@@ -1,0 +1,218 @@
+{
+  "source": "doc/api/console.markdown",
+  "modules": [
+    {
+      "textRaw": "Console",
+      "name": "console",
+      "stability": 2,
+      "stabilityText": "Stable",
+      "desc": "<p>The <code>console</code> module provides a simple debugging console that is similar to the\nJavaScript console mechanism provided by web browsers.\n\n</p>\n<p>The module exports two specific components:\n\n</p>\n<ul>\n<li>A <code>Console</code> class with methods such as <code>console.log()</code>, <code>console.error()</code> and\n<code>console.warn()</code> that can be used to write to any Node.js stream.</li>\n<li>A global <code>console</code> instance configured to write to <code>stdout</code> and <code>stderr</code>.\nBecause this object is global, it can be used without calling\n<code>require(&#39;console&#39;)</code>.</li>\n</ul>\n<p>Example using the global <code>console</code>:\n\n</p>\n<pre><code>console.log(&#39;hello world&#39;);\n  // Prints: hello world, to stdout\nconsole.log(&#39;hello %s&#39;, &#39;world&#39;);\n  // Prints: hello world, to stdout\nconsole.error(new Error(&#39;Whoops, something bad happened&#39;));\n  // Prints: [Error: Whoops, something bad happened], to stderr\n\nconst name = &#39;Will Robinson&#39;;\nconsole.warn(`Danger ${name}! Danger!`);\n  // Prints: Danger Will Robinson! Danger!, to stderr</code></pre>\n<p>Example using the <code>Console</code> class:\n\n</p>\n<pre><code>const out = getStreamSomehow();\nconst err = getStreamSomehow();\nconst myConsole = new console.Console(out, err);\n\nmyConsole.log(&#39;hello world&#39;);\n  // Prints: hello world, to out\nmyConsole.log(&#39;hello %s&#39;, &#39;world&#39;);\n  // Prints: hello world, to out\nmyConsole.error(new Error(&#39;Whoops, something bad happened&#39;));\n  // Prints: [Error: Whoops, something bad happened], to err\n\nconst name = &#39;Will Robinson&#39;;\nmyConsole.warn(`Danger ${name}! Danger!`);\n  // Prints: Danger Will Robinson! Danger!, to err</code></pre>\n<p>While the API for the <code>Console</code> class is designed fundamentally around the\nWeb browser <code>console</code> object, the <code>Console</code> is Node.js is <em>not</em> intended to\nduplicate the browsers functionality exactly.\n\n</p>\n",
+      "modules": [
+        {
+          "textRaw": "Asynchronous vs Synchronous Consoles",
+          "name": "asynchronous_vs_synchronous_consoles",
+          "desc": "<p>The console functions are synchronous when the destination is a terminal or\na file (to avoid lost messages in case of premature exit) and asynchronous\nwhen the destination is a pipe (to avoid blocking for long periods of time).\n\n</p>\n<p>In the following example, stdout is non-blocking while stderr is blocking:\n\n</p>\n<pre><code>$ node script.js 2&gt; error.log | tee info.log</code></pre>\n<p>Typically, the distinction between blocking/non-blocking is not important\nunless an application is logging significant amounts of data. High volume\nlogging <em>should</em> use a <code>Console</code> instance that writes to a pipe.\n\n</p>\n",
+          "type": "module",
+          "displayName": "Asynchronous vs Synchronous Consoles"
+        }
+      ],
+      "classes": [
+        {
+          "textRaw": "Class: Console",
+          "type": "class",
+          "name": "Console",
+          "desc": "<p>The <code>Console</code> class can be used to create a simple logger with configurable\noutput streams and can be accessed using either <code>require(&#39;console&#39;).Console</code>\nor <code>console.Console</code>:\n\n</p>\n<pre><code>const Console = require(&#39;console&#39;).Console;\nconst Console = console.Console;</code></pre>\n",
+          "methods": [
+            {
+              "textRaw": "console.assert(value[, message][, ...])",
+              "type": "method",
+              "name": "assert",
+              "desc": "<p>A simple assertion test that verifies whether <code>value</code> is truthy. If it is not,\nan <code>AssertionError</code> is throw. If provided, the error <code>message</code> is formatted\nusing [<code>util.format()</code>][] and used as the error message.\n\n</p>\n<pre><code>console.assert(true, &#39;does nothing&#39;);\n  // OK\nconsole.assert(false, &#39;Whoops %s&#39;, &#39;didn\\&#39;t work&#39;);\n  // AssertionError: Whoops didn&#39;t work</code></pre>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "value"
+                    },
+                    {
+                      "name": "message",
+                      "optional": true
+                    },
+                    {
+                      "name": "...",
+                      "optional": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "textRaw": "console.dir(obj[, options])",
+              "type": "method",
+              "name": "dir",
+              "desc": "<p>Uses [<code>util.inspect()</code>][] on <code>obj</code> and prints the resulting string to stdout.\nThis function bypasses any custom <code>inspect()</code> function defined on <code>obj</code>. An\noptional <code>options</code> object may be passed that alters certain aspects of the\nformatted string:\n\n</p>\n<ul>\n<li><p><code>showHidden</code> - if <code>true</code> then the object&#39;s non-enumerable and symbol\nproperties will be shown too. Defaults to <code>false</code>.</p>\n</li>\n<li><p><code>depth</code> - tells <code>inspect</code> how many times to recurse while formatting the\nobject. This is useful for inspecting large complicated objects. Defaults to\n<code>2</code>. To make it recurse indefinitely, pass <code>null</code>.</p>\n</li>\n<li><p><code>colors</code> - if <code>true</code>, then the output will be styled with ANSI color codes.\nDefaults to <code>false</code>. Colors are customizable; see\n[customizing <code>util.inspect()</code> colors][].</p>\n</li>\n</ul>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "obj"
+                    },
+                    {
+                      "name": "options",
+                      "optional": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "textRaw": "console.error([data][, ...])",
+              "type": "method",
+              "name": "error",
+              "desc": "<p>Prints to stderr with newline. Multiple arguments can be passed, with the first\nused as the primary message and all additional used as substitution\nvalues similar to <code>printf()</code> (the arguments are all passed to\n[<code>util.format()</code>][]).\n\n</p>\n<pre><code>const code = 5;\nconsole.error(&#39;error #%d&#39;, code);\n  // Prints: error #5, to stderr\nconsole.error(&#39;error&#39;, code);\n  // Prints: error 5, to stderr</code></pre>\n<p>If formatting elements (e.g. <code>%d</code>) are not found in the first string then\n[<code>util.inspect()</code>][] is called on each argument and the resulting string\nvalues are concatenated.  See [<code>util.format()</code>][] for more information.\n\n</p>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "data",
+                      "optional": true
+                    },
+                    {
+                      "name": "...",
+                      "optional": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "textRaw": "console.info([data][, ...])",
+              "type": "method",
+              "name": "info",
+              "desc": "<p>The <code>console.info()</code> function is an alias for [<code>console.log()</code>][].\n\n</p>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "data",
+                      "optional": true
+                    },
+                    {
+                      "name": "...",
+                      "optional": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "textRaw": "console.log([data][, ...])",
+              "type": "method",
+              "name": "log",
+              "desc": "<p>Prints to stdout with newline. Multiple arguments can be passed, with the first\nused as the primary message and all additional used as substitution\nvalues similar to <code>printf()</code> (the arguments are all passed to\n[<code>util.format()</code>][]).\n\n</p>\n<pre><code>var count = 5;\nconsole.log(&#39;count: %d&#39;, count);\n  // Prints: count: 5, to stdout\nconsole.log(&#39;count: &#39;, count);\n  // Prints: count: 5, to stdout</code></pre>\n<p>If formatting elements (e.g. <code>%d</code>) are not found in the first string then\n[<code>util.inspect()</code>][] is called on each argument and the resulting string\nvalues are concatenated.  See [<code>util.format()</code>][] for more information.\n\n</p>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "data",
+                      "optional": true
+                    },
+                    {
+                      "name": "...",
+                      "optional": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "textRaw": "console.time(label)",
+              "type": "method",
+              "name": "time",
+              "desc": "<p>Used to calculate the duration of a specific operation. To start a timer, call\nthe <code>console.time()</code> method, giving it a unique <code>label</code> as the only parameter. To stop the\ntimer, and to get the elapsed time in milliseconds, just call the\n[<code>console.timeEnd()</code>][] method, again passing the\ntimer&#39;s unique <code>label</code> as the parameter.\n\n</p>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "label"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "textRaw": "console.timeEnd(label)",
+              "type": "method",
+              "name": "timeEnd",
+              "desc": "<p>Stops a timer that was previously started by calling [<code>console.time()</code>][] and\nprints the result to stdout:\n\n</p>\n<pre><code>console.time(&#39;100-elements&#39;);\nfor (var i = 0; i &lt; 100; i++) {\n  ;\n}\nconsole.timeEnd(&#39;100-elements&#39;);\n// prints 100-elements: 262ms</code></pre>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "label"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "textRaw": "console.trace(message[, ...])",
+              "type": "method",
+              "name": "trace",
+              "desc": "<p>Prints to stderr the string <code>&#39;Trace :&#39;</code>, followed by the [<code>util.format()</code>][]\nformatted message and stack trace to the current position in the code.\n\n</p>\n<pre><code>console.trace(&#39;Show me&#39;);\n  // Prints: (stack trace will vary based on where trace is called)\n  //  Trace: Show me\n  //    at repl:2:9\n  //    at REPLServer.defaultEval (repl.js:248:27)\n  //    at bound (domain.js:287:14)\n  //    at REPLServer.runBound [as eval] (domain.js:300:12)\n  //    at REPLServer.&lt;anonymous&gt; (repl.js:412:12)\n  //    at emitOne (events.js:82:20)\n  //    at REPLServer.emit (events.js:169:7)\n  //    at REPLServer.Interface._onLine (readline.js:210:10)\n  //    at REPLServer.Interface._line (readline.js:549:8)\n  //    at REPLServer.Interface._ttyWrite (readline.js:826:14)</code></pre>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "message"
+                    },
+                    {
+                      "name": "...",
+                      "optional": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "textRaw": "console.warn([data][, ...])",
+              "type": "method",
+              "name": "warn",
+              "desc": "<p>The <code>console.warn()</code> function is an alias for [<code>console.error()</code>][].\n\n</p>\n",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "name": "data",
+                      "optional": true
+                    },
+                    {
+                      "name": "...",
+                      "optional": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "signatures": [
+            {
+              "params": [
+                {
+                  "name": "stdout"
+                },
+                {
+                  "name": "stderr",
+                  "optional": true
+                }
+              ],
+              "desc": "<p>Creates a new <code>Console</code> by passing one or two writable stream instances.\n<code>stdout</code> is a writable stream to print log or info output. <code>stderr</code>\nis used for warning or error output. If <code>stderr</code> isn&#39;t passed, the warning\nand error output will be sent to the <code>stdout</code>.\n\n</p>\n<pre><code>const output = fs.createWriteStream(&#39;./stdout.log&#39;);\nconst errorOutput = fs.createWriteStream(&#39;./stderr.log&#39;);\n// custom simple logger\nconst logger = new Console(output, errorOutput);\n// use it like console\nvar count = 5;\nlogger.log(&#39;count: %d&#39;, count);\n// in stdout.log: count 5</code></pre>\n<p>The global <code>console</code> is a special <code>Console</code> whose output is sent to\n<code>process.stdout</code> and <code>process.stderr</code>. It is equivalent to calling:\n\n</p>\n<pre><code>new Console(process.stdout, process.stderr);</code></pre>\n"
+            }
+          ]
+        }
+      ],
+      "type": "module",
+      "displayName": "Console"
+    }
+  ]
+}

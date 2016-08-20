@@ -1,0 +1,30 @@
+# for launching mosquitto on mac
+
+ln -sfv /usr/local/opt/mosquitto/*.plist ~/Library/LaunchAgents
+load ~/Library/LaunchAgents/homebrew.mxcl.mosquitto.plist
+
+# for testing mosquitto
+
+mosquitto_sub -h 127.0.0.1 -t topic
+mosquitto_pub -h 127.0.0.1 -t topic -m "hello world"
+
+# for experiment related information -> see OLD_EXPERIMENT
+
+# port mapping
+
+2-Net#-Type-X-X
+
+Type: Auth if 9, Server if [1, 8]
+
+Auth - EntityPort - Type-X-X: 900
+Auth - AuthPort   - Type-X-X: 901
+
+# Current mappings
+
+# Net 1
+Auth: EntityPort: 21900, AuthPort: 21901
+Server: 21100
+
+# Net 2
+Auth: EntityPort: 22900, AuthPort: 22901
+Server: 22100

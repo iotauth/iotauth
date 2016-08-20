@@ -1,0 +1,658 @@
+dhcp-44-168:entity hokeunkim$ node server.js
+loading from config file: configs/net1/server.config
+net1.server bound on port 21100
+net1.server:Servers prompt>
+skReqPub
+skReqSub (Session key request for target publish topic) command
+net1.server:Servers prompt>
+connected to auth! from local port 61749
+received auth hello!
+{ authId: 101, nonce: <Buffer fc 46 82 51 e5 02 08 90> }
+IOT| RSA_public_encrypt: Len: 53, Count: 1
+final256: Total Digested: 256
+IOT| RSA_private_encrypt: Len: 51, Count: 1
+received session key response with distribution key attached!
+final256: Total Digested: 512
+IOT| RSA_public_decrypt: Len: 256, Count: 1
+auth signature verified
+IOT| RSA_private_decrypt: Len: 256, Count: 1
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 128, Total: 128
+final256: Total Digested: 601
+replyNonce in sessionKeyResp: <Buffer 1f 4b 8a 3a ac 7f f7 b0>
+auth nonce verified
+updating distribution key: { val: <Buffer c8 32 ae ec 6c b2 12 e5 50 b0 b9 b2 f1 2a d7 32>,
+  absValidity: Mon Mar 28 2016 18:49:32 GMT-0700 (PDT) }
+received 1 keys
+disconnected from auth
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+session key NOT found! sending session key request
+connected to auth! from local port 61752
+received auth hello!
+{ authId: 101, nonce: <Buffer dc 9e fe ba ef 05 66 cd> }
+final256: Total Digested: 651
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 80
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 96
+received session key response encrypted with distribution key
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 128, Total: 256
+final256: Total Digested: 740
+replyNonce in sessionKeyResp: <Buffer f5 27 7f 59 0e 49 69 b3>auth nonce verified
+received 1 keys
+found session key inside callback
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 320
+final256: Total Digested: 757
+{ nonce: <Buffer c0 f9 6f c0 dc 0d 86 99> }
+chosen nonce: <Buffer 75 df b4 be aa 58 7c 87>
+final256: Total Digested: 774
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 144
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 160
+switching to HANDSHAKE_2_SENT
+disconnected from auth
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 384
+final256: Total Digested: 791
+{ replyNonce: <Buffer 75 df b4 be aa 58 7c 87> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 448
+final256: Total Digested: 808
+{ nonce: <Buffer 76 68 a4 35 3f 05 0f 22> }
+chosen nonce: <Buffer 13 8d a4 dc 1c 41 06 4c>
+final256: Total Digested: 825
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 208
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 224
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 512
+final256: Total Digested: 842
+{ replyNonce: <Buffer 13 8d a4 dc 1c 41 06 4c> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 576
+final256: Total Digested: 859
+{ nonce: <Buffer eb 88 46 7f 87 20 50 a4> }
+chosen nonce: <Buffer a5 a7 8e fa 83 01 b3 5d>
+final256: Total Digested: 876
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 272
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 288
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 640
+final256: Total Digested: 893
+{ replyNonce: <Buffer a5 a7 8e fa 83 01 b3 5d> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 704
+final256: Total Digested: 910
+{ nonce: <Buffer e1 95 57 68 a0 02 bd f4> }
+chosen nonce: <Buffer 10 68 23 3b d0 19 e1 fe>
+final256: Total Digested: 927
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 336
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 352
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 768
+final256: Total Digested: 944
+{ replyNonce: <Buffer 10 68 23 3b d0 19 e1 fe> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 832
+final256: Total Digested: 961
+{ nonce: <Buffer 88 65 48 9b 92 c2 59 48> }
+chosen nonce: <Buffer 83 f9 7c 43 4a 66 c1 fc>
+final256: Total Digested: 978
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 400
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 416
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 896
+final256: Total Digested: 995
+{ replyNonce: <Buffer 83 f9 7c 43 4a 66 c1 fc> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 960
+final256: Total Digested: 1012
+{ nonce: <Buffer 12 39 9b 37 8b 14 3e 99> }
+chosen nonce: <Buffer 2a 0c 6a b2 ae d8 6e ba>
+final256: Total Digested: 1029
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 464
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 480
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1024
+final256: Total Digested: 1046
+{ replyNonce: <Buffer 2a 0c 6a b2 ae d8 6e ba> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1088
+final256: Total Digested: 1063
+{ nonce: <Buffer 0c 4b 0f 16 1d a3 77 ca> }
+chosen nonce: <Buffer 5d 26 d5 f3 fd 50 f4 c9>
+final256: Total Digested: 1080
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 528
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 544
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1152
+final256: Total Digested: 1097
+{ replyNonce: <Buffer 5d 26 d5 f3 fd 50 f4 c9> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1216
+final256: Total Digested: 1114
+{ nonce: <Buffer 31 4b f7 6a 48 4f 6f e1> }
+chosen nonce: <Buffer 7a 87 e3 e0 85 a6 c0 2e>
+final256: Total Digested: 1131
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 592
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 608
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1280
+final256: Total Digested: 1148
+{ replyNonce: <Buffer 7a 87 e3 e0 85 a6 c0 2e> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1344
+final256: Total Digested: 1165
+{ nonce: <Buffer 83 84 cc ea f1 89 b0 73> }
+chosen nonce: <Buffer 27 1e 8b 0e 40 4e b6 99>
+final256: Total Digested: 1182
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 656
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 672
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1408
+final256: Total Digested: 1199
+{ replyNonce: <Buffer 27 1e 8b 0e 40 4e b6 99> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1472
+final256: Total Digested: 1216
+{ nonce: <Buffer 3a c2 25 59 0f bb d0 2d> }
+chosen nonce: <Buffer da 11 d8 c9 e0 f8 77 a9>
+final256: Total Digested: 1233
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 720
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 736
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1536
+final256: Total Digested: 1250
+{ replyNonce: <Buffer da 11 d8 c9 e0 f8 77 a9> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1600
+final256: Total Digested: 1267
+{ nonce: <Buffer cb 69 40 17 71 e7 4c 4c> }
+chosen nonce: <Buffer d2 5e 63 18 4d 98 35 26>
+final256: Total Digested: 1284
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 784
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 800
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1664
+final256: Total Digested: 1301
+{ replyNonce: <Buffer d2 5e 63 18 4d 98 35 26> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1728
+final256: Total Digested: 1318
+{ nonce: <Buffer 97 73 41 05 f9 0d da f2> }
+chosen nonce: <Buffer 5e 3a e0 cd bd b8 9f 0f>
+final256: Total Digested: 1335
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 848
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 864
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1792
+final256: Total Digested: 1352
+{ replyNonce: <Buffer 5e 3a e0 cd bd b8 9f 0f> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1856
+final256: Total Digested: 1369
+{ nonce: <Buffer 9b c1 9e 47 77 c1 ba f5> }
+chosen nonce: <Buffer 68 32 4b 37 81 87 d8 25>
+final256: Total Digested: 1386
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 912
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 928
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1920
+final256: Total Digested: 1403
+{ replyNonce: <Buffer 68 32 4b 37 81 87 d8 25> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1984
+final256: Total Digested: 1420
+{ nonce: <Buffer 10 7a e8 9b 6a 5b 22 d1> }
+chosen nonce: <Buffer 42 d1 58 73 ba fd 5a b5>
+final256: Total Digested: 1437
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 976
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 992
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2048
+final256: Total Digested: 1454
+{ replyNonce: <Buffer 42 d1 58 73 ba fd 5a b5> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2112
+final256: Total Digested: 1471
+{ nonce: <Buffer da 6a 00 a1 9e fe 22 3b> }
+chosen nonce: <Buffer 99 4b ec 9a 78 b8 5c 97>
+final256: Total Digested: 1488
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1040
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1056
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2176
+final256: Total Digested: 1505
+{ replyNonce: <Buffer 99 4b ec 9a 78 b8 5c 97> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2240
+final256: Total Digested: 1522
+{ nonce: <Buffer af 64 f5 2a 4c 1d db 1f> }
+chosen nonce: <Buffer 89 56 aa 70 30 44 2c c1>
+final256: Total Digested: 1539
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1120
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2304
+final256: Total Digested: 1556
+{ replyNonce: <Buffer 89 56 aa 70 30 44 2c c1> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2368
+final256: Total Digested: 1573
+{ nonce: <Buffer 6f 09 5e d7 d9 1a 1d 9e> }
+chosen nonce: <Buffer fd e1 4c 68 23 e8 61 b0>
+final256: Total Digested: 1590
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1168
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1184
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2432
+final256: Total Digested: 1607
+{ replyNonce: <Buffer fd e1 4c 68 23 e8 61 b0> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2496
+final256: Total Digested: 1624
+{ nonce: <Buffer 53 4a 7e 6a 3f 48 3f dd> }
+chosen nonce: <Buffer e9 60 a5 34 d2 91 ad b2>
+final256: Total Digested: 1641
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1232
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1248
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2560
+final256: Total Digested: 1658
+{ replyNonce: <Buffer e9 60 a5 34 d2 91 ad b2> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2624
+final256: Total Digested: 1675
+{ nonce: <Buffer ec f1 82 31 ee d9 77 31> }
+chosen nonce: <Buffer 19 3b 2b 09 35 84 f9 24>
+final256: Total Digested: 1692
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1296
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1312
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2688
+final256: Total Digested: 1709
+{ replyNonce: <Buffer 19 3b 2b 09 35 84 f9 24> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2752
+final256: Total Digested: 1726
+{ nonce: <Buffer 8e 90 3e e1 cd 6c 8e 0b> }
+chosen nonce: <Buffer 3b e1 bd cc 74 af f1 81>
+final256: Total Digested: 1743
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1360
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1376
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2816
+final256: Total Digested: 1760
+{ replyNonce: <Buffer 3b e1 bd cc 74 af f1 81> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2880
+final256: Total Digested: 1777
+{ nonce: <Buffer 0e 61 9f 19 1e 13 c2 81> }
+chosen nonce: <Buffer a4 15 77 ce 9e 87 74 87>
+final256: Total Digested: 1794
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1424
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1440
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 2944
+final256: Total Digested: 1811
+{ replyNonce: <Buffer a4 15 77 ce 9e 87 74 87> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3008
+final256: Total Digested: 1828
+{ nonce: <Buffer 2d 0f 33 3b 31 a9 7a 18> }
+chosen nonce: <Buffer 6e ce c9 97 c6 48 5c b6>
+final256: Total Digested: 1845
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1488
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1504
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3072
+final256: Total Digested: 1862
+{ replyNonce: <Buffer 6e ce c9 97 c6 48 5c b6> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3136
+final256: Total Digested: 1879
+{ nonce: <Buffer 36 45 74 f1 28 7d 98 eb> }
+chosen nonce: <Buffer 93 f8 e2 20 ba 90 04 ed>
+final256: Total Digested: 1896
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1552
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1568
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3200
+final256: Total Digested: 1913
+{ replyNonce: <Buffer 93 f8 e2 20 ba 90 04 ed> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3264
+final256: Total Digested: 1930
+{ nonce: <Buffer 3f 74 93 de ca cc 45 4f> }
+chosen nonce: <Buffer c7 ad f0 9c ad b8 e5 4f>
+final256: Total Digested: 1947
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1616
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1632
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3328
+final256: Total Digested: 1964
+{ replyNonce: <Buffer c7 ad f0 9c ad b8 e5 4f> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3392
+final256: Total Digested: 1981
+{ nonce: <Buffer 89 26 cb 67 9a 64 7f 2d> }
+chosen nonce: <Buffer d0 b0 a4 e8 73 88 da 18>
+final256: Total Digested: 1998
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1680
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1696
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3456
+final256: Total Digested: 2015
+{ replyNonce: <Buffer d0 b0 a4 e8 73 88 da 18> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3520
+final256: Total Digested: 2032
+{ nonce: <Buffer 2c 50 8e 3f 06 0d b5 ee> }
+chosen nonce: <Buffer e2 1d a8 89 9b 4c de 1e>
+final256: Total Digested: 2049
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1744
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1760
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3584
+final256: Total Digested: 2066
+{ replyNonce: <Buffer e2 1d a8 89 9b 4c de 1e> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3648
+final256: Total Digested: 2083
+{ nonce: <Buffer b5 59 1d 4a 48 bc 36 ea> }
+chosen nonce: <Buffer 65 58 65 1e bd 8c fc 12>
+final256: Total Digested: 2100
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1808
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1824
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3712
+final256: Total Digested: 2117
+{ replyNonce: <Buffer 65 58 65 1e bd 8c fc 12> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3776
+final256: Total Digested: 2134
+{ nonce: <Buffer d5 74 b7 8d 4f 3b 99 c0> }
+chosen nonce: <Buffer cb 45 e1 c2 c1 f9 60 a8>
+final256: Total Digested: 2151
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1872
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1888
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3840
+final256: Total Digested: 2168
+{ replyNonce: <Buffer cb 45 e1 c2 c1 f9 60 a8> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3904
+final256: Total Digested: 2185
+{ nonce: <Buffer 80 3c ed 3f 03 4b 35 fd> }
+chosen nonce: <Buffer 8e 0a 95 4f ee 99 5d 81>
+final256: Total Digested: 2202
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1936
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1952
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3968
+final256: Total Digested: 2219
+{ replyNonce: <Buffer 8e 0a 95 4f ee 99 5d 81> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 4032
+final256: Total Digested: 2236
+{ nonce: <Buffer 01 d4 ab 95 96 78 fd 0d> }
+chosen nonce: <Buffer f3 ef ac 07 1e d8 81 fc>
+final256: Total Digested: 2253
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 2000
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 2016
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 4096
+final256: Total Digested: 2270
+{ replyNonce: <Buffer f3 ef ac 07 1e d8 81 fc> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 4160
+final256: Total Digested: 2287
+{ nonce: <Buffer da 3f 9c 6e 0b 2c a0 bf> }
+chosen nonce: <Buffer 7b bb d5 78 cd 10 13 91>
+final256: Total Digested: 2304
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 2064
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 2080
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 4224
+final256: Total Digested: 2321
+{ replyNonce: <Buffer 7b bb d5 78 cd 10 13 91> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+Unidentified client connected
+received session key handshake1
+session key id: 10122620
+found session key
+received 0 keys
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 4288
+final256: Total Digested: 2338
+{ nonce: <Buffer 28 f4 31 de dd fb 46 a9> }
+chosen nonce: <Buffer 08 8c 51 e7 5d 2f 21 e6>
+final256: Total Digested: 2355
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 2128
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 2144
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 4352
+final256: Total Digested: 2372
+{ replyNonce: <Buffer 08 8c 51 e7 5d 2f 21 e6> }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+==================================================
+unrecognized command: ==================================================
+net1.server:Servers prompt>
+sendFile
+sendFile command
+file data length: 256
+final256: Total Digested: 2636
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 288, Total: 2432
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 2448
+net1.server:Servers prompt>
+^C
+dhcp-44-168:entity hokeunkim$

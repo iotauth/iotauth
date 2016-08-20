@@ -1,0 +1,11 @@
+.idea/*
+*.class
+*.jar
+javadoc/*.html
+javadoc/script.js
+javadoc/stylesheet.css
+sessionKeyCount*.txt
+target/*
+auth.db
+src/test/target/*
+example-auth-db-generator/target/*

@@ -1,0 +1,276 @@
+diff --git a/node-v4.2.1/Makefile b/node-v4.2.1/Makefile
+index 02619fa..73f0b70 100644
+--- a/node-v4.2.1/Makefile
++++ b/node-v4.2.1/Makefile
+@@ -61,6 +61,7 @@ config.gypi: configure
+ 
+ install: all
+ 	$(PYTHON) tools/install.py $@ '$(DESTDIR)' '$(PREFIX)'
++	chmod 755 $(PREFIX)/bin/node
+ 
+ uninstall:
+ 	$(PYTHON) tools/install.py $@ '$(DESTDIR)' '$(PREFIX)'
+diff --git a/node-v4.2.1/deps/openssl/openssl/README b/node-v4.2.1/deps/openssl/openssl/README
+index 493141b..13d858c 100644
+--- a/node-v4.2.1/deps/openssl/openssl/README
++++ b/node-v4.2.1/deps/openssl/openssl/README
+@@ -1,3 +1,16 @@
++*************************** Hokeun's Instructions **************************
++
++// make and copy executable to the certs directory
++./Configure debug-darwin64-x86_64-cc enable-ec_nistp_64_gcc_128 no-ssl2 no-ssl3 no-comp --openssldir=.
++make
++cp apps/openssl ../../../../node/certs/
++
++// cleaning after make
++git clean -f
++git checkout -- include/openssl/*
++git checkout -- Makefile crypto/opensslconf.h tools/c_rehash
++
++****************************************************************************
+ 
+  OpenSSL 1.0.2d 9 Jul 2015
+ 
+diff --git a/node-v4.2.1/deps/openssl/openssl/crypto/evp/digest.c b/node-v4.2.1/deps/openssl/openssl/crypto/evp/digest.c
+index f2643f3..9bbeedc 100644
+--- a/node-v4.2.1/deps/openssl/openssl/crypto/evp/digest.c
++++ b/node-v4.2.1/deps/openssl/openssl/crypto/evp/digest.c
+@@ -143,8 +143,23 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
+     return EVP_DigestInit_ex(ctx, type, NULL);
+ }
+ 
++//int firstUpdateAfterInit = 0;
++//static int sha256_initiated = 0;
++
+ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+ {
++    // logging
++    // const char* md_name = EVP_MD_name(type);
++    // if (strcmp(md_name, "SHA256") == 0) {
++    //     fprintf(stderr, "EVP_DigestInit_ex: %s ", EVP_MD_name(type));
++    //     printf(stderr, "(%s : %d)\n", __FILE__, __LINE__);
++    //     sha256_initiated = 1;
++    // }
++    // else {
++    //     sha256_initiated = 0;
++    // }
++    // firstUpdateAfterInit = 1;
++    // logging
+     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
+ #ifdef OPENSSL_FIPS
+     /* If FIPS mode switch to approved implementation if possible */
+@@ -248,8 +263,23 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+     return ctx->digest->init(ctx);
+ }
+ 
++static size_t total_sha256_digested_bytes = 0;
+ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
+ {
++    // logging
++    //if (firstUpdateAfterInit) {
++    // if (sha256_initiated) {
++    //     total_sha256_digested_bytes += count;
++    // }
++        // fprintf(stderr, "EVP_DigestUpdate: ");
++        // fprintf(stderr, "(%s : %d)", __FILE__, __LINE__);
++        // fprintf(stderr, " Len: %zu", count);
++    //    firstUpdateAfterInit = 0;
++    //}
++    //else {
++    //    fprintf(stderr, ", %zu", count);
++    //}
++    // logging
+ #ifdef OPENSSL_FIPS
+     return FIPS_digestupdate(ctx, data, count);
+ #else
+@@ -269,6 +299,16 @@ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
+ /* The caller can assume that this removes any secret data from the context */
+ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
+ {
++    // logging
++    // if (sha256_initiated) {
++    //     fprintf(stderr, "EVP_DigestFinal_ex: "); 
++    //     fprintf(stderr, "(%s : %d)", __FILE__, __LINE__);
++    //     //fprintf(stderr, " Len: %zu", count);
++    //     fprintf(stderr, " Total Digested: %zu\n", total_sha256_digested_bytes);
++    //     //sha256_initiated = 0;
++    // }
++    // fprintf(stderr, ": EVP_DigestFinal_ex\n");
++    // logging
+ #ifdef OPENSSL_FIPS
+     return FIPS_digestfinal(ctx, md, size);
+ #else
+@@ -349,6 +389,12 @@ int EVP_Digest(const void *data, size_t count,
+                unsigned char *md, unsigned int *size, const EVP_MD *type,
+                ENGINE *impl)
+ {
++    // logging    
++    // fprintf(stderr, "EVP_Digest: %s ", EVP_MD_name(type));
++    // fprintf(stderr, " Len: %zu ", count);
++    // fprintf(stderr, "(%s : %d)\n", __FILE__, __LINE__);
++    // logging
++
+     EVP_MD_CTX ctx;
+     int ret;
+ 
+diff --git a/node-v4.2.1/deps/openssl/openssl/crypto/evp/evp_enc.c b/node-v4.2.1/deps/openssl/openssl/crypto/evp/evp_enc.c
+index 65f0e02..d23890f 100644
+--- a/node-v4.2.1/deps/openssl/openssl/crypto/evp/evp_enc.c
++++ b/node-v4.2.1/deps/openssl/openssl/crypto/evp/evp_enc.c
+@@ -69,12 +69,40 @@
+ #endif
+ #include "evp_locl.h"
+ 
++static int total_encrypted_bytes = 0;
++static int total_decrypted_bytes = 0;
++
++int M_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
++                      const unsigned char *in, int inl)
++{
++    int ret;
+ #ifdef OPENSSL_FIPS
+-# define M_do_cipher(ctx, out, in, inl) FIPS_cipher(ctx, out, in, inl)
++    ret = FIPS_cipher(ctx, out, in, inl);
+ #else
+-# define M_do_cipher(ctx, out, in, inl) ctx->cipher->do_cipher(ctx, out, in, inl)
++    ret = ctx->cipher->do_cipher(ctx, out, in, inl);
+ #endif
+ 
++    // Logging
++    fprintf(stderr, "M_do_cipher: ");
++    fprintf(stderr, "%s ", EVP_CIPHER_name(ctx->cipher));
++    if (ctx->encrypt) {
++        total_encrypted_bytes += inl;
++        fprintf(stderr, "Total Encrypted: %d, ", total_encrypted_bytes);
++        fprintf(stderr, "Encrypt");
++    }
++    else {
++        total_decrypted_bytes += inl;
++        fprintf(stderr, "Total Decrypted: %d, ", total_decrypted_bytes);
++        fprintf(stderr, "Decrypt");
++    }
++    fprintf(stderr, " Len: %d ", inl);
++    fprintf(stderr, "(%s : %d)\n", __FILE__, __LINE__);
++    // Logging
++
++    return ret;
++}
++
++
+ const char EVP_version[] = "EVP" OPENSSL_VERSION_PTEXT;
+ 
+ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
+diff --git a/node-v4.2.1/deps/openssl/openssl/crypto/evp/evp_lib.c b/node-v4.2.1/deps/openssl/openssl/crypto/evp/evp_lib.c
+index a53a27c..4c4cbf2 100644
+--- a/node-v4.2.1/deps/openssl/openssl/crypto/evp/evp_lib.c
++++ b/node-v4.2.1/deps/openssl/openssl/crypto/evp/evp_lib.c
+@@ -197,9 +197,29 @@ int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
+     return ctx->cipher->block_size;
+ }
+ 
++static int total_encrypted_bytes = 0;
++static int total_decrypted_bytes = 0;
++
+ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                const unsigned char *in, unsigned int inl)
+ {
++    // Logging
++    fprintf(stderr, "EVP_Cipher: ");
++    fprintf(stderr, "%s ", EVP_CIPHER_name(ctx->cipher));
++    if (ctx->encrypt) {
++        total_encrypted_bytes += inl;
++        fprintf(stderr, "Total Encrypted: %d, ", total_encrypted_bytes);
++        fprintf(stderr, "Encrypt");
++    }
++    else {
++        total_decrypted_bytes += inl;
++        fprintf(stderr, "Total Decrypted: %d, ", total_decrypted_bytes);
++        fprintf(stderr, "Decrypt");
++    }
++    fprintf(stderr, " Len: %d ", inl);
++    fprintf(stderr, "(%s : %d)\n", __FILE__, __LINE__);
++    // Logging
++
+     return ctx->cipher->do_cipher(ctx, out, in, inl);
+ }
+ 
+diff --git a/node-v4.2.1/deps/openssl/openssl/crypto/evp/m_sha1.c b/node-v4.2.1/deps/openssl/openssl/crypto/evp/m_sha1.c
+index a74e6b7..2b5b526 100644
+--- a/node-v4.2.1/deps/openssl/openssl/crypto/evp/m_sha1.c
++++ b/node-v4.2.1/deps/openssl/openssl/crypto/evp/m_sha1.c
+@@ -115,6 +115,7 @@ static int init256(EVP_MD_CTX *ctx)
+     return SHA256_Init(ctx->md_data);
+ }
+ 
++static size_t total_sha256_digested = 0;
+ /*
+  * Even though there're separate SHA224_[Update|Final], we call
+  * SHA256 functions even in SHA224 context. This is what happens
+@@ -122,11 +123,19 @@ static int init256(EVP_MD_CTX *ctx)
+  */
+ static int update256(EVP_MD_CTX *ctx, const void *data, size_t count)
+ {
++    // logging
++    total_sha256_digested += count;
++    // logging
+     return SHA256_Update(ctx->md_data, data, count);
+ }
+ 
+ static int final256(EVP_MD_CTX *ctx, unsigned char *md)
+ {
++    // logging
++    fprintf(stderr, "final256: ");
++    fprintf(stderr, "(%s : %d)", __FILE__, __LINE__);
++    fprintf(stderr, " Total Digested: %zu\n", total_sha256_digested);
++    // logging
+     return SHA256_Final(md, ctx->md_data);
+ }
+ 
+diff --git a/node-v4.2.1/deps/openssl/openssl/crypto/rsa/rsa_crpt.c b/node-v4.2.1/deps/openssl/openssl/crypto/rsa/rsa_crpt.c
+index 5c416b5..0bd3b40 100644
+--- a/node-v4.2.1/deps/openssl/openssl/crypto/rsa/rsa_crpt.c
++++ b/node-v4.2.1/deps/openssl/openssl/crypto/rsa/rsa_crpt.c
+@@ -75,6 +75,10 @@ int RSA_size(const RSA *r)
+ int RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
+                        RSA *rsa, int padding)
+ {
++    // Logging
++    fprintf(stderr, "RSA_public_encrypt: Len: %d ", flen);
++    fprintf(stderr, "(%s : %d)\n", __FILE__, __LINE__);
++    // Logging
+ #ifdef OPENSSL_FIPS
+     if (FIPS_mode() && !(rsa->meth->flags & RSA_FLAG_FIPS_METHOD)
+         && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW)) {
+@@ -88,6 +92,10 @@ int RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
+ int RSA_private_encrypt(int flen, const unsigned char *from,
+                         unsigned char *to, RSA *rsa, int padding)
+ {
++    // Logging
++    fprintf(stderr, "RSA_private_encrypt: Len: %d ", flen);
++    fprintf(stderr, "(%s : %d)\n", __FILE__, __LINE__);
++    // Logging
+ #ifdef OPENSSL_FIPS
+     if (FIPS_mode() && !(rsa->meth->flags & RSA_FLAG_FIPS_METHOD)
+         && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW)) {
+@@ -101,6 +109,10 @@ int RSA_private_encrypt(int flen, const unsigned char *from,
+ int RSA_private_decrypt(int flen, const unsigned char *from,
+                         unsigned char *to, RSA *rsa, int padding)
+ {
++    // Logging
++    fprintf(stderr, "RSA_private_decrypt: Len: %d ", flen);
++    fprintf(stderr, "(%s : %d)\n", __FILE__, __LINE__);
++    // Logging
+ #ifdef OPENSSL_FIPS
+     if (FIPS_mode() && !(rsa->meth->flags & RSA_FLAG_FIPS_METHOD)
+         && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW)) {
+@@ -114,6 +126,10 @@ int RSA_private_decrypt(int flen, const unsigned char *from,
+ int RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
+                        RSA *rsa, int padding)
+ {
++    // Logging
++    fprintf(stderr, "RSA_public_decrypt: Len: %d ", flen);
++    fprintf(stderr, "(%s : %d)\n", __FILE__, __LINE__);
++    // Logging
+ #ifdef OPENSSL_FIPS
+     if (FIPS_mode() && !(rsa->meth->flags & RSA_FLAG_FIPS_METHOD)
+         && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW)) {

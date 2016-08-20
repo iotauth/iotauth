@@ -1,0 +1,1867 @@
+dhcp-44-168:tls hokeunkim$ subl tls_subscriber.js
+dhcp-44-168:tls hokeunkim$ ls
+dhcp-44-168:tls hokeunkim$ node tls_publisher.js
+publisher bound on port 21100
+TLS_Publisher prompt>
+final256: Total Digested: 705
+IOT| RSA_public_decrypt: Len: 256, Count: 1
+final256: Total Digested: 1410
+IOT| RSA_public_decrypt: Len: 256, Count: 2
+IOT| RSA_private_decrypt: Len: 256, Count: 1
+final256: Total Digested: 1615
+final256: Total Digested: 1647
+final256: Total Digested: 1756
+final256: Total Digested: 1788
+final256: Total Digested: 1788
+final256: Total Digested: 1820
+final256: Total Digested: 1929
+final256: Total Digested: 1961
+IOT| RSA_public_decrypt: Len: 256, Count: 3
+final256: Total Digested: 7178
+final256: Total Digested: 7210
+final256: Total Digested: 7319
+final256: Total Digested: 7351
+final256: Total Digested: 7351
+final256: Total Digested: 7383
+final256: Total Digested: 7492
+final256: Total Digested: 7524
+final256: Total Digested: 7524
+final256: Total Digested: 7556final256: Total Digested: 7665
+final256: Total Digested: 7697
+final256: Total Digested: 7697
+final256: Total Digested: 7729
+final256: Total Digested: 7838
+final256: Total Digested: 7870
+final256: Total Digested: 7998
+final256: Total Digested: 8173
+final256: Total Digested: 8205
+final256: Total Digested: 8284
+final256: Total Digested: 8316
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 96
+final256: Total Digested: 8412
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 176
+final256: Total Digested: 8544
+final256: Total Digested: 8544
+final256: Total Digested: 8719
+final256: Total Digested: 8751
+final256: Total Digested: 8830
+final256: Total Digested: 8862
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 1104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1120
+final256: Total Digested: 10158
+final256: Total Digested: 10190
+final256: Total Digested: 11512
+final256: Total Digested: 11687
+final256: Total Digested: 11719
+final256: Total Digested: 11798
+final256: Total Digested: 11830
+final256: Total Digested: 11859
+final256: Total Digested: 11891
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 1200
+subscriber connected authorized
+final256: Total Digested: 12612
+IOT| RSA_public_decrypt: Len: 256, Count: 4
+IOT| RSA_private_decrypt: Len: 256, Count: 2
+final256: Total Digested: 12817
+final256: Total Digested: 12849
+final256: Total Digested: 12958
+final256: Total Digested: 12990
+final256: Total Digested: 12990
+final256: Total Digested: 13022
+final256: Total Digested: 13131
+final256: Total Digested: 13163
+IOT| RSA_public_decrypt: Len: 256, Count: 5
+final256: Total Digested: 18380
+final256: Total Digested: 18412
+final256: Total Digested: 18521
+final256: Total Digested: 18553
+final256: Total Digested: 18553
+final256: Total Digested: 18585
+final256: Total Digested: 18694
+final256: Total Digested: 18726
+final256: Total Digested: 18726
+final256: Total Digested: 18758
+final256: Total Digested: 18867
+final256: Total Digested: 18899
+final256: Total Digested: 18899
+final256: Total Digested: 18931
+final256: Total Digested: 19040
+final256: Total Digested: 19072
+final256: Total Digested: 19200
+final256: Total Digested: 19375
+final256: Total Digested: 19407
+final256: Total Digested: 19486
+final256: Total Digested: 19518
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 272
+final256: Total Digested: 19614
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 352
+final256: Total Digested: 19746
+final256: Total Digested: 19746
+final256: Total Digested: 19921
+final256: Total Digested: 19953
+final256: Total Digested: 20032
+final256: Total Digested: 20064
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 2304
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 2320
+final256: Total Digested: 21360
+final256: Total Digested: 21392
+final256: Total Digested: 22714
+final256: Total Digested: 22889
+final256: Total Digested: 22921
+final256: Total Digested: 23000
+final256: Total Digested: 23032
+final256: Total Digested: 23061
+final256: Total Digested: 23093
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 2400
+subscriber connected authorized
+final256: Total Digested: 23814
+IOT| RSA_public_decrypt: Len: 256, Count: 6
+IOT| RSA_private_decrypt: Len: 256, Count: 3
+final256: Total Digested: 24019
+final256: Total Digested: 24051
+final256: Total Digested: 24160
+final256: Total Digested: 24192
+final256: Total Digested: 24192
+final256: Total Digested: 24224
+final256: Total Digested: 24333
+final256: Total Digested: 24365
+IOT| RSA_public_decrypt: Len: 256, Count: 7
+final256: Total Digested: 29582
+final256: Total Digested: 29614
+final256: Total Digested: 29723
+final256: Total Digested: 29755
+final256: Total Digested: 29755
+final256: Total Digested: 29787
+final256: Total Digested: 29896
+final256: Total Digested: 29928
+final256: Total Digested: 29928
+final256: Total Digested: 29960
+final256: Total Digested: 30069
+final256: Total Digested: 30101
+final256: Total Digested: 30101
+final256: Total Digested: 30133
+final256: Total Digested: 30242
+final256: Total Digested: 30274
+final256: Total Digested: 30402
+final256: Total Digested: 30577
+final256: Total Digested: 30609
+final256: Total Digested: 30688
+final256: Total Digested: 30720
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 448
+final256: Total Digested: 30816
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 528
+final256: Total Digested: 30948
+final256: Total Digested: 30948
+final256: Total Digested: 31123
+final256: Total Digested: 31155
+final256: Total Digested: 31234
+final256: Total Digested: 31266
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 3504
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 3520
+final256: Total Digested: 32562
+final256: Total Digested: 32594
+final256: Total Digested: 33916
+final256: Total Digested: 34091
+final256: Total Digested: 34123
+final256: Total Digested: 34202
+final256: Total Digested: 34234
+final256: Total Digested: 34263
+final256: Total Digested: 34295
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 3600
+subscriber connected authorized
+final256: Total Digested: 35016
+IOT| RSA_public_decrypt: Len: 256, Count: 8
+IOT| RSA_private_decrypt: Len: 256, Count: 4
+final256: Total Digested: 35221
+final256: Total Digested: 35253
+final256: Total Digested: 35362
+final256: Total Digested: 35394
+final256: Total Digested: 35394
+final256: Total Digested: 35426
+final256: Total Digested: 35535
+final256: Total Digested: 35567
+IOT| RSA_public_decrypt: Len: 256, Count: 9
+final256: Total Digested: 40784
+final256: Total Digested: 40816
+final256: Total Digested: 40925
+final256: Total Digested: 40957
+final256: Total Digested: 40957
+final256: Total Digested: 40989
+final256: Total Digested: 41098
+final256: Total Digested: 41130
+final256: Total Digested: 41130
+final256: Total Digested: 41162
+final256: Total Digested: 41271
+final256: Total Digested: 41303
+final256: Total Digested: 41303
+final256: Total Digested: 41335
+final256: Total Digested: 41444
+final256: Total Digested: 41476
+final256: Total Digested: 41604
+final256: Total Digested: 41779
+final256: Total Digested: 41811
+final256: Total Digested: 41890
+final256: Total Digested: 41922
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 624
+final256: Total Digested: 42018
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 704
+final256: Total Digested: 42150
+final256: Total Digested: 42150
+final256: Total Digested: 42325
+final256: Total Digested: 42357
+final256: Total Digested: 42436
+final256: Total Digested: 42468
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 4704
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 4720
+final256: Total Digested: 43764
+final256: Total Digested: 43796
+final256: Total Digested: 45118
+final256: Total Digested: 45293
+final256: Total Digested: 45325
+final256: Total Digested: 45404
+final256: Total Digested: 45436
+final256: Total Digested: 45465
+final256: Total Digested: 45497
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 4800
+subscriber connected authorized
+final256: Total Digested: 46218
+IOT| RSA_public_decrypt: Len: 256, Count: 10
+IOT| RSA_private_decrypt: Len: 256, Count: 5
+final256: Total Digested: 46423
+final256: Total Digested: 46455
+final256: Total Digested: 46564
+final256: Total Digested: 46596
+final256: Total Digested: 46596
+final256: Total Digested: 46628
+final256: Total Digested: 46737
+final256: Total Digested: 46769
+IOT| RSA_public_decrypt: Len: 256, Count: 11
+final256: Total Digested: 51986
+final256: Total Digested: 52018
+final256: Total Digested: 52127
+final256: Total Digested: 52159
+final256: Total Digested: 52159
+final256: Total Digested: 52191
+final256: Total Digested: 52300
+final256: Total Digested: 52332
+final256: Total Digested: 52332
+final256: Total Digested: 52364
+final256: Total Digested: 52473
+final256: Total Digested: 52505
+final256: Total Digested: 52505
+final256: Total Digested: 52537
+final256: Total Digested: 52646
+final256: Total Digested: 52678
+final256: Total Digested: 52806
+final256: Total Digested: 52981
+final256: Total Digested: 53013
+final256: Total Digested: 53092
+final256: Total Digested: 53124
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 800
+final256: Total Digested: 53220
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 880
+final256: Total Digested: 53352
+final256: Total Digested: 53352
+final256: Total Digested: 53527
+final256: Total Digested: 53559
+final256: Total Digested: 53638
+final256: Total Digested: 53670
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 5904
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 5920
+final256: Total Digested: 54966
+final256: Total Digested: 54998
+final256: Total Digested: 56320
+final256: Total Digested: 56495
+final256: Total Digested: 56527
+final256: Total Digested: 56606
+final256: Total Digested: 56638
+final256: Total Digested: 56667
+final256: Total Digested: 56699
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 6000
+subscriber connected authorized
+final256: Total Digested: 57420
+IOT| RSA_public_decrypt: Len: 256, Count: 12
+IOT| RSA_private_decrypt: Len: 256, Count: 6
+final256: Total Digested: 57625
+final256: Total Digested: 57657
+final256: Total Digested: 57766
+final256: Total Digested: 57798
+final256: Total Digested: 57798
+final256: Total Digested: 57830
+final256: Total Digested: 57939
+final256: Total Digested: 57971
+IOT| RSA_public_decrypt: Len: 256, Count: 13
+final256: Total Digested: 63188
+final256: Total Digested: 63220
+final256: Total Digested: 63329
+final256: Total Digested: 63361
+final256: Total Digested: 63361
+final256: Total Digested: 63393
+final256: Total Digested: 63502
+final256: Total Digested: 63534
+final256: Total Digested: 63534
+final256: Total Digested: 63566
+final256: Total Digested: 63675
+final256: Total Digested: 63707
+final256: Total Digested: 63707
+final256: Total Digested: 63739
+final256: Total Digested: 63848
+final256: Total Digested: 63880
+final256: Total Digested: 64008
+final256: Total Digested: 64183
+final256: Total Digested: 64215
+final256: Total Digested: 64294
+final256: Total Digested: 64326
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 976
+final256: Total Digested: 64422
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 1056
+final256: Total Digested: 64554
+final256: Total Digested: 64554
+final256: Total Digested: 64729
+final256: Total Digested: 64761
+final256: Total Digested: 64840
+final256: Total Digested: 64872
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 7104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 7120
+final256: Total Digested: 66168
+final256: Total Digested: 66200
+final256: Total Digested: 67522
+final256: Total Digested: 67697
+final256: Total Digested: 67729
+final256: Total Digested: 67808
+final256: Total Digested: 67840
+final256: Total Digested: 67869
+final256: Total Digested: 67901
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 7200
+subscriber connected authorized
+final256: Total Digested: 68622
+IOT| RSA_public_decrypt: Len: 256, Count: 14
+IOT| RSA_private_decrypt: Len: 256, Count: 7
+final256: Total Digested: 68827
+final256: Total Digested: 68859
+final256: Total Digested: 68968
+final256: Total Digested: 69000
+final256: Total Digested: 69000
+final256: Total Digested: 69032
+final256: Total Digested: 69141
+final256: Total Digested: 69173
+IOT| RSA_public_decrypt: Len: 256, Count: 15
+final256: Total Digested: 74390
+final256: Total Digested: 74422
+final256: Total Digested: 74531
+final256: Total Digested: 74563
+final256: Total Digested: 74563
+final256: Total Digested: 74595
+final256: Total Digested: 74704
+final256: Total Digested: 74736
+final256: Total Digested: 74736
+final256: Total Digested: 74768
+final256: Total Digested: 74877
+final256: Total Digested: 74909
+final256: Total Digested: 74909
+final256: Total Digested: 74941
+final256: Total Digested: 75050
+final256: Total Digested: 75082
+final256: Total Digested: 75210
+final256: Total Digested: 75385
+final256: Total Digested: 75417
+final256: Total Digested: 75496
+final256: Total Digested: 75528
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 1152
+final256: Total Digested: 75624
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 1232
+final256: Total Digested: 75756
+final256: Total Digested: 75756
+final256: Total Digested: 75931
+final256: Total Digested: 75963
+final256: Total Digested: 76042
+final256: Total Digested: 76074
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 8304
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 8320
+final256: Total Digested: 77370
+final256: Total Digested: 77402
+final256: Total Digested: 78724
+final256: Total Digested: 78899
+final256: Total Digested: 78931
+final256: Total Digested: 79010
+final256: Total Digested: 79042
+final256: Total Digested: 79071
+final256: Total Digested: 79103
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 8400
+subscriber connected authorized
+final256: Total Digested: 79824
+IOT| RSA_public_decrypt: Len: 256, Count: 16
+IOT| RSA_private_decrypt: Len: 256, Count: 8
+final256: Total Digested: 80029
+final256: Total Digested: 80061
+final256: Total Digested: 80170
+final256: Total Digested: 80202
+final256: Total Digested: 80202
+final256: Total Digested: 80234
+final256: Total Digested: 80343
+final256: Total Digested: 80375
+IOT| RSA_public_decrypt: Len: 256, Count: 17
+final256: Total Digested: 85592
+final256: Total Digested: 85624
+final256: Total Digested: 85733
+final256: Total Digested: 85765
+final256: Total Digested: 85765
+final256: Total Digested: 85797
+final256: Total Digested: 85906
+final256: Total Digested: 85938
+final256: Total Digested: 85938
+final256: Total Digested: 85970
+final256: Total Digested: 86079
+final256: Total Digested: 86111
+final256: Total Digested: 86111
+final256: Total Digested: 86143
+final256: Total Digested: 86252
+final256: Total Digested: 86284
+final256: Total Digested: 86412
+final256: Total Digested: 86587
+final256: Total Digested: 86619
+final256: Total Digested: 86698
+final256: Total Digested: 86730
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 1328
+final256: Total Digested: 86826
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 1408
+final256: Total Digested: 86958
+final256: Total Digested: 86958
+final256: Total Digested: 87133
+final256: Total Digested: 87165
+final256: Total Digested: 87244
+final256: Total Digested: 87276
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 9504
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 9520
+final256: Total Digested: 88572
+final256: Total Digested: 88604
+final256: Total Digested: 89926
+final256: Total Digested: 90101
+final256: Total Digested: 90133
+final256: Total Digested: 90212
+final256: Total Digested: 90244
+final256: Total Digested: 90273
+final256: Total Digested: 90305
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 9600
+subscriber connected authorized
+final256: Total Digested: 91026
+IOT| RSA_public_decrypt: Len: 256, Count: 18
+IOT| RSA_private_decrypt: Len: 256, Count: 9
+final256: Total Digested: 91231
+final256: Total Digested: 91263
+final256: Total Digested: 91372
+final256: Total Digested: 91404
+final256: Total Digested: 91404
+final256: Total Digested: 91436
+final256: Total Digested: 91545
+final256: Total Digested: 91577
+IOT| RSA_public_decrypt: Len: 256, Count: 19
+final256: Total Digested: 96794
+final256: Total Digested: 96826
+final256: Total Digested: 96935
+final256: Total Digested: 96967
+final256: Total Digested: 96967
+final256: Total Digested: 96999
+final256: Total Digested: 97108
+final256: Total Digested: 97140
+final256: Total Digested: 97140
+final256: Total Digested: 97172
+final256: Total Digested: 97281
+final256: Total Digested: 97313
+final256: Total Digested: 97313
+final256: Total Digested: 97345
+final256: Total Digested: 97454
+final256: Total Digested: 97486
+final256: Total Digested: 97614
+final256: Total Digested: 97789
+final256: Total Digested: 97821
+final256: Total Digested: 97900
+final256: Total Digested: 97932
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 1504
+final256: Total Digested: 98028
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 1584
+final256: Total Digested: 98160
+final256: Total Digested: 98160
+final256: Total Digested: 98335
+final256: Total Digested: 98367
+final256: Total Digested: 98446
+final256: Total Digested: 98478
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 10704
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 10720
+final256: Total Digested: 99774
+final256: Total Digested: 99806
+final256: Total Digested: 101128
+final256: Total Digested: 101303
+final256: Total Digested: 101335
+final256: Total Digested: 101414
+final256: Total Digested: 101446
+final256: Total Digested: 101475
+final256: Total Digested: 101507
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 10800
+subscriber connected authorized
+final256: Total Digested: 102228
+IOT| RSA_public_decrypt: Len: 256, Count: 20
+IOT| RSA_private_decrypt: Len: 256, Count: 10
+final256: Total Digested: 102433
+final256: Total Digested: 102465
+final256: Total Digested: 102574
+final256: Total Digested: 102606
+final256: Total Digested: 102606
+final256: Total Digested: 102638
+final256: Total Digested: 102747
+final256: Total Digested: 102779
+IOT| RSA_public_decrypt: Len: 256, Count: 21
+final256: Total Digested: 107996
+final256: Total Digested: 108028
+final256: Total Digested: 108137
+final256: Total Digested: 108169
+final256: Total Digested: 108169
+final256: Total Digested: 108201
+final256: Total Digested: 108310
+final256: Total Digested: 108342
+final256: Total Digested: 108342
+final256: Total Digested: 108374
+final256: Total Digested: 108483
+final256: Total Digested: 108515
+final256: Total Digested: 108515
+final256: Total Digested: 108547
+final256: Total Digested: 108656
+final256: Total Digested: 108688
+final256: Total Digested: 108816
+final256: Total Digested: 108991
+final256: Total Digested: 109023
+final256: Total Digested: 109102
+final256: Total Digested: 109134
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 1680
+final256: Total Digested: 109230
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 1760
+final256: Total Digested: 109362
+final256: Total Digested: 109362
+final256: Total Digested: 109537
+final256: Total Digested: 109569
+final256: Total Digested: 109648
+final256: Total Digested: 109680
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 11904
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 11920
+final256: Total Digested: 110976
+final256: Total Digested: 111008
+final256: Total Digested: 112330
+final256: Total Digested: 112505
+final256: Total Digested: 112537
+final256: Total Digested: 112616
+final256: Total Digested: 112648
+final256: Total Digested: 112677
+final256: Total Digested: 112709
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 12000
+subscriber connected authorized
+final256: Total Digested: 113430
+IOT| RSA_public_decrypt: Len: 256, Count: 22
+IOT| RSA_private_decrypt: Len: 256, Count: 11
+final256: Total Digested: 113635
+final256: Total Digested: 113667
+final256: Total Digested: 113776
+final256: Total Digested: 113808
+final256: Total Digested: 113808
+final256: Total Digested: 113840
+final256: Total Digested: 113949
+final256: Total Digested: 113981
+IOT| RSA_public_decrypt: Len: 256, Count: 23
+final256: Total Digested: 119198
+final256: Total Digested: 119230
+final256: Total Digested: 119339
+final256: Total Digested: 119371
+final256: Total Digested: 119371
+final256: Total Digested: 119403
+final256: Total Digested: 119512
+final256: Total Digested: 119544
+final256: Total Digested: 119544
+final256: Total Digested: 119576
+final256: Total Digested: 119685
+final256: Total Digested: 119717
+final256: Total Digested: 119717
+final256: Total Digested: 119749
+final256: Total Digested: 119858
+final256: Total Digested: 119890
+final256: Total Digested: 120018
+final256: Total Digested: 120193
+final256: Total Digested: 120225
+final256: Total Digested: 120304
+final256: Total Digested: 120336
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 1856
+final256: Total Digested: 120432
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 1936
+final256: Total Digested: 120564
+final256: Total Digested: 120564
+final256: Total Digested: 120739
+final256: Total Digested: 120771
+final256: Total Digested: 120850
+final256: Total Digested: 120882
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 13104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 13120
+final256: Total Digested: 122178
+final256: Total Digested: 122210
+final256: Total Digested: 123532
+final256: Total Digested: 123707
+final256: Total Digested: 123739
+final256: Total Digested: 123818
+final256: Total Digested: 123850
+final256: Total Digested: 123879
+final256: Total Digested: 123911
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 13200
+subscriber connected authorized
+final256: Total Digested: 124632
+IOT| RSA_public_decrypt: Len: 256, Count: 24
+IOT| RSA_private_decrypt: Len: 256, Count: 12
+final256: Total Digested: 124837
+final256: Total Digested: 124869
+final256: Total Digested: 124978
+final256: Total Digested: 125010
+final256: Total Digested: 125010
+final256: Total Digested: 125042
+final256: Total Digested: 125151
+final256: Total Digested: 125183
+IOT| RSA_public_decrypt: Len: 256, Count: 25
+final256: Total Digested: 130400
+final256: Total Digested: 130432
+final256: Total Digested: 130541
+final256: Total Digested: 130573
+final256: Total Digested: 130573
+final256: Total Digested: 130605
+final256: Total Digested: 130714
+final256: Total Digested: 130746
+final256: Total Digested: 130746
+final256: Total Digested: 130778
+final256: Total Digested: 130887
+final256: Total Digested: 130919
+final256: Total Digested: 130919
+final256: Total Digested: 130951
+final256: Total Digested: 131060
+final256: Total Digested: 131092
+final256: Total Digested: 131220
+final256: Total Digested: 131395
+final256: Total Digested: 131427
+final256: Total Digested: 131506
+final256: Total Digested: 131538
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 2032
+final256: Total Digested: 131634
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 2112
+final256: Total Digested: 131766
+final256: Total Digested: 131766
+final256: Total Digested: 131941
+final256: Total Digested: 131973
+final256: Total Digested: 132052
+final256: Total Digested: 132084
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 14304
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 14320
+final256: Total Digested: 133380
+final256: Total Digested: 133412
+final256: Total Digested: 134734
+final256: Total Digested: 134909
+final256: Total Digested: 134941
+final256: Total Digested: 135020
+final256: Total Digested: 135052
+final256: Total Digested: 135081
+final256: Total Digested: 135113
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 14400
+subscriber connected authorized
+final256: Total Digested: 135834
+IOT| RSA_public_decrypt: Len: 256, Count: 26
+IOT| RSA_private_decrypt: Len: 256, Count: 13
+final256: Total Digested: 136039
+final256: Total Digested: 136071
+final256: Total Digested: 136180
+final256: Total Digested: 136212
+final256: Total Digested: 136212
+final256: Total Digested: 136244
+final256: Total Digested: 136353
+final256: Total Digested: 136385
+IOT| RSA_public_decrypt: Len: 256, Count: 27
+final256: Total Digested: 141602
+final256: Total Digested: 141634
+final256: Total Digested: 141743
+final256: Total Digested: 141775
+final256: Total Digested: 141775
+final256: Total Digested: 141807
+final256: Total Digested: 141916
+final256: Total Digested: 141948
+final256: Total Digested: 141948
+final256: Total Digested: 141980
+final256: Total Digested: 142089
+final256: Total Digested: 142121
+final256: Total Digested: 142121
+final256: Total Digested: 142153
+final256: Total Digested: 142262
+final256: Total Digested: 142294
+final256: Total Digested: 142422
+final256: Total Digested: 142597
+final256: Total Digested: 142629
+final256: Total Digested: 142708
+final256: Total Digested: 142740
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 2208
+final256: Total Digested: 142836
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 2288
+final256: Total Digested: 142968
+final256: Total Digested: 142968
+final256: Total Digested: 143143
+final256: Total Digested: 143175
+final256: Total Digested: 143254
+final256: Total Digested: 143286
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 15504
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 15520
+final256: Total Digested: 144582
+final256: Total Digested: 144614
+final256: Total Digested: 145936
+final256: Total Digested: 146111
+final256: Total Digested: 146143
+final256: Total Digested: 146222
+final256: Total Digested: 146254
+final256: Total Digested: 146283
+final256: Total Digested: 146315
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 15600
+subscriber connected authorized
+final256: Total Digested: 147036
+IOT| RSA_public_decrypt: Len: 256, Count: 28
+IOT| RSA_private_decrypt: Len: 256, Count: 14
+final256: Total Digested: 147241
+final256: Total Digested: 147273
+final256: Total Digested: 147382
+final256: Total Digested: 147414
+final256: Total Digested: 147414
+final256: Total Digested: 147446
+final256: Total Digested: 147555
+final256: Total Digested: 147587
+IOT| RSA_public_decrypt: Len: 256, Count: 29
+final256: Total Digested: 152804
+final256: Total Digested: 152836
+final256: Total Digested: 152945
+final256: Total Digested: 152977
+final256: Total Digested: 152977
+final256: Total Digested: 153009
+final256: Total Digested: 153118
+final256: Total Digested: 153150
+final256: Total Digested: 153150
+final256: Total Digested: 153182
+final256: Total Digested: 153291
+final256: Total Digested: 153323
+final256: Total Digested: 153323
+final256: Total Digested: 153355
+final256: Total Digested: 153464
+final256: Total Digested: 153496
+final256: Total Digested: 153624
+final256: Total Digested: 153799
+final256: Total Digested: 153831
+final256: Total Digested: 153910
+final256: Total Digested: 153942
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 2384
+final256: Total Digested: 154038
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 2464
+final256: Total Digested: 154170
+final256: Total Digested: 154170
+final256: Total Digested: 154345
+final256: Total Digested: 154377
+final256: Total Digested: 154456
+final256: Total Digested: 154488
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 16704
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 16720
+final256: Total Digested: 155784
+final256: Total Digested: 155816
+final256: Total Digested: 157138
+final256: Total Digested: 157313
+final256: Total Digested: 157345
+final256: Total Digested: 157424
+final256: Total Digested: 157456
+final256: Total Digested: 157485
+final256: Total Digested: 157517
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 16800
+subscriber connected authorized
+final256: Total Digested: 158238
+IOT| RSA_public_decrypt: Len: 256, Count: 30
+IOT| RSA_private_decrypt: Len: 256, Count: 15
+final256: Total Digested: 158443
+final256: Total Digested: 158475
+final256: Total Digested: 158584
+final256: Total Digested: 158616
+final256: Total Digested: 158616
+final256: Total Digested: 158648
+final256: Total Digested: 158757
+final256: Total Digested: 158789
+IOT| RSA_public_decrypt: Len: 256, Count: 31
+final256: Total Digested: 164006
+final256: Total Digested: 164038
+final256: Total Digested: 164147
+final256: Total Digested: 164179
+final256: Total Digested: 164179
+final256: Total Digested: 164211
+final256: Total Digested: 164320
+final256: Total Digested: 164352
+final256: Total Digested: 164352
+final256: Total Digested: 164384
+final256: Total Digested: 164493
+final256: Total Digested: 164525
+final256: Total Digested: 164525
+final256: Total Digested: 164557
+final256: Total Digested: 164666
+final256: Total Digested: 164698
+final256: Total Digested: 164826
+final256: Total Digested: 165001
+final256: Total Digested: 165033
+final256: Total Digested: 165112
+final256: Total Digested: 165144
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 2560
+final256: Total Digested: 165240
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 2640
+final256: Total Digested: 165372
+final256: Total Digested: 165372
+final256: Total Digested: 165547
+final256: Total Digested: 165579
+final256: Total Digested: 165658
+final256: Total Digested: 165690
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 17904
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 17920
+final256: Total Digested: 166986
+final256: Total Digested: 167018
+final256: Total Digested: 168340
+final256: Total Digested: 168515
+final256: Total Digested: 168547
+final256: Total Digested: 168626
+final256: Total Digested: 168658
+final256: Total Digested: 168687
+final256: Total Digested: 168719
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 18000
+subscriber connected authorized
+final256: Total Digested: 169440
+IOT| RSA_public_decrypt: Len: 256, Count: 32
+IOT| RSA_private_decrypt: Len: 256, Count: 16
+final256: Total Digested: 169645
+final256: Total Digested: 169677
+final256: Total Digested: 169786
+final256: Total Digested: 169818
+final256: Total Digested: 169818
+final256: Total Digested: 169850
+final256: Total Digested: 169959
+final256: Total Digested: 169991
+IOT| RSA_public_decrypt: Len: 256, Count: 33
+final256: Total Digested: 175208
+final256: Total Digested: 175240
+final256: Total Digested: 175349
+final256: Total Digested: 175381
+final256: Total Digested: 175381
+final256: Total Digested: 175413
+final256: Total Digested: 175522
+final256: Total Digested: 175554
+final256: Total Digested: 175554
+final256: Total Digested: 175586
+final256: Total Digested: 175695
+final256: Total Digested: 175727
+final256: Total Digested: 175727
+final256: Total Digested: 175759
+final256: Total Digested: 175868
+final256: Total Digested: 175900
+final256: Total Digested: 176028
+final256: Total Digested: 176203
+final256: Total Digested: 176235
+final256: Total Digested: 176314
+final256: Total Digested: 176346
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 2736
+final256: Total Digested: 176442
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 2816
+final256: Total Digested: 176574
+final256: Total Digested: 176574
+final256: Total Digested: 176749
+final256: Total Digested: 176781
+final256: Total Digested: 176860
+final256: Total Digested: 176892
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 19104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 19120
+final256: Total Digested: 178188
+final256: Total Digested: 178220
+final256: Total Digested: 179542
+final256: Total Digested: 179717
+final256: Total Digested: 179749
+final256: Total Digested: 179828
+final256: Total Digested: 179860
+final256: Total Digested: 179889
+final256: Total Digested: 179921
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 19200
+subscriber connected authorized
+final256: Total Digested: 180642
+IOT| RSA_public_decrypt: Len: 256, Count: 34
+IOT| RSA_private_decrypt: Len: 256, Count: 17
+final256: Total Digested: 180847
+final256: Total Digested: 180879
+final256: Total Digested: 180988
+final256: Total Digested: 181020
+final256: Total Digested: 181020
+final256: Total Digested: 181052
+final256: Total Digested: 181161
+final256: Total Digested: 181193
+IOT| RSA_public_decrypt: Len: 256, Count: 35
+final256: Total Digested: 186410
+final256: Total Digested: 186442
+final256: Total Digested: 186551
+final256: Total Digested: 186583
+final256: Total Digested: 186583
+final256: Total Digested: 186615
+final256: Total Digested: 186724
+final256: Total Digested: 186756
+final256: Total Digested: 186756
+final256: Total Digested: 186788
+final256: Total Digested: 186897
+final256: Total Digested: 186929
+final256: Total Digested: 186929
+final256: Total Digested: 186961
+final256: Total Digested: 187070
+final256: Total Digested: 187102
+final256: Total Digested: 187230
+final256: Total Digested: 187405
+final256: Total Digested: 187437
+final256: Total Digested: 187516
+final256: Total Digested: 187548
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 2912
+final256: Total Digested: 187644
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 2992
+final256: Total Digested: 187776
+final256: Total Digested: 187776
+final256: Total Digested: 187951
+final256: Total Digested: 187983
+final256: Total Digested: 188062
+final256: Total Digested: 188094
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 20304
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 20320
+final256: Total Digested: 189390
+final256: Total Digested: 189422
+final256: Total Digested: 190744
+final256: Total Digested: 190919
+final256: Total Digested: 190951
+final256: Total Digested: 191030
+final256: Total Digested: 191062
+final256: Total Digested: 191091
+final256: Total Digested: 191123
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 20400
+subscriber connected authorized
+final256: Total Digested: 191844
+IOT| RSA_public_decrypt: Len: 256, Count: 36
+IOT| RSA_private_decrypt: Len: 256, Count: 18
+final256: Total Digested: 192049
+final256: Total Digested: 192081
+final256: Total Digested: 192190
+final256: Total Digested: 192222
+final256: Total Digested: 192222
+final256: Total Digested: 192254
+final256: Total Digested: 192363
+final256: Total Digested: 192395
+IOT| RSA_public_decrypt: Len: 256, Count: 37
+final256: Total Digested: 197612
+final256: Total Digested: 197644
+final256: Total Digested: 197753
+final256: Total Digested: 197785
+final256: Total Digested: 197785
+final256: Total Digested: 197817
+final256: Total Digested: 197926
+final256: Total Digested: 197958
+final256: Total Digested: 197958
+final256: Total Digested: 197990
+final256: Total Digested: 198099
+final256: Total Digested: 198131
+final256: Total Digested: 198131
+final256: Total Digested: 198163
+final256: Total Digested: 198272
+final256: Total Digested: 198304
+final256: Total Digested: 198432
+final256: Total Digested: 198607
+final256: Total Digested: 198639
+final256: Total Digested: 198718
+final256: Total Digested: 198750
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 3088
+final256: Total Digested: 198846
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 3168
+final256: Total Digested: 198978
+final256: Total Digested: 198978
+final256: Total Digested: 199153
+final256: Total Digested: 199185
+final256: Total Digested: 199264
+final256: Total Digested: 199296
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 21504
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 21520
+final256: Total Digested: 200592
+final256: Total Digested: 200624
+final256: Total Digested: 201946
+final256: Total Digested: 202121
+final256: Total Digested: 202153
+final256: Total Digested: 202232
+final256: Total Digested: 202264
+final256: Total Digested: 202293
+final256: Total Digested: 202325
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 21600
+subscriber connected authorized
+final256: Total Digested: 203046
+IOT| RSA_public_decrypt: Len: 256, Count: 38
+IOT| RSA_private_decrypt: Len: 256, Count: 19
+final256: Total Digested: 203251
+final256: Total Digested: 203283
+final256: Total Digested: 203392
+final256: Total Digested: 203424
+final256: Total Digested: 203424
+final256: Total Digested: 203456
+final256: Total Digested: 203565
+final256: Total Digested: 203597
+IOT| RSA_public_decrypt: Len: 256, Count: 39
+final256: Total Digested: 208814
+final256: Total Digested: 208846
+final256: Total Digested: 208955
+final256: Total Digested: 208987
+final256: Total Digested: 208987
+final256: Total Digested: 209019
+final256: Total Digested: 209128
+final256: Total Digested: 209160
+final256: Total Digested: 209160
+final256: Total Digested: 209192
+final256: Total Digested: 209301
+final256: Total Digested: 209333
+final256: Total Digested: 209333
+final256: Total Digested: 209365
+final256: Total Digested: 209474
+final256: Total Digested: 209506
+final256: Total Digested: 209634
+final256: Total Digested: 209809
+final256: Total Digested: 209841
+final256: Total Digested: 209920
+final256: Total Digested: 209952
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 3264
+final256: Total Digested: 210048
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 3344
+final256: Total Digested: 210180
+final256: Total Digested: 210180
+final256: Total Digested: 210355
+final256: Total Digested: 210387
+final256: Total Digested: 210466
+final256: Total Digested: 210498
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 22704
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 22720
+final256: Total Digested: 211794
+final256: Total Digested: 211826
+final256: Total Digested: 213148
+final256: Total Digested: 213323
+final256: Total Digested: 213355
+final256: Total Digested: 213434
+final256: Total Digested: 213466
+final256: Total Digested: 213495
+final256: Total Digested: 213527
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 22800
+subscriber connected authorized
+final256: Total Digested: 214248
+IOT| RSA_public_decrypt: Len: 256, Count: 40
+IOT| RSA_private_decrypt: Len: 256, Count: 20
+final256: Total Digested: 214453
+final256: Total Digested: 214485
+final256: Total Digested: 214594
+final256: Total Digested: 214626
+final256: Total Digested: 214626
+final256: Total Digested: 214658
+final256: Total Digested: 214767
+final256: Total Digested: 214799
+IOT| RSA_public_decrypt: Len: 256, Count: 41
+final256: Total Digested: 220016
+final256: Total Digested: 220048
+final256: Total Digested: 220157
+final256: Total Digested: 220189
+final256: Total Digested: 220189
+final256: Total Digested: 220221
+final256: Total Digested: 220330
+final256: Total Digested: 220362
+final256: Total Digested: 220362
+final256: Total Digested: 220394
+final256: Total Digested: 220503
+final256: Total Digested: 220535
+final256: Total Digested: 220535
+final256: Total Digested: 220567
+final256: Total Digested: 220676
+final256: Total Digested: 220708
+final256: Total Digested: 220836
+final256: Total Digested: 221011
+final256: Total Digested: 221043
+final256: Total Digested: 221122
+final256: Total Digested: 221154
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 3440
+final256: Total Digested: 221250
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 3520
+final256: Total Digested: 221382
+final256: Total Digested: 221382
+final256: Total Digested: 221557
+final256: Total Digested: 221589
+final256: Total Digested: 221668
+final256: Total Digested: 221700
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 23904
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 23920
+final256: Total Digested: 222996
+final256: Total Digested: 223028
+final256: Total Digested: 224350
+final256: Total Digested: 224525
+final256: Total Digested: 224557
+final256: Total Digested: 224636
+final256: Total Digested: 224668
+final256: Total Digested: 224697
+final256: Total Digested: 224729
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 24000
+subscriber connected authorized
+final256: Total Digested: 225450
+IOT| RSA_public_decrypt: Len: 256, Count: 42
+IOT| RSA_private_decrypt: Len: 256, Count: 21
+final256: Total Digested: 225655
+final256: Total Digested: 225687
+final256: Total Digested: 225796
+final256: Total Digested: 225828
+final256: Total Digested: 225828
+final256: Total Digested: 225860
+final256: Total Digested: 225969
+final256: Total Digested: 226001
+IOT| RSA_public_decrypt: Len: 256, Count: 43
+final256: Total Digested: 231218
+final256: Total Digested: 231250
+final256: Total Digested: 231359
+final256: Total Digested: 231391
+final256: Total Digested: 231391
+final256: Total Digested: 231423
+final256: Total Digested: 231532
+final256: Total Digested: 231564
+final256: Total Digested: 231564
+final256: Total Digested: 231596
+final256: Total Digested: 231705
+final256: Total Digested: 231737
+final256: Total Digested: 231737
+final256: Total Digested: 231769
+final256: Total Digested: 231878
+final256: Total Digested: 231910
+final256: Total Digested: 232038
+final256: Total Digested: 232213
+final256: Total Digested: 232245
+final256: Total Digested: 232324
+final256: Total Digested: 232356
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 3616
+final256: Total Digested: 232452
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 3696
+final256: Total Digested: 232584
+final256: Total Digested: 232584
+final256: Total Digested: 232759
+final256: Total Digested: 232791
+final256: Total Digested: 232870
+final256: Total Digested: 232902
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 25104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 25120
+final256: Total Digested: 234198
+final256: Total Digested: 234230
+final256: Total Digested: 235552
+final256: Total Digested: 235727
+final256: Total Digested: 235759
+final256: Total Digested: 235838
+final256: Total Digested: 235870
+final256: Total Digested: 235899
+final256: Total Digested: 235931
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 25200
+subscriber connected authorized
+final256: Total Digested: 236652
+IOT| RSA_public_decrypt: Len: 256, Count: 44
+IOT| RSA_private_decrypt: Len: 256, Count: 22
+final256: Total Digested: 236857
+final256: Total Digested: 236889
+final256: Total Digested: 236998
+final256: Total Digested: 237030
+final256: Total Digested: 237030
+final256: Total Digested: 237062
+final256: Total Digested: 237171
+final256: Total Digested: 237203
+IOT| RSA_public_decrypt: Len: 256, Count: 45
+final256: Total Digested: 242420
+final256: Total Digested: 242452
+final256: Total Digested: 242561
+final256: Total Digested: 242593
+final256: Total Digested: 242593
+final256: Total Digested: 242625
+final256: Total Digested: 242734
+final256: Total Digested: 242766
+final256: Total Digested: 242766
+final256: Total Digested: 242798
+final256: Total Digested: 242907
+final256: Total Digested: 242939
+final256: Total Digested: 242939
+final256: Total Digested: 242971
+final256: Total Digested: 243080
+final256: Total Digested: 243112
+final256: Total Digested: 243240
+final256: Total Digested: 243415
+final256: Total Digested: 243447
+final256: Total Digested: 243526
+final256: Total Digested: 243558
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 3792
+final256: Total Digested: 243654
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 3872
+final256: Total Digested: 243786
+final256: Total Digested: 243786
+final256: Total Digested: 243961
+final256: Total Digested: 243993
+final256: Total Digested: 244072
+final256: Total Digested: 244104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 26304
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 26320
+final256: Total Digested: 245400
+final256: Total Digested: 245432
+final256: Total Digested: 246754
+final256: Total Digested: 246929
+final256: Total Digested: 246961
+final256: Total Digested: 247040
+final256: Total Digested: 247072
+final256: Total Digested: 247101
+final256: Total Digested: 247133
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 26400
+subscriber connected authorized
+final256: Total Digested: 247854
+IOT| RSA_public_decrypt: Len: 256, Count: 46
+IOT| RSA_private_decrypt: Len: 256, Count: 23
+final256: Total Digested: 248059
+final256: Total Digested: 248091
+final256: Total Digested: 248200
+final256: Total Digested: 248232
+final256: Total Digested: 248232
+final256: Total Digested: 248264
+final256: Total Digested: 248373
+final256: Total Digested: 248405
+IOT| RSA_public_decrypt: Len: 256, Count: 47
+final256: Total Digested: 253622
+final256: Total Digested: 253654
+final256: Total Digested: 253763
+final256: Total Digested: 253795
+final256: Total Digested: 253795
+final256: Total Digested: 253827
+final256: Total Digested: 253936
+final256: Total Digested: 253968
+final256: Total Digested: 253968
+final256: Total Digested: 254000
+final256: Total Digested: 254109
+final256: Total Digested: 254141
+final256: Total Digested: 254141
+final256: Total Digested: 254173
+final256: Total Digested: 254282
+final256: Total Digested: 254314
+final256: Total Digested: 254442
+final256: Total Digested: 254617
+final256: Total Digested: 254649
+final256: Total Digested: 254728
+final256: Total Digested: 254760
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 3968
+final256: Total Digested: 254856
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 4048
+final256: Total Digested: 254988
+final256: Total Digested: 254988
+final256: Total Digested: 255163
+final256: Total Digested: 255195
+final256: Total Digested: 255274
+final256: Total Digested: 255306
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 27504
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 27520
+final256: Total Digested: 256602
+final256: Total Digested: 256634
+final256: Total Digested: 257956
+final256: Total Digested: 258131
+final256: Total Digested: 258163
+final256: Total Digested: 258242
+final256: Total Digested: 258274
+final256: Total Digested: 258303
+final256: Total Digested: 258335
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 27600
+subscriber connected authorized
+final256: Total Digested: 259056
+IOT| RSA_public_decrypt: Len: 256, Count: 48
+IOT| RSA_private_decrypt: Len: 256, Count: 24
+final256: Total Digested: 259261
+final256: Total Digested: 259293
+final256: Total Digested: 259402
+final256: Total Digested: 259434
+final256: Total Digested: 259434
+final256: Total Digested: 259466
+final256: Total Digested: 259575
+final256: Total Digested: 259607
+IOT| RSA_public_decrypt: Len: 256, Count: 49
+final256: Total Digested: 264824
+final256: Total Digested: 264856
+final256: Total Digested: 264965
+final256: Total Digested: 264997
+final256: Total Digested: 264997
+final256: Total Digested: 265029
+final256: Total Digested: 265138
+final256: Total Digested: 265170
+final256: Total Digested: 265170
+final256: Total Digested: 265202
+final256: Total Digested: 265311
+final256: Total Digested: 265343
+final256: Total Digested: 265343
+final256: Total Digested: 265375
+final256: Total Digested: 265484
+final256: Total Digested: 265516
+final256: Total Digested: 265644
+final256: Total Digested: 265819
+final256: Total Digested: 265851
+final256: Total Digested: 265930
+final256: Total Digested: 265962
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 4144
+final256: Total Digested: 266058
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 4224
+final256: Total Digested: 266190
+final256: Total Digested: 266190
+final256: Total Digested: 266365
+final256: Total Digested: 266397
+final256: Total Digested: 266476
+final256: Total Digested: 266508
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 28704
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 28720
+final256: Total Digested: 267804
+final256: Total Digested: 267836
+final256: Total Digested: 269158
+final256: Total Digested: 269333
+final256: Total Digested: 269365
+final256: Total Digested: 269444
+final256: Total Digested: 269476
+final256: Total Digested: 269505
+final256: Total Digested: 269537
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 28800
+subscriber connected authorized
+final256: Total Digested: 270258
+IOT| RSA_public_decrypt: Len: 256, Count: 50
+IOT| RSA_private_decrypt: Len: 256, Count: 25
+final256: Total Digested: 270463
+final256: Total Digested: 270495
+final256: Total Digested: 270604
+final256: Total Digested: 270636
+final256: Total Digested: 270636
+final256: Total Digested: 270668
+final256: Total Digested: 270777
+final256: Total Digested: 270809
+IOT| RSA_public_decrypt: Len: 256, Count: 51
+final256: Total Digested: 276026
+final256: Total Digested: 276058
+final256: Total Digested: 276167
+final256: Total Digested: 276199
+final256: Total Digested: 276199
+final256: Total Digested: 276231
+final256: Total Digested: 276340
+final256: Total Digested: 276372
+final256: Total Digested: 276372
+final256: Total Digested: 276404
+final256: Total Digested: 276513
+final256: Total Digested: 276545
+final256: Total Digested: 276545
+final256: Total Digested: 276577
+final256: Total Digested: 276686
+final256: Total Digested: 276718
+final256: Total Digested: 276846
+final256: Total Digested: 277021
+final256: Total Digested: 277053
+final256: Total Digested: 277132
+final256: Total Digested: 277164
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 4320
+final256: Total Digested: 277260
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 4400
+final256: Total Digested: 277392
+final256: Total Digested: 277392
+final256: Total Digested: 277567
+final256: Total Digested: 277599
+final256: Total Digested: 277678
+final256: Total Digested: 277710
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 29904
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 29920
+final256: Total Digested: 279006
+final256: Total Digested: 279038
+final256: Total Digested: 280360
+final256: Total Digested: 280535
+final256: Total Digested: 280567
+final256: Total Digested: 280646
+final256: Total Digested: 280678
+final256: Total Digested: 280707
+final256: Total Digested: 280739
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 30000
+subscriber connected authorized
+final256: Total Digested: 281460
+IOT| RSA_public_decrypt: Len: 256, Count: 52
+IOT| RSA_private_decrypt: Len: 256, Count: 26
+final256: Total Digested: 281665
+final256: Total Digested: 281697
+final256: Total Digested: 281806
+final256: Total Digested: 281838
+final256: Total Digested: 281838
+final256: Total Digested: 281870
+final256: Total Digested: 281979
+final256: Total Digested: 282011
+IOT| RSA_public_decrypt: Len: 256, Count: 53
+final256: Total Digested: 287228
+final256: Total Digested: 287260
+final256: Total Digested: 287369
+final256: Total Digested: 287401
+final256: Total Digested: 287401
+final256: Total Digested: 287433
+final256: Total Digested: 287542
+final256: Total Digested: 287574
+final256: Total Digested: 287574
+final256: Total Digested: 287606
+final256: Total Digested: 287715
+final256: Total Digested: 287747
+final256: Total Digested: 287747
+final256: Total Digested: 287779
+final256: Total Digested: 287888
+final256: Total Digested: 287920
+final256: Total Digested: 288048
+final256: Total Digested: 288223
+final256: Total Digested: 288255
+final256: Total Digested: 288334
+final256: Total Digested: 288366
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 4496
+final256: Total Digested: 288462
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 4576
+final256: Total Digested: 288594
+final256: Total Digested: 288594
+final256: Total Digested: 288769
+final256: Total Digested: 288801
+final256: Total Digested: 288880
+final256: Total Digested: 288912
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 31104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 31120
+final256: Total Digested: 290208
+final256: Total Digested: 290240
+final256: Total Digested: 291562
+final256: Total Digested: 291737
+final256: Total Digested: 291769
+final256: Total Digested: 291848
+final256: Total Digested: 291880
+final256: Total Digested: 291909
+final256: Total Digested: 291941
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 31200
+subscriber connected authorized
+final256: Total Digested: 292662
+IOT| RSA_public_decrypt: Len: 256, Count: 54
+IOT| RSA_private_decrypt: Len: 256, Count: 27
+final256: Total Digested: 292867
+final256: Total Digested: 292899
+final256: Total Digested: 293008
+final256: Total Digested: 293040
+final256: Total Digested: 293040
+final256: Total Digested: 293072
+final256: Total Digested: 293181
+final256: Total Digested: 293213
+IOT| RSA_public_decrypt: Len: 256, Count: 55
+final256: Total Digested: 298430
+final256: Total Digested: 298462
+final256: Total Digested: 298571
+final256: Total Digested: 298603
+final256: Total Digested: 298603
+final256: Total Digested: 298635
+final256: Total Digested: 298744
+final256: Total Digested: 298776
+final256: Total Digested: 298776
+final256: Total Digested: 298808
+final256: Total Digested: 298917
+final256: Total Digested: 298949
+final256: Total Digested: 298949
+final256: Total Digested: 298981
+final256: Total Digested: 299090
+final256: Total Digested: 299122
+final256: Total Digested: 299250
+final256: Total Digested: 299425
+final256: Total Digested: 299457
+final256: Total Digested: 299536
+final256: Total Digested: 299568
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 4672
+final256: Total Digested: 299664
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 4752
+final256: Total Digested: 299796
+final256: Total Digested: 299796
+final256: Total Digested: 299971
+final256: Total Digested: 300003
+final256: Total Digested: 300082
+final256: Total Digested: 300114
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 32304
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 32320
+final256: Total Digested: 301410
+final256: Total Digested: 301442
+final256: Total Digested: 302764
+final256: Total Digested: 302939
+final256: Total Digested: 302971
+final256: Total Digested: 303050
+final256: Total Digested: 303082
+final256: Total Digested: 303111
+final256: Total Digested: 303143
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 32400
+subscriber connected authorized
+final256: Total Digested: 303864
+IOT| RSA_public_decrypt: Len: 256, Count: 56
+IOT| RSA_private_decrypt: Len: 256, Count: 28
+final256: Total Digested: 304069
+final256: Total Digested: 304101
+final256: Total Digested: 304210
+final256: Total Digested: 304242
+final256: Total Digested: 304242
+final256: Total Digested: 304274
+final256: Total Digested: 304383
+final256: Total Digested: 304415
+IOT| RSA_public_decrypt: Len: 256, Count: 57
+final256: Total Digested: 309632
+final256: Total Digested: 309664
+final256: Total Digested: 309773
+final256: Total Digested: 309805
+final256: Total Digested: 309805
+final256: Total Digested: 309837
+final256: Total Digested: 309946
+final256: Total Digested: 309978
+final256: Total Digested: 309978
+final256: Total Digested: 310010
+final256: Total Digested: 310119
+final256: Total Digested: 310151
+final256: Total Digested: 310151
+final256: Total Digested: 310183
+final256: Total Digested: 310292
+final256: Total Digested: 310324
+final256: Total Digested: 310452
+final256: Total Digested: 310627
+final256: Total Digested: 310659
+final256: Total Digested: 310738
+final256: Total Digested: 310770
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 4848
+final256: Total Digested: 310866
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 4928
+final256: Total Digested: 310998
+final256: Total Digested: 310998
+final256: Total Digested: 311173
+final256: Total Digested: 311205
+final256: Total Digested: 311284
+final256: Total Digested: 311316
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 33504
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 33520
+final256: Total Digested: 312612
+final256: Total Digested: 312644
+final256: Total Digested: 313966
+final256: Total Digested: 314141
+final256: Total Digested: 314173
+final256: Total Digested: 314252
+final256: Total Digested: 314284
+final256: Total Digested: 314313
+final256: Total Digested: 314345
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 33600
+subscriber connected authorized
+final256: Total Digested: 315066
+IOT| RSA_public_decrypt: Len: 256, Count: 58
+IOT| RSA_private_decrypt: Len: 256, Count: 29
+final256: Total Digested: 315271
+final256: Total Digested: 315303
+final256: Total Digested: 315412
+final256: Total Digested: 315444
+final256: Total Digested: 315444
+final256: Total Digested: 315476
+final256: Total Digested: 315585
+final256: Total Digested: 315617
+IOT| RSA_public_decrypt: Len: 256, Count: 59
+final256: Total Digested: 320834
+final256: Total Digested: 320866
+final256: Total Digested: 320975
+final256: Total Digested: 321007
+final256: Total Digested: 321007
+final256: Total Digested: 321039
+final256: Total Digested: 321148
+final256: Total Digested: 321180
+final256: Total Digested: 321180
+final256: Total Digested: 321212
+final256: Total Digested: 321321
+final256: Total Digested: 321353
+final256: Total Digested: 321353
+final256: Total Digested: 321385
+final256: Total Digested: 321494
+final256: Total Digested: 321526
+final256: Total Digested: 321654
+final256: Total Digested: 321829
+final256: Total Digested: 321861
+final256: Total Digested: 321940
+final256: Total Digested: 321972
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 5024
+final256: Total Digested: 322068
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 5104
+final256: Total Digested: 322200
+final256: Total Digested: 322200
+final256: Total Digested: 322375
+final256: Total Digested: 322407
+final256: Total Digested: 322486
+final256: Total Digested: 322518
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 34704
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 34720
+final256: Total Digested: 323814
+final256: Total Digested: 323846
+final256: Total Digested: 325168
+final256: Total Digested: 325343
+final256: Total Digested: 325375
+final256: Total Digested: 325454
+final256: Total Digested: 325486
+final256: Total Digested: 325515
+final256: Total Digested: 325547
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 34800
+subscriber connected authorized
+final256: Total Digested: 326268
+IOT| RSA_public_decrypt: Len: 256, Count: 60
+IOT| RSA_private_decrypt: Len: 256, Count: 30
+final256: Total Digested: 326473
+final256: Total Digested: 326505
+final256: Total Digested: 326614
+final256: Total Digested: 326646
+final256: Total Digested: 326646
+final256: Total Digested: 326678
+final256: Total Digested: 326787
+final256: Total Digested: 326819
+IOT| RSA_public_decrypt: Len: 256, Count: 61
+final256: Total Digested: 332036
+final256: Total Digested: 332068
+final256: Total Digested: 332177
+final256: Total Digested: 332209
+final256: Total Digested: 332209
+final256: Total Digested: 332241
+final256: Total Digested: 332350
+final256: Total Digested: 332382
+final256: Total Digested: 332382
+final256: Total Digested: 332414
+final256: Total Digested: 332523
+final256: Total Digested: 332555
+final256: Total Digested: 332555
+final256: Total Digested: 332587
+final256: Total Digested: 332696
+final256: Total Digested: 332728
+final256: Total Digested: 332856
+final256: Total Digested: 333031
+final256: Total Digested: 333063
+final256: Total Digested: 333142
+final256: Total Digested: 333174
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 5200
+final256: Total Digested: 333270
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 5280
+final256: Total Digested: 333402
+final256: Total Digested: 333402
+final256: Total Digested: 333577
+final256: Total Digested: 333609
+final256: Total Digested: 333688
+final256: Total Digested: 333720
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 35904
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 35920
+final256: Total Digested: 335016
+final256: Total Digested: 335048
+final256: Total Digested: 336370
+final256: Total Digested: 336545
+final256: Total Digested: 336577
+final256: Total Digested: 336656
+final256: Total Digested: 336688
+final256: Total Digested: 336717
+final256: Total Digested: 336749
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 36000
+subscriber connected authorized
+final256: Total Digested: 337470
+IOT| RSA_public_decrypt: Len: 256, Count: 62
+IOT| RSA_private_decrypt: Len: 256, Count: 31
+final256: Total Digested: 337675
+final256: Total Digested: 337707
+final256: Total Digested: 337816
+final256: Total Digested: 337848
+final256: Total Digested: 337848
+final256: Total Digested: 337880
+final256: Total Digested: 337989
+final256: Total Digested: 338021
+IOT| RSA_public_decrypt: Len: 256, Count: 63
+final256: Total Digested: 343238
+final256: Total Digested: 343270
+final256: Total Digested: 343379
+final256: Total Digested: 343411
+final256: Total Digested: 343411
+final256: Total Digested: 343443
+final256: Total Digested: 343552
+final256: Total Digested: 343584
+final256: Total Digested: 343584
+final256: Total Digested: 343616
+final256: Total Digested: 343725
+final256: Total Digested: 343757
+final256: Total Digested: 343757
+final256: Total Digested: 343789
+final256: Total Digested: 343898
+final256: Total Digested: 343930
+final256: Total Digested: 344058
+final256: Total Digested: 344233
+final256: Total Digested: 344265
+final256: Total Digested: 344344
+final256: Total Digested: 344376
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 5376
+final256: Total Digested: 344472
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 5456
+final256: Total Digested: 344604
+final256: Total Digested: 344604
+final256: Total Digested: 344779
+final256: Total Digested: 344811
+final256: Total Digested: 344890
+final256: Total Digested: 344922
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 37104
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 37120
+final256: Total Digested: 346218
+final256: Total Digested: 346250
+final256: Total Digested: 347572
+final256: Total Digested: 347747
+final256: Total Digested: 347779
+final256: Total Digested: 347858
+final256: Total Digested: 347890
+final256: Total Digested: 347919
+final256: Total Digested: 347951
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 37200
+subscriber connected authorized
+final256: Total Digested: 348672
+IOT| RSA_public_decrypt: Len: 256, Count: 64
+IOT| RSA_private_decrypt: Len: 256, Count: 32
+final256: Total Digested: 348877
+final256: Total Digested: 348909
+final256: Total Digested: 349018
+final256: Total Digested: 349050
+final256: Total Digested: 349050
+final256: Total Digested: 349082
+final256: Total Digested: 349191
+final256: Total Digested: 349223
+IOT| RSA_public_decrypt: Len: 256, Count: 65
+final256: Total Digested: 354440
+final256: Total Digested: 354472
+final256: Total Digested: 354581
+final256: Total Digested: 354613
+final256: Total Digested: 354613
+final256: Total Digested: 354645
+final256: Total Digested: 354754
+final256: Total Digested: 354786
+final256: Total Digested: 354786
+final256: Total Digested: 354818
+final256: Total Digested: 354927
+final256: Total Digested: 354959
+final256: Total Digested: 354959
+final256: Total Digested: 354991
+final256: Total Digested: 355100
+final256: Total Digested: 355132
+final256: Total Digested: 355260
+final256: Total Digested: 355435
+final256: Total Digested: 355467
+final256: Total Digested: 355546
+final256: Total Digested: 355578
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 96, Total: 5552
+final256: Total Digested: 355674
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 5632
+final256: Total Digested: 355806
+final256: Total Digested: 355806
+final256: Total Digested: 355981
+final256: Total Digested: 356013
+final256: Total Digested: 356092
+final256: Total Digested: 356124
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 1104, Total: 38304
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 38320
+final256: Total Digested: 357420
+final256: Total Digested: 357452
+final256: Total Digested: 358774
+final256: Total Digested: 358949
+final256: Total Digested: 358981
+final256: Total Digested: 359060
+final256: Total Digested: 359092
+final256: Total Digested: 359121
+final256: Total Digested: 359153
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 38400
+subscriber connected authorized
+==================================================================
+pubFile
+TLS_Publisher prompt>
+pubFile command
+file data length: 256
+final256: Total Digested: 359438
+final256: Total Digested: 359470
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 38720
+final256: Total Digested: 359739
+final256: Total Digested: 359771
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 39040
+final256: Total Digested: 360040
+final256: Total Digested: 360072
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 39360
+final256: Total Digested: 360341
+final256: Total Digested: 360373
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 39680
+final256: Total Digested: 360642
+final256: Total Digested: 360674
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 40000
+final256: Total Digested: 360943
+final256: Total Digested: 360975
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 40320
+final256: Total Digested: 361244
+final256: Total Digested: 361276
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 40640
+final256: Total Digested: 361545
+final256: Total Digested: 361577
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 40960
+final256: Total Digested: 361846
+final256: Total Digested: 361878
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 41280
+final256: Total Digested: 362147
+final256: Total Digested: 362179
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 41600
+final256: Total Digested: 362448
+final256: Total Digested: 362480
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 41920
+final256: Total Digested: 362749
+final256: Total Digested: 362781
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 42240
+final256: Total Digested: 363050
+final256: Total Digested: 363082
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 42560
+final256: Total Digested: 363351
+final256: Total Digested: 363383
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 42880
+final256: Total Digested: 363652
+final256: Total Digested: 363684
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 43200
+final256: Total Digested: 363953
+final256: Total Digested: 363985
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 43520
+final256: Total Digested: 364254
+final256: Total Digested: 364286
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 43840
+final256: Total Digested: 364555
+final256: Total Digested: 364587
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 44160
+final256: Total Digested: 364856
+final256: Total Digested: 364888
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 44480
+final256: Total Digested: 365157
+final256: Total Digested: 365189
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 44800
+final256: Total Digested: 365458
+final256: Total Digested: 365490
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 45120
+final256: Total Digested: 365759
+final256: Total Digested: 365791
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 45440
+final256: Total Digested: 366060
+final256: Total Digested: 366092
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 45760
+final256: Total Digested: 366361
+final256: Total Digested: 366393
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 46080
+final256: Total Digested: 366662
+final256: Total Digested: 366694
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 46400
+final256: Total Digested: 366963
+final256: Total Digested: 366995
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 46720
+final256: Total Digested: 367264
+final256: Total Digested: 367296
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 47040
+final256: Total Digested: 367565
+final256: Total Digested: 367597
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 47360
+final256: Total Digested: 367866
+final256: Total Digested: 367898
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 47680
+final256: Total Digested: 368167
+final256: Total Digested: 368199
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 48000
+final256: Total Digested: 368468
+final256: Total Digested: 368500
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 48320
+final256: Total Digested: 368769
+final256: Total Digested: 368801
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 320, Total: 48640

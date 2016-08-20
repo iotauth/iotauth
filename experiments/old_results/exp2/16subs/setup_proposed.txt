@@ -1,0 +1,314 @@
+
+
+Last login: Sun Nov 22 10:58:28 on ttys016
+Hokeuns-MacBook-Pro:~ hokeunkim$ cd $IOT/node
+Hokeuns-MacBook-Pro:node hokeunkim$ subl server.js
+Hokeuns-MacBook-Pro:node hokeunkim$ node server
+server bound on port 8125
+Server prompt>
+ckReq 1
+Server prompt>
+ckReq (cached key request for new keys) command
+connected to auth! from local port 58426
+received auth hello!
+{ authId: 1234567, nonce: 3718765496 }
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 29
+RSA_private_encrypt: Len: 51 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 97)
+received cached key request response!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 288
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+auth signature verified
+RSA_private_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 114){ replyNonce: 3779611606,  sessionKeyList:    [ { id: 688,
+       val: <Buffer c9 a0 0e 42 f4 d0 63 53 c0 17 b6 99 7c 87 e5 ee>,
+       absValidity: Sun Nov 29 2015 11:18:29 GMT-0800 (PST),
+       relValidity: 7200000 } ] }
+auth nonce verified
+disconnected from auth
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 48, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 297
+{ nonce: 58791918 }
+chosen nonce: 3951146021
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 306
+M_do_cipher: AES-128-CBC Total Encrypted: 32, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 48, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 96, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 315
+{ replyNonce: 3951146021 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 144, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 324
+{ nonce: 478581266 }
+chosen nonce: 2148315004
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 333
+M_do_cipher: AES-128-CBC Total Encrypted: 80, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 96, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 192, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 342
+{ replyNonce: 2148315004 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 240, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 351
+{ nonce: 954277125 }
+chosen nonce: 1781101695
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 360
+M_do_cipher: AES-128-CBC Total Encrypted: 128, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 144, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 288, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 369
+{ replyNonce: 1781101695 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 336, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 378
+{ nonce: 2434719052 }
+chosen nonce: 995573645
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 387
+M_do_cipher: AES-128-CBC Total Encrypted: 176, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 192, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 384, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 396
+{ replyNonce: 995573645 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 432, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 405
+{ nonce: 379172884 }
+chosen nonce: 1444500444
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 414
+M_do_cipher: AES-128-CBC Total Encrypted: 224, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 240, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 480, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 423
+{ replyNonce: 1444500444 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 528, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 432
+{ nonce: 1766525238 }
+chosen nonce: 1901183286
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 441
+M_do_cipher: AES-128-CBC Total Encrypted: 272, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 288, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 576, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 450
+{ replyNonce: 1901183286 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 624, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 459
+{ nonce: 3755183772 }
+chosen nonce: 2943064172
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 468
+M_do_cipher: AES-128-CBC Total Encrypted: 320, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 336, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 672, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 477
+{ replyNonce: 2943064172 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 720, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 486
+{ nonce: 3701537547 }
+chosen nonce: 3672136142
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 495
+M_do_cipher: AES-128-CBC Total Encrypted: 368, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 384, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 768, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 504
+{ replyNonce: 3672136142 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 816, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 513
+{ nonce: 1809834301 }
+chosen nonce: 2119046268
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 522
+M_do_cipher: AES-128-CBC Total Encrypted: 416, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 432, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 864, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 531
+{ replyNonce: 2119046268 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 912, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 540
+{ nonce: 3014727504 }
+chosen nonce: 2401830161
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 549
+M_do_cipher: AES-128-CBC Total Encrypted: 464, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 480, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 960, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 558
+{ replyNonce: 2401830161 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 1008, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 567
+{ nonce: 589401015 }
+chosen nonce: 2319858135
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 576
+M_do_cipher: AES-128-CBC Total Encrypted: 512, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 528, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 1056, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 585
+{ replyNonce: 2319858135 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 1104, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 594
+{ nonce: 4181817690 }
+chosen nonce: 1745392256
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 603
+M_do_cipher: AES-128-CBC Total Encrypted: 560, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 576, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 1152, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 612
+{ replyNonce: 1745392256 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 1200, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 621
+{ nonce: 373925952 }
+chosen nonce: 1827998201
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 630
+M_do_cipher: AES-128-CBC Total Encrypted: 608, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 624, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 1248, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 639
+{ replyNonce: 1827998201 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 1296, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 648
+{ nonce: 1843357469 }
+chosen nonce: 2621150646
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 657
+M_do_cipher: AES-128-CBC Total Encrypted: 656, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 672, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 1344, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 666
+{ replyNonce: 2621150646 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 1392, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 675
+{ nonce: 3476145855 }
+chosen nonce: 477332275
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 684
+M_do_cipher: AES-128-CBC Total Encrypted: 704, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 720, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 1440, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 693
+{ replyNonce: 477332275 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM
+auth or client connected
+received session key handshake1
+session key id: 688
+found session key
+M_do_cipher: AES-128-CBC Total Decrypted: 1488, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 702
+{ nonce: 750384619 }
+chosen nonce: 3073685269
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 711
+M_do_cipher: AES-128-CBC Total Encrypted: 752, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 768, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_2_SENT
+received session key handshake3!
+M_do_cipher: AES-128-CBC Total Decrypted: 1536, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 720
+{ replyNonce: 3073685269 }
+client authenticated/authorized by solving nonce!
+switching to IN_COMM

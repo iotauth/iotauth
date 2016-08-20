@@ -1,0 +1,517 @@
+
+Last login: Sun Nov 22 10:02:20 on ttys016
+Hokeuns-MacBook-Pro:~ hokeunkim$ cd $IOT/node
+Hokeuns-MacBook-Pro:node hokeunkim$ node client
+Client prompt>
+ckReq 16
+Client prompt>
+ckReq (cached key request for new keys) command
+connected to auth! from local port 58190
+received auth hello!
+{ authId: 1234567, nonce: 4033452233 }
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 29
+RSA_private_encrypt: Len: 51 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 97)
+received cached key request response!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 640
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+auth signature verified
+RSA_private_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 114)
+M_do_cipher: AES-128-CBC Total Decrypted: 352, Decrypt Len: 352 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+{ replyNonce: 1072386919,
+  sessionKeyList:
+   [ { id: 672,
+       val: <Buffer be bc c4 c6 64 b0 f5 76 ac 4c 46 bd 73 88 5c 48>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),       relValidity: 7200000 },     { id: 673,
+       val: <Buffer c9 d9 69 8e 30 0d f0 38 84 9c 2a 1e 98 c8 1e 84>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 674,
+       val: <Buffer 97 03 f6 20 24 20 86 9e bd 28 99 50 78 61 05 ad>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 675,
+       val: <Buffer 18 bd 43 6c c6 1d 4e de e4 01 62 9b 04 b5 dd ef>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 676,
+       val: <Buffer 0d 82 56 fb 6d c1 eb be 40 0a 45 e6 40 e2 d5 3f>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 677,
+       val: <Buffer c6 83 f1 b2 07 19 33 96 f5 c6 e2 c9 53 95 15 cd>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 678,
+       val: <Buffer 57 34 13 54 a4 7c ac 1b 56 f5 0f 0e d5 47 29 2b>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 679,
+       val: <Buffer b9 e9 a8 29 12 ec 62 f8 9c d3 26 79 9c 9a 6a bf>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 680,
+       val: <Buffer 37 96 c5 46 47 f7 17 ad 96 fe 17 35 c7 9a 6e 82>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 681,
+       val: <Buffer 22 8d 4c 8d f9 f5 62 65 7e 4c 6c 4b b6 f1 ff 4b>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 682,
+       val: <Buffer 00 9c df b1 f5 37 81 fe d4 5c e8 0a d7 f0 9d e2>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 683,
+       val: <Buffer d7 fd 0b 8f 71 5f de 3b fd b4 99 70 a8 05 dd fa>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 684,
+       val: <Buffer 32 e4 d3 ed a7 a2 17 b4 6c 7e 7d 6d f4 27 d1 2e>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 685,
+       val: <Buffer 33 4d 99 31 0e fc 12 6a f0 a9 19 9f b9 c3 d2 86>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 686,
+       val: <Buffer 1f cb 5f 32 22 ca d5 48 97 01 95 8f 96 ee ea 34>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 },
+     { id: 687,
+       val: <Buffer da 4e b9 43 48 8f 0e 63 0d c3 e4 ab a8 ca 56 99>,
+       absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+       relValidity: 7200000 } ] }
+auth nonce verified
+disconnected from auth
+initComm 8125
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 672,
+  val: <Buffer be bc c4 c6 64 b0 f5 76 ac 4c 46 bd 73 88 5c 48>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58191
+chosen nonce: 3199028171
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 649
+M_do_cipher: AES-128-CBC Total Encrypted: 32, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 48, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 400, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 658
+{ nonce: 912412874, replyNonce: 3199028171 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 667
+M_do_cipher: AES-128-CBC Total Encrypted: 80, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 96, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8126
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 673,
+  val: <Buffer c9 d9 69 8e 30 0d f0 38 84 9c 2a 1e 98 c8 1e 84>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58193
+chosen nonce: 706381927
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 676
+M_do_cipher: AES-128-CBC Total Encrypted: 128, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 144, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 448, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 685
+{ nonce: 4052694685, replyNonce: 706381927 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 694
+M_do_cipher: AES-128-CBC Total Encrypted: 176, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 192, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8127
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 674,
+  val: <Buffer 97 03 f6 20 24 20 86 9e bd 28 99 50 78 61 05 ad>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58195
+chosen nonce: 3182245580
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 703
+M_do_cipher: AES-128-CBC Total Encrypted: 224, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 240, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 496, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 712
+{ nonce: 4075657553, replyNonce: 3182245580 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 721
+M_do_cipher: AES-128-CBC Total Encrypted: 272, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 288, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8128
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 675,
+  val: <Buffer 18 bd 43 6c c6 1d 4e de e4 01 62 9b 04 b5 dd ef>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58197
+chosen nonce: 3750350156
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 730
+M_do_cipher: AES-128-CBC Total Encrypted: 320, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 336, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 544, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 739
+{ nonce: 2101014160, replyNonce: 3750350156 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 748
+M_do_cipher: AES-128-CBC Total Encrypted: 368, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 384, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8129
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 676,
+  val: <Buffer 0d 82 56 fb 6d c1 eb be 40 0a 45 e6 40 e2 d5 3f>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58199
+chosen nonce: 3847053857
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 757
+M_do_cipher: AES-128-CBC Total Encrypted: 416, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 432, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 592, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 766
+{ nonce: 828489353, replyNonce: 3847053857 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 775
+M_do_cipher: AES-128-CBC Total Encrypted: 464, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 480, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8130
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 677,
+  val: <Buffer c6 83 f1 b2 07 19 33 96 f5 c6 e2 c9 53 95 15 cd>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58202
+chosen nonce: 1962237136
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 784
+M_do_cipher: AES-128-CBC Total Encrypted: 512, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 528, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 640, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 793
+{ nonce: 2655789030, replyNonce: 1962237136 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 802
+M_do_cipher: AES-128-CBC Total Encrypted: 560, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 576, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8131
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 678,
+  val: <Buffer 57 34 13 54 a4 7c ac 1b 56 f5 0f 0e d5 47 29 2b>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58204
+chosen nonce: 465385731
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 811
+M_do_cipher: AES-128-CBC Total Encrypted: 608, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 624, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 688, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 820
+{ nonce: 4290860336, replyNonce: 465385731 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 829
+M_do_cipher: AES-128-CBC Total Encrypted: 656, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 672, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8132
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 679,
+  val: <Buffer b9 e9 a8 29 12 ec 62 f8 9c d3 26 79 9c 9a 6a bf>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58207
+chosen nonce: 2236418607
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 838
+M_do_cipher: AES-128-CBC Total Encrypted: 704, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 720, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 736, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 847
+{ nonce: 378214587, replyNonce: 2236418607 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 856
+M_do_cipher: AES-128-CBC Total Encrypted: 752, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 768, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8133
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 680,
+  val: <Buffer 37 96 c5 46 47 f7 17 ad 96 fe 17 35 c7 9a 6e 82>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58209
+chosen nonce: 3463038653
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 865
+M_do_cipher: AES-128-CBC Total Encrypted: 800, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 816, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 784, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 874
+{ nonce: 658532941, replyNonce: 3463038653 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 883
+M_do_cipher: AES-128-CBC Total Encrypted: 848, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 864, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8134
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 681,
+  val: <Buffer 22 8d 4c 8d f9 f5 62 65 7e 4c 6c 4b b6 f1 ff 4b>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58211
+chosen nonce: 505360292
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 892
+M_do_cipher: AES-128-CBC Total Encrypted: 896, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 912, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 832, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 901
+{ nonce: 2986148877, replyNonce: 505360292 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 910
+M_do_cipher: AES-128-CBC Total Encrypted: 944, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 960, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8135
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 682,
+  val: <Buffer 00 9c df b1 f5 37 81 fe d4 5c e8 0a d7 f0 9d e2>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58214
+chosen nonce: 349861186
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 919
+M_do_cipher: AES-128-CBC Total Encrypted: 992, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1008, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 880, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 928
+{ nonce: 2266066097, replyNonce: 349861186 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 937
+M_do_cipher: AES-128-CBC Total Encrypted: 1040, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1056, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8136
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 683,
+  val: <Buffer d7 fd 0b 8f 71 5f de 3b fd b4 99 70 a8 05 dd fa>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58217
+chosen nonce: 4043028193
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 946
+M_do_cipher: AES-128-CBC Total Encrypted: 1088, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1104, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 928, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 955
+{ nonce: 1479968268, replyNonce: 4043028193 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 964
+M_do_cipher: AES-128-CBC Total Encrypted: 1136, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1152, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8137
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 684,
+  val: <Buffer 32 e4 d3 ed a7 a2 17 b4 6c 7e 7d 6d f4 27 d1 2e>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58219
+chosen nonce: 3469526098
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 973
+M_do_cipher: AES-128-CBC Total Encrypted: 1184, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1200, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 976, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 982
+{ nonce: 3487052648, replyNonce: 3469526098 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 991
+M_do_cipher: AES-128-CBC Total Encrypted: 1232, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1248, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8138
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 685,
+  val: <Buffer 33 4d 99 31 0e fc 12 6a f0 a9 19 9f b9 c3 d2 86>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58221
+chosen nonce: 3551734358
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1000
+M_do_cipher: AES-128-CBC Total Encrypted: 1280, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1296, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 1024, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1009
+{ nonce: 1013628606, replyNonce: 3551734358 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1018
+M_do_cipher: AES-128-CBC Total Encrypted: 1328, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1344, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8139
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 686,
+  val: <Buffer 1f cb 5f 32 22 ca d5 48 97 01 95 8f 96 ee ea 34>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58223
+chosen nonce: 968070461
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1027
+M_do_cipher: AES-128-CBC Total Encrypted: 1376, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1392, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 1072, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1036
+{ nonce: 3690016786, replyNonce: 968070461 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1045
+M_do_cipher: AES-128-CBC Total Encrypted: 1424, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1440, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server
+initComm 8140
+Client prompt>
+initComm command
+chosen commSessionKey:
+{ id: 687,
+  val: <Buffer da 4e b9 43 48 8f 0e 63 0d c3 e4 ab a8 ca 56 99>,
+  absValidity: Sun Nov 29 2015 10:13:56 GMT-0800 (PST),
+  relValidity: 7200000 }
+connected to server! from local port 58225
+chosen nonce: 671093418
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1054
+M_do_cipher: AES-128-CBC Total Encrypted: 1472, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1488, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+M_do_cipher: AES-128-CBC Total Decrypted: 1120, Decrypt Len: 48 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1063
+{ nonce: 1669598372, replyNonce: 671093418 }
+server authenticated/authorized by solving nonce!
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 1072
+M_do_cipher: AES-128-CBC Total Encrypted: 1520, Encrypt Len: 32 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+M_do_cipher: AES-128-CBC Total Encrypted: 1536, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
+switching to IN_COMM
+finComm
+Client prompt>
+finComm command
+disconnected from server

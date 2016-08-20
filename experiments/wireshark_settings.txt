@@ -1,0 +1,13 @@
+#To see packet info for SSL/TLS messages
+
+Register the SSL/TLS server's port number using
+Wireshark -> Preferences -> Protocols -> HTTP -> SSL/TLS ports (e.g. 443,41018 if the port number is 41018)
+
+# To see decrypted messages
+
+Register RSA keys using
+Wireshark -> Preferences -> Protocols -> SSL -> RSA keys list -> Edit
+For Protocol, usually we use "data".
+Need to input "enter" after entering the password.
+
+#

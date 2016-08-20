@@ -1,0 +1,65 @@
+initComm 21115
+TLS_Client prompt>
+initComm command, connecting to server port 21115
+final256: Total Digested: 177870
+IOT| RSA_public_decrypt: Len: 256, Count: 31
+final256: Total Digested: 178575
+IOT| RSA_public_decrypt: Len: 256, Count: 32
+IOT| RSA_public_encrypt: Len: 48, Count: 16
+final256: Total Digested: 178780
+final256: Total Digested: 178812
+final256: Total Digested: 178921
+final256: Total Digested: 178953
+final256: Total Digested: 178953
+final256: Total Digested: 178985
+final256: Total Digested: 179094
+final256: Total Digested: 179126
+IOT| RSA_private_encrypt: Len: 83, Count: 16
+final256: Total Digested: 184343
+final256: Total Digested: 184375
+final256: Total Digested: 184484
+final256: Total Digested: 184516
+final256: Total Digested: 184516
+final256: Total Digested: 184548
+final256: Total Digested: 184657
+final256: Total Digested: 184689
+final256: Total Digested: 184689
+final256: Total Digested: 184721
+final256: Total Digested: 184830
+final256: Total Digested: 184862
+final256: Total Digested: 184862
+final256: Total Digested: 184894
+final256: Total Digested: 185003
+final256: Total Digested: 185035
+final256: Total Digested: 185212
+final256: Total Digested: 185244
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 96, Total: 3696
+final256: Total Digested: 185280
+final256: Total Digested: 185455
+final256: Total Digested: 185487
+final256: Total Digested: 185566
+final256: Total Digested: 185598
+final256: Total Digested: 185627
+final256: Total Digested: 185659
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 80, Total: 3776
+final256: Total Digested: 188053
+final256: Total Digested: 188181
+final256: Total Digested: 188356
+final256: Total Digested: 188388
+final256: Total Digested: 188467
+final256: Total Digested: 188499
+IOT| EVP_Cipher: AES-128-CBC  Decrypted Len: Current: 80, Total: 1280
+final256: Total Digested: 188595
+final256: Total Digested: 188595
+final256: Total Digested: 188770
+final256: Total Digested: 188802
+final256: Total Digested: 188881
+final256: Total Digested: 188913
+client connected authorized
+finComm
+TLS_Client prompt>
+finComm command
+final256: Total Digested: 188944
+final256: Total Digested: 188976
+IOT| EVP_Cipher: AES-128-CBC  Encrypted Len: Current: 64, Total: 3840
+disconnected from server

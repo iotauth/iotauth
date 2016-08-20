@@ -1,0 +1,58 @@
+client port for Auth: 59267
+
+------------------------------------
+
+dhcp-44-168:entity hokeunkim$ node client.js
+loading from config file: configs/net1/client.confignet1.client:Clients
+prompt>skReq 16
+skReq (Session key request for target servers) command
+net1.client:Clients prompt>
+connected to auth! from local port 59267
+received auth hello!
+{ authId: 101, nonce: <Buffer 35 86 79 26 1b 77 e6 23> }
+IOT| RSA_public_encrypt: Len: 51, Count: 1
+final256: Total Digested: 256
+IOT| RSA_private_encrypt: Len: 51, Count: 1
+received session key response with distribution key attached!
+final256: Total Digested: 512
+IOT| RSA_public_decrypt: Len: 256, Count: 1
+auth signature verified
+IOT| RSA_private_decrypt: Len: 256, Count: 1
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 672, Total: 672
+final256: Total Digested: 1141
+
+-------------------------------------
+
+disconnected from net1.server
+switching to IDLE
+initComm net1.server 21115
+serverPort is explicitly specified: 21115
+initComm command targeted to net1.server
+chosen commSessionKey:
+{ id: 10122324,
+  val: <Buffer 08 8c d7 0e 65 2b f1 2b e6 c1 69 4a 49 a4 ba 88>,
+  absValidity: Tue Mar 29 2016 12:24:40 GMT-0700 (PDT),
+  relValidity: 7200000 }
+net1.client:Clients prompt>
+connected to net1.server(localhost:21115)! from local port 59384
+chosen nonce: <Buffer b5 27 bb a7 c1 08 f7 fa>
+final256: Total Digested: 1923
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 1968
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 1984
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 1696
+final256: Total Digested: 1940
+{ nonce: <Buffer 72 9a 22 5e 30 96 1d 00>,
+  replyNonce: <Buffer b5 27 bb a7 c1 08 f7 fa> }
+server authenticated/authorized by solving nonce!
+final256: Total Digested: 1957
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 2032
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 2048
+switching to IN_COMM
+f
+finComm command
+net1.client:Clients prompt>
+disconnected from net1.server
+switching to IDLE
+

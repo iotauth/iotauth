@@ -1,0 +1,57 @@
+client port for Auth: 59880
+
+-------------------------------
+
+dhcp-44-168:entity hokeunkim$ node client.js
+loading from config file: configs/net1/client.config
+net1.client:Clients prompt>
+skReq 32
+skReq (Session key request for target servers) command
+net1.client:Clients prompt>
+connected to auth! from local port 59880
+received auth hello!
+{ authId: 101, nonce: <Buffer 33 e3 a1 20 28 9e 92 38> }
+IOT| RSA_public_encrypt: Len: 51, Count: 1
+final256: Total Digested: 256
+IOT| RSA_private_encrypt: Len: 51, Count: 1
+received session key response with distribution key attached!
+final256: Total Digested: 512
+IOT| RSA_public_decrypt: Len: 256, Count: 1
+auth signature verified
+IOT| RSA_private_decrypt: Len: 256, Count: 1
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 1248, Total: 1248
+final256: Total Digested: 1717
+replyNonce in sessionKeyResp: <Buffer b3 0f 94 9e 23 b7 af 7a>
+auth nonce verified
+updating distribution key: { val: <Buffer 28 9f f5 93 43 3a 04 77 9b 7b 1c f0 e5 eb 93 93>,
+  absValidity: Mon Mar 28 2016 14:06:46 GMT-0700 (PDT) }
+received 32 keys
+disconnected from auth
+
+-------------------------------
+
+switching to IDLE
+chosen commSessionKey:
+{ id: 10122551,
+  val: <Buffer 4d 24 20 53 8c 85 da 8b 00 b3 8b c9 5d 47 48 e6>,
+  absValidity: Tue Mar 29 2016 13:06:46 GMT-0700 (PDT),
+  relValidity: 7200000 }
+connected to net1.Server(localhost:21131)! from local port 59950
+chosen nonce: <Buffer 45 75 45 ad c0 3a 60 5e>
+final256: Total Digested: 3315
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 4016
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 4032
+switching to HANDSHAKE_1_SENT
+received session key handshake2!
+IOT| M_do_cipher: AES-128-CBC  Decrypted Len: Current: 64, Total: 3296
+final256: Total Digested: 3332
+{ nonce: <Buffer 3a d2 ad 02 30 44 1b 18>,
+  replyNonce: <Buffer 45 75 45 ad c0 3a 60 5e> }
+server authenticated/authorized by solving nonce!
+final256: Total Digested: 3349
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 48, Total: 4080
+IOT| M_do_cipher: AES-128-CBC  Encrypted Len: Current: 16, Total: 4096
+switching to IN_COMM
+disconnected from net1.Server
+switching to IDLE
+

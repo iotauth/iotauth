@@ -1,0 +1,270 @@
+
+
+
+
+Last login: Sat Nov 21 17:48:15 on ttys001
+Hokeuns-MacBook-Pro:~ hokeunkim$
+
+
+Hokeuns-MacBook-Pro:~ hokeunkim$
+
+
+Hokeuns-MacBook-Pro:~ hokeunkim$
+
+
+Hokeuns-MacBook-Pro:~ hokeunkim$ cd $IOT/node
+Hokeuns-MacBook-Pro:node hokeunkim$ node tls_client.js
+TLS_Client prompt>
+initComm 41018
+TLS_Client prompt>
+initComm command
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 661
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1322
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+RSA_public_encrypt: Len: 48 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 80)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1527
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1559
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1668
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1700final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1700final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1732final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1841final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 1873RSA_private_encrypt: Len: 83 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 97)final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6576final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6608
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6717
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6749
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6749
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6781
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6890
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6922
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6922
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 6954
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7063
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7095
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7095
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7127
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7236
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7268
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7445
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7477
+EVP_Cipher: AES-128-CBC Total Encrypted: 96, Encrypt Len: 96 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7513
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7688
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7720
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7799
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7831
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7860
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 7892
+EVP_Cipher: AES-128-CBC Total Encrypted: 176, Encrypt Len: 80 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10190
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10318
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10493
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10525
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10604
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10636
+EVP_Cipher: AES-128-CBC Total Decrypted: 80, Decrypt Len: 80 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10732
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10732
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10907
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 10939
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 11018
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 11050
+client connected authorized
+finComm
+TLS_Client prompt>
+finComm command
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 11081
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 11113
+EVP_Cipher: AES-128-CBC Total Encrypted: 240, Encrypt Len: 64 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+disconnected from server
+initComm 41019
+TLS_Client prompt>
+initComm command
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 11774
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12435
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+RSA_public_encrypt: Len: 48 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 80)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12640
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12672
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12781
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12813
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12813
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12845
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12954
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 12986
+RSA_private_encrypt: Len: 83 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 97)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 17689
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 17721
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 17830
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 17862
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 17862
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 17894
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18003
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18035
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18035
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18067
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18176
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18208
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18208
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18240
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18349
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18381
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18558
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18590
+EVP_Cipher: AES-128-CBC Total Encrypted: 336, Encrypt Len: 96 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18626
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18801
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18833
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18912
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18944
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 18973
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 19005
+EVP_Cipher: AES-128-CBC Total Encrypted: 416, Encrypt Len: 80 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 21303
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 21431
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 21606
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 21638
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 21717
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 21749
+EVP_Cipher: AES-128-CBC Total Decrypted: 160, Decrypt Len: 80 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 21845
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 21845
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 22020
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 22052
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 22131
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 22163
+client connected authorized
+finComm
+TLS_Client prompt>
+finComm command
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 22194
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 22226
+EVP_Cipher: AES-128-CBC Total Encrypted: 480, Encrypt Len: 64 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+disconnected from server
+initComm 41020
+TLS_Client prompt>
+initComm command
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 22887
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 23548
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+RSA_public_encrypt: Len: 48 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 80)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 23753
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 23785
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 23894
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 23926
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 23926
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 23958
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 24067
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 24099
+RSA_private_encrypt: Len: 83 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 97)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 28802
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 28834
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 28943
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 28975
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 28975
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29007
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29116
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29148
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29148
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29180
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29289
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29321
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29321
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29353
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29462
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29494
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29671
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29703
+EVP_Cipher: AES-128-CBC Total Encrypted: 576, Encrypt Len: 96 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29739
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29914
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 29946
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 30025
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 30057
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 30086
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 30118
+EVP_Cipher: AES-128-CBC Total Encrypted: 656, Encrypt Len: 80 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 32416
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 32544
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 32719
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 32751
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 32830
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 32862
+EVP_Cipher: AES-128-CBC Total Decrypted: 240, Decrypt Len: 80 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 32958
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 32958
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 33133
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 33165
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 33244
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 33276
+client connected authorized
+finComm
+TLS_Client prompt>
+finComm command
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 33307
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 33339
+EVP_Cipher: AES-128-CBC Total Encrypted: 720, Encrypt Len: 64 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+disconnected from server
+initComm 41021
+TLS_Client prompt>
+initComm command
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 34000
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 34661
+RSA_public_decrypt: Len: 256 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 131)
+RSA_public_encrypt: Len: 48 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 80)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 34866
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 34898
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 35007
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 35039
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 35039
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 35071
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 35180
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 35212
+RSA_private_encrypt: Len: 83 (../deps/openssl/openssl/crypto/rsa/rsa_crpt.c : 97)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 39915
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 39947
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40056
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40088
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40088
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40120
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40229
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40261
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40261
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40293
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40402
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40434
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40434
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40466
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40575
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40607
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40784
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40816
+EVP_Cipher: AES-128-CBC Total Encrypted: 816, Encrypt Len: 96 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 40852
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 41027
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 41059
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 41138
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 41170
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 41199
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 41231
+EVP_Cipher: AES-128-CBC Total Encrypted: 896, Encrypt Len: 80 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 43529
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 43657
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 43832
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 43864
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 43943
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 43975
+EVP_Cipher: AES-128-CBC Total Decrypted: 320, Decrypt Len: 80 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 44071
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 44071
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 44246
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 44278
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 44357
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 44389
+client connected authorized
+finComm
+TLS_Client prompt>
+finComm command
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 44420
+final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 138) Total Digested: 44452
+EVP_Cipher: AES-128-CBC Total Encrypted: 960, Encrypt Len: 64 (../deps/openssl/openssl/crypto/evp/evp_lib.c : 220)
+disconnected from server
