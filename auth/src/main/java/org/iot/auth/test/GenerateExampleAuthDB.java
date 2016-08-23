@@ -46,7 +46,7 @@ public class GenerateExampleAuthDB {
             String authDBPath = authDatabaseDir + "/auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
             sqLiteConnector.createTablesIfNotExists();
-            initTrustedAuthTable(sqLiteConnector, 102, "localhost", 22901, "credentials/certs/Auth102InternetCert.pem");
+            initTrustedAuthTable(sqLiteConnector, 102, "localhost", 22901, "../credentials/certs/Auth102InternetCert.pem");
         }
         else if (authID == 102) {
             String authDatabaseDir = "databases/auth102/";
@@ -55,7 +55,7 @@ public class GenerateExampleAuthDB {
             String authDBPath = authDatabaseDir + "/auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
             sqLiteConnector.createTablesIfNotExists();
-            initTrustedAuthTable(sqLiteConnector, 101, "localhost", 21901, "credentials/certs/Auth101InternetCert.pem");
+            initTrustedAuthTable(sqLiteConnector, 101, "localhost", 21901, "../credentials/certs/Auth101InternetCert.pem");
         }
         else {
             logger.error("No such AuthID {}", authID);
