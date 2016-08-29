@@ -70,7 +70,7 @@ public class AuthServerProperties {
         _propertyFilePath = propertyFilePath;
 
         prop = new Properties();
-        File propertyFile = new File("../src/main/resources/" + _propertyFilePath);
+        File propertyFile = new File(_propertyFilePath);
         InputStream inputStream = new FileInputStream(propertyFile);
         if (inputStream != null) {
             prop.load(inputStream);

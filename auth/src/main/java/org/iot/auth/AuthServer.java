@@ -76,6 +76,9 @@ public class AuthServer {
 
         entityPortTimeout = properties.getEntityPortTimeout();
 
+        // suppress default logging by jetty
+        org.eclipse.jetty.util.log.Log.setLog(new NoLogging());
+
         // TODO: get Port for this
         entityPortServerSocket = new ServerSocket(properties.getEntityPort());
 
@@ -155,12 +158,11 @@ public class AuthServer {
         }
         String propertiesFilePath = cmd.getOptionValue("properties");
         if (propertiesFilePath == null) {
-            propertiesFilePath = "exampleAuth101.properties";
-            logger.info("No properties file specified. Using default: {} ", propertiesFilePath);
+            logger.info("No properties file specified! (Use option -p to specify the properties file.)");
+            System.exit(1);
+            return;
         }
-        else {
-            logger.info("Properties file specified: {}", propertiesFilePath);
-        }
+        logger.info("Properties file specified: {}", propertiesFilePath);
 
         PROPERTIES = new AuthServerProperties(propertiesFilePath);
         logger.info("Finished loading Auth Server properties.");
@@ -321,6 +323,24 @@ public class AuthServer {
             }
         }
         private AuthServer server;
+    }
+
+    private class NoLogging implements org.eclipse.jetty.util.log.Logger {
+        @Override public String getName() { return "no"; }
+        @Override public void warn(String msg, Object... args) { }
+        @Override public void warn(Throwable thrown) { }
+        @Override public void warn(String msg, Throwable thrown) { }
+        @Override public void info(String msg, Object... args) { }
+        @Override public void info(Throwable thrown) { }
+        @Override public void info(String msg, Throwable thrown) { }
+        @Override public boolean isDebugEnabled() { return false; }
+        @Override public void setDebugEnabled(boolean enabled) { }
+        @Override public void debug(String msg, long value) { }
+        @Override public void debug(String msg, Object... args) { }
+        @Override public void debug(Throwable thrown) { }
+        @Override public void debug(String msg, Throwable thrown) { }
+        @Override public org.eclipse.jetty.util.log.Logger getLogger(String name) { return this; }
+        @Override public void ignore(Throwable ignored) { }
     }
 
     private static final Logger logger = LoggerFactory.getLogger(AuthServer.class);

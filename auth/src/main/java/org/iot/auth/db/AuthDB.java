@@ -242,8 +242,6 @@ public class AuthDB {
     private void loadTrustedAuthDB(String trustStorePassword) throws
             KeyStoreException, CertificateException, NoSuchAlgorithmException, SQLException, ClassNotFoundException, IOException
     {
-        logger.info("Loading Trusted Auth DB from file...");
-
         // TODO: replace this with password input
         trustStoreForTrustedAuths = KeyStore.getInstance(KeyStore.getDefaultType());
         trustStoreForTrustedAuths.load(null, trustStorePassword.toCharArray());

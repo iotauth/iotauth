@@ -17,6 +17,8 @@
     </modules>
 
     <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <!-- Adapt this to a version found on
              http://central.maven.org/maven2/org/eclipse/jetty/jetty-maven-plugin/
           -->
