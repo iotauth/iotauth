@@ -1,6 +1,12 @@
 # Overview
 ---
-Automated shell scripts for Auth.
+This directory includes scripts and descriptions for running example Auths and entities.
+The scripts are used to clean and generate credentials (certificates and keystores) for example Auths and entities.
+
+# Example details
+---
+![Image of Example Auths and entities]
+(https://github.com/iotauth/iotauth/blob/master/entity/figures/example_description.pdf)
 
 # Script details
 ---
