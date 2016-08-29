@@ -3,6 +3,8 @@
 This directory includes scripts and descriptions for running example Auths and entities.
 The scripts are used to clean and generate credentials (certificates and keystores) for example Auths and entities.
 
+**Important: The examples described here are just for demonstration, not for actual deployment. Each Auth and each entity MUST be deployed separately in actual settings, although everything is assumed to be in the same machine in the following examples.**
+
 # Example details
 ---
 ![Image of Example Auths and entities](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/example_description.png)
@@ -33,7 +35,50 @@ This script generates credentials for example Auths and example entities. And it
 
 This scripts deletes all credentials of example Auths and entities, and deletes databases for example Auths
 
-# How to Run examples
+# How to run examples
 ---
-If the script (generateExampleAuthsEntities.sh) finishes without an error, the credentials for Auths and entities and databases for Auths should be created.
+If the script (generateExampleAuthsEntities.sh) finishes without an error, the credentials for Auths and entities and databases for Auths should be created. Here are instructions for running example Auths and entities.
 
+### To run example Auths (in command line)
+
+1. Change directories to *auth/auth-server/*.
+
+2. Run 'mvn clean install' to build an executable jar file. (Maven command line tools should be installed a priori.)
+
+3. Run the jar file with the properties file for Auth101, with 'java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties'. Information of Auth101 will appear on the screen. If you see 'Enter command (e.g., show re/cp/ta/sk, clean sk):' at the end of the screen, that means Auth101 is successfully running.
+
+4. For the example with multiple Auths, Run Auth102 with 'java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth102.properties', in a separate terminal.
+
+5. After running example Auths, you can view database table contents of each Auth, using the show commands (show re, show cp, show ta, show sk).
+
+### To run example Auths using IntelliJ IDEA for development.
+
+See README.md under *auth/*.
+
+### To run example entities written in Node.js
+
+1. Change directories to *entity/node/example_entities/*.
+
+2. Run 'node client.js configs/net1/client.config', to execute net1.client.
+
+3. Run 'node server.js configs/net1/server.config' in a separate terminal, to execute net1.server.
+
+4. Within net1.client, enter 'skReq' to send a session key request to Auth101.
+
+5. Within net1.client, enter 'initComm net1.server' to start a secure communication with net1.server.
+
+6. Within net1.client, enter 'send blah blah' to send a (encrypted) message to net1.server, do the same within net1.server to send a (encrypted) message to net1.client.
+
+7. Within net1.client, enter 'finComm' to end the secure communication with net1.server.
+
+8. For entities in net2 registered with Auth102, run 'node client.js configs/net2/client.config', to execute net2.client, and run 'node server.js configs/net2/server.config', to execute net2.server.
+
+9. Do the same within net2.client and net2.server as in the steps 4-7.
+
+### To run example entities written in Cape Code
+
+1. [Install Ptolemy II](https://chess.eecs.berkeley.edu/ptexternal/) and run the [Cape Code Swarmlet host](https://www.terraswarm.org/accessors/hosts/ptolemy/index.html).
+
+2. Open *entity/capecode/ptClient.xml* and *entity/capecode/ptServer.xml*.
+
+3. Run each Cape Code model with Auth101.

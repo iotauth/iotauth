@@ -26,25 +26,7 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 
 # Quick start with example Auths and entities
 ---
-cd scripts
-
-./cleanExampleAuthsEntities.sh
-
-./generateExampleAuthsEntities.sh
-
-Execute an example Auth with ID 101 with argument -p exampleAuth101.properties
-
-Execute an example Auth with ID 102 with argument -p exampleAuth102.properties
-
-cd entity/node/example_entities/
-
-node client.js configs/net1/client.config
-
-node server.js configs/net1/server.config
-
-node client.js configs/net2/client.config
-
-node server.js configs/net2/server.config
+See "How to run examples" in README.md under *examples/*.
 
 # Contributors
 ---
@@ -53,6 +35,6 @@ node server.js configs/net2/server.config
 
 # Disclaimer
 ---
-This project is still in its infancy and currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source codes with caution when they are used for commercial or safety-critical purposes.
+This project is still in its infancy and currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source codes with caution at their own risk, when the tools provided in this project are used for commercial or safety-critical purposes.
 
-*Last updated on August 19, 2016*
+*Last updated on August 29, 2016*
