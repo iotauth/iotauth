@@ -54,3 +54,9 @@ To run jar file
 
 To generate Javadoc
 - in IntelliJ IDEA, Tools -> Generate JavaDoc, set output directory (e.g., auth/target/doc) and click OK
+
+To configure run/debug configurations for example Auths,
+
+![Image of Auth101 Config](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/auth101_intellij_config.png)
+
+![Image of Auth102 Config](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/auth102_intellij_config.png)
