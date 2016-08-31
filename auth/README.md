@@ -4,14 +4,12 @@ This directory includes an open-source implementation of Auth, using IntelliJ ID
 
 # Directory structure
 ---
+- **auth-server**: Directory for auth-server module
 - **credentials**: Directory for certificates and keystores of Auth
 - **databases**: Directory for SQLite database and entity/trusted Auth certificates
+- **example-auth-db-generator**: Directory for example-auth-db-generato module
+- **properties**: Properties files for auth server
 - **src**: Directory for source codes and resources
-    - **main**: Main source codes for auth server
-        - **java**: Java source code
-        - **resources**: Properties file for auth server
-    - **test**: Source codes for unit tests
-- **test-unit**: Directory for Java code for generating example Auth databases
 
 # Using IntelliJ IDEA
 ---
