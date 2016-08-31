@@ -37,13 +37,24 @@ This scripts deletes all credentials of example Auths and entities, and deletes 
 
 # How to run examples
 ---
-If the script (generateExampleAuthsEntities.sh) finishes without an error, the credentials for Auths and entities and databases for Auths should be created. Here are instructions for running example Auths and entities.
+
+For this section, we use *$ROOT* for the root directory of this repository.
+
+### To generate credentials for example Auths and entities, and to create example Auth databases
+
+1. Change directory to *$ROOT/examples*.
+
+2. Run the script *generateExampleAuthsEntities.sh*, by entering './generateExampleAuthsEntities.sh'.
+
+3. If the script (generateExampleAuthsEntities.sh) finishes without an error, the credentials for Auths and entities and databases for Auths should be created. Here are instructions for running example Auths and entities.
+
+4. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanExampleAuthsEntities.sh*, with the command './cleanExampleAuthsEntities.sh'.
 
 ### To run example Auths (in command line)
 
-1. Change directories to *auth/auth-server/*.
+1. Change directories to *$ROOT/auth/auth-server/*.
 
-2. Run 'mvn clean install' to build an executable jar file. (Maven command line tools should be installed a priori.)
+2. Run 'mvn clean install' to build an executable jar file. (Maven command line tools should be installed a priori. If it is not installed and you are using Mac OS X, then you can install it easily using [Homebrew](http://brew.sh/), by entering 'brew install maven'.)
 
 3. Run the jar file with the properties file for Auth101, with 'java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties'. Information of Auth101 will appear on the screen. If you see 'Enter command (e.g., show re/cp/ta/sk, clean sk):' at the end of the screen, that means Auth101 is successfully running.
 
@@ -57,7 +68,7 @@ See README.md under *auth/*.
 
 ### To run example entities written in Node.js
 
-1. Change directories to *entity/node/example_entities/*.
+1. Change directories to *$ROOT/entity/node/example_entities/*.
 
 2. Run 'node client.js configs/net1/client.config', to execute net1.client.
 
@@ -79,6 +90,6 @@ See README.md under *auth/*.
 
 1. [Install Ptolemy II](https://chess.eecs.berkeley.edu/ptexternal/) and run the [Cape Code Swarmlet host](https://www.terraswarm.org/accessors/hosts/ptolemy/index.html).
 
-2. Open *entity/capecode/ptClient.xml* and *entity/capecode/ptServer.xml*.
+2. Open *$ROOT/entity/capecode/ptClient.xml* and *$ROOT/entity/capecode/ptServer.xml*.
 
 3. Run each Cape Code model with Auth101.
