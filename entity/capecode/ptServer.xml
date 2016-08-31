@@ -16,15 +16,15 @@
         <property name="_location" class="ptolemy.kernel.util.Location" value="[350.0, 135.0]">
         </property>
     </property>
-    <property name="_windowProperties" class="ptolemy.actor.gui.WindowPropertiesAttribute" value="{bounds={289, 199, 948, 632}, maximized=false}">
+    <property name="_windowProperties" class="ptolemy.actor.gui.WindowPropertiesAttribute" value="{bounds={606, 557, 730, 509}, maximized=false}">
     </property>
-    <property name="_vergilSize" class="ptolemy.actor.gui.SizeAttribute" value="[714, 522]">
+    <property name="_vergilSize" class="ptolemy.actor.gui.SizeAttribute" value="[496, 399]">
     </property>
-    <property name="_vergilZoomFactor" class="ptolemy.data.expr.ExpertParameter" value="1.4857585675303584">
+    <property name="_vergilZoomFactor" class="ptolemy.data.expr.ExpertParameter" value="1.2201304867215976">
     </property>
-    <property name="_vergilCenter" class="ptolemy.data.expr.ExpertParameter" value="{503.9160156249999, 270.4458563978022}">
+    <property name="_vergilCenter" class="ptolemy.data.expr.ExpertParameter" value="{466.1590265504499, 266.5908203125}">
     </property>
-    <property name="CERTSPATH" class="ptolemy.data.expr.Parameter" value="&quot;/Users/hokeunkim/Development/IoTSecureArchi/node/certs&quot;">
+    <property name="PROJECT_PATH" class="ptolemy.data.expr.Parameter" value="&quot;/Users/hokeunkim/Development/iotauth/&quot;">
         <property name="_hideName" class="ptolemy.kernel.util.SingletonAttribute">
         </property>
         <property name="_icon" class="ptolemy.vergil.icon.ValueIcon">
@@ -40,7 +40,7 @@
         </property>
         <property name="_editorFactory" class="ptolemy.vergil.toolbox.VisibleParameterEditorFactory">
         </property>
-        <property name="_location" class="ptolemy.kernel.util.Location" value="[300.0, 420.0]">
+        <property name="_location" class="ptolemy.kernel.util.Location" value="[275.0, 420.0]">
         </property>
     </property>
     <entity name="Received" class="ptolemy.actor.lib.gui.TimedDisplay">
@@ -60,7 +60,7 @@
         </property>
     </entity>
     <entity name="Connection" class="ptolemy.actor.lib.gui.TimedDisplay">
-        <property name="_windowProperties" class="ptolemy.actor.gui.WindowPropertiesAttribute" value="{bounds={79, 627, 660, 208}, maximized=false}">
+        <property name="_windowProperties" class="ptolemy.actor.gui.WindowPropertiesAttribute" value="{bounds={98, 452, 660, 208}, maximized=false}">
         </property>
         <property name="_paneSize" class="ptolemy.actor.gui.SizeAttribute" value="[660, 164]">
         </property>
@@ -76,7 +76,7 @@
         </property>
     </entity>
     <entity name="KeyId" class="ptolemy.actor.lib.gui.TimedDisplay">
-        <property name="_windowProperties" class="ptolemy.actor.gui.WindowPropertiesAttribute" value="{bounds={586, 627, 499, 208}, maximized=false}">
+        <property name="_windowProperties" class="ptolemy.actor.gui.WindowPropertiesAttribute" value="{bounds={1100, 753, 499, 208}, maximized=false}">
         </property>
         <property name="_paneSize" class="ptolemy.actor.gui.SizeAttribute" value="[499, 164]">
         </property>
@@ -92,7 +92,7 @@
         </property>
     </entity>
     <entity name="SessionKey" class="ptolemy.actor.lib.gui.TimedDisplay">
-        <property name="_windowProperties" class="ptolemy.actor.gui.WindowPropertiesAttribute" value="{bounds={241, 860, 499, 208}, maximized=false}">
+        <property name="_windowProperties" class="ptolemy.actor.gui.WindowPropertiesAttribute" value="{bounds={241, 692, 499, 208}, maximized=false}">
         </property>
         <property name="_paneSize" class="ptolemy.actor.gui.SizeAttribute" value="[499, 164]">
         </property>
@@ -184,7 +184,7 @@
         </property>
         <property name="authPort" class="ptolemy.data.expr.Parameter" value="21900">
         </property>
-        <property name="authCertPath" class="ptolemy.data.expr.Parameter" value="$CERTSPATH/Net1/AuthCert.pem">
+        <property name="authCertPath" class="ptolemy.data.expr.Parameter" value="$PROJECT_PATH/entity/auth_certs/Auth101EntityCert.pem">
             <property name="_stringMode" class="ptolemy.kernel.util.SingletonAttribute">
             </property>
         </property>
@@ -192,7 +192,7 @@
             <property name="_stringMode" class="ptolemy.kernel.util.SingletonAttribute">
             </property>
         </property>
-        <property name="entityPrivateKeyPath" class="ptolemy.data.expr.Parameter" value="$CERTSPATH/Net1/PtServerKey.der">
+        <property name="entityPrivateKeyPath" class="ptolemy.data.expr.Parameter" value="$PROJECT_PATH/entity/credentials/keys/net1/PtServerKey.der">
             <property name="_stringMode" class="ptolemy.kernel.util.SingletonAttribute">
             </property>
         </property>
