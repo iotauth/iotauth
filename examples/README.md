@@ -44,7 +44,7 @@ For this section, we use *$ROOT* for the root directory of this repository.
 
 1. Change directory to *$ROOT/examples*.
 
-2. Run the script *generateExampleAuthsEntities.sh*, by entering './generateExampleAuthsEntities.sh'.
+2. Run the script *generateExampleAuthsEntities.sh*, by entering './generateExampleAuthsEntities.sh'. To run the script OpenSSL and Maven command line tools should be installed a priory. If you're using Mac OS X, they can be installed using [Homebrew](http://brew.sh/), by entering 'brew install openssl' and 'brew install maven'.
 
 3. If the script (generateExampleAuthsEntities.sh) finishes without an error, the credentials for Auths and entities and databases for Auths should be created. Here are instructions for running example Auths and entities.
 
