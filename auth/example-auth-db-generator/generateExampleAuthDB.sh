@@ -6,7 +6,7 @@ then
     echo "need to create databases"
 else
 	cd ../
-	mvn -pl example-auth-db-generator -am install
+	mvn -pl example-auth-db-generator -am install -DskipTests
 	cd example-auth-db-generator
     cp target/init-example-auth-db-jar-with-dependencies.jar ../
     cd ../
