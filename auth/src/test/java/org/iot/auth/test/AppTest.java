@@ -257,7 +257,7 @@ public class AppTest {
         }
         SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
         sqLiteConnector.DEBUG = true;
-        AuthServer.PROPERTIES = new AuthServerProperties("exampleAuth101.properties");
+        AuthServer.PROPERTIES = new AuthServerProperties("properties/exampleAuth101.properties");
         sqLiteConnector.selectAllRegEntities("databases/auth101");
     }
 
