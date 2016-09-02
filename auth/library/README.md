@@ -12,7 +12,8 @@ This directory contains the classes used to implement the IoT Authentication Ser
 
 # test library
 > library has built in JUnit and it can be executed with the next command.
-## How To
+#### How To
+
 > > mvn test -pl library
 
 
