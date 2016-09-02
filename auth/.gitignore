@@ -6,13 +6,13 @@ javadoc/script.js
 javadoc/stylesheet.css
 sessionKeyCount*.txt
 log/*
-target/*
+*/target/*
 auth.db
 src/test/target/*
 auth-server/log/*
 auth-server/target/*
 auth-server/auth-server.iml
-example-auth-db-generator/log/*
+*/log/*
 example-auth-db-generator/target/*
 example-auth-db-generator/example-auth-db-generator.iml
 *.iml
