@@ -20,11 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
- * A class for the SQLite connector for Auth database tables.
+ * A SQLite connector Class for CRUD operations on Auth database.
+ *
  * @author Salomon Lee
  */
 public class SQLiteConnector {
@@ -44,6 +44,13 @@ public class SQLiteConnector {
             connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
     }
 
+    /**
+     * On cold start it will be needed to create a database and the related tables.
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public void createTablesIfNotExists() throws SQLException, ClassNotFoundException {
         setConnection();
         String sql = "CREATE TABLE IF NOT EXISTS " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
@@ -125,6 +132,18 @@ public class SQLiteConnector {
         closeConnection();
     }
 
+    /**
+     * Insert records into CommunicationPolicyTable.
+     *
+     * @param policy the records needed to set a communication policy.
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     * @see CommunicationPolicyTable
+     */
     public boolean insertRecords(CommunicationPolicyTable policy) throws SQLException, ClassNotFoundException {
         setConnection();
         String sql = "INSERT INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
@@ -151,6 +170,19 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Insert records into RegistrationEntityTable
+     *
+     * @param regEntity the records registered as entity to be distributed among the clients.
+     *
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     * @see RegisteredEntityTable
+     */
     public boolean insertRecords(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
         setConnection();
         String sql = "INSERT INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
@@ -188,6 +220,18 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Insert records related to the TrustedAuthTable
+     *
+     * @param auth the records registered as to be used as trusted authentication server
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     * @see TrustedAuthTable
+     */
     public boolean insertRecords(TrustedAuthTable auth)  throws SQLException, ClassNotFoundException {
         setConnection();
         String sql = "INSERT INTO " + TrustedAuthTable.T_TRUSTED_AUTH + "(";
@@ -208,6 +252,18 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Insert records related to the cached session keys
+     *
+     * @param cachedSessionKey the information of records related cached as session keys
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     * @see CachedSessionKeyTable
+     */
     public boolean insertRecords(CachedSessionKeyTable cachedSessionKey) throws SQLException, ClassNotFoundException {
         setConnection();
         String sql = "INSERT INTO " + CachedSessionKeyTable.T_CACHED_SESSION_KEY + "(";
@@ -234,6 +290,18 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Inserts the meta data information int the table meta data.
+     *
+     * @param metaData the object container of the information in meta data table
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     * @see MetaDataTable
+     */
     public boolean insertRecords(MetaDataTable metaData) throws SQLException, ClassNotFoundException {
         setConnection();
 
@@ -251,6 +319,14 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Selects all policies record from the table communication policy.
+     * @return a list of all policies stored in the database
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public List<CommunicationPolicyTable> selectAllPolicies() throws SQLException, ClassNotFoundException {
         setConnection();
         statement = connection.createStatement();
@@ -268,6 +344,15 @@ public class SQLiteConnector {
         return policies;
     }
 
+    /**
+     * Select all records stored in the table registered entity.
+     * @param authDatabaseDir the path where the public key file is stored.
+     * @return a list of all registered entities in the
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public List<RegisteredEntityTable> selectAllRegEntities(String authDatabaseDir) throws SQLException, ClassNotFoundException {
         setConnection();
         statement = connection.createStatement();
@@ -283,6 +368,17 @@ public class SQLiteConnector {
         return entities;
     }
 
+    /**
+     * Updates the registered entity distribution key values.
+     * @param regEntityName registered entity name
+     * @param distKeyExpirationTime distribution key expiration time
+     * @param distKeyVal the actual binary representation of the distribute key
+     * @return <code>true</code> if the update success otherwise, <code>false</code>
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public boolean updateRegEntityDistKey(String regEntityName, long distKeyExpirationTime, byte[] distKeyVal)
             throws SQLException, ClassNotFoundException
     {
@@ -301,6 +397,15 @@ public class SQLiteConnector {
 
     }
 
+    /**
+     * Selects all Trusted Auth records.
+     *
+     * @return a list of all trusted auth records.
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, ClassNotFoundException {
         setConnection();
         statement = connection.createStatement();
@@ -316,6 +421,15 @@ public class SQLiteConnector {
         return authList;
     }
 
+    /**
+     * Selects all cached session keys.
+     *
+     * @return a list of all cached session keys
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public List<CachedSessionKeyTable> selectAllCachedSessionKey() throws SQLException, ClassNotFoundException {
         setConnection();
         statement = connection.createStatement();
@@ -331,6 +445,15 @@ public class SQLiteConnector {
         return cachedSessionKeyList;
     }
 
+    /**
+     * Select a specific cached key by its ID
+     * @param id the id used to store this cached session key.
+     * @return returns the Object container ${@link CachedSessionKeyTable}
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public CachedSessionKeyTable selectCachedSessionKeyByID(long id) throws SQLException, ClassNotFoundException {
         setConnection();
         statement = connection.createStatement();
@@ -346,6 +469,14 @@ public class SQLiteConnector {
         return cachedSessionKey;
     }
 
+    /**
+     * Deletes exprired cached session keys from the database.
+     * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public boolean deleteExpiredCahcedSessionKeys() throws SQLException, ClassNotFoundException {
         setConnection();
         String sql = "DELETE FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
@@ -359,6 +490,16 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Append a owner to a session key.
+     * @param keyID the id of the session key
+     * @param newOwner the owner to the session key
+     * @return <code>true</code> if the append is successful; otherwise, <code>false</code>
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public boolean appendSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         setConnection();
         String sql = "UPDATE " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
@@ -373,6 +514,15 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Select the value of a meta data by its key
+     * @param key the key to be selected
+     * @return the string representation of the metadata's value
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public String selectMetaDataValue(String key) throws SQLException, ClassNotFoundException {
         setConnection();
         statement = connection.createStatement();
@@ -388,6 +538,16 @@ public class SQLiteConnector {
         return metaData.getValue();
     }
 
+    /**
+     * Updates the metadata value on the given key
+     * @param key the key value of the metadata to update
+     * @param value the value to update
+     * @return <code>true</code> if the update is successful; otherwise <code>false</code>
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public boolean updateMetaData(String key, String value) throws SQLException, ClassNotFoundException
     {
         setConnection();
@@ -403,14 +563,29 @@ public class SQLiteConnector {
 
     }
 
+    /**
+     * Close the ${@link PreparedStatement}.
+     * <pre>
+     *     Recomended to be used after execute the sql through the ${@link Connection}
+     * </pre>
+     * @throws SQLException SQLException if a database access error occurs
+     */
     public void closeStatement() throws SQLException {
         statement.close();
     }
 
+    /**
+     * Close the connection to the database.
+     * @throws SQLException SQLException if a database access error occurs
+     */
     public void closeConnection() throws SQLException {
         connection.close();
     }
 
+    /**
+     * Constructor that stores the physical location of the database file.
+     * @param dbPath
+     */
     public SQLiteConnector(String dbPath) {
         this.dbPath = dbPath;
         try {
