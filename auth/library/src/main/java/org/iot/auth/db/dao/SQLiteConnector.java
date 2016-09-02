@@ -20,7 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A class for the SQLite connector for Auth database tables.

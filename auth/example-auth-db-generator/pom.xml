@@ -13,7 +13,7 @@
     <packaging>jar</packaging>
 
     <build>
-        <sourceDirectory>../src/main/java</sourceDirectory>
+        <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -34,7 +34,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>org.iot.auth.test.GenerateExampleAuthDB</mainClass>
+                            <mainClass>org.iot.auth.db.generator.GenerateExampleAuthDB</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -59,4 +59,11 @@
             </plugin>
         </plugins>
     </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.iot.auth</groupId>
+            <artifactId>library</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+    </dependencies>
 </project>

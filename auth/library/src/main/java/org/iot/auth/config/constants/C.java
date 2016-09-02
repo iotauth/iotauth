@@ -15,6 +15,8 @@
 
 package org.iot.auth.config.constants;
 
+import org.iot.auth.config.AuthServerProperties;
+
 /**
  * Constant Class that defines the constant values on this project.
  *
@@ -40,4 +42,6 @@ public class C {
                 return 0;
         }
     }
+
+    public static AuthServerProperties PROPERTIES;
 }

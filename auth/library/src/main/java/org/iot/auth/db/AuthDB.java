@@ -16,8 +16,8 @@
 package org.iot.auth.db;
 
 import org.iot.auth.AuthCrypto;
-import org.iot.auth.AuthServer;
 import org.iot.auth.config.AuthServerProperties;
+import org.iot.auth.config.constants.C;
 import org.iot.auth.db.bean.CachedSessionKeyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
@@ -28,7 +28,7 @@ import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -42,7 +42,7 @@ import java.util.*;
  * @author Hokeun Kim, Salomon Lee
  */
 public class AuthDB {
-    private AuthServerProperties prop = AuthServer.PROPERTIES;
+    private AuthServerProperties prop = C.PROPERTIES;
     private static final Logger logger = LoggerFactory.getLogger(AuthDB.class);
     private static final String AUTH_DB_FILE_NAME = "auth.db";
 

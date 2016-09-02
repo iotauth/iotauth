@@ -22,6 +22,7 @@ import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.Fields;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.iot.auth.config.AuthServerProperties;
+import org.iot.auth.config.constants.C;
 import org.iot.auth.db.*;
 import org.iot.auth.server.CommunicationTargetType;
 import org.iot.auth.server.EntityConnectionHandler;
@@ -52,7 +53,6 @@ import java.util.concurrent.TimeoutException;
  * @author Hokeun Kim, Salomon Lee
  */
 public class AuthServer {
-    public static AuthServerProperties PROPERTIES;
     public boolean isRunning() {
         return isRunning;
     }
@@ -164,10 +164,10 @@ public class AuthServer {
         }
         logger.info("Properties file specified: {}", propertiesFilePath);
 
-        PROPERTIES = new AuthServerProperties(propertiesFilePath);
+        C.PROPERTIES = new AuthServerProperties(propertiesFilePath);
         logger.info("Finished loading Auth Server properties.");
 
-        AuthServer authServer = new AuthServer(PROPERTIES);
+        AuthServer authServer = new AuthServer(C.PROPERTIES);
         authServer.begin();
     }
 

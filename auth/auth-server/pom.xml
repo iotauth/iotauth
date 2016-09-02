@@ -13,14 +13,12 @@
     <packaging>jar</packaging>
 
     <build>
-        <sourceDirectory>../src/main/java</sourceDirectory>
+        <sourceDirectory>src/main/java</sourceDirectory>
         <resources>
             <resource>
-                <directory>../src/main/resources</directory>
+                <directory>src/main/resources</directory>
                 <includes>
                     <include>logback.xml</include>
-                    <include>authServer.properties</include>
-                    <include>authServer2.properties</include>
                 </includes>
                 <targetPath>${project.build.outputDirectory}</targetPath>
             </resource>
@@ -70,4 +68,11 @@
             </plugin>
         </plugins>
     </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.iot.auth</groupId>
+            <artifactId>library</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+    </dependencies>
 </project>

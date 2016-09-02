@@ -14,7 +14,7 @@
  */
 
 package org.iot.auth.io;
-import java.lang.IndexOutOfBoundsException;
+
 import java.util.Arrays;
 import java.util.Base64;
 
