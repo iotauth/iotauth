@@ -28,6 +28,10 @@ import java.sql.SQLException;
  * @author Hokeun Kim
  */
 public class AuthCommandLine extends Thread  {
+    /**
+     * Constructor for AuthCommandLine object
+     * @param server Auth server object that this command line object works for
+     */
     public AuthCommandLine(AuthServer server) {
         this.server = server;
     }
@@ -44,10 +48,10 @@ public class AuthCommandLine extends Thread  {
                 }
                 // show sk (show session keys)
                 if (command.equals("show re")) {
-                    logger.info("\nShow registered entities command\n{}", server.regEntitiesToString());
+                    logger.info("\nShow registered entities command\n{}", server.registeredEntitiesToString());
                 }
                 else if (command.equals("show cp")) {
-                    logger.info("\nShow communication policies command\n{}", server.commPoliciesToString());
+                    logger.info("\nShow communication policies command\n{}", server.communicationPoliciesToString());
                 }
                 else if (command.equals("show ta")) {
                     logger.info("\nShow trusted Auths command\n{}", server.trustedAuthsToString());

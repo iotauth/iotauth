@@ -42,9 +42,26 @@ import java.util.Map;
  */
 public class TrustedAuthConnectionHandler extends AbstractHandler {
 
+    /**
+     * Constructor for the trusted connection handler
+     * @param server Auth server that this handler works for
+     */
     public TrustedAuthConnectionHandler(AuthServer server) {
         this.server = server;
     }
+
+
+
+    /**
+     * This method implements the handle method of AbstractHandler interface, for handling a HTTP request.
+     * @param target The target of HTTP request (url or name), NOT used in this handler.
+     * @param baseRequest The original unwrapped request object, mainly used in this handler.
+     * @param request Request of the wrapper, only used for getting the certificate of the requester (a trusted Auth) in
+     *                this handler.
+     * @param response The response to be sent to the requester (trusted Auth).
+     * @throws IOException If any IO fails.
+     * @throws ServletException
+     */
     public void handle( String target, Request baseRequest, HttpServletRequest request,
                         HttpServletResponse response) throws IOException, ServletException
     {
@@ -53,7 +70,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
 
         X509Certificate[] certs = (X509Certificate[])request.getAttribute("javax.servlet.request.X509Certificate");
         // Alias == ID
-        int requestingAuthID = server.getTrustedAuthIDByCert(certs[0]);
+        int requestingAuthID = server.getTrustedAuthIDByCertificate(certs[0]);
         logger.info("Alias: {} ", requestingAuthID);
 
         // TODO: Check client (trusted Auth) identity before sending response
@@ -80,7 +97,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         AuthSessionKeyReqMessage authSessionKeyReqMessage = AuthSessionKeyReqMessage.fromJSONObject(jsonObject);
         logger.info("Received AuthSessionKeyReqMessage: {}", authSessionKeyReqMessage.toString());
 
-        SessionKey sessionKey = null;
+        SessionKey sessionKey;
         try {
             sessionKey = server.getSessionKeyByID(authSessionKeyReqMessage.getSessionKeyID());
         } catch (SQLException | ClassNotFoundException e) {

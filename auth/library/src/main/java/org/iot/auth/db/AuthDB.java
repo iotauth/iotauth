@@ -57,6 +57,16 @@ public class AuthDB {
         this.trustedAuthMap = new HashMap<>();
     }
 
+    /**
+     * Initializes Auth's database by loading database tables
+     * @param trustStorePassword Password for trust store for storing certificates of trusted Auths
+     * @throws IOException
+     * @throws CertificateException
+     * @throws NoSuchAlgorithmException
+     * @throws KeyStoreException
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
     public void initialize(String trustStorePassword) throws IOException, CertificateException,
             NoSuchAlgorithmException, KeyStoreException, SQLException, ClassNotFoundException
     {
@@ -65,7 +75,7 @@ public class AuthDB {
         loadTrustedAuthDB(trustStorePassword);
     }
 
-    public RegisteredEntity getRegEntity(String entityName) {
+    public RegisteredEntity getRegisteredEntity(String entityName) {
         return registeredEntityMap.get(entityName);
     }
 
@@ -83,7 +93,7 @@ public class AuthDB {
     public void updateDistributionKey(String entityName, DistributionKey distributionKey)
             throws SQLException, ClassNotFoundException
     {
-        RegisteredEntity registeredEntity = getRegEntity(entityName);
+        RegisteredEntity registeredEntity = getRegisteredEntity(entityName);
         registeredEntity.setDistributionKey(distributionKey);
         registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
 
@@ -156,7 +166,7 @@ public class AuthDB {
         return sb.toString();
     }
 
-    public String regEntitiesToString() {
+    public String registeredEntitiesToString() {
         StringBuilder sb = new StringBuilder();
         boolean init = true;
         for (RegisteredEntity registeredEntity : registeredEntityMap.values()) {
@@ -171,7 +181,7 @@ public class AuthDB {
         return sb.toString();
     }
 
-    public String commPoliciesToString() {
+    public String communicationPoliciesToString() {
         StringBuilder sb = new StringBuilder();
         boolean init = true;
         for (CommunicationPolicy communicationPolicy : communicationPolicyList) {
@@ -201,7 +211,7 @@ public class AuthDB {
         return sb.toString();
     }
 
-    public int getTrustedAuthIDByCert(X509Certificate cert) {
+    public int getTrustedAuthIDByCertificate(X509Certificate cert) {
         try {
             String alias = trustStoreForTrustedAuths.getCertificateAlias(cert);
             return Integer.parseInt(alias);

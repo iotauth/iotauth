@@ -15,15 +15,32 @@
 
 package org.iot.auth;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.util.Fields;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
-import org.iot.auth.db.*;
+import org.iot.auth.db.AuthDB;
+import org.iot.auth.db.CommunicationPolicy;
+import org.iot.auth.db.DistributionKey;
+import org.iot.auth.db.RegisteredEntity;
+import org.iot.auth.db.SessionKey;
+import org.iot.auth.db.TrustedAuth;
 import org.iot.auth.server.CommunicationTargetType;
 import org.iot.auth.server.EntityConnectionHandler;
 import org.iot.auth.server.TrustedAuthConnectionHandler;
@@ -32,7 +49,11 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SNIServerName;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -53,11 +74,11 @@ import java.util.concurrent.TimeoutException;
  * @author Hokeun Kim, Salomon Lee
  */
 public class AuthServer {
-    public boolean isRunning() {
+    private boolean isRunning() {
         return isRunning;
     }
 
-    public void setRunning(boolean running) {
+    private void setRunning(boolean running) {
         this.isRunning = running;
     }
 
@@ -93,48 +114,27 @@ public class AuthServer {
         setRunning(true);
     }
 
+    /**
+     * Getter for Auth's unique identifier
+     * @return
+     */
     public int getAuthID() {
         return authID;
     }
 
+    /**
+     * Getter for AuthCrypto object of Auth
+     * @return Auth's AuthCrypto object
+     */
     public AuthCrypto getCrypto() {
         return crypto;
     }
 
-    public RegisteredEntity getRegEntity(String entityName) {
-        return db.getRegEntity(entityName);
-    }
-
-    public CommunicationPolicy getCommPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
-        return db.getCommPolicy(reqGroup, targetType, target);
-    }
-
-    public void updateDistributionKey(String entityName, DistributionKey distributionKey)
-            throws SQLException, ClassNotFoundException {
-        db.updateDistributionKey(entityName, distributionKey);
-    }
-
-    public List<SessionKey> generateSessionKeys(String owner, int numKeys, CommunicationPolicy communicationPolicy)
-            throws IOException, SQLException, ClassNotFoundException {
-        return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy);
-    }
-
-    public SessionKey getSessionKeyByID(long keyID) throws SQLException, ClassNotFoundException {
-        return db.getSessionKeyByID(keyID);
-    }
-
-    public String sessionKeysToString() throws SQLException, ClassNotFoundException {
-        return db.sessionKeysToString();
-    }
-    public String regEntitiesToString() {
-        return db.regEntitiesToString();
-    }
-    public String commPoliciesToString() {
-        return db.commPoliciesToString();
-    }
-
-    public String trustedAuthsToString() { return db.trustedAuthsToString(); }
-
+    /**
+     * Main method of Auth server, which is executed at the very beginning
+     * @param args Command line argeuments
+     * @throws Exception When any exception occurs
+     */
     public static void main(String[] args) throws Exception {
         // parsing command line arguments
         Options options = new Options();
@@ -171,6 +171,10 @@ public class AuthServer {
         authServer.begin();
     }
 
+    /**
+     * Starts Auth server
+     * @throws Exception When any exception occurs
+     */
     public void begin() throws Exception {
         EntityPortListener entityPortListener = new EntityPortListener(this);
         entityPortListener.start();
@@ -184,19 +188,17 @@ public class AuthServer {
         serverForTrustedAuths.join();
     }
 
-    public int getTrustedAuthIDByCert(X509Certificate cert) {
-        return db.getTrustedAuthIDByCert(cert);
-    }
-
-    public TrustedAuth getTrustedAuthInfo(int authID) {
-        return db.getTrustedAuthInfo(authID);
-    }
-
-    public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
-        return db.addSessionKeyOwner(keyID, newOwner);
-    }
-
-    public ContentResponse performPostRequest(String uri, Fields fields, JSONObject keyVals) throws TimeoutException,
+    /**
+     * Send POST request to the trusted Auth, using HTTPS client, clientForTrustedAuths, this is why this method is
+     * within AuthServer, not TrustedAuthConnectionHandler.
+     * @param uri Host and port number of the trusted Auth.
+     * @param keyVals Message to be sent to the trusted Auth, in JSON object format.
+     * @return
+     * @throws TimeoutException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    public ContentResponse performPostRequest(String uri, JSONObject keyVals) throws TimeoutException,
             ExecutionException, InterruptedException
     {
         org.eclipse.jetty.client.api.Request postRequest = clientForTrustedAuths.POST(uri);
@@ -206,10 +208,157 @@ public class AuthServer {
         return postRequest.send();
     }
 
+    //////////////////////////////////////////////////
+    ///
+    /// Below are methods for exposing AuthDB operations, rather than exposing AuthDB object itself
+    ///
+    //////////////////////////////////////////////////
+    /**
+     * Method to view database information for all registered entities
+     * @return String with information of all registered entities
+     */
+    public String registeredEntitiesToString() {
+        return db.registeredEntitiesToString();
+    }
+
+    /**
+     * Method to view database information for all communication policies
+     * @return String with information of all communication policies
+     */
+    public String communicationPoliciesToString() {
+        return db.communicationPoliciesToString();
+    }
+
+    /**
+     * Method to view database information for all trsuted Auths
+     * @return String with information of all trusted Auths
+     */
+    public String trustedAuthsToString() { return db.trustedAuthsToString(); }
+    /**
+     * Method for exposing an AuthDB operation, addSessionKeyOwner
+     * @param keyID
+     * @param newOwner
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
+        return db.addSessionKeyOwner(keyID, newOwner);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getCommPolicy
+     * @param reqGroup
+     * @param targetType
+     * @param target
+     * @return
+     */
+    public CommunicationPolicy getCommPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
+        return db.getCommPolicy(reqGroup, targetType, target);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, updateDistributionKey
+     * @param entityName
+     * @param distributionKey
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public void updateDistributionKey(String entityName, DistributionKey distributionKey)
+            throws SQLException, ClassNotFoundException {
+        db.updateDistributionKey(entityName, distributionKey);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, generateSessionKeys
+     * @param owner
+     * @param numKeys
+     * @param communicationPolicy
+     * @return
+     * @throws IOException
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public List<SessionKey> generateSessionKeys(String owner, int numKeys, CommunicationPolicy communicationPolicy)
+            throws IOException, SQLException, ClassNotFoundException {
+        return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getSessionKeyByID
+     * @param keyID
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public SessionKey getSessionKeyByID(long keyID) throws SQLException, ClassNotFoundException {
+        return db.getSessionKeyByID(keyID);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, sessionKeysToString
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public String sessionKeysToString() throws SQLException, ClassNotFoundException {
+        return db.sessionKeysToString();
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getTrustedAuthIDByCertificate
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public int getTrustedAuthIDByCertificate(X509Certificate cert) {
+        return db.getTrustedAuthIDByCertificate(cert);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getRegisteredEntity
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public RegisteredEntity getRegisteredEntity(String entityName) {
+        return db.getRegisteredEntity(entityName);
+    }
+
+    /**
+     *  Method for exposing an AuthDB operation, getTrustedAuthInfo
+     * @param authID
+     * @return
+     */
+    public TrustedAuth getTrustedAuthInfo(int authID) {
+        return db.getTrustedAuthInfo(authID);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, cleanExpiredSessionKeys
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
         db.cleanExpiredSessionKeys();
     }
 
+    //////////////////////////////////////////////////
+    ///
+    /// Above are methods for exposing AuthDB operations, rather than exposing AuthDB object itself
+    ///
+    //////////////////////////////////////////////////
+
+    /**
+     * Initializes HTTPS server to which trusted Auths connect
+     * @param properties Auth server's properties
+     * @param authKeyStorePassword password for Auth's key store that is used for communication with trusted Auths
+     * @return HTTPS server object
+     * @throws CertificateException
+     * @throws NoSuchAlgorithmException
+     * @throws KeyStoreException
+     * @throws IOException
+     */
     private Server initServerForTrustedAuths(AuthServerProperties properties, String authKeyStorePassword)
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException
     {
@@ -301,6 +450,10 @@ public class AuthServer {
         return clientForTrustedAuths;
     }
 
+    /**
+     * Class for a thread that listens to requests coming from entities, and creates another thread for processing
+     * the request from an entity, which is entityConnectionHandler
+     */
     private class EntityPortListener extends Thread {
         public EntityPortListener(AuthServer server) {
             this.server = server;
@@ -325,6 +478,9 @@ public class AuthServer {
         private AuthServer server;
     }
 
+    /**
+     * Class for suppressing logging by jetty
+     */
     private class NoLogging implements org.eclipse.jetty.util.log.Logger {
         @Override public String getName() { return "no"; }
         @Override public void warn(String msg, Object... args) { }
