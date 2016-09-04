@@ -21,8 +21,6 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
 - **entity**: Directory for entities in the IoT, to be authenticated/authorized by Auth
 - **examples**: Directory for scripts and descriptions to run example Auths and entities.
-- **experiments**: Directory for data, results and instructions for conducting experiments used in our conference paper
-- **lib**: External libraries used in this project. Currently, this directory includes source code for node-v4.3.2
 
 # Quick start with example Auths and entities
 ---
