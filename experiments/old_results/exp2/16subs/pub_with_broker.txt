@@ -1,7 +1,0 @@
-spubFile
-Client prompt>
-spubFile command
-file data length: 256
-final256: (../deps/openssl/openssl/crypto/evp/m_sha1.c : 136) Total Digested: 544
-M_do_cipher: AES-128-CBC Total Encrypted: 288, Encrypt Len: 288 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
-M_do_cipher: AES-128-CBC Total Encrypted: 304, Encrypt Len: 16 (../deps/openssl/openssl/crypto/evp/evp_enc.c : 99)
