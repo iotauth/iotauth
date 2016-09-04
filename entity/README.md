@@ -22,4 +22,3 @@ This directory includes entities in the IoT, to be authenticated/authorized by A
 		- **experimentalConfigs**: Configuration files for entities used for experiments
 
 	- **node_modules**: Node modules used by entities in JavaScript on Node.js
-	- **tls_entities**: Entities using SSL/TLS (*Only for performance evaluation against SSL/TLS*)
