@@ -43,28 +43,50 @@ import javax.crypto.spec.SecretKeySpec;
 public class AuthCrypto {
     private static final Logger logger = LoggerFactory.getLogger(AuthCrypto.class);
 
-    public AuthCrypto(String keyStorePath, String keyStorePassword) throws IOException, KeyStoreException,
+    /**
+     * Constructor for AuthCrypto object, where Auth's credentials and default cryptography algorithms are initialized.
+     * @param entityKeyStorePath Path to the key store file, that includes Auth's asymmetric key pair for communicating
+     *                           with registered entities.
+     * @param entityKeyStorePassword Password to the Auth's key store for entities.
+     * @throws IOException If file IO fails.
+     * @throws KeyStoreException If key store loading fails.
+     * @throws CertificateException If a certificate related problem occurs.
+     * @throws NoSuchAlgorithmException If the algorithm specified in the key store is invalid.
+     * @throws UnrecoverableEntryException If a key entry in the key store is invalid.
+     * @throws IllegalArgumentException If conditions for the key store are wrong.
+     */
+    public AuthCrypto(String entityKeyStorePath, String entityKeyStorePassword) throws IOException, KeyStoreException,
             CertificateException, NoSuchAlgorithmException, UnrecoverableEntryException, IllegalArgumentException
     {
-        this.authKeyStore = loadKeyStore(keyStorePath, keyStorePassword);
+        KeyStore authKeyStoreForEntities = loadKeyStore(entityKeyStorePath, entityKeyStorePassword);
 
-        if (authKeyStore.size() != 1) {
+        if (authKeyStoreForEntities.size() != 1) {
             throw new IllegalArgumentException("Auth key store must contain one key entry.");
         }
-        Enumeration<String> aliases = authKeyStore.aliases();
+        Enumeration<String> aliases = authKeyStoreForEntities.aliases();
 
         KeyStore.ProtectionParameter protParam =
-                new KeyStore.PasswordProtection(keyStorePassword.toCharArray());
+                new KeyStore.PasswordProtection(entityKeyStorePassword.toCharArray());
         while (aliases.hasMoreElements()) {
             String alias = aliases.nextElement();
-            KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) authKeyStore.getEntry(alias, protParam);
+            KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) authKeyStoreForEntities.getEntry(alias, protParam);
             logger.debug("Alias {}: , Cert: {}, Key: {}", alias, pkEntry.getCertificate(), pkEntry.getPrivateKey());
-            this.authPrivateKey = pkEntry.getPrivateKey();
+            this.authPrivateKeyForEntities = pkEntry.getPrivateKey();
         }
         this.authSignAlgorithm = "SHA256withRSA";
         this.authPublicCipherAlgorithm = "RSA/ECB/PKCS1PADDING";
     }
 
+    /**
+     * Check if a signature is valid for the given data and public key.
+     * @param data Data used to generate signature
+     * @param signature
+     * @param publicKey
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws SignatureException
+     */
     public boolean verifySignedData(Buffer data, Buffer signature, PublicKey publicKey)
             throws NoSuchAlgorithmException, InvalidKeyException, SignatureException
     {
@@ -79,7 +101,7 @@ public class AuthCrypto {
             throws IllegalArgumentException {
         try {
             Signature signer = Signature.getInstance(authSignAlgorithm);
-            signer.initSign(authPrivateKey); // cf) initVerify
+            signer.initSign(authPrivateKeyForEntities); // cf) initVerify
             signer.update(input.getRawBytes());
             return new Buffer(signer.sign());
         }
@@ -90,7 +112,7 @@ public class AuthCrypto {
 
     public Buffer privateDecrypt(Buffer input)
             throws IllegalArgumentException {
-        return performAsymmetricCrypto(Cipher.DECRYPT_MODE, input, authPrivateKey, authPublicCipherAlgorithm);
+        return performAsymmetricCrypto(Cipher.DECRYPT_MODE, input, authPrivateKeyForEntities, authPublicCipherAlgorithm);
     }
 
     public Buffer publicEncrypt(Buffer input, PublicKey publicKey)
@@ -98,6 +120,16 @@ public class AuthCrypto {
         return performAsymmetricCrypto(Cipher.ENCRYPT_MODE, input, publicKey, authPublicCipherAlgorithm);
     }
 
+    /**
+     * Load a key store from the specified file path, using the given password.
+     * @param filePath Path of the key store file.
+     * @param password Password for the key store.
+     * @return Key store object loaded from the key store file.
+     * @throws IOException When file IO fails.
+     * @throws KeyStoreException When loading key store fails.
+     * @throws CertificateException
+     * @throws NoSuchAlgorithmException
+     */
     public static KeyStore loadKeyStore(String filePath, String password) throws IOException, KeyStoreException,
             CertificateException, NoSuchAlgorithmException {
         File keyStoreFile = new File(filePath);
@@ -105,7 +137,7 @@ public class AuthCrypto {
         FileInputStream keyStoreFIS = new FileInputStream(keyStoreFile);
 
         // check if it's pfx
-        KeyStore keyStore = null;
+        KeyStore keyStore;
 
         if (keyStoreFile.getName().endsWith(".pfx")) {
             keyStore = KeyStore.getInstance("pkcs12");
@@ -118,6 +150,11 @@ public class AuthCrypto {
         return keyStore;
     }
 
+    /**
+     * Load an X.509 certificate from file.
+     * @param filePath Path to the certificate file.
+     * @return Loaded X.509 certificate.
+     */
     public static X509Certificate loadCertificate(String filePath) {
         try {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
@@ -213,6 +250,12 @@ public class AuthCrypto {
         }
     }
 
+    /**
+     * Helper method for loading binary data from a file.
+     * @param filePath Path to the file to be loaded
+     * @return Byte array, the binary data of the file
+     * @throws IOException If file IO fails.
+     */
     private byte[] readBinaryFile(String filePath) throws IOException {
         File file = new File(filePath);
         DataInputStream dataInStream = new DataInputStream(new FileInputStream(filePath));
@@ -223,7 +266,7 @@ public class AuthCrypto {
 
     private Buffer performAsymmetricCrypto(int operationMode, Buffer input, Key key, String cipherAlgorithm)
             throws IllegalArgumentException {
-        Cipher cipher = null;
+        Cipher cipher;
         try {
             cipher = Cipher.getInstance(cipherAlgorithm);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
@@ -246,6 +289,17 @@ public class AuthCrypto {
         return new Buffer(byteArrayOutputStream.toByteArray());
     }
 
+    /**
+     * Initialize and get a cipher object for the given symmetric cryptography, mode, key, and optionally, IV
+     * (initialization vector)
+     * @param operationMode Encrypt or decrypt (Cipher.ENCRYPT_MODE or Cipher.DECRYPT_MODE)
+     * @param cipherAlgo Specified cipher algorithm.
+     * @param cipherKey Cryptographic key to be used for the cipher.
+     * @param cipherText To extract IV (initialization vector) from the cipher text. Only used when the mode is decrypt,
+     *                   and cipher uses IV , otherwise set to null.
+     * @return Initialized cipher object
+     * @throws IllegalArgumentException If invalid cipher algorithm or IV (prefix of cipherText) is given.
+     */
     private static Cipher getCipher(int operationMode, String cipherAlgo, Buffer cipherKey, Buffer cipherText)
             throws IllegalArgumentException {
         String[] tokens = cipherAlgo.split("-");
@@ -284,8 +338,7 @@ public class AuthCrypto {
         return cipher;
     }
 
-    private KeyStore authKeyStore;
-    private PrivateKey authPrivateKey;
+    private PrivateKey authPrivateKeyForEntities;
     private String authSignAlgorithm;
     private String authPublicCipherAlgorithm;
 }

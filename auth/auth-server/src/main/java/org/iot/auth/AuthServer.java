@@ -31,7 +31,6 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.util.Fields;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
@@ -116,7 +115,7 @@ public class AuthServer {
 
     /**
      * Getter for Auth's unique identifier
-     * @return
+     * @return Auth's ID
      */
     public int getAuthID() {
         return authID;
@@ -132,7 +131,7 @@ public class AuthServer {
 
     /**
      * Main method of Auth server, which is executed at the very beginning
-     * @param args Command line argeuments
+     * @param args Command line arguments
      * @throws Exception When any exception occurs
      */
     public static void main(String[] args) throws Exception {
@@ -193,7 +192,7 @@ public class AuthServer {
      * within AuthServer, not TrustedAuthConnectionHandler.
      * @param uri Host and port number of the trusted Auth.
      * @param keyVals Message to be sent to the trusted Auth, in JSON object format.
-     * @return
+     * @return HTTP response from the trusted Auth
      * @throws TimeoutException
      * @throws ExecutionException
      * @throws InterruptedException
@@ -247,14 +246,14 @@ public class AuthServer {
     }
 
     /**
-     * Method for exposing an AuthDB operation, getCommPolicy
+     * Method for exposing an AuthDB operation, getCommunicationPolicy
      * @param reqGroup
      * @param targetType
      * @param target
      * @return
      */
-    public CommunicationPolicy getCommPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
-        return db.getCommPolicy(reqGroup, targetType, target);
+    public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
+        return db.getCommunicationPolicy(reqGroup, targetType, target);
     }
 
     /**
@@ -350,9 +349,9 @@ public class AuthServer {
     //////////////////////////////////////////////////
 
     /**
-     * Initializes HTTPS server to which trusted Auths connect
-     * @param properties Auth server's properties
-     * @param authKeyStorePassword password for Auth's key store that is used for communication with trusted Auths
+     * Initialize HTTPS server to which trusted Auths connect
+     * @param properties Auth server's properties to get paths for key stores and certificates
+     * @param authKeyStorePassword Password for Auth's key store that is used for communication with trusted Auths
      * @return HTTPS server object
      * @throws CertificateException
      * @throws NoSuchAlgorithmException
@@ -403,6 +402,16 @@ public class AuthServer {
         return serverForTrustedAuths;
     }
 
+    /**
+     * Initialize HTTPS client for connecting to other trusted Auths and sending Auth session key requests
+     * @param properties Auth server's properties to get paths for key stores and certificates
+     * @param authKeyStorePassword Password for Auth's key store that is used for communication with trusted Auths
+     * @return HTTPS client object
+     * @throws CertificateException
+     * @throws NoSuchAlgorithmException
+     * @throws KeyStoreException
+     * @throws IOException
+     */
     private HttpClient initClientForTrustedAuths(AuthServerProperties properties, String authKeyStorePassword)
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException
     {

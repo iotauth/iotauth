@@ -38,7 +38,8 @@ import java.sql.SQLException;
 import java.util.*;
 
 /**
- * A main class for Auth databases.
+ * A main class for Auth database, which include tables for registered entities, communication policies, trusted Auths,
+ *
  * @author Hokeun Kim, Salomon Lee
  */
 public class AuthDB {
@@ -75,11 +76,16 @@ public class AuthDB {
         loadTrustedAuthDB(trustStorePassword);
     }
 
+    /**
+     * Get a registered entity by name.
+     * @param entityName The name of the entity to be found.
+     * @return The registered entity, if found, null, otherwise.
+     */
     public RegisteredEntity getRegisteredEntity(String entityName) {
         return registeredEntityMap.get(entityName);
     }
 
-    public CommunicationPolicy getCommPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
+    public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
         for (CommunicationPolicy communicationPolicy : communicationPolicyList) {
             if (communicationPolicy.getReqGroup().equals(reqGroup) &&
                     communicationPolicy.getTargetType() == targetType &&
@@ -90,6 +96,13 @@ public class AuthDB {
         return null;
     }
 
+    /**
+     * Update the distribution key of the specified entity.
+     * @param entityName The name of the entity whose distribution key to be updated.
+     * @param distributionKey New distribution key for the entity.
+     * @throws SQLException When database SQL fails.
+     * @throws ClassNotFoundException If the class cannot be located
+     */
     public void updateDistributionKey(String entityName, DistributionKey distributionKey)
             throws SQLException, ClassNotFoundException
     {
@@ -101,6 +114,17 @@ public class AuthDB {
                 distributionKey.getKeyVal().getRawBytes());
     }
 
+    /**
+     *
+     * @param authID
+     * @param owner
+     * @param numKeys
+     * @param communicationPolicy
+     * @return
+     * @throws IOException
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
     public List<SessionKey> generateSessionKeys(int authID, String owner, int numKeys, CommunicationPolicy communicationPolicy)
             throws IOException, SQLException, ClassNotFoundException
     {
