@@ -20,6 +20,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.iot.auth.AuthCrypto;
 import org.iot.auth.AuthServer;
 import org.iot.auth.db.*;
+import org.iot.auth.exception.InvalidSessionKeyTargetException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.BufferedString;
 import org.iot.auth.io.VariableLengthInt;
@@ -171,8 +172,16 @@ public class EntityConnectionHandler extends Thread {
                 throw new RuntimeException("Entity signature verification failed!!");
             }
 
-            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret =
-                    processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
+            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret;
+            try {
+                ret = processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
+            }
+            catch (InvalidSessionKeyTargetException e) {
+                logger.info("InvalidSessionKeyTargetException: " + e.getMessage());
+                sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ_TARGET);
+                close();
+                return;
+            }
             List<SessionKey> sessionKeyList = ret.fst;
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.snd;
 
@@ -200,13 +209,13 @@ public class EntityConnectionHandler extends Thread {
 
             // TODO: check distribution key validity here and if not, refuse request
             if (requestingEntity.getDistributionKey() == null) {
-                logger.info("No distribution key is available!");
+                logger.error("No distribution key is available!");
                 sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
                 close();
                 return;
             }
             else if (new Date().getTime() > requestingEntity.getDistributionKey().getExpirationTime().getTime()) {
-                logger.info("Distribution key is expired!");
+                logger.error("Distribution key is expired!");
                 sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
                 close();
                 return;
@@ -232,8 +241,15 @@ public class EntityConnectionHandler extends Thread {
 
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
 
-            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret =
-                    processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
+            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret;
+            try {
+                ret = processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
+            } catch (InvalidSessionKeyTargetException e) {
+                logger.info("InvalidSessionKeyTargetException: " + e.getMessage());
+                sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ_TARGET);
+                close();
+                return;
+            }
             List<SessionKey> sessionKeyList = ret.fst;
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.snd;
 
@@ -297,7 +313,7 @@ public class EntityConnectionHandler extends Thread {
      */
     private Pair<List<SessionKey>, SymmetricKeyCryptoSpec> processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)
-            throws IOException, ParseException, SQLException, ClassNotFoundException
+            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException
     {
         logger.debug("Sender entity: {}", sessionKeyReqMessage.getEntityName());
 
@@ -321,7 +337,7 @@ public class EntityConnectionHandler extends Thread {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 if (communicationPolicy == null) {
-                    throw new RuntimeException("Unrecognized Purpose: "
+                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: "
                             + purpose.toString());
                 }
                 cryptoSpec = communicationPolicy.getCryptoSpec();

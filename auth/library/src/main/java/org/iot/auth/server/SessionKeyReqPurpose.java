@@ -15,6 +15,7 @@
 
 package org.iot.auth.server;
 
+import org.iot.auth.exception.InvalidSessionKeyTargetException;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @author Hokeun Kim
  */
 public class SessionKeyReqPurpose {
-    public SessionKeyReqPurpose(JSONObject purpose) throws RuntimeException {
+    public SessionKeyReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
         // TODO: match JSON string (group, pubTopic, subTopic) and CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
         Object objTarget = null;
         this.targetType = CommunicationTargetType.UNKNOWN;
@@ -53,7 +54,7 @@ public class SessionKeyReqPurpose {
         }
 
         if (this.targetType == CommunicationTargetType.UNKNOWN) {
-            throw new RuntimeException("Unrecognized purpose: " + purpose);
+            throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
         }
         this.target = objTarget;
     }
