@@ -9,6 +9,20 @@
 #include <string>
 #include <list>
 
+#define EI_NAME 0
+#define EI_GROUP 1
+#define EI_PK_PATH 2
+
+#define AI_ID 10
+#define AI_HOST 11
+#define AI_PORT 12
+#define AI_PK_PATH 13
+
+#define SI_QTY 20
+#define SI_NAME 21
+#define SI_HOST 22
+#define SI_PORT 23
+
 struct _entityInfo{
     std::string name;
     std::string group;
@@ -30,6 +44,6 @@ struct _targetServerInfo {
 
 typedef _entityInfo EntityInfo;
 typedef _authInfo AuthInfo;
-typedef std::list<_targetServerInfo> TargetServerInfo;
+typedef _targetServerInfo TargetServerInfo;
 
 #endif //CLIENT_STRUCTURES_HPP

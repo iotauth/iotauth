@@ -11,17 +11,16 @@ class Properties {
 private:
     EntityInfo entityInfo;
     AuthInfo authInfo;
-    TargetServerInfo targetServerInfo;
+    std::list<TargetServerInfo> targetServerInfoList;
     void init(std::string config_file);
+    int getKeyValue(std::string key);
 protected:
-    void setEntityInfo(std::string name, std::string group, std::string private_key_path);
-    void setAuthInfo(int id, std::string host, int port, std::string private_key_path);
-    void addTargetServerInfo(std::string name, std::string host, int port);
+    void addTargetServerInfo(_targetServerInfo serverInfo);
 public:
     Properties(std::string file_name);
     EntityInfo getEntityInfo();
     AuthInfo getAuthInfo();
-    TargetServerInfo getTargetServerInfo();
+    std::list<TargetServerInfo> getTargetServerInfo();
     virtual ~Properties(){};
 };
 
