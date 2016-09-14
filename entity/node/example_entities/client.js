@@ -197,6 +197,9 @@ function initComm(commServerInfo) {
         console.log('switching to IDLE');
         currentState = commState.IDLE;
     });
+    curClient.on('error', function(message) {
+        console.log('Error, details: ' + message);
+    });
 };
 
 function finComm() {

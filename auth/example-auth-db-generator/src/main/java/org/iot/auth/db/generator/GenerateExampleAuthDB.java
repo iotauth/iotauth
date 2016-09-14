@@ -112,6 +112,22 @@ public class GenerateExampleAuthDB {
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
+
+        registeredEntity.setName(entityPrefix + "ptPublisher");
+        registeredEntity.setGroup("PtPublishers");
+        registeredEntity.setPublicKeyFile("certs/PtPublisherCert.pem");
+        registeredEntity.setDistValidityPeriod("3*sec");
+        registeredEntity.setDistCipherAlgo("AES-128-CBC");
+        registeredEntity.setDistHashAlgo("SHA256");
+        sqLiteConnector.insertRecords(registeredEntity);
+
+        registeredEntity.setName(entityPrefix + "ptSubscriber");
+        registeredEntity.setGroup("PtSubscribers");
+        registeredEntity.setPublicKeyFile("certs/PtSubscriberCert.pem");
+        registeredEntity.setDistValidityPeriod("3*sec");
+        registeredEntity.setDistCipherAlgo("AES-128-CBC");
+        registeredEntity.setDistHashAlgo("SHA256");
+        sqLiteConnector.insertRecords(registeredEntity);
     }
 
     private static void initCommPolicyTable(SQLiteConnector sqLiteConnector)
@@ -183,6 +199,24 @@ public class GenerateExampleAuthDB {
 
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
+        communicationPolicyTable.setTarget("Ptopic");
+        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
+        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setAbsValidityStr("6*hour");
+        communicationPolicyTable.setRelValidityStr("3*hour");
+        sqLiteConnector.insertRecords(communicationPolicyTable);
+
+        communicationPolicyTable.setReqGroup("PtPublishers");
+        communicationPolicyTable.setTargetTypeVal("PubTopic");
+        communicationPolicyTable.setTarget("Ptopic");
+        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
+        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setAbsValidityStr("6*hour");
+        communicationPolicyTable.setRelValidityStr("3*hour");
+        sqLiteConnector.insertRecords(communicationPolicyTable);
+
+        communicationPolicyTable.setReqGroup("PtSubscribers");
+        communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
