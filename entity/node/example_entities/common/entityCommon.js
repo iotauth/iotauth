@@ -305,68 +305,18 @@ exports.sendSessionKeyReq = function(senderName, purpose, numKeys, authInfo, pri
 
 exports.loadEntityConfig = function(inputFileName) {
     console.log('loading from config file: ' + inputFileName);
-    var entityInfo;
-    var authInfo;
-    var targetServerInfoList = [];
-    var listeningServerInfo;
     var fileLines = fs.readFileSync(inputFileName, 'utf8').split('\n');
+    var fileString = "";
     for (var i = 0; i < fileLines.length; i++) {
         var line = fileLines[i].trim();
         if (line.startsWith('//') || line.length == 0) {
             continue;
         }
-        var tokens = line.split(/[\s,]+/);
-        if (tokens.length == 0) {
-            continue;
-        }
-        if (tokens[0] == 'entityInfo') {
-            if (tokens.length != 4) {
-                throw 'error loading entityInfo: wrong number of properties!';
-            }
-            entityInfo = {
-                name: tokens[1],
-                group: tokens[2],
-                privateKey: fs.readFileSync(tokens[3])
-            };
-        }
-        else if (tokens[0] == 'authInfo') {
-            if (tokens.length != 5) {
-                throw 'error loading authInfo: wrong number of properties!';
-            }
-            authInfo = {
-                id: parseInt(tokens[1]),
-                host: tokens[2],
-                port: parseInt(tokens[3]),
-                publicKey: fs.readFileSync(tokens[4])
-            };
-        }
-        else if (tokens[0] == 'targetServerInfo') {
-            if (tokens.length != 4) {
-                throw 'error loading targetServerInfo: wrong number of properties!';
-            }
-            targetServerInfoList.push({
-                name: tokens[1],
-                host: tokens[2],
-                port: parseInt(tokens[3])
-            });
-        }
-        else if (tokens[0] == 'listeningServerInfo') {
-            if (tokens.length != 3) {
-                throw 'error loading listeningServerInfo: wrong number of properties!';
-            }
-            listeningServerInfo = {
-                host: tokens[1],
-                port: parseInt(tokens[2])
-            };
-        }
-        else {
-            throw 'Configuration item is NOT recognized! ' + tokens[0];
-        }
+        fileString += line;
     }
-    return {
-        entityInfo: entityInfo,
-        authInfo: authInfo,
-        targetServerInfoList: targetServerInfoList,
-        listeningServerInfo: listeningServerInfo
-    };
+    var entityConfig = JSON.parse(fileString);
+    entityConfig.entityInfo.privateKey = fs.readFileSync(entityConfig.entityInfo.privateKey);
+    entityConfig.authInfo.publicKey = fs.readFileSync(entityConfig.authInfo.publicKey);
+    return entityConfig;
 };
+
