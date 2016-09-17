@@ -21,12 +21,12 @@
 
 var net = require('net');
 var fs = require('fs');
-var entityCommon = require('./common/entityCommon')
+var iotAuth = require('./common/iotAuth')
 var common = require('./common/common');
 var mqtt = require('mqtt');
 var util = require('util');
 var msgType = common.msgType;
-var commState = entityCommon.commState;
+var commState = iotAuth.commState;
 
 // to be loaded from config file
 var entityInfo;
@@ -82,12 +82,12 @@ function initComm(commServerInfo) {
             console.log('connected to ' + commServerInfo.name + '(' + commServerInfo.host
                 + ':' + commServerInfo.port + ')! from local port ' + curClient.localPort);
 
-            myNonce = entityCommon.generateHSNonce();
+            myNonce = iotAuth.generateHSNonce();
             console.log('chosen nonce: ' + myNonce.inspect());
 
             var handshake1 = {nonce: myNonce};
-            var buf = entityCommon.serializeHandshake(handshake1);
-            var enc = entityCommon.encryptSessionMessage(buf, commSessionKey.val);
+            var buf = iotAuth.serializeHandshake(handshake1);
+            var enc = iotAuth.encryptSessionMessage(buf, commSessionKey.val);
             var keyIdBuf = new Buffer(common.S_KEY_ID_SIZE);
             keyIdBuf.writeUIntBE(commSessionKey.id, 0, common.S_KEY_ID_SIZE);
 
@@ -136,8 +136,8 @@ function initComm(commServerInfo) {
                 return;
             }
 
-            var buf = entityCommon.decryptSessionMessage(obj.payload, commSessionKey.val);
-            var ret = entityCommon.parseHandshake(buf);
+            var buf = iotAuth.decryptSessionMessage(obj.payload, commSessionKey.val);
+            var ret = iotAuth.parseHandshake(buf);
             console.log(ret);
 
             if (myNonce.equals(ret.replyNonce)) {
@@ -153,8 +153,8 @@ function initComm(commServerInfo) {
             var theirNonce = ret.nonce;
             var handshake3 = {replyNonce: theirNonce};
 
-            buf = entityCommon.serializeHandshake(handshake3);
-            var enc = entityCommon.encryptSessionMessage(buf, commSessionKey.val);
+            buf = iotAuth.serializeHandshake(handshake3);
+            var enc = iotAuth.encryptSessionMessage(buf, commSessionKey.val);
 
             var msg = {
                 msgType: msgType.SKEY_HANDSHAKE_3,
@@ -176,7 +176,7 @@ function initComm(commServerInfo) {
                 return;
             }
 
-            var ret = entityCommon.parseDecryptSessionMessage(obj.payload, commSessionKey.val);
+            var ret = iotAuth.parseDecryptSessionMessage(obj.payload, commSessionKey.val);
             if (ret.seqNum != readSeqNum) {
             	console.log('seqNum does not match! expected: ' + readSeqNum + ' received: ' + ret.seqNum);
             }
@@ -286,7 +286,7 @@ function commandInterpreter() {
             }
             else {
                 console.log('send command');
-                var enc = entityCommon.serializeEncryptSessionMessage(
+                var enc = iotAuth.serializeEncryptSessionMessage(
                 	{seqNum: writeSeqNum, data: new Buffer(message)}, commSessionKey.val);
                 writeSeqNum++;
                 var buf = common.serializeIoTSP({
@@ -308,7 +308,7 @@ function commandInterpreter() {
                 }
                 var fileData = fs.readFileSync(fileName);
                 console.log('file data length: ' + fileData.length);
-                var enc = entityCommon.serializeEncryptSessionMessage(
+                var enc = iotAuth.serializeEncryptSessionMessage(
                 	{seqNum: writeSeqNum, data: fileData}, commSessionKey.val);
                 writeSeqNum++;
                 var buf = common.serializeIoTSP({
@@ -354,7 +354,7 @@ function commandInterpreter() {
                 console.log('no message!');
                 return;
             }
-            var secureMqtt = entityCommon.encryptSerializeSecureqMqtt(
+            var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
                 {seqNum: pubSeqNum, data: new Buffer(message)}, sessionKeyCacheForPublish[0]);
             pubSeqNum++;
             var buf = common.serializeIoTSP({
@@ -379,7 +379,7 @@ function commandInterpreter() {
             }
             var fileData = fs.readFileSync(fileName);
             console.log('file data length: ' + fileData.length);
-            var secureMqtt = entityCommon.encryptSerializeSecureqMqtt(
+            var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
                 {seqNum: pubSeqNum, data: fileData}, sessionKeyCacheForPublish[0]);
             pubSeqNum++;
             var buf = common.serializeIoTSP({
@@ -395,7 +395,7 @@ function commandInterpreter() {
                 numKeys = parseInt(message);
             }
             currentTargetSessionKeyCache = 'Servers';
-            entityCommon.sendSessionKeyReq(entityInfo.name, {group: 'Servers'}, numKeys,
+            iotAuth.sendSessionKeyReq(entityInfo.name, {group: 'Servers'}, numKeys,
                 authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
         }
         else if (command == 'skReq2') {
@@ -405,7 +405,7 @@ function commandInterpreter() {
                 numKeys = parseInt(message);
             }
             currentTargetSessionKeyCache = 'Servers';
-            entityCommon.sendSessionKeyReq(entityInfo.name, {group: 'Servers', exist: true}, numKeys,
+            iotAuth.sendSessionKeyReq(entityInfo.name, {group: 'Servers', exist: true}, numKeys,
                 authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
         }
         else if (command == 'skReqPub') {
@@ -415,7 +415,7 @@ function commandInterpreter() {
                 numKeys = parseInt(message);
             }
             currentTargetSessionKeyCache = 'Publish';
-            entityCommon.sendSessionKeyReq(entityInfo.name, {pubTopic: 'Ptopic'}, numKeys,
+            iotAuth.sendSessionKeyReq(entityInfo.name, {pubTopic: 'Ptopic'}, numKeys,
                 authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
         }
         else if (command == 'saveData') {
@@ -467,7 +467,7 @@ function commandInterpreter() {
             }
             var numKeys = 1;
             currentTargetSessionKeyCache = 'Servers';
-            entityCommon.sendSessionKeyReq(entityInfo.name, {subTopic: 'Ptopic'}, numKeys,
+            iotAuth.sendSessionKeyReq(entityInfo.name, {subTopic: 'Ptopic'}, numKeys,
                 authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyRespWrapper);
 
         }
@@ -483,7 +483,7 @@ if (process.argv.length > 2) {
     configFilePath = process.argv[2];
 }
 
-var entityConfig = entityCommon.loadEntityConfig(configFilePath);
+var entityConfig = iotAuth.loadEntityConfig(configFilePath);
 
 entityInfo = entityConfig.entityInfo;
 authInfo = entityConfig.authInfo;
