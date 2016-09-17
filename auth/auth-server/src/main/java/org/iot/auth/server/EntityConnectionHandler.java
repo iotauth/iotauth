@@ -17,8 +17,9 @@ package org.iot.auth.server;
 
 import com.sun.tools.javac.util.Pair;
 import org.eclipse.jetty.client.api.ContentResponse;
-import org.iot.auth.AuthCrypto;
+import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.AuthServer;
+import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.*;
 import org.iot.auth.exception.InvalidSessionKeyTargetException;
 import org.iot.auth.io.Buffer;

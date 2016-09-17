@@ -14,8 +14,6 @@
  */
 
 /**
- * package org.iot.auth.config.properties
- *     All Classes defined on this package are dedicated to read different types of properties
- *     among the different type of configuration files with extension .properties
+ * <p>This package contains classes for cryptography of Auth.</p>
  */
-package org.iot.auth.config.properties;
+package org.iot.auth.crypto;

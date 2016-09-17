@@ -15,6 +15,7 @@
 
 package org.iot.auth.db;
 
+import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.io.Buffer;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

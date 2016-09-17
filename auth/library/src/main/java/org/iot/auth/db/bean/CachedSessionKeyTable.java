@@ -16,7 +16,7 @@
 package org.iot.auth.db.bean;
 
 import org.iot.auth.db.SessionKey;
-import org.iot.auth.db.SymmetricKeyCryptoSpec;
+import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.io.Buffer;
 import org.json.simple.JSONObject;
 

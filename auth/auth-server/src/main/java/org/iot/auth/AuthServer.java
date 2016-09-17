@@ -34,6 +34,7 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
+import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.db.AuthDB;
 import org.iot.auth.db.CommunicationPolicy;
 import org.iot.auth.db.DistributionKey;

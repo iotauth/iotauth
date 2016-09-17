@@ -17,7 +17,5 @@
  * package org.iot.auth.config.constants
  *     All Classes defined on this package are related to constants values that
  *     are needed to be refer across the project.
- *
- * @author Salomon Lee
  */
 package org.iot.auth.config.constants;

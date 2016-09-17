@@ -13,7 +13,7 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.db;
+package org.iot.auth.crypto;
 
 import org.json.simple.JSONObject;
 

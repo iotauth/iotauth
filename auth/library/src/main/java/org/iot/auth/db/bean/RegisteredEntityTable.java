@@ -15,7 +15,7 @@
 
 package org.iot.auth.db.bean;
 
-import org.iot.auth.AuthCrypto;
+import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.util.DateHelper;
 import org.json.simple.JSONObject;
 

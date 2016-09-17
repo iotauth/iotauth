@@ -13,7 +13,7 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth;
+package org.iot.auth.crypto;
 
 import org.iot.auth.io.Buffer;
 import org.slf4j.Logger;

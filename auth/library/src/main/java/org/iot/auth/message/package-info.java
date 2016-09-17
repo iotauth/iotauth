@@ -24,7 +24,5 @@
  * <ul>
  *     <li>{@link org.iot.auth.message.MessageType}</li>
  * </ul>
- *
- * Created by lsmon on 6/15/16.
  */
 package org.iot.auth.message;

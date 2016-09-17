@@ -15,6 +15,7 @@
 
 package org.iot.auth.db;
 
+import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.server.CommunicationTargetType;
 
 /**

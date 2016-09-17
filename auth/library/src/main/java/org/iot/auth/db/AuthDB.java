@@ -15,9 +15,10 @@
 
 package org.iot.auth.db;
 
-import org.iot.auth.AuthCrypto;
+import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
+import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.bean.CachedSessionKeyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
