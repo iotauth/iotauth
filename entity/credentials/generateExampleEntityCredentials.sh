@@ -6,7 +6,6 @@ CERTS_DIR="certs"
 KEYS_DIR="keys"
 VAL_DAYS=730
 
-
 entity_cred_gen() {
 	NET_NAME=$1
 	FILE_PREFIX=$2
@@ -24,6 +23,16 @@ entity_cred_gen() {
 		openssl pkcs8 -topk8 -inform PEM -outform DER -in $KEY_PATH_PREFIX"Key.pem" -out $KEY_PATH_PREFIX"Key.der" -nocrypt
 		rm $KEY_PATH_PREFIX"Key.pem"
 	fi
+}
+
+entity_dist_key_gen() {
+	NET_NAME=$1
+	FILE_PREFIX=$2
+	KEY_SIZE=$3
+	KEY_PATH_PREFIX=$KEYS_DIR/$NET_NAME/$FILE_PREFIX
+	ENTITY_NAME=$NET_NAME"."$2
+
+	openssl rand $KEY_SIZE > $KEY_PATH_PREFIX"Key.key"
 }
 
 mkdir -p $CERTS_DIR/"net1"
@@ -45,3 +54,8 @@ entity_cred_gen "net2" "PtClient"
 entity_cred_gen "net2" "PtServer"
 entity_cred_gen "net2" "PtPublisher"
 entity_cred_gen "net2" "PtSubscriber"
+
+entity_dist_key_gen "net1" "RcClient" 16	# 16 bytes - 128 bits
+entity_dist_key_gen "net1" "RcServer" 16	# 16 bytes - 128 bits
+entity_dist_key_gen "net2" "RcClient" 16	# 16 bytes - 128 bits
+entity_dist_key_gen "net2" "RcServer" 16	# 16 bytes - 128 bits

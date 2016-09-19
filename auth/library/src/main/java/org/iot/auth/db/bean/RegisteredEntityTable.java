@@ -32,6 +32,7 @@ public class RegisteredEntityTable {
     public enum c {
         Name,
         Group,
+        UsePermanentDistKey,
         DistKeyValidity,
         DistValidityPeriod,
         PublKeyFile,
@@ -43,6 +44,7 @@ public class RegisteredEntityTable {
     }
     private String name;
     private String group;
+    private boolean usePermanentDistKey;
     private PublicKey publicKey;
     private String publicKeyFile;
     private String distValidityPeriod;
@@ -56,7 +58,6 @@ public class RegisteredEntityTable {
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -64,15 +65,20 @@ public class RegisteredEntityTable {
     public String getGroup() {
         return group;
     }
-
     public void setGroup(String group) {
         this.group = group;
+    }
+
+    public boolean getUsePermanentDistKey() {
+        return usePermanentDistKey;
+    }
+    public void setUsePermanentDistKey(boolean usePermanentDistKey) {
+        this.usePermanentDistKey = usePermanentDistKey;
     }
 
     public PublicKey getPublicKey() {
         return publicKey;
     }
-
     public void setPublicKey(PublicKey publicKey) {
         this.publicKey = publicKey;
     }
@@ -80,14 +86,13 @@ public class RegisteredEntityTable {
     public long getDistKeyValidity() {
         return distKeyValidity;
     }
-
     public void setDistKeyValidity(long distKeyValidity) {
         this.distKeyValidity = distKeyValidity;
     }
+
     public String getPublicKeyFile() {
         return publicKeyFile;
     }
-
     public void setPublicKeyFile(String publicKeyFile) {
         this.publicKeyFile = publicKeyFile;
     }
@@ -95,7 +100,6 @@ public class RegisteredEntityTable {
     public String getDistValidityPeriod() {
         return distValidityPeriod;
     }
-
     public void setDistValidityPeriod(String distValidityPeriod) {
         this.distValidityPeriod = distValidityPeriod;
     }
@@ -103,7 +107,6 @@ public class RegisteredEntityTable {
     public String getDistCipherAlgo() {
         return distCipherAlgo;
     }
-
     public void setDistCipherAlgo(String distCipherAlgo) {
         this.distCipherAlgo = distCipherAlgo;
     }
@@ -111,7 +114,6 @@ public class RegisteredEntityTable {
     public String getDistHashAlgo() {
         return distHashAlgo;
     }
-
     public void setDistHashAlgo(String distHashAlgo) {
         this.distHashAlgo = distHashAlgo;
     }
@@ -119,7 +121,6 @@ public class RegisteredEntityTable {
     public long getDistKeyExpirationTime() {
         return distKeyExpirationTime;
     }
-
     public void setDistKeyExpirationTime(long distKeyExpirationTime) {
         this.distKeyExpirationTime = distKeyExpirationTime;
     }
@@ -127,7 +128,6 @@ public class RegisteredEntityTable {
     public byte[] getDistKeyVal() {
         return distKeyVal;
     }
-
     public void setDistKeyVal(byte[] distKeyVal) {
         this.distKeyVal = Arrays.copyOf(distKeyVal, distKeyVal.length);
     }
@@ -151,7 +151,10 @@ public class RegisteredEntityTable {
         entity.setName(r.getString(c.Name.name()));
         entity.setGroup(r.getString(c.Group.name()));
         entity.setPublicKeyFile(r.getString(c.PublKeyFile.name()));
-        entity.setPublicKey(AuthCrypto.loadPublicKey(authDatabaseDir + "/" + entity.getPublicKeyFile()));
+        entity.setUsePermanentDistKey(r.getBoolean(c.UsePermanentDistKey.name()));
+        if (!entity.getUsePermanentDistKey()) {
+            entity.setPublicKey(AuthCrypto.loadPublicKey(authDatabaseDir + "/" + entity.getPublicKeyFile()));
+        }
         entity.setDistKeyValidity(DateHelper.parseTimePeriod(r.getString(c.DistValidityPeriod.name())));
         entity.setDistCipherAlgo(r.getString(c.DistCipherAlgo.name()));
         entity.setDistHashAlgo(r.getString(c.DistHashAlgo.name()));

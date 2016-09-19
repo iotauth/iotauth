@@ -21,11 +21,11 @@
 
 var net = require('net');
 var fs = require('fs');
-var iotAuth = require('./common/iotAuth')
-var common = require('./common/common');
+var iotAuth = require('iotAuth')
+var common = require('common');
 var mqtt = require('mqtt');
 var util = require('util');
-var msgType = common.msgType;
+var msgType = iotAuth.msgType;
 var commState = iotAuth.commState;
 
 // to be loaded from config file
@@ -488,5 +488,13 @@ var entityConfig = iotAuth.loadEntityConfig(configFilePath);
 entityInfo = entityConfig.entityInfo;
 authInfo = entityConfig.authInfo;
 targetServerInfoList = entityConfig.targetServerInfoList;
+
+if (entityInfo.usePermanentDistKey) {
+    var absValidity = new Date().getTime() + common.parseTimePeriod(entityInfo.distKeyValidity);
+    distributionKey = {
+        val: entityInfo.permanentDistKey,
+        absValidity: new Date(absValidity)
+    };
+}
 
 process.stdin.on('readable', commandInterpreter);

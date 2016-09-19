@@ -20,10 +20,15 @@ import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
+import org.iot.auth.util.DateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Date;
 
 /**
  * A program to generate example Auth databases for two example Auths with ID 101 and ID 102.
@@ -36,12 +41,12 @@ public class GenerateExampleAuthDB {
     }
 
     private static void generateAuthDatabase(int authID) throws Exception {
-        String entityPrefix = "";
+        String networkName = "";
         SQLiteConnector sqLiteConnector = null;
 
         if (authID == 101) {
             String authDatabaseDir = "databases/auth101/";
-            entityPrefix = "net1.";
+            networkName = "net1";
 
             String authDBPath = authDatabaseDir + "/auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
@@ -50,7 +55,7 @@ public class GenerateExampleAuthDB {
         }
         else if (authID == 102) {
             String authDatabaseDir = "databases/auth102/";
-            entityPrefix = "net2.";
+            networkName = "net2";
 
             String authDBPath = authDatabaseDir + "/auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
@@ -62,7 +67,7 @@ public class GenerateExampleAuthDB {
             return;
         }
 
-        initRegisteredEntityTable(sqLiteConnector, entityPrefix);
+        initRegisteredEntityTable(sqLiteConnector, networkName);
         initCommPolicyTable(sqLiteConnector);
         initMetaDataTable(sqLiteConnector);
     }
@@ -76,53 +81,90 @@ public class GenerateExampleAuthDB {
         sqLiteConnector.insertRecords(metaData);
     }
 
-    private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, String entityPrefix)
-            throws ClassNotFoundException, SQLException
+    private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, String networkName)
+            throws ClassNotFoundException, SQLException, IOException
     {
-        RegisteredEntityTable registeredEntity = new RegisteredEntityTable();
+        String entityPrefix = networkName + ".";
+        RegisteredEntityTable registeredEntity;
 
+        registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "server");
-        registeredEntity.setGroup("Servers");
+        registeredEntity.setGroup("");
+        registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setPublicKeyFile("certs/ServerCert.pem");
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
+        registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "client");
         registeredEntity.setGroup("Clients");
+        registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setPublicKeyFile("certs/ClientCert.pem");
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
+        registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptServer");
         registeredEntity.setGroup("PtServers");
+        registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setPublicKeyFile("certs/PtServerCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
+        registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptClient");
         registeredEntity.setGroup("PtClients");
+        registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setPublicKeyFile("certs/PtClientCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
+        // resource-constrained server - no public key file specified
+        registeredEntity = new RegisteredEntityTable();
+        registeredEntity.setName(entityPrefix + "rcServer");
+        registeredEntity.setGroup("Servers");
+        registeredEntity.setUsePermanentDistKey(true);
+        registeredEntity.setDistValidityPeriod("1*hour");
+        registeredEntity.setDistCipherAlgo("AES-128-CBC");
+        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistKeyVal(readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcServerKey.key"));
+        registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
+        sqLiteConnector.insertRecords(registeredEntity);
+
+        // resource-constrained client - no public key file specified
+        registeredEntity = new RegisteredEntityTable();
+        registeredEntity.setName(entityPrefix + "rcClient");
+        registeredEntity.setGroup("Clients");
+        registeredEntity.setUsePermanentDistKey(true);
+        registeredEntity.setDistValidityPeriod("1*hour");
+        registeredEntity.setDistCipherAlgo("AES-128-CBC");
+        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistKeyVal(readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcClientKey.key"));
+        registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
+        sqLiteConnector.insertRecords(registeredEntity);
+
+        registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptPublisher");
         registeredEntity.setGroup("PtPublishers");
+        registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setPublicKeyFile("certs/PtPublisherCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
+        registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptSubscriber");
         registeredEntity.setGroup("PtSubscribers");
+        registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setPublicKeyFile("certs/PtSubscriberCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
@@ -132,7 +174,8 @@ public class GenerateExampleAuthDB {
 
     private static void initCommPolicyTable(SQLiteConnector sqLiteConnector)
             throws ClassNotFoundException, SQLException
-    {        CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
+    {
+        CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
 
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
@@ -234,6 +277,14 @@ public class GenerateExampleAuthDB {
         trustedAuth.setPort(port);
         trustedAuth.setCertificatePath(certificatePath);
         sqLiteConnector.insertRecords(trustedAuth);
+    }
+
+    private static byte[] readSymmetricKey(String filePath) throws IOException {
+        final int MAX_SYMMETRIC_KEY_SIZE = 32;  // Max symmetric key size: 256 bits
+        FileInputStream inStream = new FileInputStream(filePath);
+        byte[] byteArray = new byte[MAX_SYMMETRIC_KEY_SIZE];
+        int numBytes = inStream.read(byteArray);
+        return Arrays.copyOfRange(byteArray, 0, numBytes);
     }
 
     private static final Logger logger = LoggerFactory.getLogger(GenerateExampleAuthDB.class);

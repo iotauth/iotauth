@@ -25,11 +25,12 @@ import java.security.PublicKey;
  * @author Hokeun Kim
  */
 public class RegisteredEntity {
-    public RegisteredEntity(String name, String group, PublicKey publicKey, long distKeyValidity,
+    public RegisteredEntity(String name, String group, boolean usePermanentDistKey, PublicKey publicKey, long distKeyValidity,
                             SymmetricKeyCryptoSpec distCryptoSpec)
     {
         this.name = name;
         this.group = group;
+        this.usePermanentDistKey = usePermanentDistKey;
         this.publicKey = publicKey;
         this.distKeyValidity = distKeyValidity;
         this.distCryptoSpec = distCryptoSpec;
@@ -53,7 +54,9 @@ public class RegisteredEntity {
         return distCryptoSpec;
     }
     public String toString() {
-        String ret = "Name: " + name + "\tGroup: " + group + "\tDistKeyValidity: " + +distKeyValidity +
+        String ret = "Name: " + name + "\tGroup: " + group +
+                "\tUsePermanentKey:" + usePermanentDistKey +
+                "\tDistKeyValidity: " + distKeyValidity +
                 "\tDistCryptoSpec: " + distCryptoSpec.toString();
         ret += "\tDistKey: ";
         if (distributionKey == null) {
@@ -62,7 +65,9 @@ public class RegisteredEntity {
         else {
             ret += distributionKey.toString();
         }
-        ret += "\tPublicKey: " + Buffer.toHexString(publicKey.getEncoded());
+        if (!usePermanentDistKey) {
+            ret += "\tPublicKey: " + Buffer.toHexString(publicKey.getEncoded());
+        }
         return ret;
     }
     public void setDistributionKey(DistributionKey distributionKey) {
@@ -70,6 +75,7 @@ public class RegisteredEntity {
     }
     private String name;
     private String group;
+    private boolean usePermanentDistKey;
     private PublicKey publicKey;
     private long distKeyValidity;
     private SymmetricKeyCryptoSpec distCryptoSpec;
