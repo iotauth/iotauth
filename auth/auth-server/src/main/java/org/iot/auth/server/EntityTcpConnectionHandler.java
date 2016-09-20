@@ -48,17 +48,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A handler class for connections from each entity that requests Auth service (e.g., session key requests)
+ * A handler class for TCP connections from each entity that requests Auth service (e.g., session key requests)
  * @author Hokeun Kim
  */
-public class EntityConnectionHandler extends Thread {
+public class EntityTcpConnectionHandler extends Thread {
     /**
      * Constructor for the entity connection handler, to process a connected entity
      * @param server Auth server that this handler is for
      * @param entitySocket TCP socket of the connection with the entity
      * @param timeout A timeout for the connection with the entity
      */
-    public EntityConnectionHandler(AuthServer server, Socket entitySocket, long timeout) {
+    public EntityTcpConnectionHandler(AuthServer server, Socket entitySocket, long timeout) {
         this.socket = entitySocket;
         this.server = server;
         this.timeOut = timeout;
@@ -446,7 +446,7 @@ public class EntityConnectionHandler extends Thread {
         }
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(EntityConnectionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(EntityTcpConnectionHandler.class);
     private Socket socket;
     private AuthServer server;
     private long timeOut;

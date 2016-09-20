@@ -35,8 +35,8 @@ public class AuthServerProperties {
 
         host_name,
 
-        entity_port,
-        entity_port_timeout,
+        entity_tcp_port,
+        entity_tcp_port_timeout,
 
         trusted_auth_port,
         trusted_auth_port_idle_timeout,
@@ -54,8 +54,8 @@ public class AuthServerProperties {
 
     private String hostName;
 
-    private int entityPort;
-    private long entityPortTimeout;
+    private int entityTcpPort;
+    private long entityTcpPortTimeout;
 
     private int trustedAuthPort;
     private long trustedAuthPortIdleTimeout;
@@ -83,11 +83,11 @@ public class AuthServerProperties {
             logger.info("key:value = {}:{}", key.host_name.toString(), hostName);
 
 
-            entityPort = Integer.parseInt(prop.getProperty(key.entity_port.toString()));
-            logger.info("key:value = {}:{}", key.entity_port.toString(), entityPort);
+            entityTcpPort = Integer.parseInt(prop.getProperty(key.entity_tcp_port.toString()));
+            logger.info("key:value = {}:{}", key.entity_tcp_port.toString(), entityTcpPort);
 
-            entityPortTimeout = Long.parseLong(prop.getProperty(key.entity_port_timeout.toString()));
-            logger.info("key:value = {}:{}", key.entity_port_timeout.toString(), entityPortTimeout);
+            entityTcpPortTimeout = Long.parseLong(prop.getProperty(key.entity_tcp_port_timeout.toString()));
+            logger.info("key:value = {}:{}", key.entity_tcp_port_timeout.toString(), entityTcpPortTimeout);
 
 
             trustedAuthPort = Integer.parseInt(prop.getProperty(key.trusted_auth_port.toString()));
@@ -123,11 +123,11 @@ public class AuthServerProperties {
         return hostName;
     }
 
-    public int getEntityPort() {
-        return entityPort;
+    public int getEntityTcpPort() {
+        return entityTcpPort;
     }
-    public long getEntityPortTimeout() {
-        return entityPortTimeout;
+    public long getEntityTcpPortTimeout() {
+        return entityTcpPortTimeout;
     }
 
     public int getTrustedAuthPort() {

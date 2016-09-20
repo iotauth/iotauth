@@ -42,7 +42,7 @@ import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.SessionKey;
 import org.iot.auth.db.TrustedAuth;
 import org.iot.auth.server.CommunicationTargetType;
-import org.iot.auth.server.EntityConnectionHandler;
+import org.iot.auth.server.EntityTcpConnectionHandler;
 import org.iot.auth.server.TrustedAuthConnectionHandler;
 import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
@@ -95,19 +95,19 @@ public class AuthServer {
 
         crypto = new AuthCrypto(properties.getEntityKeyStorePath(), authKeyStorePassword);
 
-        entityPortTimeout = properties.getEntityPortTimeout();
+        entityTcpPortTimeout = properties.getEntityTcpPortTimeout();
 
         // suppress default logging by jetty
         org.eclipse.jetty.util.log.Log.setLog(new NoLogging());
 
         // TODO: get Port for this
-        entityPortServerSocket = new ServerSocket(properties.getEntityPort());
+        entityTcpPortServerSocket = new ServerSocket(properties.getEntityTcpPort());
 
         serverForTrustedAuths = initServerForTrustedAuths(properties, authKeyStorePassword);
         clientForTrustedAuths = initClientForTrustedAuths(properties, authKeyStorePassword);
 
-        logger.info("Auth server information. Auth ID: {}, Entity Port: {}, Trusted auth Port: {}, Host name: {}",
-                properties.getAuthID(), entityPortServerSocket.getLocalPort(),
+        logger.info("Auth server information. Auth ID: {}, Entity TCP Port: {}, Trusted auth Port: {}, Host name: {}",
+                properties.getAuthID(), entityTcpPortServerSocket.getLocalPort(),
                 ((ServerConnector) serverForTrustedAuths.getConnectors()[0]).getPort(),
                 properties.getHostName());
 
@@ -176,8 +176,8 @@ public class AuthServer {
      * @throws Exception When any exception occurs
      */
     public void begin() throws Exception {
-        EntityPortListener entityPortListener = new EntityPortListener(this);
-        entityPortListener.start();
+        EntityTcpPortListener entityTcpPortListener = new EntityTcpPortListener(this);
+        entityTcpPortListener.start();
 
         AuthCommandLine authCommandLine = new AuthCommandLine(this);
         authCommandLine.start();
@@ -464,8 +464,8 @@ public class AuthServer {
      * Class for a thread that listens to requests coming from entities, and creates another thread for processing
      * the request from an entity, which is entityConnectionHandler
      */
-    private class EntityPortListener extends Thread {
-        public EntityPortListener(AuthServer server) {
+    private class EntityTcpPortListener extends Thread {
+        public EntityTcpPortListener(AuthServer server) {
             this.server = server;
         }
         public void run() {
@@ -473,12 +473,12 @@ public class AuthServer {
             while(isRunning()) {
                 try {
                     while (isRunning) {
-                        Socket entitySocket = entityPortServerSocket.accept();
+                        Socket entitySocket = entityTcpPortServerSocket.accept();
                         logger.info("An entity connected from: {} ", entitySocket.getRemoteSocketAddress());
 
-                        EntityConnectionHandler entityConnectionHandler =
-                                new EntityConnectionHandler(server, entitySocket, entityPortTimeout);
-                        entityConnectionHandler.start();
+                        EntityTcpConnectionHandler entityTcpConnectionHandler =
+                                new EntityTcpConnectionHandler(server, entitySocket, entityTcpPortTimeout);
+                        entityTcpConnectionHandler.start();
                     }
                 } catch (IOException e) {
                     logger.error("IOException {}", ExceptionToString.convertExceptionToStackTrace(e));
@@ -512,9 +512,9 @@ public class AuthServer {
     private static final Logger logger = LoggerFactory.getLogger(AuthServer.class);
 
     private int authID;
-    private long entityPortTimeout;
+    private long entityTcpPortTimeout;
 
-    private ServerSocket entityPortServerSocket;
+    private ServerSocket entityTcpPortServerSocket;
 
     private boolean isRunning;
     private AuthDB db;
