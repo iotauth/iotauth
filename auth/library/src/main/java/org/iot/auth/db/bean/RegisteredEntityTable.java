@@ -29,6 +29,7 @@ import java.util.Arrays;
  */
 public class RegisteredEntityTable {
     public static final String T_REGISTERED_ENTITY = "registered_entity";
+
     public enum c {
         Name,
         Group,
@@ -40,7 +41,8 @@ public class RegisteredEntityTable {
         DistCipherAlgo,
         DistHashAlgo,
         DistKeyExpirationTime,
-        DistKeyVal
+        DistKeyVal,
+        MaxSessionKeysPerRequest
     }
     private String name;
     private String group;
@@ -53,6 +55,7 @@ public class RegisteredEntityTable {
     private String distHashAlgo;
     private long distKeyExpirationTime = -1;
     private byte[] distKeyVal = null;
+    private int maxSessionKeysPerRequest;
 
 
     public String getName() {
@@ -132,6 +135,13 @@ public class RegisteredEntityTable {
         this.distKeyVal = Arrays.copyOf(distKeyVal, distKeyVal.length);
     }
 
+    public int getMaxSessionKeysPerRequest() {
+        return maxSessionKeysPerRequest;
+    }
+    public void setMaxSessionKeysPerRequest(int maxSessionKeysPerRequest) {
+        this.maxSessionKeysPerRequest = maxSessionKeysPerRequest;
+    }
+
     public String toString() {
         return toJSONObject().toJSONString();
     }
@@ -143,6 +153,7 @@ public class RegisteredEntityTable {
         object.put(c.DistKeyValidity.name(), getDistKeyValidity());
         object.put(c.PublKeyFile.name(), getPublicKeyFile().toString());
         object.put(c.PublicKey.name(), getPublicKey());
+        object.put(c.MaxSessionKeysPerRequest.name(), getMaxSessionKeysPerRequest());
         return object;
     }
 
@@ -163,6 +174,7 @@ public class RegisteredEntityTable {
             entity.setDistKeyVal(distKeyVal);
             entity.setDistKeyExpirationTime(r.getLong(c.DistKeyExpirationTime.name()));
         }
+        entity.setMaxSessionKeysPerRequest(r.getInt(c.MaxSessionKeysPerRequest.name()));
         return entity;
     }
 }

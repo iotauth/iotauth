@@ -89,8 +89,9 @@ public class GenerateExampleAuthDB {
 
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "server");
-        registeredEntity.setGroup("");
+        registeredEntity.setGroup("Servers");
         registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(1);
         registeredEntity.setPublicKeyFile("certs/ServerCert.pem");
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
@@ -101,6 +102,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setName(entityPrefix + "client");
         registeredEntity.setGroup("Clients");
         registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/ClientCert.pem");
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
@@ -111,6 +113,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setName(entityPrefix + "ptServer");
         registeredEntity.setGroup("PtServers");
         registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(1);
         registeredEntity.setPublicKeyFile("certs/PtServerCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
@@ -121,6 +124,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setName(entityPrefix + "ptClient");
         registeredEntity.setGroup("PtClients");
         registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtClientCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
@@ -132,6 +136,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setName(entityPrefix + "rcServer");
         registeredEntity.setGroup("Servers");
         registeredEntity.setUsePermanentDistKey(true);
+        registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
@@ -144,6 +149,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setName(entityPrefix + "rcClient");
         registeredEntity.setGroup("Clients");
         registeredEntity.setUsePermanentDistKey(true);
+        registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
@@ -155,6 +161,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setName(entityPrefix + "ptPublisher");
         registeredEntity.setGroup("PtPublishers");
         registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtPublisherCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
@@ -165,6 +172,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setName(entityPrefix + "ptSubscriber");
         registeredEntity.setGroup("PtSubscribers");
         registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtSubscriberCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
