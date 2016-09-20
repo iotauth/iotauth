@@ -24,6 +24,7 @@ import java.util.Map;
  */
 public enum MessageType {
     AUTH_HELLO((byte)0),
+    ENTITY_HELLO((byte)1),
     AUTH_SESSION_KEY_REQ((byte)10),
     AUTH_SESSION_KEY_RESP((byte)11),
     SESSION_KEY_REQ_IN_PUB_ENC((byte)20),

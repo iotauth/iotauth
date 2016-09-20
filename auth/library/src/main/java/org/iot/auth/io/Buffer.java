@@ -47,6 +47,9 @@ public class Buffer {
     public Buffer(byte[] bytes) {
         this.bytes = Arrays.copyOf(bytes, bytes.length);
     }
+    public Buffer(byte[] bytes, int size) {
+        this.bytes = Arrays.copyOf(bytes, size);
+    }
 
     public Buffer(Buffer buf) {
         bytes = Arrays.copyOf(buf.getRawBytes(), buf.getRawBytes().length);

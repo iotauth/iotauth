@@ -38,6 +38,9 @@ public class AuthServerProperties {
         entity_tcp_port,
         entity_tcp_port_timeout,
 
+        entity_udp_port,
+        entity_udp_port_timeout,
+
         trusted_auth_port,
         trusted_auth_port_idle_timeout,
 
@@ -56,6 +59,9 @@ public class AuthServerProperties {
 
     private int entityTcpPort;
     private long entityTcpPortTimeout;
+
+    private int entityUdpPort;
+    private long entityUdpPortTimeout;
 
     private int trustedAuthPort;
     private long trustedAuthPortIdleTimeout;
@@ -88,6 +94,13 @@ public class AuthServerProperties {
 
             entityTcpPortTimeout = Long.parseLong(prop.getProperty(key.entity_tcp_port_timeout.toString()));
             logger.info("key:value = {}:{}", key.entity_tcp_port_timeout.toString(), entityTcpPortTimeout);
+
+
+            entityUdpPort = Integer.parseInt(prop.getProperty(key.entity_udp_port.toString()));
+            logger.info("key:value = {}:{}", key.entity_udp_port.toString(), entityUdpPort);
+
+            entityUdpPortTimeout = Long.parseLong(prop.getProperty(key.entity_udp_port_timeout.toString()));
+            logger.info("key:value = {}:{}", key.entity_udp_port_timeout.toString(), entityUdpPortTimeout);
 
 
             trustedAuthPort = Integer.parseInt(prop.getProperty(key.trusted_auth_port.toString()));
@@ -128,6 +141,13 @@ public class AuthServerProperties {
     }
     public long getEntityTcpPortTimeout() {
         return entityTcpPortTimeout;
+    }
+
+    public int getEntityUdpPort() {
+        return entityUdpPort;
+    }
+    public long getEntityUdpPortTimeout() {
+        return entityUdpPortTimeout;
     }
 
     public int getTrustedAuthPort() {

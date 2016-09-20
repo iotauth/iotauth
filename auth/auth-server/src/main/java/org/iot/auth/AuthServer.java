@@ -41,6 +41,7 @@ import org.iot.auth.db.DistributionKey;
 import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.SessionKey;
 import org.iot.auth.db.TrustedAuth;
+import org.iot.auth.io.Buffer;
 import org.iot.auth.server.CommunicationTargetType;
 import org.iot.auth.server.EntityTcpConnectionHandler;
 import org.iot.auth.server.TrustedAuthConnectionHandler;
@@ -55,6 +56,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyStore;
@@ -100,14 +103,15 @@ public class AuthServer {
         // suppress default logging by jetty
         org.eclipse.jetty.util.log.Log.setLog(new NoLogging());
 
-        // TODO: get Port for this
+        // Init tcp server socket
         entityTcpPortServerSocket = new ServerSocket(properties.getEntityTcpPort());
+        entityUdpPortServerSocket = new DatagramSocket(properties.getEntityUdpPort());
 
         serverForTrustedAuths = initServerForTrustedAuths(properties, authKeyStorePassword);
         clientForTrustedAuths = initClientForTrustedAuths(properties, authKeyStorePassword);
 
-        logger.info("Auth server information. Auth ID: {}, Entity TCP Port: {}, Trusted auth Port: {}, Host name: {}",
-                properties.getAuthID(), entityTcpPortServerSocket.getLocalPort(),
+        logger.info("Auth server information. Auth ID: {}, Entity Ports TCP: {} UDP: {}, Trusted auth Port: {}, Host name: {}",
+                properties.getAuthID(), entityTcpPortServerSocket.getLocalPort(), entityUdpPortServerSocket.getLocalPort(),
                 ((ServerConnector) serverForTrustedAuths.getConnectors()[0]).getPort(),
                 properties.getHostName());
 
@@ -178,6 +182,9 @@ public class AuthServer {
     public void begin() throws Exception {
         EntityTcpPortListener entityTcpPortListener = new EntityTcpPortListener(this);
         entityTcpPortListener.start();
+
+        EntityUdpPortListener entityUdpPortListener = new EntityUdpPortListener(this);
+        entityUdpPortListener.start();
 
         AuthCommandLine authCommandLine = new AuthCommandLine(this);
         authCommandLine.start();
@@ -461,8 +468,8 @@ public class AuthServer {
     }
 
     /**
-     * Class for a thread that listens to requests coming from entities, and creates another thread for processing
-     * the request from an entity, which is entityConnectionHandler
+     * Class for a thread that listens to TCP connections coming from entities, and creates another thread for processing
+     * the connection from an entity, which is entityTcpConnectionHandler
      */
     private class EntityTcpPortListener extends Thread {
         public EntityTcpPortListener(AuthServer server) {
@@ -481,7 +488,36 @@ public class AuthServer {
                         entityTcpConnectionHandler.start();
                     }
                 } catch (IOException e) {
-                    logger.error("IOException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                    logger.error("IOException in Entity TCP Port Listener {}", ExceptionToString.convertExceptionToStackTrace(e));
+                }
+            }
+        }
+        private AuthServer server;
+    }
+
+    /**
+     * Class for a thread that listens to UDP connection coming from entities
+     */
+    private class EntityUdpPortListener extends Thread {
+        public EntityUdpPortListener(AuthServer server) {
+            this.server = server;
+        }
+        public void run() {
+            while (isRunning()) {
+                byte[] bufferBytes = new byte[4096];
+                DatagramPacket receivedPacket = new DatagramPacket(bufferBytes, bufferBytes.length);
+                try {
+                    entityUdpPortServerSocket.receive(receivedPacket);
+                    logger.info("Entity Address: {}, Port: {}, Length: {}", receivedPacket.getAddress().toString(),
+                            receivedPacket.getPort(), receivedPacket.getLength());
+                    byte[] receivedBytes = receivedPacket.getData();
+                    Buffer receivedBuffer = new Buffer(receivedBytes, receivedPacket.getLength());
+                    logger.info("Received data : {}", receivedBuffer.toHexString());
+
+                    DatagramPacket packetToSend = new DatagramPacket(receivedBuffer.getRawBytes(), receivedBuffer.getRawBytes().length, receivedPacket.getAddress(), receivedPacket.getPort());
+                    entityUdpPortServerSocket.send(packetToSend);
+                } catch (IOException e) {
+                    logger.error("IOException in Entity UDP Port Listener {}", ExceptionToString.convertExceptionToStackTrace(e));
                 }
             }
         }
@@ -515,6 +551,7 @@ public class AuthServer {
     private long entityTcpPortTimeout;
 
     private ServerSocket entityTcpPortServerSocket;
+    private DatagramSocket entityUdpPortServerSocket;
 
     private boolean isRunning;
     private AuthDB db;
