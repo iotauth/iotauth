@@ -27,7 +27,13 @@ var common = require('common');
 var mqtt = require('mqtt');
 var util = require('util');
 var msgType = iotAuth.msgType;
-var commState = iotAuth.commState;
+var commState = {
+    IDLE: 0,
+    HANDSHAKE_1_SENT: 1,
+    HANDSHAKE_2_SENT: 2,
+    HANDSHAKE_3_SENT: 3,
+    IN_COMM: 4                    // Session message
+};
 
 // to be loaded from config file
 var entityInfo;

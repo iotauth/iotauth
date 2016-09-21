@@ -26,7 +26,11 @@ var common = require('common');
 var mqtt = require('mqtt');
 var util = require('util');
 var msgType = iotAuth.msgType;
-var commState = iotAuth.commState;
+
+var clientCommState = {
+    IDLE: 0,
+    IN_COMM: 30                    // Session message
+};
 
 // to be loaded from config file
 var entityInfo;
@@ -34,7 +38,7 @@ var authInfo;
 var targetServerInfoList;
 
 // initial states
-var currentState = commState.IDLE;
+var currentState = clientCommState.IDLE;
 var pubSeqNum = 0;
 var writeSeqNum = 0;
 var readSeqNum = 0;
@@ -61,159 +65,69 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey) {
     }
 };
 
-var commSessionKey;
-var curClient;
+var currentSessionKey;
+var currentSecureClient;
 var tempLargeDataBuf;
 
-function initComm(commServerInfo) {
-    if (sessionKeyCacheForServers.length == 0) {
-        console.log('No available key for servers!');
-        return;
-    }
-
-    // per connection information
-    commSessionKey = sessionKeyCacheForServers[0];
-    console.log('chosen commSessionKey: ');
-    console.log(commSessionKey);
-    var myNonce;
-
-    curClient = net.connect({host:commServerInfo.host, port: commServerInfo.port},
-        function() {
-            console.log('connected to ' + commServerInfo.name + '(' + commServerInfo.host
-                + ':' + commServerInfo.port + ')! from local port ' + curClient.localPort);
-
-            myNonce = iotAuth.generateHSNonce();
-            console.log('chosen nonce: ' + myNonce.inspect());
-
-            var handshake1 = {nonce: myNonce};
-            var buf = iotAuth.serializeHandshake(handshake1);
-            var enc = iotAuth.encryptSessionMessage(buf, commSessionKey.val);
-            var keyIdBuf = new Buffer(common.S_KEY_ID_SIZE);
-            keyIdBuf.writeUIntBE(commSessionKey.id, 0, common.S_KEY_ID_SIZE);
-
-            var msg = {
-                msgType: msgType.SKEY_HANDSHAKE_1,
-                payload: Buffer.concat([keyIdBuf, enc])
-            };
-            curClient.write(common.serializeIoTSP(msg));
-
-            console.log('switching to HANDSHAKE_1_SENT');
-            currentState = commState.HANDSHAKE_1_SENT;
-    });
-
-    var expectingMoreData = false;
-    var obj;
-    curClient.on('data', function(data) {
-        if (!expectingMoreData) {
-            obj = common.parseIoTSP(data);
-            if (obj.payload.length < obj.payloadLen) {
-                expectingMoreData = true;
-                console.log('more data will come. current: ' + obj.payload.length
-                    + ' expected: ' + obj.payloadLen);
-            }
-        }
-        else {
-            obj.payload = Buffer.concat([obj.payload, data]);
-            if (obj.payload.length ==  obj.payloadLen) {
-                expectingMoreData = false;
-            }
-            else {
-                console.log('more data will come. current: ' + obj.payload.length
-                    + ' expected: ' + obj.payloadLen);
-            }
-        }
-
-        if (expectingMoreData) {
-            // do not process the packet yet
-            return;
-        }
-        else if (obj.msgType == msgType.SKEY_HANDSHAKE_2) {
-            console.log('received session key handshake2!');
-            if (currentState != commState.HANDSHAKE_1_SENT) {
-                console.log('Error: wrong sequence of handshake, disconnecting...');
-                currentState = commState.IDLE;
-                curClient.end();
-                return;
-            }
-
-            var buf = iotAuth.decryptSessionMessage(obj.payload, commSessionKey.val);
-            var ret = iotAuth.parseHandshake(buf);
-            console.log(ret);
-
-            if (myNonce.equals(ret.replyNonce)) {
-                console.log('server authenticated/authorized by solving nonce!');
-            }
-            else {
-                console.log('Error: server NOT verified, nonce NOT matched, disconnecting...');
-                currentState = commState.IDLE;
-                curClient.end();
-                return;
-            }
-
-            var theirNonce = ret.nonce;
-            var handshake3 = {replyNonce: theirNonce};
-
-            buf = iotAuth.serializeHandshake(handshake3);
-            var enc = iotAuth.encryptSessionMessage(buf, commSessionKey.val);
-
-            var msg = {
-                msgType: msgType.SKEY_HANDSHAKE_3,
-                payload: enc
-            };
-            curClient.write(common.serializeIoTSP(msg));
-
-            console.log('switching to IN_COMM');
-            currentState = commState.IN_COMM;
-            readSeqNum = 0;
-            writeSeqNum = 0;
-        }
-        else if (obj.msgType == msgType.SECURE_COMM_MSG) {
-            console.log('received secure communication message!');
-            if (currentState != commState.IN_COMM) {
-                console.log('Error: it is not in IN_COMM state, disconecting...');
-                currentState = commState.IDLE;
-                curClient.end();
-                return;
-            }
-
-            var ret = iotAuth.parseDecryptSessionMessage(obj.payload, commSessionKey.val);
-            if (ret.seqNum != readSeqNum) {
-            	console.log('seqNum does not match! expected: ' + readSeqNum + ' received: ' + ret.seqNum);
-            }
-            readSeqNum++;
-            if (ret.data.length > 65535) {
-            	console.log('seqNum: ' + ret.seqNum);
-                console.log('data is too large to display, to store in file use saveData command');
-                tempLargeDataBuf = ret.data;
-            }
-            else {
-            	console.log('seqNum: ' + ret.seqNum + ' data: ' + ret.data.toString());
-            }
-        }
-    });
-
-    curClient.on('end', function() {
-        console.log('disconnected from ' + commServerInfo.name);
-        console.log('switching to IDLE');
-        currentState = commState.IDLE;
-    });
-    curClient.on('error', function(message) {
-        console.log('Error, details: ' + message);
-    });
-};
 
 function finComm() {
-    curClient.end();
-    currentState = commState.IDLE;
+    currentSecureClient.close();
+    currentState = clientCommState.IDLE;
     // remove used session key
+    /*
     for (var i = 0; i < sessionKeyCacheForServers.length; i++) {
-        if (sessionKeyCacheForServers[i].id == commSessionKey.id) {
+        if (sessionKeyCacheForServers[i].id == currentSessionKey.id) {
             sessionKeyCacheForServers.splice(i, 1);
         }
     }
+    */
 };
 
 var mqttClient;
+function onClose() {
+    console.log('secure connection with the server closed.');
+};
+function onError(message) {
+    console.error('Error in secure comm - details: ' + message);
+};
+function onData(data) {
+    console.log('data received from server via secure communication');
+    if (data.length > 65535) {
+        console.log('data is too large to display, to store in file use saveData command');
+        tempLargeDataBuf = data;
+    }
+    else {
+        console.log(data.toString());
+    }
+};
+function onConnection(entityClientSocket) {
+    console.log('communication initialization succeeded');
+    currentSecureClient = entityClientSocket;
+    currentState = clientCommState.IN_COMM;
+};
+
+function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
+    currentSessionKey = sessionKey;
+    console.log(currentSessionKey);
+    if (currentSecureClient) {
+        currentSecureClient.close();
+        console.log('Status: Secure connection closed before starting a new connection.');
+        currentState = clientCommState.IDLE;
+    }
+    var options = {
+        serverHost: serverHost,
+        serverPort: serverPort,
+        sessionKey: currentSessionKey,
+        sessionCryptoSpec: {cipher: 'AES-128-CBC', hash: 'SHA256'}
+    };
+    var eventHandlers = {
+        onClose: onClose,
+        onError: onError,
+        onData: onData,
+        onConnection: onConnection
+    };
+    iotAuth.initializeSecureCommunication(options, eventHandlers);
+}
 
 function commandInterpreter() {
     var chunk = process.stdin.read();
@@ -231,7 +145,7 @@ function commandInterpreter() {
         }
 
         if (command == 'initComm') {
-            if (currentState != commState.IDLE) {
+            if (currentState != clientCommState.IDLE) {
                 console.log('invalid initComm command, it is not in IDLE state');
                 return;
             }
@@ -261,10 +175,10 @@ function commandInterpreter() {
             }
             
             console.log('initComm command targeted to ' + commServerInfo.name);
-            initComm(commServerInfo);
+            initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', commServerInfo.port);
         }
         else if (command == 'finComm' || command == 'f') {
-            if (currentState != commState.IN_COMM) {
+            if (currentState != clientCommState.IN_COMM) {
                 console.log('invalid finComm command, it is not in IN_COMM state');
             }
             else {
@@ -281,23 +195,26 @@ function commandInterpreter() {
             console.log(util.inspect(sessionKeyCacheForPublish));
         }
         else if (command == 'send') {
-            if (currentState != commState.IN_COMM) {
+            if (currentState != clientCommState.IN_COMM) {
                 console.log('invalid send command, it is not in IN_COMM state');
             }
             else {
                 console.log('send command');
+                currentSecureClient.send(new Buffer(message));
+                /*
                 var enc = iotAuth.serializeEncryptSessionMessage(
-                	{seqNum: writeSeqNum, data: new Buffer(message)}, commSessionKey.val);
+                	{seqNum: writeSeqNum, data: new Buffer(message)}, currentSessionKey.val);
                 writeSeqNum++;
                 var buf = common.serializeIoTSP({
                     msgType: msgType.SECURE_COMM_MSG,
                     payload: enc
                 });
-                curClient.write(buf);
+                currentSecureClient.write(buf);
+                */
             }
         }
         else if (command == 'sendFile') {
-            if (currentState != commState.IN_COMM) {
+            if (currentState != clientCommState.IN_COMM) {
                 console.log('invalid sendFile command, it is not in IN_COMM state');
             }
             else {
@@ -308,14 +225,17 @@ function commandInterpreter() {
                 }
                 var fileData = fs.readFileSync(fileName);
                 console.log('file data length: ' + fileData.length);
+                currentSecureClient.send(fileData);
+                /*
                 var enc = iotAuth.serializeEncryptSessionMessage(
-                	{seqNum: writeSeqNum, data: fileData}, commSessionKey.val);
+                	{seqNum: writeSeqNum, data: fileData}, currentSessionKey.val);
                 writeSeqNum++;
                 var buf = common.serializeIoTSP({
                     msgType: msgType.SECURE_COMM_MSG,
                     payload: enc
                 });
-                curClient.write(buf);
+                currentSecureClient.write(buf);
+                */
             }
         }
         else if (command == 'mqtt') {
@@ -451,7 +371,7 @@ function commandInterpreter() {
                 }
             }
             var repeater = function() {
-                initComm(commServerInfo);
+                initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', commServerInfo.port);
                 setTimeout(repeater2, 1000);
             }
             repeater();
@@ -463,7 +383,7 @@ function commandInterpreter() {
                 handleSessionKeyResp(sessionKeyList, receivedDistKey);
                 var commServerInfo = targetServerInfoList[0];
                 console.log('initComm command targeted to ' + commServerInfo.name);
-                initComm(commServerInfo);
+                iotAuth.initializeSecureCommunication(commServerInfo);
             }
             var numKeys = 1;
             currentTargetSessionKeyCache = 'Servers';
