@@ -19,7 +19,6 @@
  */
 "use strict";
 
-var net = require('net');
 var fs = require('fs');
 var iotAuth = require('iotAuth')
 var common = require('common');
@@ -277,11 +276,7 @@ function commandInterpreter() {
             var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
                 {seqNum: pubSeqNum, data: new Buffer(message)}, sessionKeyCacheForPublish[0]);
             pubSeqNum++;
-            var buf = common.serializeIoTSP({
-                msgType: msgType.SECURE_PUB,
-                payload: secureMqtt
-            });
-            mqttClient.publish('Ptopic', buf);
+            mqttClient.publish('Ptopic', secureMqtt);
         }
         else if (command == 'spubFile') {
             console.log('spubFile command, secure publish of file');
@@ -302,11 +297,7 @@ function commandInterpreter() {
             var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
                 {seqNum: pubSeqNum, data: fileData}, sessionKeyCacheForPublish[0]);
             pubSeqNum++;
-            var buf = common.serializeIoTSP({
-                msgType: msgType.SECURE_PUB,
-                payload: secureMqtt
-            });
-            mqttClient.publish('Ptopic', buf);
+            mqttClient.publish('Ptopic', secureMqtt);
         }
         else if (command == 'skReq') {
             console.log('skReq (Session key request for target servers) command');
@@ -410,7 +401,7 @@ authInfo = entityConfig.authInfo;
 targetServerInfoList = entityConfig.targetServerInfoList;
 
 if (entityInfo.usePermanentDistKey) {
-    var absValidity = new Date().getTime() + common.parseTimePeriod(entityInfo.distKeyValidity);
+    var absValidity = new Date().getTime() + iotAuth.parseTimePeriod(entityInfo.distKeyValidity);
     distributionKey = {
         val: entityInfo.permanentDistKey,
         absValidity: new Date(absValidity)

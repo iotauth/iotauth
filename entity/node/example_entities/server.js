@@ -390,7 +390,7 @@ authInfo = entityConfig.authInfo;
 listeningServerInfo = entityConfig.listeningServerInfo;
 
 if (entityInfo.usePermanentDistKey) {
-    var absValidity = new Date().getTime() + common.parseTimePeriod(entityInfo.distKeyValidity);
+    var absValidity = new Date().getTime() + iotAuth.parseTimePeriod(entityInfo.distKeyValidity);
     distributionKey = {
         val: entityInfo.permanentDistKey,
         absValidity: new Date(absValidity)
