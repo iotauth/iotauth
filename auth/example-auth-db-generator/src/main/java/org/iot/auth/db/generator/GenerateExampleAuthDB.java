@@ -188,6 +188,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(2);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("1*day");
@@ -197,6 +198,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(2);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("1*hour");
@@ -206,6 +208,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("PtClients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(2);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("1*day");
@@ -215,6 +218,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("PtClients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(2);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("2*hour");
@@ -224,6 +228,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
@@ -233,6 +238,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
@@ -242,6 +248,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
@@ -251,6 +258,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
@@ -260,6 +268,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("PtPublishers");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
@@ -269,6 +278,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setReqGroup("PtSubscribers");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
+        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
         communicationPolicyTable.setCipherAlgo("AES-128-CBC");
         communicationPolicyTable.setHashAlgo("SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");

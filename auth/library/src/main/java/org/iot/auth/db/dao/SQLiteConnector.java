@@ -57,6 +57,7 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.TargetType.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.Target.name() + " TEXT NOT NULL,";
+        sql += CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + " INT NOT NULL,";
         sql += CommunicationPolicyTable.c.CipherAlgorithm.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.HashAlgorithm.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + " TEXT NOT NULL,";
@@ -108,6 +109,8 @@ public class SQLiteConnector {
         sql = "CREATE TABLE IF NOT EXISTS " + CachedSessionKeyTable.T_CACHED_SESSION_KEY + "(";
         sql += CachedSessionKeyTable.c.ID.name() + " INT NOT NULL PRIMARY KEY,";
         sql += CachedSessionKeyTable.c.Owners.name() + " TEXT NOT NULL,";
+        sql += CachedSessionKeyTable.c.MaxNumOwners.name() + " INT NOT NULL,";
+        sql += CachedSessionKeyTable.c.Purpose.name() + " TEXT NOT NULL,";
         sql += CachedSessionKeyTable.c.AbsValidity.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.RelValidity.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.CipherAlgo.name() + " TEXT NOT NULL,";
@@ -152,19 +155,21 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
         sql += CommunicationPolicyTable.c.Target.name() + ",";
+        sql += CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + ",";
         sql += CommunicationPolicyTable.c.CipherAlgorithm.name() + ",";
         sql += CommunicationPolicyTable.c.HashAlgorithm.name() + ",";
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + ",";
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?)";
+        sql += " VALUES (?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         preparedStatement.setString(1,policy.getReqGroup());
         preparedStatement.setString(2,policy.getTargetTypeVal());
         preparedStatement.setString(3,policy.getTarget());
-        preparedStatement.setString(4,policy.getCipherAlgo());
-        preparedStatement.setString(5,policy.getHashAlgo());
-        preparedStatement.setString(6,policy.getAbsValidityStr());
-        preparedStatement.setString(7,policy.getRelValidityStr());
+        preparedStatement.setInt(4,policy.getMaxNumSessionKeyOwners());
+        preparedStatement.setString(5,policy.getCipherAlgo());
+        preparedStatement.setString(6,policy.getHashAlgo());
+        preparedStatement.setString(7,policy.getAbsValidityStr());
+        preparedStatement.setString(8,policy.getRelValidityStr());
         if (DEBUG) logger.info(preparedStatement.toString());
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -275,20 +280,24 @@ public class SQLiteConnector {
         String sql = "INSERT INTO " + CachedSessionKeyTable.T_CACHED_SESSION_KEY + "(";
         sql += CachedSessionKeyTable.c.ID.name() + ",";
         sql += CachedSessionKeyTable.c.Owners.name() + ",";
+        sql += CachedSessionKeyTable.c.MaxNumOwners.name() + ",";
+        sql += CachedSessionKeyTable.c.Purpose.name() + ",";
         sql += CachedSessionKeyTable.c.AbsValidity.name() + ",";
         sql += CachedSessionKeyTable.c.RelValidity.name() + ",";
         sql += CachedSessionKeyTable.c.CipherAlgo.name() + ",";
         sql += CachedSessionKeyTable.c.HashAlgo.name() + ",";
         sql += CachedSessionKeyTable.c.KeyVal.name() + ")";
-        sql += " VALUES(?,?,?,?,?,?,?)";
+        sql += " VALUES(?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         preparedStatement.setLong(1,cachedSessionKey.getID());
         preparedStatement.setString(2,cachedSessionKey.getOwner());
-        preparedStatement.setLong(3,cachedSessionKey.getAbsValidity());
-        preparedStatement.setLong(4,cachedSessionKey.getRelValidity());
-        preparedStatement.setString(5,cachedSessionKey.getCipherAlgo());
-        preparedStatement.setString(6,cachedSessionKey.getHashAlgo());
-        preparedStatement.setBytes(7,cachedSessionKey.getKeyVal());
+        preparedStatement.setInt(3,cachedSessionKey.getMaxNumOwners());
+        preparedStatement.setString(4,cachedSessionKey.getPurpose());
+        preparedStatement.setLong(5,cachedSessionKey.getAbsValidity());
+        preparedStatement.setLong(6,cachedSessionKey.getRelValidity());
+        preparedStatement.setString(7,cachedSessionKey.getCipherAlgo());
+        preparedStatement.setString(8,cachedSessionKey.getHashAlgo());
+        preparedStatement.setBytes(9,cachedSessionKey.getKeyVal());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -494,6 +503,20 @@ public class SQLiteConnector {
         // It's in auto-commit mode no need for explicit commit
         //_commit();
         return result;
+    }
+
+    /**
+     * Delete all cached session keys from the database.
+     * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
+     * @throws SQLException if a database access error occurs;
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    public boolean deleteAllCachedSessionKeys() throws SQLException, ClassNotFoundException {
+        setConnection();
+        String sql = "DELETE FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        return preparedStatement.execute();
     }
 
     /**

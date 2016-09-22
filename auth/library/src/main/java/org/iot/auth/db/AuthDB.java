@@ -134,12 +134,14 @@ public class AuthDB {
         String value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.SessionKeyCount.name());
         long sessionKeyCount = Long.parseLong(value);
 
-
+        // FIXME: Create SessionKeyPurpose class and handle it here
+        String purpose = communicationPolicy.getTargetType().name() + ":" + communicationPolicy.getTarget();
         for (long i = 0; i < numKeys; i++) {
             long curSessionKeyIndex = sessionKeyCount + i;
             // TODO: work on authID encoding
             long sessionKeyID = encodeSessionKeyID(authID, curSessionKeyIndex);
             SessionKey sessionKey = new SessionKey(sessionKeyID, owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
+                    communicationPolicy.getMaxNumSessionKeyOwners(), purpose,
                     new Date().getTime() + communicationPolicy.getAbsValidity(), communicationPolicy.getRelValidity(),
                     communicationPolicy.getCryptoSpec(), AuthCrypto.getRandomBytes(communicationPolicy.getCryptoSpec().getCipherKeySize()));
             sessionKeyList.add(sessionKey);
@@ -168,6 +170,10 @@ public class AuthDB {
 
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
         sqLiteConnector.deleteExpiredCahcedSessionKeys();
+    }
+
+    public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {
+        sqLiteConnector.deleteAllCachedSessionKeys();
     }
 
     public TrustedAuth getTrustedAuthInfo(int authID) {
@@ -268,6 +274,7 @@ public class AuthDB {
     private void loadCommPolicyDB() throws SQLException, ClassNotFoundException {
         sqLiteConnector.selectAllPolicies().forEach(c -> {
             CommunicationPolicy communicationPolicy = new CommunicationPolicy(c.getReqGroup(), c.getTargetType(), c.getTarget(),
+                    c.getMaxNumSessionKeyOwners(),
                     c.getCipherAlgo(), c.getHashAlgo(),
                     c.getAbsValidity(), c.getRelValidity());
             communicationPolicyList.add(communicationPolicy);

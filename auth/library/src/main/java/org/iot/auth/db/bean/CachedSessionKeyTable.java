@@ -33,6 +33,8 @@ public class CachedSessionKeyTable {
     public enum c {
         ID,
         Owners,
+        MaxNumOwners,
+        Purpose,
         AbsValidity,
         RelValidity,
         CipherAlgo,
@@ -44,6 +46,8 @@ public class CachedSessionKeyTable {
         CachedSessionKeyTable cachedSessionKey = new CachedSessionKeyTable();
         cachedSessionKey.setID(sessionKey.getID());
         cachedSessionKey.setOwner(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getOwners()));
+        cachedSessionKey.setMaxNumOwners(sessionKey.getMaxNumOwners());
+        cachedSessionKey.setPurpose(sessionKey.getPurpose());
         cachedSessionKey.setAbsValidity(sessionKey.getAbsValidity().getTime());
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
         SymmetricKeyCryptoSpec cryptoSpec = sessionKey.getCryptoSpec();
@@ -55,7 +59,9 @@ public class CachedSessionKeyTable {
 
     public SessionKey toSessionKey() {
         SymmetricKeyCryptoSpec cryptoSpec = SymmetricKeyCryptoSpec.fromJSSpec(getCipherAlgo(), getHashAlgo());
-        SessionKey sessionKey = new SessionKey(getID(), getOwner().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM), getAbsValidity(), getRelValidity(),
+        SessionKey sessionKey = new SessionKey(getID(), getOwner().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
+                getMaxNumOwners(), getPurpose(),
+                getAbsValidity(), getRelValidity(),
                 cryptoSpec, new Buffer(getKeyVal()));
         return sessionKey;
     }
@@ -72,6 +78,19 @@ public class CachedSessionKeyTable {
     public void setOwner(String owner) {
         this.owners = owner;
     }
+    public int getMaxNumOwners() {
+        return maxNumOwners;
+    }
+    public void setMaxNumOwners(int maxNumOwners) {
+        this.maxNumOwners = maxNumOwners;
+    }
+    public String getPurpose() {
+        return purpose;
+    }
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
+    }
+
 
     public long getAbsValidity() {
         return absValidity;
@@ -110,6 +129,8 @@ public class CachedSessionKeyTable {
         CachedSessionKeyTable cachedSessionKey = new CachedSessionKeyTable();
         cachedSessionKey.setID(r.getLong(c.ID.name()));
         cachedSessionKey.setOwner(r.getString(c.Owners.name()));
+        cachedSessionKey.setMaxNumOwners(r.getInt(c.MaxNumOwners.name()));
+        cachedSessionKey.setPurpose(r.getString(c.Purpose.name()));
         cachedSessionKey.setAbsValidity(r.getLong(c.AbsValidity.name()));
         cachedSessionKey.setRelValidity(r.getLong(c.RelValidity.name()));
         cachedSessionKey.setCipherAlgo(r.getString(c.CipherAlgo.name()));
@@ -122,6 +143,8 @@ public class CachedSessionKeyTable {
         JSONObject object = new JSONObject();
         object.put(c.ID.name(), getID());
         object.put(c.Owners.name(), getOwner());
+        object.put(c.MaxNumOwners.name(), getMaxNumOwners());
+        object.put(c.Purpose.name(), getPurpose());
         object.put(c.AbsValidity.name(), getAbsValidity());
         object.put(c.RelValidity.name(), getRelValidity());
         object.put(c.CipherAlgo.name(), getCipherAlgo());
@@ -132,6 +155,8 @@ public class CachedSessionKeyTable {
 
     private long id;
     private String owners;
+    private int maxNumOwners;
+    private String purpose;
 
     private long absValidity;
     private long relValidity;

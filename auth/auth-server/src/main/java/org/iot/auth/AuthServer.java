@@ -350,6 +350,14 @@ public class AuthServer {
         db.cleanExpiredSessionKeys();
     }
 
+    /**
+     * Method for exposing an AuthDB operation, deleteAllSessionKeys
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {
+        db.deleteAllSessionKeys();
+    }
     //////////////////////////////////////////////////
     ///
     /// Above are methods for exposing AuthDB operations, rather than exposing AuthDB object itself

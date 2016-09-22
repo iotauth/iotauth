@@ -46,13 +46,15 @@ public class SessionKey {
     private enum key {
         ID,
         Owners,
+        MaxNumOwners,
+        Purpose,
         AbsValidity,
         RelValidity,
         CryptoSpec,
         KeyVal
     }
 
-    public SessionKey(long id, String[] owners,
+    public SessionKey(long id, String[] owners, int maxNumOwners, String purpose,
                       long absValidity, long relValidity,
                       SymmetricKeyCryptoSpec cryptoSpec, Buffer keyVal)
     {
@@ -61,6 +63,9 @@ public class SessionKey {
         }
         this.id = id;
         this.owners = owners;
+
+        this.maxNumOwners = maxNumOwners;
+        this.purpose = purpose;
 
         // from time of generation
         this.absValidity = new Date(absValidity);
@@ -94,6 +99,8 @@ public class SessionKey {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(key.ID, id);
         jsonObject.put(key.Owners, String.join(SESSION_KEY_OWNER_NAME_DELIM, owners));
+        jsonObject.put(key.MaxNumOwners, maxNumOwners);
+        jsonObject.put(key.Purpose, purpose);
         jsonObject.put(key.AbsValidity, absValidity.getTime());
         jsonObject.put(key.RelValidity, relValidity);
         jsonObject.put(key.CryptoSpec, cryptoSpec.toJSONObject());
@@ -103,13 +110,15 @@ public class SessionKey {
 
     public static SessionKey fromJSONObject(JSONObject jsonObject) throws ParseException {
         SessionKey sessionKey = new SessionKey(
-                Long.parseLong(jsonObject.get(key.ID.toString()).toString()),
-                jsonObject.get(key.Owners.toString()).toString().split(SESSION_KEY_OWNER_NAME_DELIM),
-                Long.parseLong(jsonObject.get(key.AbsValidity.toString()).toString()),
-                Long.parseLong(jsonObject.get(key.RelValidity.toString()).toString()),
+                Long.parseLong(jsonObject.get(key.ID.name()).toString()),
+                jsonObject.get(key.Owners.name()).toString().split(SESSION_KEY_OWNER_NAME_DELIM),
+                Integer.parseInt(jsonObject.get(key.MaxNumOwners.name()).toString()),
+                jsonObject.get(key.Purpose.name()).toString(),
+                Long.parseLong(jsonObject.get(key.AbsValidity.name()).toString()),
+                Long.parseLong(jsonObject.get(key.RelValidity.name()).toString()),
                 SymmetricKeyCryptoSpec.fromJSONObject(
-                        (JSONObject) new JSONParser().parse(jsonObject.get(key.CryptoSpec.toString()).toString())),
-                Buffer.fromBase64(jsonObject.get(key.KeyVal.toString()).toString())
+                        (JSONObject) new JSONParser().parse(jsonObject.get(key.CryptoSpec.name()).toString())),
+                Buffer.fromBase64(jsonObject.get(key.KeyVal.name()).toString())
         );
         return sessionKey;
     }
@@ -122,13 +131,19 @@ public class SessionKey {
         return owners;
     }
 
+    public int getMaxNumOwners() {
+        return maxNumOwners;
+    }
+    public String getPurpose() {
+        return purpose;
+    }
+
     public Date getAbsValidity() {
         return absValidity;
     }
     public long getRelValidity() {
         return relValidity;
     }
-
 
     public SymmetricKeyCryptoSpec getCryptoSpec() {
         return cryptoSpec;
@@ -140,6 +155,9 @@ public class SessionKey {
 
     private long id;
     private String[] owners;
+
+    private int maxNumOwners;
+    private String purpose;
 
     private Date absValidity;
     private long relValidity;

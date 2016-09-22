@@ -24,12 +24,14 @@ import org.iot.auth.server.CommunicationTargetType;
  */
 public class CommunicationPolicy {
     public CommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target,
+                               int maxNumSessionKeyOwners,
                                String cipherAlgo, String hashAlgo,
                                long absValidity, long relValidity)
     {
         this.reqGroup = reqGroup;
         this.targetType = targetType;
         this.target = target;
+        this.maxNumSessionKeyOwners = maxNumSessionKeyOwners;
 
         this.cryptoSpec = SymmetricKeyCryptoSpec.fromJSSpec(cipherAlgo, hashAlgo);
 
@@ -45,6 +47,9 @@ public class CommunicationPolicy {
     }
     public String getTarget() {
         return target;
+    }
+    public int getMaxNumSessionKeyOwners() {
+        return maxNumSessionKeyOwners;
     }
 
     public SymmetricKeyCryptoSpec getCryptoSpec() {
@@ -68,6 +73,7 @@ public class CommunicationPolicy {
     private String reqGroup;
     private CommunicationTargetType targetType;
     private String target;
+    private int maxNumSessionKeyOwners;
 
     private SymmetricKeyCryptoSpec cryptoSpec;
 

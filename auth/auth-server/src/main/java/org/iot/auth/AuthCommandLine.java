@@ -40,7 +40,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., show re/cp/ta/sk, clean sk): ");
+                logger.info("\nEnter command (e.g., show re/cp/ta/sk, clean sk, reset sk): ");
                 String command = br.readLine();
                 command = command.trim();
                 if (command.length() == 0) {
@@ -73,6 +73,16 @@ public class AuthCommandLine extends Thread  {
                     catch (SQLException | ClassNotFoundException e) {
                         logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
                         throw new RuntimeException("Exception occurred while cleaning session keys!");
+                    }
+                }
+                else if (command.equals("reset sk")) {
+                    logger.info("\nReset cached session key table (Delete all session keys) command\n");
+                    try {
+                        server.deleteAllSessionKeys();
+                    }
+                    catch (SQLException | ClassNotFoundException e) {
+                        logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                        throw new RuntimeException("Exception occurred while deleting all session keys!");
                     }
                 }
                 else {

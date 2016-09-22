@@ -29,7 +29,7 @@ import java.sql.SQLException;
  * This class will store and process the data used to define the communication policy. <br/>
  * The communication policy is stored on a sqlite database.
  *
- * @author Salomon Lee
+ * @author Salomon Lee, Hokeun Kim
  */
 public class CommunicationPolicyTable {
     public static final String T_COMMUNICATION_POLICY = "communication_policy";
@@ -38,6 +38,7 @@ public class CommunicationPolicyTable {
         RequestingGroup,
         TargetType,
         Target,
+        MaxNumSessionKeyOwners,
         CipherAlgorithm,
         HashAlgorithm,
         AbsoluteValidity,
@@ -48,6 +49,7 @@ public class CommunicationPolicyTable {
     private CommunicationTargetType targetType;
     private String targetTypeVal;
     private String target;
+    private int maxNumSessionKeyOwners;
     private long absValidity;
     private String absValidityStr;
     private long relValidity;
@@ -105,6 +107,15 @@ public class CommunicationPolicyTable {
      */
     public void setTarget(String target) {
         this.target = target;
+    }
+
+
+    public int getMaxNumSessionKeyOwners() {
+        return maxNumSessionKeyOwners;
+    }
+
+    public void setMaxNumSessionKeyOwners(int maxNumSessionKeyOwners) {
+        this.maxNumSessionKeyOwners = maxNumSessionKeyOwners;
     }
 
     /**
@@ -168,9 +179,6 @@ public class CommunicationPolicyTable {
     }
 
     public String toString() {
-        /*return "RequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
-                "\t" + cryptoSpec.toString() +
-                "\tAbsValidity: " + absValidity + "\tRelValidity: " + relValidity;*/
         return toJSONObject().toJSONString();
     }
 
@@ -195,6 +203,7 @@ public class CommunicationPolicyTable {
         object.put(c.RequestingGroup.name(),getReqGroup());
         object.put(c.TargetType.name(),getTargetTypeVal());
         object.put(c.Target.name(),getTarget());
+        object.put(c.MaxNumSessionKeyOwners.name(), getMaxNumSessionKeyOwners());
         object.put(c.AbsoluteValidity.name(), getAbsValidity());
         object.put(c.RelativeValidity.name(), getRelValidity());
         return object;
@@ -206,6 +215,7 @@ public class CommunicationPolicyTable {
         policy.setTargetTypeVal(r.getString(c.TargetType.name()));
         policy.setTargetType(CommunicationTargetType.fromStringValue(r.getString(c.TargetType.name())));
         policy.setTarget(r.getString(c.Target.name()));
+        policy.setMaxNumSessionKeyOwners(r.getInt(c.MaxNumSessionKeyOwners.name()));
         policy.setCipherAlgo(r.getString(c.CipherAlgorithm.name()));
         policy.setHashAlgo(r.getString(c.HashAlgorithm.name()));
         policy.setCryptoSpec(policy.getCipherAlgo(),policy.getHashAlgo());
