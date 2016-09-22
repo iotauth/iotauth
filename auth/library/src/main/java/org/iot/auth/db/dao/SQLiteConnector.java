@@ -18,6 +18,7 @@ package org.iot.auth.db.dao;
 import org.iot.auth.db.bean.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.Cache;
 
 import java.sql.*;
 import java.util.*;
@@ -482,6 +483,35 @@ public class SQLiteConnector {
             if (DEBUG) logger.info(cachedSessionKey.toJSONObject().toJSONString());
         }
         return cachedSessionKey;
+    }
+
+    /**
+     * Select session keys with the same purpose and that is not expired yet.
+     * @param purpose the given purpose of the session key
+     * @return returns the list of session keys with the given session key
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    public List<CachedSessionKeyTable> selectCachedSessionKeysByPurpose(String requestingEntityName, String purpose)
+            throws SQLException, ClassNotFoundException {
+        setConnection();
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
+        sql += " WHERE " + CachedSessionKeyTable.c.Purpose.name() + " = " + "'" + purpose + "'";
+        sql += " AND " + CachedSessionKeyTable.c.Owners.name() + " NOT LIKE " + "'%" + requestingEntityName + "%'";
+        long currentTime = new java.util.Date().getTime();
+        sql += " AND " + CachedSessionKeyTable.c.AbsValidity.name() + " > " + currentTime;
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        List<CachedSessionKeyTable> result = new LinkedList<>();
+        while (resultSet.next()) {
+            CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
+            if (DEBUG) logger.info(cachedSessionKey.toJSONObject().toJSONString());
+            result.add(cachedSessionKey);
+        }
+        return result;
     }
 
     /**

@@ -126,7 +126,9 @@ public class AuthDB {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    public List<SessionKey> generateSessionKeys(int authID, String owner, int numKeys, CommunicationPolicy communicationPolicy)
+    public List<SessionKey> generateSessionKeys(int authID, String owner, int numKeys,
+                                                CommunicationPolicy communicationPolicy,
+                                                SessionKeyPurpose sessionKeyPurpose)
             throws IOException, SQLException, ClassNotFoundException
     {
         List<SessionKey> sessionKeyList = new LinkedList<SessionKey>();
@@ -141,7 +143,7 @@ public class AuthDB {
             // TODO: work on authID encoding
             long sessionKeyID = encodeSessionKeyID(authID, curSessionKeyIndex);
             SessionKey sessionKey = new SessionKey(sessionKeyID, owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
-                    communicationPolicy.getMaxNumSessionKeyOwners(), purpose,
+                    communicationPolicy.getMaxNumSessionKeyOwners(), sessionKeyPurpose.toString(),
                     new Date().getTime() + communicationPolicy.getAbsValidity(), communicationPolicy.getRelValidity(),
                     communicationPolicy.getCryptoSpec(), AuthCrypto.getRandomBytes(communicationPolicy.getCryptoSpec().getCipherKeySize()));
             sessionKeyList.add(sessionKey);
@@ -162,6 +164,17 @@ public class AuthDB {
         logger.debug("keyID: {}", keyID);
         CachedSessionKeyTable cachedSessionKey = sqLiteConnector.selectCachedSessionKeyByID(keyID);
         return cachedSessionKey.toSessionKey();
+    }
+
+    public List<SessionKey> getSessionKeysByPurpose(String requestingEntityName, SessionKeyPurpose sessionKeyPurpose)
+            throws SQLException, ClassNotFoundException {
+        List<CachedSessionKeyTable> cachedSessionKeyTableList =
+                sqLiteConnector.selectCachedSessionKeysByPurpose(requestingEntityName, sessionKeyPurpose.toString());
+        List<SessionKey> result = new ArrayList<>(cachedSessionKeyTableList.size());
+        for (CachedSessionKeyTable cachedSessionKeyTable: cachedSessionKeyTableList) {
+            result.add(cachedSessionKeyTable.toSessionKey());
+        }
+        return result;
     }
 
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {

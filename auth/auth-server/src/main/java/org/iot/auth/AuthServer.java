@@ -35,12 +35,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
 import org.iot.auth.crypto.AuthCrypto;
-import org.iot.auth.db.AuthDB;
-import org.iot.auth.db.CommunicationPolicy;
-import org.iot.auth.db.DistributionKey;
-import org.iot.auth.db.RegisteredEntity;
-import org.iot.auth.db.SessionKey;
-import org.iot.auth.db.TrustedAuth;
+import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.server.CommunicationTargetType;
 import org.iot.auth.server.EntityTcpConnectionHandler;
@@ -286,9 +281,10 @@ public class AuthServer {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    public List<SessionKey> generateSessionKeys(String owner, int numKeys, CommunicationPolicy communicationPolicy)
+    public List<SessionKey> generateSessionKeys(String owner, int numKeys, CommunicationPolicy communicationPolicy,
+                                                SessionKeyPurpose sessionKeyPurpose)
             throws IOException, SQLException, ClassNotFoundException {
-        return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy);
+        return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy, sessionKeyPurpose);
     }
 
     /**
@@ -300,6 +296,19 @@ public class AuthServer {
      */
     public SessionKey getSessionKeyByID(long keyID) throws SQLException, ClassNotFoundException {
         return db.getSessionKeyByID(keyID);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getSessionKeysByPurpose
+     * @param requestingEntityName
+     * @param sessionKeyPurpose
+     * @return
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    public List<SessionKey> getSessionKeysByPurpose(String requestingEntityName, SessionKeyPurpose sessionKeyPurpose)
+            throws SQLException, ClassNotFoundException {
+        return db.getSessionKeysByPurpose(requestingEntityName, sessionKeyPurpose);
     }
 
     /**

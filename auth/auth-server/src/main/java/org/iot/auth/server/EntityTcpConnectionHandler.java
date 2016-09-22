@@ -333,8 +333,7 @@ public class EntityTcpConnectionHandler extends Thread {
         List<SessionKey> sessionKeyList = null;
         switch (reqPurpose.getTargetType()) {
             case TARGET_GROUP:
-            case PUBLISH_TOPIC:
-            case SUBSCRIBE_TOPIC: {
+            case PUBLISH_TOPIC: {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 if (communicationPolicy == null) {
@@ -343,9 +342,27 @@ public class EntityTcpConnectionHandler extends Thread {
                 }
                 cryptoSpec = communicationPolicy.getCryptoSpec();
                 // generate session keys
+                SessionKeyPurpose sessionKeyPurpose =
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 logger.debug("numKeys {}", sessionKeyReqMessage.getNumKeys());
                 sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
-                        sessionKeyReqMessage.getNumKeys(), communicationPolicy);
+                        sessionKeyReqMessage.getNumKeys(), communicationPolicy, sessionKeyPurpose);
+                break;
+            }
+            case SUBSCRIBE_TOPIC: {
+                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
+                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                if (communicationPolicy == null) {
+                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: "
+                            + purpose.toString());
+                }
+                cryptoSpec = communicationPolicy.getCryptoSpec();
+                SessionKeyPurpose sessionKeyPurpose =
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                sessionKeyList = server.getSessionKeysByPurpose(requestingEntity.getName(), sessionKeyPurpose);
+                for (SessionKey sessionKey : sessionKeyList) {
+                    server.addSessionKeyOwner(sessionKey.getID(), requestingEntity.getName());
+                }
                 break;
             }
             case SESSION_KEY_ID: {
