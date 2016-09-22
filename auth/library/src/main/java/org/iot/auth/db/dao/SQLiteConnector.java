@@ -58,7 +58,9 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.TargetType.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.Target.name() + " TEXT NOT NULL,";
-        sql += CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + " INT NOT NULL,";
+        // MaxNumSessionKeyOwners should be greater than or equal to 2
+        sql += CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + " INT NOT NULL CHECK(" +
+                CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + " >= 2),";
         sql += CommunicationPolicyTable.c.CipherAlgorithm.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.HashAlgorithm.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + " TEXT NOT NULL,";
