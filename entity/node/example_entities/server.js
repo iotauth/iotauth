@@ -20,236 +20,66 @@
 
 "use strict";
 
-var net = require('net');
 var fs = require('fs');
 var iotAuth = require('iotAuth')
 var common = require('common');
 var mqtt = require('mqtt');
 var util = require('util');
 var msgType = iotAuth.msgType;
-var commState = {
-    IDLE: 0,
-    HANDSHAKE_1_SENT: 1,
-    HANDSHAKE_2_SENT: 2,
-    HANDSHAKE_3_SENT: 3,
-    IN_COMM: 4                    // Session message
-};
 
 // to be loaded from config file
 var entityInfo;
 var authInfo;
 var listeningServerInfo;
 
-// initial states
-var currentState = commState.IDLE;
-var writeSeqNum = 0;
-var readSeqNum = 0;
-
 // session keys
 var sessionKeyCacheForClients = [];
 var sessionKeyCacheForSubscribe = [];
-var currentTargetSessionKeyCache;
 
 // distributionKey = {val: Buffer, absValidity: Date() format}
 var distributionKey = null;
 
-function handleSessionKeyResp(sessionKeyList, receivedDistKey) {
+function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
     if (receivedDistKey != null) {
         console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         distributionKey = receivedDistKey;
     }
     console.log('received ' + sessionKeyList.length + ' keys');
-    if (currentTargetSessionKeyCache == 'Clients') {
+    if (callbackParams.targetSessionKeyCache == 'Clients') {
     	sessionKeyCacheForClients = sessionKeyCacheForClients.concat(sessionKeyList);
     }
-    else if (currentTargetSessionKeyCache == 'Subscribe') {
+    else if (callbackParams.targetSessionKeyCache == 'Subscribe') {
     	sessionKeyCacheForSubscribe = sessionKeyCacheForSubscribe.concat(sessionKeyList);
+    }
+    // session key request was triggered by a client request
+    else if (callbackParams.targetSessionKeyCache == 'none') {
+        if (sessionKeyList[0].id == callbackParams.keyId) {
+            console.log('Session key id is as expected');
+            callbackParams.sendHandshake2Callback(callbackParams.handshake1Payload,
+                callbackParams.serverSocket, sessionKeyList[0]);
+        }
+        else {
+            console.error('Session key id is NOT as expected');
+        }
     }
 };
 
 var connectedClients = [];
-var lastActiveSessionKey = undefined;
 var tempLargeDataBuf;
 
-var server = net.createServer(function(connection) {
-    console.log('Unidentified client connected');
-    connection.on('end', function() {
-        console.log('Unidentified client disconnected');
-    });
-
-    var myNonce;
-    var sessionKey = undefined;
-    var obj;
-    var keyId;
-
-    function sendHandshake2(sessionKeyList, receivedDistKey) {
-        handleSessionKeyResp(sessionKeyList, receivedDistKey);
-        // sessionKey derived from call back
-        if (sessionKey == undefined) {
-            for (var i = 0; i < sessionKeyCacheForClients.length; i++) {
-                if (sessionKeyCacheForClients[i].id == keyId) {
-                    console.log('found session key inside callback');
-                    sessionKey = sessionKeyCacheForClients[i];
-                    break;
-                }
-            }
-        }
-
-        var enc = obj.payload.slice(common.S_KEY_ID_SIZE);
-        var buf = iotAuth.decryptSessionMessage(enc, sessionKey.val);
-
-        var ret = iotAuth.parseHandshake(buf);
-        var theirNonce = ret.nonce;
-
-        console.log(ret);
-
-        myNonce = iotAuth.generateHSNonce();
-        console.log('chosen nonce: ' + myNonce.inspect());
-        var handshake2 = {nonce: myNonce, replyNonce: theirNonce};
-        buf = iotAuth.serializeHandshake(handshake2);
-        enc = iotAuth.encryptSessionMessage(buf, sessionKey.val);
-        var msg = {
-            msgType: msgType.SKEY_HANDSHAKE_2,
-            payload: enc
-        };
-        connection.write(common.serializeIoTSP(msg));
-        console.log('switching to HANDSHAKE_2_SENT');
-        currentState = commState.HANDSHAKE_2_SENT;
-    }
-
-    var expectingMoreData = false;
-    connection.on('data', function(data) {
-        if (!expectingMoreData) {
-            obj = common.parseIoTSP(data);
-            if (obj.payload.length < obj.payloadLen) {
-                expectingMoreData = true;
-                console.log('more data will come. current: ' + obj.payload.length
-                    + ' expected: ' + obj.payloadLen);
-            }
-        }
-        else {
-            obj.payload = Buffer.concat([obj.payload, data]);
-            if (obj.payload.length ==  obj.payloadLen) {
-                expectingMoreData = false;
-            }
-            else {
-                console.log('more data will come. current: ' + obj.payload.length
-                    + ' expected: ' + obj.payloadLen);
-            }
-        }
-
-        if (expectingMoreData) {
-            // do not process the packet yet
-            return;
-        }
-        else if (obj.msgType == msgType.SKEY_HANDSHAKE_1) {
-            console.log('received session key handshake1');
-            keyId = obj.payload.readUIntBE(0, common.S_KEY_ID_SIZE);
-            console.log('session key id: ' + keyId);
-
-            var sessionKeyFound = false;
-            for (var i = 0; i < sessionKeyCacheForClients.length; i++) {
-                if (sessionKeyCacheForClients[i].id == keyId) {
-                    console.log('found session key');
-                    sessionKey = sessionKeyCacheForClients[i];
-                    sessionKeyFound = true;
-                    break;
-                }
-            }
-            if (sessionKeyFound) {
-                // send empty list
-                sendHandshake2([]);
-            }
-            else {
-                console.log('session key NOT found! sending session key request');
-                currentTargetSessionKeyCache = 'Clients';
-                iotAuth.sendSessionKeyReq(entityInfo.name, {keyId: keyId}, 1,
-                    authInfo, entityInfo.privateKey, distributionKey, sendHandshake2);
-            }
-        }
-        else if (obj.msgType == msgType.SKEY_HANDSHAKE_3) {
-            console.log('received session key handshake3!');
-            if (currentState != commState.HANDSHAKE_2_SENT) {
-                console.log('Error: wrong sequence of handshake, disconnecting...');
-                currentState = commState.IDLE;
-                connection.end();
-                return;
-            }
-            var buf = iotAuth.decryptSessionMessage(obj.payload, sessionKey.val);
-            var ret = iotAuth.parseHandshake(buf);
-            console.log(ret);
-
-            if (myNonce.equals(ret.replyNonce)) {
-                console.log('client authenticated/authorized by solving nonce!');
-            }
-            else {
-                console.log('Error: client NOT verified, nonce NOT matched, disconnecting...');
-                currentState = commState.IDLE;
-                client.end();
-                return;
-            }
-
-            console.log('switching to IN_COMM');
-            currentState = commState.IN_COMM;
-            writeSeqNum = 0;
-            readSeqNum = 0;
-
-            // registering clients as potential subscribers
-            connectedClients.push(connection);
-            lastActiveSessionKey = sessionKey;
-        }
-        else if (obj.msgType == msgType.SECURE_COMM_MSG) {
-            console.log('received secure communication!');
-            if (currentState != commState.IN_COMM) {
-                console.log('Error: it is not in IN_COMM state, disconecting...');
-                currentState = commState.IDLE;
-                connection.end();
-                return;
-            }
-
-            var ret = iotAuth.parseDecryptSessionMessage(obj.payload, sessionKey.val);
-            if (ret.seqNum != readSeqNum) {
-            	console.log('seqNum does not match! expected: ' + readSeqNum + ' received: ' + ret.seqNum);
-            }
-            readSeqNum++;
-            if (ret.data.length > 65535) {
-            	console.log('seqNum: ' + ret.seqNum);
-                console.log('data is too large to display, to store in file use saveData command');
-                tempLargeDataBuf = ret.data;
-            }
-            else {
-            	console.log('seqNum: ' + ret.seqNum + ' data: ' + ret.data.toString());
-            }
-        }
-    });
-});
-
 function sendToClients(message) {
-    if (lastActiveSessionKey == undefined) {
-        console.log('no session key for clients')
-        return;
-    }
-    if (connectedClients.length == undefined) {
-        console.log('no connected clients')
-        return;
-    }
-    var enc = iotAuth.serializeEncryptSessionMessage(
-    	{seqNum: writeSeqNum, data: new Buffer(message)}, lastActiveSessionKey.val);
-    writeSeqNum++;
-    var buf = common.serializeIoTSP({
-        msgType: msgType.SECURE_COMM_MSG,
-        payload: enc
-    });
     for (var i = 0; i < connectedClients.length; i++) {
-    	try{
-        	connectedClients[i].write(buf);
-    	}
-    	catch (err) {
-    		console.log('error while sending to client: ' + err.message);
-    		console.log('removing this client from the list...');
-    		connectedClients.splice(i, 1);
-    		i--;
-    	}
+        if (connectedClients[i] == null) {
+            continue;
+        }
+        try{
+            connectedClients[i].send(new Buffer(message));
+        }
+        catch (err) {
+            console.log('error while sending to client#' + i + ': ' + err.message);
+            console.log('removing this client from the list...');
+            connectedClients[i] = null;
+        }
     }
 };
 
@@ -283,7 +113,13 @@ function initMqttSubscribe(topic) {
             console.log(topic + ' : ' + message);
         }
     });
-}
+};
+
+
+function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
+    iotAuth.sendSessionKeyReq(entityInfo.name, purpose, numKeys,
+        authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp, callbackParams);
+};
 
 function commandInterpreter() {
     var chunk = process.stdin.read();
@@ -314,9 +150,7 @@ function commandInterpreter() {
             if (message != undefined) {
                 numKeys = parseInt(message);
             }
-            currentTargetSessionKeyCache = 'Subscribe';
-            iotAuth.sendSessionKeyReq(entityInfo.name, {subTopic: 'Ptopic'}, numKeys,
-                authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
+            sendSessionKeyRequest({subTopic: 'Ptopic'}, numKeys, {targetSessionKeyCache: 'Subscribe'});
         }
         else if (command == 'skReqPub') {
             console.log('skReqSub (Session key request for target publish topic) command');
@@ -324,9 +158,7 @@ function commandInterpreter() {
             if (message != undefined) {
                 numKeys = parseInt(message);
             }
-            currentTargetSessionKeyCache = 'Clients';
-            iotAuth.sendSessionKeyReq(entityInfo.name, {pubTopic: 'Ptopic'}, numKeys,
-                authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
+            sendSessionKeyRequest({pubTopic: 'Ptopic'}, numKeys, {targetSessionKeyCache: 'Clients'});
         }
         else if (command == 'mqtt') {
             console.log('mqtt command, init mqtt connection');
@@ -368,9 +200,7 @@ function commandInterpreter() {
             initMqttSubscribe('Ptopic');
             console.log('requesting 1 key for subscribe');
             var numKeys = 1;
-            currentTargetSessionKeyCache = 'Subscribe';
-            iotAuth.sendSessionKeyReq(entityInfo.name, {subTopic: 'Ptopic'}, numKeys,
-                authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
+            sendSessionKeyRequest({subTopic: 'Ptopic'}, numKeys, {targetSessionKeyCache: 'Subscribe'});
         }
         else {
             console.log('unrecognized command: ' + command);
@@ -397,9 +227,85 @@ if (entityInfo.usePermanentDistKey) {
     };
 }
 
-server.listen(listeningServerInfo.port, function() {
+function onServerListening() {
     console.log(entityInfo.name + ' bound on port ' + listeningServerInfo.port);
-});
+};
+function onServerError(message) {
+    console.error('Error in server - details: ' + message);
+};
+function onClientRequest(handshake1Payload, serverSocket, sendHandshake2Callback) {
+    var keyId = handshake1Payload.readUIntBE(0, common.S_KEY_ID_SIZE);
+    console.log('session key id: ' + keyId);
+    var sessionKeyFound = false;
+    for (var i = 0; i < sessionKeyCacheForClients.length; i++) {
+        if (sessionKeyCacheForClients[i].id == keyId) {
+            console.log('found session key');
+            sendHandshake2Callback(handshake1Payload, serverSocket, sessionKeyCacheForClients[i]);
+            sessionKeyFound = true;
+            break;
+        }
+    }
+    if (!sessionKeyFound) {
+        console.log('session key NOT found! sending session key id to AuthService');
+        var callbackParams = {
+            targetSessionKeyCache: 'none',
+            keyId: keyId,
+            sendHandshake2Callback: sendHandshake2Callback,
+            handshake1Payload: handshake1Payload,
+            serverSocket: serverSocket
+        }
+        sendSessionKeyRequest({keyId: keyId}, 1, callbackParams);
+    }
+};
+
+// event handlers for individual sockets
+function onClose(socketID) {
+    console.log('secure connection with the client closed.');
+    sockets[socketID] = null;
+    self.send('connection', 'socket #' + socketID + ' closed');
+};
+function onError(message, socketID) {
+    console.error('Error in secure server socket #' + socketID +
+        ' details: ' + message);
+};
+function onConnection(socketInstance, entityServerSocket) {
+    console.log('secure connection with the client established.');
+
+    console.log(socketInstance);
+    // registering clients as potential subscribers
+    connectedClients[socketInstance.id] = entityServerSocket;
+};
+function onData(data, socketID) {
+    console.log('data received from server via secure communication');
+
+    if (data.length > 65535) {
+        console.log('socketID: ' + socketID);
+        console.log('data is too large to display, to store in file use saveData command');
+        tempLargeDataBuf = data;
+    }
+    else {
+        console.log('socketID: ' + socketID + ' data: ' + data.toString());
+    }
+};
+
+function initializeSecureServer() {
+    var options = {
+        serverPort: listeningServerInfo.port,
+        sessionCryptoSpec: {cipher: 'AES-128-CBC', hash: 'SHA256'}
+    };
+    var eventHandlers = {
+        onServerError: onServerError,      // for server
+        onServerListening: onServerListening,
+        onClientRequest: onClientRequest,    // for client's communication initialization request
+
+        onClose: onClose,            // for individual sockets
+        onError: onError,
+        onData: onData,
+        onConnection: onConnection
+    };
+    iotAuth.initializeSecureServer(options, eventHandlers);
+};
+initializeSecureServer();
 
 process.stdin.on('readable', commandInterpreter);
 

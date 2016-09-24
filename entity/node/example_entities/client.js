@@ -20,8 +20,7 @@
 "use strict";
 
 var fs = require('fs');
-var iotAuth = require('iotAuth')
-var common = require('common');
+var iotAuth = require('iotAuth');
 var mqtt = require('mqtt');
 var util = require('util');
 var msgType = iotAuth.msgType;
@@ -39,28 +38,28 @@ var targetServerInfoList;
 // initial states
 var currentState = clientCommState.IDLE;
 var pubSeqNum = 0;
-var writeSeqNum = 0;
-var readSeqNum = 0;
 
 // session keys
 var sessionKeyCacheForServers = [];
 var sessionKeyCacheForPublish = [];
-var currentTargetSessionKeyCache;
 
 // distributionKey = {val: Buffer, absValidity: Date() format}
 var distributionKey = null;
 
-function handleSessionKeyResp(sessionKeyList, receivedDistKey) {
+function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
     if (receivedDistKey != null) {
         console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         distributionKey = receivedDistKey;
     }
     console.log('received ' + sessionKeyList.length + ' keys');
-    if (currentTargetSessionKeyCache == 'Servers') {
+    if (callbackParams.targetSessionKeyCache == 'Servers') {
     	sessionKeyCacheForServers = sessionKeyCacheForServers.concat(sessionKeyList);
     }
-    else if (currentTargetSessionKeyCache == 'Publish') {
+    else if (callbackParams.targetSessionKeyCache == 'Publish') {
     	sessionKeyCacheForPublish = sessionKeyCacheForPublish.concat(sessionKeyList);
+    }
+    else {
+        console.log('Error! communication target is wrong!');
     }
 };
 
@@ -72,14 +71,6 @@ var tempLargeDataBuf;
 function finComm() {
     currentSecureClient.close();
     currentState = clientCommState.IDLE;
-    // remove used session key
-    /*
-    for (var i = 0; i < sessionKeyCacheForServers.length; i++) {
-        if (sessionKeyCacheForServers[i].id == currentSessionKey.id) {
-            sessionKeyCacheForServers.splice(i, 1);
-        }
-    }
-    */
 };
 
 var mqttClient;
@@ -126,7 +117,12 @@ function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
         onConnection: onConnection
     };
     iotAuth.initializeSecureCommunication(options, eventHandlers);
-}
+};
+
+function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbackParams) {
+    iotAuth.sendSessionKeyReq(entityInfo.name, purpose, numKeys, authInfo,
+        entityInfo.privateKey, distributionKey, sessionKeyRespCallback, callbackParams);
+};
 
 function commandInterpreter() {
     var chunk = process.stdin.read();
@@ -200,16 +196,6 @@ function commandInterpreter() {
             else {
                 console.log('send command');
                 currentSecureClient.send(new Buffer(message));
-                /*
-                var enc = iotAuth.serializeEncryptSessionMessage(
-                	{seqNum: writeSeqNum, data: new Buffer(message)}, currentSessionKey.val);
-                writeSeqNum++;
-                var buf = common.serializeIoTSP({
-                    msgType: msgType.SECURE_COMM_MSG,
-                    payload: enc
-                });
-                currentSecureClient.write(buf);
-                */
             }
         }
         else if (command == 'sendFile') {
@@ -225,16 +211,6 @@ function commandInterpreter() {
                 var fileData = fs.readFileSync(fileName);
                 console.log('file data length: ' + fileData.length);
                 currentSecureClient.send(fileData);
-                /*
-                var enc = iotAuth.serializeEncryptSessionMessage(
-                	{seqNum: writeSeqNum, data: fileData}, currentSessionKey.val);
-                writeSeqNum++;
-                var buf = common.serializeIoTSP({
-                    msgType: msgType.SECURE_COMM_MSG,
-                    payload: enc
-                });
-                currentSecureClient.write(buf);
-                */
             }
         }
         else if (command == 'mqtt') {
@@ -305,9 +281,8 @@ function commandInterpreter() {
             if (message != undefined) {
                 numKeys = parseInt(message);
             }
-            currentTargetSessionKeyCache = 'Servers';
-            iotAuth.sendSessionKeyReq(entityInfo.name, {group: 'Servers'}, numKeys,
-                authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
+            sendSessionKeyRequest({group: 'Servers'}, numKeys, handleSessionKeyResp,
+                {targetSessionKeyCache: 'Servers'});
         }
         else if (command == 'skReq2') {
             console.log('skReq2 (Session key request for existing session keys for target servers) command');
@@ -315,9 +290,8 @@ function commandInterpreter() {
             if (message != undefined) {
                 numKeys = parseInt(message);
             }
-            currentTargetSessionKeyCache = 'Servers';
-            iotAuth.sendSessionKeyReq(entityInfo.name, {group: 'Servers', exist: true}, numKeys,
-                authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
+            sendSessionKeyRequest({group: 'Servers', exist: true}, numKeys, handleSessionKeyResp,
+                {targetSessionKeyCache: 'Servers'});
         }
         else if (command == 'skReqPub') {
             console.log('skReqPub (Session key request for target publish topic) command');
@@ -325,9 +299,8 @@ function commandInterpreter() {
             if (message != undefined) {
                 numKeys = parseInt(message);
             }
-            currentTargetSessionKeyCache = 'Publish';
-            iotAuth.sendSessionKeyReq(entityInfo.name, {pubTopic: 'Ptopic'}, numKeys,
-                authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp);
+            sendSessionKeyRequest({pubTopic: 'Ptopic'}, numKeys, handleSessionKeyResp,
+                {targetSessionKeyCache: 'Publish'});
         }
         else if (command == 'saveData') {
             console.log('saveData command');
@@ -377,9 +350,8 @@ function commandInterpreter() {
                 iotAuth.initializeSecureCommunication(commServerInfo);
             }
             var numKeys = 1;
-            currentTargetSessionKeyCache = 'Servers';
-            iotAuth.sendSessionKeyReq(entityInfo.name, {subTopic: 'Ptopic'}, numKeys,
-                authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyRespWrapper);
+            sendSessionKeyRequest({subTopic: 'Ptopic'}, numKeys, handleSessionKeyRespWrapper,
+                {targetSessionKeyCache: 'Servers'});
 
         }
         else {
