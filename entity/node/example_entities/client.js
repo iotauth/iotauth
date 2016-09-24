@@ -120,8 +120,19 @@ function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
 };
 
 function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbackParams) {
-    iotAuth.sendSessionKeyReq(entityInfo.name, purpose, numKeys, authInfo,
-        entityInfo.privateKey, distributionKey, sessionKeyRespCallback, callbackParams);
+    var options = {
+        authHost: authInfo.host,
+        authPort: authInfo.port,
+        entityName: entityInfo.name,
+        numKeysPerRequest: numKeys,
+        purpose: purpose,
+        distributionKey: distributionKey,
+        //distributionCryptoSpec,
+        //publicKeyCryptoSpec,
+        authPublicKey: authInfo.publicKey,
+        entityPrivateKey: entityInfo.privateKey
+    };
+    iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, callbackParams);
 };
 
 function commandInterpreter() {

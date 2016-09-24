@@ -117,8 +117,19 @@ function initMqttSubscribe(topic) {
 
 
 function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
-    iotAuth.sendSessionKeyReq(entityInfo.name, purpose, numKeys,
-        authInfo, entityInfo.privateKey, distributionKey, handleSessionKeyResp, callbackParams);
+    var options = {
+        authHost: authInfo.host,
+        authPort: authInfo.port,
+        entityName: entityInfo.name,
+        numKeysPerRequest: numKeys,
+        purpose: purpose,
+        distributionKey: distributionKey,
+        //distributionCryptoSpec,
+        //publicKeyCryptoSpec,
+        authPublicKey: authInfo.publicKey,
+        entityPrivateKey: entityInfo.privateKey
+    };
+    iotAuth.sendSessionKeyReq(options, handleSessionKeyResp, callbackParams);
 };
 
 function commandInterpreter() {
@@ -261,8 +272,8 @@ function onClientRequest(handshake1Payload, serverSocket, sendHandshake2Callback
 // event handlers for individual sockets
 function onClose(socketID) {
     console.log('secure connection with the client closed.');
-    sockets[socketID] = null;
-    self.send('connection', 'socket #' + socketID + ' closed');
+    connectedClients[socketID] = null;
+    console.log('socket #' + socketID + ' closed');
 };
 function onError(message, socketID) {
     console.error('Error in secure server socket #' + socketID +
