@@ -123,6 +123,7 @@ function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
         entityName: entityInfo.name,
         numKeysPerRequest: numKeys,
         purpose: purpose,
+        distProtocol: entityInfo.distProtocol,
         distributionKey: distributionKey,
         //distributionCryptoSpec,
         //publicKeyCryptoSpec,

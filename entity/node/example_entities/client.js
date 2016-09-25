@@ -126,6 +126,7 @@ function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbac
         entityName: entityInfo.name,
         numKeysPerRequest: numKeys,
         purpose: purpose,
+        distProtocol: entityInfo.distProtocol,
         distributionKey: distributionKey,
         //distributionCryptoSpec,
         //publicKeyCryptoSpec,

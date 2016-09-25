@@ -40,7 +40,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., show re/cp/ta/sk, clean sk, reset sk): ");
+                logger.info("\nEnter command (e.g., show re/cp/ta/sk/maps, clean sk, reset sk): ");
                 String command = br.readLine();
                 command = command.trim();
                 if (command.length() == 0) {
@@ -64,6 +64,9 @@ public class AuthCommandLine extends Thread  {
                         logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
                         throw new RuntimeException("Exception occurred while loading session keys!");
                     }
+                }
+                else if (command.equals("show maps")) {
+                    logger.info("\nShow maps for UDP listener port command\n{}", server.showAllUdpPortListenerMaps());
                 }
                 else if (command.equals("clean sk")) {
                     logger.info("\nClean expired session keys command\n");

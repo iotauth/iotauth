@@ -37,8 +37,11 @@ import org.iot.auth.config.constants.C;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
+import org.iot.auth.message.AuthHelloMessage;
+import org.iot.auth.message.MessageType;
 import org.iot.auth.server.CommunicationTargetType;
 import org.iot.auth.server.EntityTcpConnectionHandler;
+import org.iot.auth.server.EntityUdpConnectionHandler;
 import org.iot.auth.server.TrustedAuthConnectionHandler;
 import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
@@ -61,8 +64,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -94,6 +96,7 @@ public class AuthServer {
         crypto = new AuthCrypto(properties.getEntityKeyStorePath(), authKeyStorePassword);
 
         entityTcpPortTimeout = properties.getEntityTcpPortTimeout();
+        entityUdpPortTimeout = properties.getEntityUdpPortTimeout();
 
         // suppress default logging by jetty
         org.eclipse.jetty.util.log.Log.setLog(new NoLogging());
@@ -500,9 +503,7 @@ public class AuthServer {
                         Socket entitySocket = entityTcpPortServerSocket.accept();
                         logger.info("An entity connected from: {} ", entitySocket.getRemoteSocketAddress());
 
-                        EntityTcpConnectionHandler entityTcpConnectionHandler =
-                                new EntityTcpConnectionHandler(server, entitySocket, entityTcpPortTimeout);
-                        entityTcpConnectionHandler.start();
+                        new Thread(new EntityTcpConnectionHandler(server, entitySocket, entityTcpPortTimeout)).start();
                     }
                 } catch (IOException e) {
                     logger.error("IOException in Entity TCP Port Listener {}", ExceptionToString.convertExceptionToStackTrace(e));
@@ -518,8 +519,11 @@ public class AuthServer {
     private class EntityUdpPortListener extends Thread {
         public EntityUdpPortListener(AuthServer server) {
             this.server = server;
+            nonceMapForUdpPortListener = new HashMap<>();
+            responseMapForUdpPortListener = new HashMap<>();
         }
         public void run() {
+            Timer timer = new Timer();
             while (isRunning()) {
                 byte[] bufferBytes = new byte[4096];
                 DatagramPacket receivedPacket = new DatagramPacket(bufferBytes, bufferBytes.length);
@@ -527,19 +531,87 @@ public class AuthServer {
                     entityUdpPortServerSocket.receive(receivedPacket);
                     logger.info("Entity Address: {}, Port: {}, Length: {}", receivedPacket.getAddress().toString(),
                             receivedPacket.getPort(), receivedPacket.getLength());
+
+                    String addressKey = receivedPacket.getAddress() + ":" + receivedPacket.getPort();
                     byte[] receivedBytes = receivedPacket.getData();
+                    MessageType type = MessageType.fromByte(receivedBytes[0]);
+                    if (type == MessageType.ENTITY_HELLO) {
+                        if (responseMapForUdpPortListener.get(addressKey) != null) {
+                            logger.error("Response for address key {} still exists", addressKey);
+                            // send alert
+                            continue;
+                        }
+                        Buffer authNonce = nonceMapForUdpPortListener.get(addressKey);
+                        if (authNonce == null) {
+                            authNonce = AuthCrypto.getRandomBytes(AuthHelloMessage.AUTH_NONCE_SIZE);
+                            nonceMapForUdpPortListener.put(addressKey, authNonce);
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    nonceMapForUdpPortListener.remove(addressKey);
+                                }
+                            }, entityUdpPortTimeout);
+                        }
+                        // send auth hello here
+                        AuthHelloMessage authHello = new AuthHelloMessage(server.getAuthID(), authNonce);
+                        byte[] bytes = authHello.serialize().getRawBytes();
+                        DatagramPacket packetToSend = new DatagramPacket(bytes, bytes.length,
+                                receivedPacket.getAddress(), receivedPacket.getPort());
+                        entityUdpPortServerSocket.send(packetToSend);
+                    }
+                    else if (type == MessageType.SESSION_KEY_RESP_WITH_DIST_KEY || type == MessageType.SESSION_KEY_RESP) {
+                        Buffer response = responseMapForUdpPortListener.get(addressKey);
+                        if (response != null) {
+                            // send response
+                            DatagramPacket packetToSend = new DatagramPacket(response.getRawBytes(), response.getRawBytes().length,
+                                    receivedPacket.getAddress(), receivedPacket.getPort());
+                            entityUdpPortServerSocket.send(packetToSend);
+                            continue;
+                        }
+                        Buffer authNonce = nonceMapForUdpPortListener.get(addressKey);
+                        if (authNonce == null) {
+                            // send alert
+                            continue;
+                        }
+                        else {
+                            // handle this
+                            // let it put to response map
+                            // and send the response
+                            Buffer receivedBuffer = new Buffer(receivedBytes, receivedPacket.getLength());
+                            logger.info("Received data : {}", receivedBuffer.toHexString());
+                            new EntityUdpConnectionHandler(server, entityUdpPortServerSocket,
+                                    receivedPacket.getAddress(), receivedPacket.getPort(), entityUdpPortTimeout,
+                                    responseMapForUdpPortListener, receivedBuffer, authNonce).run();
+                        }
+                    }
+                    /*
                     Buffer receivedBuffer = new Buffer(receivedBytes, receivedPacket.getLength());
                     logger.info("Received data : {}", receivedBuffer.toHexString());
-
-                    DatagramPacket packetToSend = new DatagramPacket(receivedBuffer.getRawBytes(), receivedBuffer.getRawBytes().length, receivedPacket.getAddress(), receivedPacket.getPort());
-                    entityUdpPortServerSocket.send(packetToSend);
+                    new Thread(new EntityUdpConnectionHandler(server,
+                            receivedPacket.getAddress(), receivedPacket.getPort(), entityUdpPortTimeout)).start();
+                    */
                 } catch (IOException e) {
                     logger.error("IOException in Entity UDP Port Listener {}", ExceptionToString.convertExceptionToStackTrace(e));
+                    continue;
                 }
             }
         }
         private AuthServer server;
     }
+    public String showAllUdpPortListenerMaps() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Nonce Map\n");
+        nonceMapForUdpPortListener.forEach((k, v)->{
+            sb.append(k + ":" + v.toHexString() + "\n");
+        });
+        sb.append("Response Map\n");
+        responseMapForUdpPortListener.forEach((k, v)->{
+            sb.append(k + ":" + v.length() + "\n");
+        });
+        return sb.toString();
+    }
+    private Map<String, Buffer> nonceMapForUdpPortListener;
+    private Map<String, Buffer> responseMapForUdpPortListener;
 
     /**
      * Class for suppressing logging by jetty
@@ -566,6 +638,7 @@ public class AuthServer {
 
     private int authID;
     private long entityTcpPortTimeout;
+    private long entityUdpPortTimeout;
 
     private ServerSocket entityTcpPortServerSocket;
     private DatagramSocket entityUdpPortServerSocket;
