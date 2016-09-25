@@ -90,6 +90,7 @@ public class GenerateExampleAuthDB {
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "server");
         registeredEntity.setGroup("Servers");
+        registeredEntity.setDistProtocol("TCP");
         registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setMaxSessionKeysPerRequest(1);
         registeredEntity.setPublicKeyFile("certs/ServerCert.pem");
@@ -101,6 +102,7 @@ public class GenerateExampleAuthDB {
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "client");
         registeredEntity.setGroup("Clients");
+        registeredEntity.setDistProtocol("TCP");
         registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/ClientCert.pem");
@@ -112,6 +114,7 @@ public class GenerateExampleAuthDB {
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptServer");
         registeredEntity.setGroup("PtServers");
+        registeredEntity.setDistProtocol("TCP");
         registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setMaxSessionKeysPerRequest(1);
         registeredEntity.setPublicKeyFile("certs/PtServerCert.pem");
@@ -123,6 +126,7 @@ public class GenerateExampleAuthDB {
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptClient");
         registeredEntity.setGroup("PtClients");
+        registeredEntity.setDistProtocol("TCP");
         registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtClientCert.pem");
@@ -135,6 +139,7 @@ public class GenerateExampleAuthDB {
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "rcServer");
         registeredEntity.setGroup("Servers");
+        registeredEntity.setDistProtocol("TCP");
         registeredEntity.setUsePermanentDistKey(true);
         registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
@@ -148,6 +153,7 @@ public class GenerateExampleAuthDB {
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "rcClient");
         registeredEntity.setGroup("Clients");
+        registeredEntity.setDistProtocol("TCP");
         registeredEntity.setUsePermanentDistKey(true);
         registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
@@ -160,6 +166,7 @@ public class GenerateExampleAuthDB {
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptPublisher");
         registeredEntity.setGroup("PtPublishers");
+        registeredEntity.setDistProtocol("TCP");
         registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtPublisherCert.pem");
@@ -171,10 +178,35 @@ public class GenerateExampleAuthDB {
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptSubscriber");
         registeredEntity.setGroup("PtSubscribers");
+        registeredEntity.setDistProtocol("TCP");
         registeredEntity.setUsePermanentDistKey(false);
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtSubscriberCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
+        registeredEntity.setDistCipherAlgo("AES-128-CBC");
+        registeredEntity.setDistHashAlgo("SHA256");
+        sqLiteConnector.insertRecords(registeredEntity);
+
+        registeredEntity = new RegisteredEntityTable();
+        registeredEntity.setName(entityPrefix + "udpServer");
+        registeredEntity.setGroup("Servers");
+        registeredEntity.setDistProtocol("UDP");
+        registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(1);
+        registeredEntity.setPublicKeyFile("certs/UdpServerCert.pem");
+        registeredEntity.setDistValidityPeriod("1*hour");
+        registeredEntity.setDistCipherAlgo("AES-128-CBC");
+        registeredEntity.setDistHashAlgo("SHA256");
+        sqLiteConnector.insertRecords(registeredEntity);
+
+        registeredEntity = new RegisteredEntityTable();
+        registeredEntity.setName(entityPrefix + "udpClient");
+        registeredEntity.setGroup("Clients");
+        registeredEntity.setDistProtocol("UDP");
+        registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(5);
+        registeredEntity.setPublicKeyFile("certs/UdpClientCert.pem");
+        registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
@@ -183,8 +215,9 @@ public class GenerateExampleAuthDB {
     private static void initCommPolicyTable(SQLiteConnector sqLiteConnector)
             throws ClassNotFoundException, SQLException
     {
-        CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
+        CommunicationPolicyTable communicationPolicyTable;
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
@@ -195,6 +228,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
@@ -205,6 +239,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("PtClients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
@@ -215,6 +250,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("2*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("PtClients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
@@ -225,6 +261,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -235,6 +272,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -245,6 +283,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -255,6 +294,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -265,6 +305,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("PtPublishers");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -275,6 +316,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable = new CommunicationPolicyTable();
         communicationPolicyTable.setReqGroup("PtSubscribers");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");

@@ -29,10 +29,10 @@ import java.util.Arrays;
  */
 public class RegisteredEntityTable {
     public static final String T_REGISTERED_ENTITY = "registered_entity";
-
     public enum c {
         Name,
         Group,
+        DistProtocol,
         UsePermanentDistKey,
         DistKeyValidity,
         DistValidityPeriod,
@@ -46,6 +46,7 @@ public class RegisteredEntityTable {
     }
     private String name;
     private String group;
+    private String distProtocol;
     private boolean usePermanentDistKey;
     private PublicKey publicKey;
     private String publicKeyFile;
@@ -71,6 +72,14 @@ public class RegisteredEntityTable {
     public void setGroup(String group) {
         this.group = group;
     }
+
+    public String getDistProtocol() {
+        return distProtocol;
+    }
+    public void setDistProtocol(String distProtocol) {
+        this.distProtocol = distProtocol;
+    }
+
 
     public boolean getUsePermanentDistKey() {
         return usePermanentDistKey;
@@ -150,6 +159,8 @@ public class RegisteredEntityTable {
         JSONObject object = new JSONObject();
         object.put(c.Name.name(), getName());
         object.put(c.Group.name(), getGroup());
+        object.put(c.DistProtocol.name(), getDistProtocol());
+        object.put(c.UsePermanentDistKey.name(), getUsePermanentDistKey());
         object.put(c.DistKeyValidity.name(), getDistKeyValidity());
         object.put(c.PublKeyFile.name(), getPublicKeyFile().toString());
         object.put(c.PublicKey.name(), getPublicKey());
@@ -161,6 +172,7 @@ public class RegisteredEntityTable {
         RegisteredEntityTable entity = new RegisteredEntityTable();
         entity.setName(r.getString(c.Name.name()));
         entity.setGroup(r.getString(c.Group.name()));
+        entity.setDistProtocol(r.getString(c.DistProtocol.name()));
         entity.setPublicKeyFile(r.getString(c.PublKeyFile.name()));
         entity.setUsePermanentDistKey(r.getBoolean(c.UsePermanentDistKey.name()));
         if (!entity.getUsePermanentDistKey()) {

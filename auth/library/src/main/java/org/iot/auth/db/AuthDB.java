@@ -270,6 +270,7 @@ public class AuthDB {
             RegisteredEntity registeredEntity = new RegisteredEntity(
                     regEntityTable.getName(),
                     regEntityTable.getGroup(),
+                    regEntityTable.getDistProtocol(),
                     regEntityTable.getUsePermanentDistKey(),
                     regEntityTable.getPublicKey(),
                     regEntityTable.getDistKeyValidity(),

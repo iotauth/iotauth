@@ -80,6 +80,7 @@ public class SQLiteConnector {
         sql = "CREATE TABLE IF NOT EXISTS " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
         sql += RegisteredEntityTable.c.Name.name() + " TEXT NOT NULL PRIMARY KEY,";
         sql += "'" + RegisteredEntityTable.c.Group.name() + "' TEXT NOT NULL,";
+        sql += RegisteredEntityTable.c.DistProtocol.name() + " TEXT NOT NULL,";
         sql += RegisteredEntityTable.c.UsePermanentDistKey.name() + " BOOLEAN NOT NULL,";
         sql += RegisteredEntityTable.c.MaxSessionKeysPerRequest.name() + " INT NOT NULL,";
         sql += RegisteredEntityTable.c.PublKeyFile.name() + " TEXT,";
@@ -198,6 +199,7 @@ public class SQLiteConnector {
         String sql = "INSERT INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
         sql += RegisteredEntityTable.c.Name.name() + ",";
         sql += "'"+ RegisteredEntityTable.c.Group.name() + "',";
+        sql += RegisteredEntityTable.c.DistProtocol.name() + ",";
         sql += RegisteredEntityTable.c.UsePermanentDistKey.name() + ",";
         sql += RegisteredEntityTable.c.MaxSessionKeysPerRequest.name() + ",";
         sql += RegisteredEntityTable.c.PublKeyFile.name() + ",";
@@ -206,24 +208,25 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistHashAlgo.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyVal.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?)";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         preparedStatement.setString(1,regEntity.getName());
         preparedStatement.setString(2,regEntity.getGroup());
-        preparedStatement.setBoolean(3,regEntity.getUsePermanentDistKey());
-        preparedStatement.setInt(4,regEntity.getMaxSessionKeysPerRequest());
-        preparedStatement.setString(5,regEntity.getPublicKeyFile());
-        preparedStatement.setString(6,regEntity.getDistValidityPeriod());
-        preparedStatement.setString(7,regEntity.getDistCipherAlgo());
-        preparedStatement.setString(8,regEntity.getDistHashAlgo());
+        preparedStatement.setString(3,regEntity.getDistProtocol());
+        preparedStatement.setBoolean(4,regEntity.getUsePermanentDistKey());
+        preparedStatement.setInt(5,regEntity.getMaxSessionKeysPerRequest());
+        preparedStatement.setString(6,regEntity.getPublicKeyFile());
+        preparedStatement.setString(7,regEntity.getDistValidityPeriod());
+        preparedStatement.setString(8,regEntity.getDistCipherAlgo());
+        preparedStatement.setString(9,regEntity.getDistHashAlgo());
         byte[] distKeyVal = regEntity.getDistKeyVal();
         if (distKeyVal != null) {
-            preparedStatement.setLong(9, regEntity.getDistKeyExpirationTime());
-            preparedStatement.setBytes(10,distKeyVal);
+            preparedStatement.setLong(10, regEntity.getDistKeyExpirationTime());
+            preparedStatement.setBytes(11,distKeyVal);
         }
         else {
-            preparedStatement.setNull(9, Types.INTEGER);
-            preparedStatement.setNull(10, Types.BLOB);
+            preparedStatement.setNull(10, Types.INTEGER);
+            preparedStatement.setNull(11, Types.BLOB);
         }
 
         preparedStatement.toString();

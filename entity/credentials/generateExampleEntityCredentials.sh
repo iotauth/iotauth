@@ -47,6 +47,8 @@ entity_cred_gen "net1" "PtClient"
 entity_cred_gen "net1" "PtServer"
 entity_cred_gen "net1" "PtPublisher"
 entity_cred_gen "net1" "PtSubscriber"
+entity_cred_gen "net1" "UdpClient"
+entity_cred_gen "net1" "UdpServer"
 
 entity_cred_gen "net2" "Client"
 entity_cred_gen "net2" "Server"
@@ -54,6 +56,8 @@ entity_cred_gen "net2" "PtClient"
 entity_cred_gen "net2" "PtServer"
 entity_cred_gen "net2" "PtPublisher"
 entity_cred_gen "net2" "PtSubscriber"
+entity_cred_gen "net2" "UdpClient"
+entity_cred_gen "net2" "UdpServer"
 
 entity_dist_key_gen "net1" "RcClient" 16	# 16 bytes - 128 bits
 entity_dist_key_gen "net1" "RcServer" 16	# 16 bytes - 128 bits

@@ -25,11 +25,12 @@ import java.security.PublicKey;
  * @author Hokeun Kim
  */
 public class RegisteredEntity {
-    public RegisteredEntity(String name, String group, boolean usePermanentDistKey, PublicKey publicKey, long distKeyValidity,
-                            SymmetricKeyCryptoSpec distCryptoSpec)
+    public RegisteredEntity(String name, String group, String distProtocol, boolean usePermanentDistKey,
+                            PublicKey publicKey, long distKeyValidity, SymmetricKeyCryptoSpec distCryptoSpec)
     {
         this.name = name;
         this.group = group;
+        this.distProtocol = distProtocol;
         this.usePermanentDistKey = usePermanentDistKey;
         this.publicKey = publicKey;
         this.distKeyValidity = distKeyValidity;
@@ -40,6 +41,9 @@ public class RegisteredEntity {
     }
     public String getGroup() {
         return group;
+    }
+    public String getDistProtocol() {
+        return distProtocol;
     }
     public PublicKey getPublicKey() {
         return publicKey;
@@ -55,7 +59,8 @@ public class RegisteredEntity {
     }
     public String toString() {
         String ret = "Name: " + name + "\tGroup: " + group +
-                "\tUsePermanentKey:" + usePermanentDistKey +
+                "\tDistProtocol: " + distProtocol +
+                "\tUsePermanentKey: " + usePermanentDistKey +
                 "\tDistKeyValidity: " + distKeyValidity +
                 "\tDistCryptoSpec: " + distCryptoSpec.toString();
         ret += "\tDistKey: ";
@@ -75,9 +80,11 @@ public class RegisteredEntity {
     }
     private String name;
     private String group;
+    private String distProtocol;
     private boolean usePermanentDistKey;
     private PublicKey publicKey;
     private long distKeyValidity;
     private SymmetricKeyCryptoSpec distCryptoSpec;
     private DistributionKey distributionKey = null;
+
 }
