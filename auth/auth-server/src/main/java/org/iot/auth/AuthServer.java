@@ -559,7 +559,7 @@ public class AuthServer {
                                 receivedPacket.getAddress(), receivedPacket.getPort());
                         entityUdpPortServerSocket.send(packetToSend);
                     }
-                    else if (type == MessageType.SESSION_KEY_RESP_WITH_DIST_KEY || type == MessageType.SESSION_KEY_RESP) {
+                    else if (type == MessageType.SESSION_KEY_REQ || type == MessageType.SESSION_KEY_REQ_IN_PUB_ENC) {
                         Buffer response = responseMapForUdpPortListener.get(addressKey);
                         if (response != null) {
                             // send response
@@ -602,11 +602,11 @@ public class AuthServer {
         StringBuilder sb = new StringBuilder();
         sb.append("Nonce Map\n");
         nonceMapForUdpPortListener.forEach((k, v)->{
-            sb.append(k + ":" + v.toHexString() + "\n");
+            sb.append(k + "->" + v.toHexString() + "\n");
         });
         sb.append("Response Map\n");
         responseMapForUdpPortListener.forEach((k, v)->{
-            sb.append(k + ":" + v.length() + "\n");
+            sb.append(k + "->" + v.length() + "\n");
         });
         return sb.toString();
     }
