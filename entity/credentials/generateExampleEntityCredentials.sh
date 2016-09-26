@@ -6,6 +6,14 @@ CERTS_DIR="certs"
 KEYS_DIR="keys"
 VAL_DAYS=730
 
+if [ $# != 1 ]
+then
+	echo 'please provide CA password (e.g., ./generateCACredentials.sh ca_password)'
+	exit
+fi
+
+CA_PASSWORD=$1
+
 entity_cred_gen() {
 	NET_NAME=$1
 	FILE_PREFIX=$2
@@ -15,7 +23,7 @@ entity_cred_gen() {
 
 	openssl genrsa -out $KEY_PATH_PREFIX"Key.pem" 2048
 	openssl req -new -key $KEY_PATH_PREFIX"Key.pem" -sha256 -out $KEY_PATH_PREFIX"Req.pem" -subj "/C=US/ST=CA/L=Berkeley/O=EECS/OU="$NET_NAME"/CN="$ENTITY_NAME
-	openssl x509 -req -in $KEY_PATH_PREFIX"Req.pem" -sha256 -extensions usr_cert -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial \
+	openssl x509 -passin pass:$CA_PASSWORD -req -in $KEY_PATH_PREFIX"Req.pem" -sha256 -extensions usr_cert -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial \
 		-out $CERT_PATH_PREFIX"Cert.pem" -days $VAL_DAYS
 	rm $KEY_PATH_PREFIX"Req.pem"
 	if [[ $FILE_PREFIX == Pt* ]]

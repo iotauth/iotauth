@@ -18,7 +18,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
@@ -80,7 +79,7 @@ public abstract class EntityConnectionHandler {
             Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
             getLogger().debug("Encrypted data ({}): {}", encPayload.length(), encPayload.toHexString());
             Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
-            Buffer decPayload = server.getCrypto().privateDecrypt(encPayload);
+            Buffer decPayload = server.getCrypto().authPrivateDecrypt(encPayload);
 
             getLogger().debug("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
@@ -116,12 +115,12 @@ public abstract class EntityConnectionHandler {
             // generate distribution key
             // Assuming AES-CBC-128
             DistributionKey distributionKey =
-                    new DistributionKey(AuthCrypto.getRandomBytes(requestingEntity.getDistCryptoSpec().getCipherKeySize()),
+                    new DistributionKey(AuthCrypto.generateSymmetricKey(requestingEntity.getDistCryptoSpec().getCipherKeySize()),
                             new Date().getTime() + requestingEntity.getDisKeyValidity());
             // update distribution key
             server.updateDistributionKey(requestingEntity.getName(), distributionKey);
 
-            Buffer encryptedDistKey = server.getCrypto().publicEncrypt(distributionKey.serialize(),
+            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKey.serialize(),
                     requestingEntity.getPublicKey());
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
 
@@ -151,21 +150,8 @@ public abstract class EntityConnectionHandler {
 
             Buffer encPayload = payload.slice(bufferedString.length());
 
-            Buffer decPayloadAndMAC = AuthCrypto.symmetricDecrypt(encPayload,
-                    requestingEntity.getDistributionKey().getKeyVal(), requestingEntity.getDistCryptoSpec().getCipherAlgo());
-
-            // Check MAC (message authentication code) value within dec payload
-            int hashLength = AuthCrypto.getHashLength(requestingEntity.getDistCryptoSpec().getHashAlgo());
-            Buffer decPayload = decPayloadAndMAC.slice(0, decPayloadAndMAC.length() - hashLength);
-            Buffer receivedMAC = decPayloadAndMAC.slice(decPayloadAndMAC.length() - hashLength);
-            Buffer computedMAC = AuthCrypto.hash(decPayload, requestingEntity.getDistCryptoSpec().getHashAlgo());
-
-            if (!receivedMAC.equals(computedMAC)) {
-                throw new RuntimeException("MAC of session key request is NOT correct!");
-            }
-            else {
-                getLogger().debug("MAC is correct!");
-            }
+            Buffer decPayload = AuthCrypto.symmetricDecryptAuthenticate(encPayload,
+                    requestingEntity.getDistributionKey().getKeyVal(), requestingEntity.getDistCryptoSpec());
 
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
 

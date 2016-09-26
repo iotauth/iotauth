@@ -24,7 +24,7 @@ import java.util.Properties;
 /**
  * Authentication Server Configuration Properties are accessed and computed from this class.
  *
- * @author Salomon Lee
+ * @author Salomon Lee, Hokeun Kim
  */
 public class AuthServerProperties {
     private static final Logger logger = LoggerFactory.getLogger(AuthServerProperties.class);
@@ -46,6 +46,7 @@ public class AuthServerProperties {
 
         entity_key_store_path,
         internet_key_store_path,
+        database_key_store_path,
         trusted_ca_cert_paths,
 
         auth_database_dir
@@ -68,6 +69,7 @@ public class AuthServerProperties {
 
     private String entityKeyStorePath;
     private String internetKeyStorePath;
+    private String databaseKeyStorePath;
     private String[] trustedCACertPaths;
 
     private String authDatabaseDir;
@@ -116,6 +118,9 @@ public class AuthServerProperties {
             internetKeyStorePath = prop.getProperty(key.internet_key_store_path.toString());
             logger.info("key:value = {}:{}", key.internet_key_store_path.toString(), internetKeyStorePath);
 
+            databaseKeyStorePath = prop.getProperty(key.database_key_store_path.toString());
+            logger.info("key:value = {}:{}", key.database_key_store_path.toString(), databaseKeyStorePath);
+
             trustedCACertPaths = prop.getProperty(key.trusted_ca_cert_paths.toString()).trim().split("\\s*(;|,|\\s+)\\s*");
             logger.info("key:value = {}:{}", key.trusted_ca_cert_paths.toString(), trustedCACertPaths);
 
@@ -162,6 +167,9 @@ public class AuthServerProperties {
     }
     public String getInternetKeyStorePath() {
         return internetKeyStorePath;
+    }
+    public String getDatabaseKeyStorePath() {
+        return databaseKeyStorePath;
     }
     public String[] getTrustedCACertPaths() { return trustedCACertPaths; }
 

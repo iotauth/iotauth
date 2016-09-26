@@ -15,17 +15,21 @@
 
 package org.iot.auth.db.generator;
 
+import org.iot.auth.crypto.AuthCrypto;
+import org.iot.auth.db.AuthDB;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
+import org.iot.auth.io.Buffer;
 import org.iot.auth.util.DateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.PublicKey;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Date;
@@ -42,6 +46,7 @@ public class GenerateExampleAuthDB {
 
     private static void generateAuthDatabase(int authID) throws Exception {
         String networkName = "";
+        String databasePublicKeyPath = "";
         SQLiteConnector sqLiteConnector = null;
 
         if (authID == 101) {
@@ -50,8 +55,10 @@ public class GenerateExampleAuthDB {
 
             String authDBPath = authDatabaseDir + "/auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
+            //sqLiteConnector.DEBUG = true;
             sqLiteConnector.createTablesIfNotExists();
             initTrustedAuthTable(sqLiteConnector, 102, "localhost", 22901, "../credentials/certs/Auth102InternetCert.pem");
+            databasePublicKeyPath =  "credentials/certs/Auth101DatabaseCert.pem";
         }
         else if (authID == 102) {
             String authDatabaseDir = "databases/auth102/";
@@ -59,29 +66,42 @@ public class GenerateExampleAuthDB {
 
             String authDBPath = authDatabaseDir + "/auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
+            //sqLiteConnector.DEBUG = true;
             sqLiteConnector.createTablesIfNotExists();
             initTrustedAuthTable(sqLiteConnector, 101, "localhost", 21901, "../credentials/certs/Auth101InternetCert.pem");
+            databasePublicKeyPath =  "credentials/certs/Auth102DatabaseCert.pem";
         }
         else {
             logger.error("No such AuthID {}", authID);
             return;
         }
-
-        initRegisteredEntityTable(sqLiteConnector, networkName);
+        Buffer databaseKey = AuthCrypto.generateSymmetricKey(AuthDB.AUTH_DB_KEY_SIZE);
+        initMetaDataTable(sqLiteConnector, databasePublicKeyPath, databaseKey);
+        initRegisteredEntityTable(sqLiteConnector, networkName, databaseKey);
         initCommPolicyTable(sqLiteConnector);
-        initMetaDataTable(sqLiteConnector);
     }
 
-    private static void initMetaDataTable(SQLiteConnector sqLiteConnector) throws ClassNotFoundException, SQLException
+    private static void initMetaDataTable(SQLiteConnector sqLiteConnector,
+                                          String databasePublicKeyPath, Buffer databaseKey) throws ClassNotFoundException, SQLException
     {
-        MetaDataTable metaData = new MetaDataTable();
+        MetaDataTable metaData;
 
+        metaData = new MetaDataTable();
         metaData.setKey(MetaDataTable.key.SessionKeyCount.name());
         metaData.setValue(Long.toString(0));
         sqLiteConnector.insertRecords(metaData);
+
+        metaData = new MetaDataTable();
+        metaData.setKey(MetaDataTable.key.EncryptedDatabaseKey.name());
+        PublicKey databasePublicKey = AuthCrypto.loadPublicKey(databasePublicKeyPath);
+        Buffer encryptedDatabaseKey = AuthCrypto.publicEncrypt(databaseKey, databasePublicKey, AuthDB.AUTH_DB_PUBLIC_CIPHER);
+
+        metaData.setValue(encryptedDatabaseKey.toBase64());
+        sqLiteConnector.insertRecords(metaData);
     }
 
-    private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, String networkName)
+    private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, String networkName,
+                                                  Buffer databaseKey)
             throws ClassNotFoundException, SQLException, IOException
     {
         String entityPrefix = networkName + ".";
@@ -145,7 +165,9 @@ public class GenerateExampleAuthDB {
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
-        registeredEntity.setDistKeyVal(readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcServerKey.key"));
+        registeredEntity.setDistKeyVal(AuthCrypto.symmetricEncryptAuthenticate(
+                readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcServerKey.key"),
+                databaseKey, AuthDB.AUTH_DB_CRYPTO_SPEC).getRawBytes());
         registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
         sqLiteConnector.insertRecords(registeredEntity);
 
@@ -159,7 +181,9 @@ public class GenerateExampleAuthDB {
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCipherAlgo("AES-128-CBC");
         registeredEntity.setDistHashAlgo("SHA256");
-        registeredEntity.setDistKeyVal(readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcClientKey.key"));
+        registeredEntity.setDistKeyVal(AuthCrypto.symmetricEncryptAuthenticate(
+                readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcClientKey.key"),
+                databaseKey, AuthDB.AUTH_DB_CRYPTO_SPEC).getRawBytes());
         registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
         sqLiteConnector.insertRecords(registeredEntity);
 
@@ -330,7 +354,6 @@ public class GenerateExampleAuthDB {
 
     private static void initTrustedAuthTable(SQLiteConnector sqLiteConnector, int id, String host, int port,
                                              String certificatePath) throws ClassNotFoundException, SQLException {
-        sqLiteConnector.DEBUG = true;
         TrustedAuthTable trustedAuth = new TrustedAuthTable();
         trustedAuth.setId(id);
         trustedAuth.setHost(host);
@@ -339,12 +362,12 @@ public class GenerateExampleAuthDB {
         sqLiteConnector.insertRecords(trustedAuth);
     }
 
-    private static byte[] readSymmetricKey(String filePath) throws IOException {
+    private static Buffer readSymmetricKey(String filePath) throws IOException {
         final int MAX_SYMMETRIC_KEY_SIZE = 32;  // Max symmetric key size: 256 bits
         FileInputStream inStream = new FileInputStream(filePath);
         byte[] byteArray = new byte[MAX_SYMMETRIC_KEY_SIZE];
         int numBytes = inStream.read(byteArray);
-        return Arrays.copyOfRange(byteArray, 0, numBytes);
+        return new Buffer(byteArray, numBytes);
     }
 
     private static final Logger logger = LoggerFactory.getLogger(GenerateExampleAuthDB.class);

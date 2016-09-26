@@ -47,10 +47,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Enumeration;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -128,14 +125,24 @@ public class AuthCrypto {
         }
     }
 
-    public Buffer privateDecrypt(Buffer input)
+    public Buffer authPrivateDecrypt(Buffer input)
             throws IllegalArgumentException {
         return performAsymmetricCrypto(Cipher.DECRYPT_MODE, input, authPrivateKeyForEntities, authPublicCipherAlgorithm);
     }
 
-    public Buffer publicEncrypt(Buffer input, PublicKey publicKey)
+    public static Buffer privateDecrypt(Buffer input, PrivateKey privateKey, String publicCipherAlgorithm)
+            throws IllegalArgumentException {
+        return performAsymmetricCrypto(Cipher.DECRYPT_MODE, input, privateKey, publicCipherAlgorithm);
+    }
+
+    public Buffer authPublicEncrypt(Buffer input, PublicKey publicKey)
             throws IllegalArgumentException {
         return performAsymmetricCrypto(Cipher.ENCRYPT_MODE, input, publicKey, authPublicCipherAlgorithm);
+    }
+
+    public static Buffer publicEncrypt(Buffer input, PublicKey publicKey, String publicCipherAlgorithm)
+            throws IllegalArgumentException{
+        return performAsymmetricCrypto(Cipher.ENCRYPT_MODE, input, publicKey, publicCipherAlgorithm);
     }
 
     /**
@@ -196,7 +203,27 @@ public class AuthCrypto {
         return new Buffer(randomBytes);
     }
 
-    public static Buffer symmetricEncrypt(Buffer input, Buffer key, String cipherAlgorithm) throws RuntimeException {
+    public static Buffer generateSymmetricKey(int size) {
+        KeyGenerator keyGenerator;
+        try {
+            // TODO: support more cryptos
+            keyGenerator = KeyGenerator.getInstance("AES");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to generate key! \n" + e.getMessage());
+        }
+        // bytes to bits
+        keyGenerator.init(size * 8);
+        SecretKey key = keyGenerator.generateKey();
+        return new Buffer(key.getEncoded());
+    }
+
+    public static Buffer symmetricEncryptAuthenticate(Buffer input, Buffer key, SymmetricKeyCryptoSpec cryptoSpec) {
+        Buffer buffer = new Buffer(input);
+        buffer.concat(AuthCrypto.hash(buffer, cryptoSpec.getHashAlgo()));
+        return AuthCrypto.symmetricEncrypt(buffer, key, cryptoSpec.getCipherAlgo());
+    }
+
+    private static Buffer symmetricEncrypt(Buffer input, Buffer key, String cipherAlgorithm) {
         Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, cipherAlgorithm, key, null);
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -214,7 +241,25 @@ public class AuthCrypto {
         return new Buffer(byteArrayOutputStream.toByteArray());
     }
 
-    public static Buffer symmetricDecrypt(Buffer cipherText, Buffer key, String cipherAlgorithm) throws RuntimeException {
+    public static Buffer symmetricDecryptAuthenticate(Buffer cipherText, Buffer key, SymmetricKeyCryptoSpec cryptoSpec) {
+        Buffer decPayloadAndMAC = AuthCrypto.symmetricDecrypt(cipherText, key, cryptoSpec.getCipherAlgo());
+
+        // Check MAC (message authentication code) value within dec payload
+        int hashLength = AuthCrypto.getHashLength(cryptoSpec.getHashAlgo());
+        Buffer decPayload = decPayloadAndMAC.slice(0, decPayloadAndMAC.length() - hashLength);
+        Buffer receivedMAC = decPayloadAndMAC.slice(decPayloadAndMAC.length() - hashLength);
+        Buffer computedMAC = AuthCrypto.hash(decPayload, cryptoSpec.getHashAlgo());
+
+        if (!receivedMAC.equals(computedMAC)) {
+            throw new RuntimeException("MAC of session key request is NOT correct!");
+        }
+        else {
+            logger.debug("MAC is correct!");
+        }
+        return decPayload;
+    }
+
+    private static Buffer symmetricDecrypt(Buffer cipherText, Buffer key, String cipherAlgorithm) {
         Cipher cipher = getCipher(Cipher.DECRYPT_MODE, cipherAlgorithm, key, cipherText);
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -226,7 +271,7 @@ public class AuthCrypto {
         try {
             byteArrayOutputStream.write(cipher.doFinal(cipherText.getRawBytes(), ivSize, cipherText.length() - ivSize));
         } catch (IllegalBlockSizeException | BadPaddingException | IOException e) {
-            throw new IllegalArgumentException("Problem processing " + cipherText.toHexString() + "\n" + e.getMessage());
+            throw new RuntimeException("Problem processing " + cipherText.toHexString() + "\n" + e.getMessage());
         }
         return new Buffer(byteArrayOutputStream.toByteArray());
     }
@@ -282,7 +327,7 @@ public class AuthCrypto {
         return bytes;
     }
 
-    private Buffer performAsymmetricCrypto(int operationMode, Buffer input, Key key, String cipherAlgorithm)
+    private static Buffer performAsymmetricCrypto(int operationMode, Buffer input, Key key, String cipherAlgorithm)
             throws IllegalArgumentException {
         Cipher cipher;
         try {

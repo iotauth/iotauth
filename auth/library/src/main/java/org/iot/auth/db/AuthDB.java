@@ -30,9 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
@@ -47,6 +45,11 @@ public class AuthDB {
     private AuthServerProperties prop = C.PROPERTIES;
     private static final Logger logger = LoggerFactory.getLogger(AuthDB.class);
     private static final String AUTH_DB_FILE_NAME = "auth.db";
+    // FIXME: should be set by properties
+    public static final int AUTH_DB_KEY_SIZE = 16;     // 128 bit
+    public static final String AUTH_DB_PUBLIC_CIPHER = "RSA/ECB/PKCS1PADDING";
+    public static final SymmetricKeyCryptoSpec AUTH_DB_CRYPTO_SPEC =
+            new SymmetricKeyCryptoSpec("AES/CBC/PKCS5Padding", 16, "SHA-256");
 
     public AuthDB(String authDatabaseDir)
     {
@@ -61,7 +64,7 @@ public class AuthDB {
 
     /**
      * Initializes Auth's database by loading database tables
-     * @param trustStorePassword Password for trust store for storing certificates of trusted Auths
+     * @param authKeyStorePassword Password for key stores and trust store for storing certificates of trusted Auths
      * @throws IOException
      * @throws CertificateException
      * @throws NoSuchAlgorithmException
@@ -69,12 +72,32 @@ public class AuthDB {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    public void initialize(String trustStorePassword) throws IOException, CertificateException,
-            NoSuchAlgorithmException, KeyStoreException, SQLException, ClassNotFoundException
+    public void initialize(String authKeyStorePassword, String databaseKeystorePath) throws IOException, CertificateException,
+            NoSuchAlgorithmException, KeyStoreException, SQLException, ClassNotFoundException, UnrecoverableEntryException
     {
+        KeyStore databaseKeyStore = AuthCrypto.loadKeyStore(databaseKeystorePath, authKeyStorePassword);
+        if (databaseKeyStore.size() != 1) {
+            throw new IllegalArgumentException("Auth key store must contain one key entry.");
+        }
+        Enumeration<String> aliases = databaseKeyStore.aliases();
+
+        KeyStore.ProtectionParameter protParam =
+                new KeyStore.PasswordProtection(authKeyStorePassword.toCharArray());
+        PrivateKey databasePrivateKey = null;
+        while (aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) databaseKeyStore.getEntry(alias, protParam);
+            logger.debug("Alias {}: , Cert: {}, Key: {}", alias, pkEntry.getCertificate(), pkEntry.getPrivateKey());
+            databasePrivateKey = pkEntry.getPrivateKey();
+        }
+
+        String value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.EncryptedDatabaseKey.name());
+        Buffer encryptedDatabaseKey = Buffer.fromBase64(value);
+        this.databaseKey = AuthCrypto.privateDecrypt(encryptedDatabaseKey, databasePrivateKey, AUTH_DB_PUBLIC_CIPHER);
+
         loadRegEntityDB();
         loadCommPolicyDB();
-        loadTrustedAuthDB(trustStorePassword);
+        loadTrustedAuthDB(authKeyStorePassword);
     }
 
     /**
@@ -112,7 +135,7 @@ public class AuthDB {
         registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
 
         sqLiteConnector.updateRegEntityDistKey(entityName, distributionKey.getExpirationTime().getTime(),
-                distributionKey.getKeyVal().getRawBytes());
+                encryptAuthDBData(distributionKey.getKeyVal()).getRawBytes());
     }
 
     /**
@@ -145,16 +168,18 @@ public class AuthDB {
             SessionKey sessionKey = new SessionKey(sessionKeyID, owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
                     communicationPolicy.getMaxNumSessionKeyOwners(), sessionKeyPurpose.toString(),
                     new Date().getTime() + communicationPolicy.getAbsValidity(), communicationPolicy.getRelValidity(),
-                    communicationPolicy.getCryptoSpec(), AuthCrypto.getRandomBytes(communicationPolicy.getCryptoSpec().getCipherKeySize()));
+                    communicationPolicy.getCryptoSpec(),
+                    AuthCrypto.generateSymmetricKey(communicationPolicy.getCryptoSpec().getCipherKeySize()));
             sessionKeyList.add(sessionKey);
         }
         sessionKeyCount += numKeys;
 
-        // write to _sessionKeyCountFilePath
         sqLiteConnector.updateMetaData(MetaDataTable.key.SessionKeyCount.name(), Long.toString(sessionKeyCount));
 
         for (SessionKey sessionKey: sessionKeyList) {
-            sqLiteConnector.insertRecords(CachedSessionKeyTable.fromSessionKey(sessionKey));
+            CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.fromSessionKey(sessionKey);
+            cachedSessionKey.setKeyVal(encryptAuthDBData(new Buffer(cachedSessionKey.getKeyVal())).getRawBytes());
+            sqLiteConnector.insertRecords(cachedSessionKey);
         }
 
         return sessionKeyList;
@@ -163,6 +188,7 @@ public class AuthDB {
     public SessionKey getSessionKeyByID(long keyID) throws SQLException, ClassNotFoundException {
         logger.debug("keyID: {}", keyID);
         CachedSessionKeyTable cachedSessionKey = sqLiteConnector.selectCachedSessionKeyByID(keyID);
+        cachedSessionKey.setKeyVal(decryptAuthDBData(new Buffer(cachedSessionKey.getKeyVal())).getRawBytes());
         return cachedSessionKey.toSessionKey();
     }
 
@@ -171,8 +197,9 @@ public class AuthDB {
         List<CachedSessionKeyTable> cachedSessionKeyTableList =
                 sqLiteConnector.selectCachedSessionKeysByPurpose(requestingEntityName, sessionKeyPurpose.toString());
         List<SessionKey> result = new ArrayList<>(cachedSessionKeyTableList.size());
-        for (CachedSessionKeyTable cachedSessionKeyTable: cachedSessionKeyTableList) {
-            result.add(cachedSessionKeyTable.toSessionKey());
+        for (CachedSessionKeyTable cachedSessionKey: cachedSessionKeyTableList) {
+            cachedSessionKey.setKeyVal(decryptAuthDBData(new Buffer(cachedSessionKey.getKeyVal())).getRawBytes());
+            result.add(cachedSessionKey.toSessionKey());
         }
         return result;
     }
@@ -205,6 +232,7 @@ public class AuthDB {
             else {
                 sb.append("\n");
             }
+            cachedSessionKey.setKeyVal(decryptAuthDBData(new Buffer(cachedSessionKey.getKeyVal())).getRawBytes());
             sb.append(cachedSessionKey.toSessionKey().toString());
         }
         return sb.toString();
@@ -277,7 +305,8 @@ public class AuthDB {
                     SymmetricKeyCryptoSpec.fromJSSpec(regEntityTable.getDistCipherAlgo(), regEntityTable.getDistHashAlgo())
             );
             if (regEntityTable.getDistKeyVal() != null) {
-                registeredEntity.setDistributionKey(new DistributionKey(new Buffer(regEntityTable.getDistKeyVal()),
+                registeredEntity.setDistributionKey(new DistributionKey(
+                        decryptAuthDBData(new Buffer(regEntityTable.getDistKeyVal())),
                         regEntityTable.getDistKeyExpirationTime()));
             }
             registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
@@ -317,10 +346,17 @@ public class AuthDB {
 
     public static long encodeSessionKeyID(int authID, long keyIndex) {
         return authID * 100000 + keyIndex;
-    };
+    }
     public static int decodeAuthIDFromSessionKeyID(long sessionKeyID) {
         return (int)(sessionKeyID / 100000);
-    };
+    }
+
+    private Buffer encryptAuthDBData(Buffer input) {
+        return AuthCrypto.symmetricEncryptAuthenticate(input, databaseKey, AUTH_DB_CRYPTO_SPEC);
+    }
+    private Buffer decryptAuthDBData(Buffer input) {
+        return AuthCrypto.symmetricDecryptAuthenticate(input, databaseKey, AUTH_DB_CRYPTO_SPEC);
+    }
 
     private String authDatabaseDir;
 
@@ -330,4 +366,6 @@ public class AuthDB {
     private KeyStore trustStoreForTrustedAuths;
 
     private SQLiteConnector sqLiteConnector;
+
+    private Buffer databaseKey;
 }

@@ -53,7 +53,10 @@ import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
+import java.io.BufferedReader;
+import java.io.Console;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -83,17 +86,33 @@ public class AuthServer {
     }
 
     public AuthServer(AuthServerProperties properties) throws Exception {
-        this.db = new AuthDB(properties.getAuthDatabaseDir());
 
         // TODO: replace this with password input
-        String authKeyStorePassword = "asdf";
+        Console console = System.console();
+        String authKeyStorePassword;
+        if (console == null) {
+            logger.warn("WARNING! Console is not available, password will appear on screen. Are you sure to continue(y/n)?");
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            String yesOrNo = br.readLine();
+            if (!yesOrNo.equalsIgnoreCase("y")) {
+                logger.info("Aborting... please run Auth with a console.");
+                System.exit(1);
+            }
+            logger.info("Warning! This can be insecure! - Please enter Auth password: ");
+            authKeyStorePassword = br.readLine();
+        }
+        else {
+            logger.info("Please enter Auth password: ");
+            authKeyStorePassword = new String(console.readPassword());
+        }
 
-        db.initialize(authKeyStorePassword);
         logger.info("Finished initializing Auth DB.");
 
         authID =  properties.getAuthID();
 
         crypto = new AuthCrypto(properties.getEntityKeyStorePath(), authKeyStorePassword);
+        this.db = new AuthDB(properties.getAuthDatabaseDir());
+        db.initialize(authKeyStorePassword, properties.getDatabaseKeyStorePath());
 
         entityTcpPortTimeout = properties.getEntityTcpPortTimeout();
         entityUdpPortTimeout = properties.getEntityUdpPortTimeout();

@@ -6,15 +6,16 @@ CERTS_DIR="certs"
 KS_DIR="keystores"
 VAL_DAYS=730
 
-if [ $# != 3 ]
+if [ $# != 4 ]
 then
-	echo 'please provide ID, host name, password (e.g., ./genAuthCred.sh 101 localhost asdf)'
+	echo 'please provide ID, host name, CA/AUTH passwords (e.g., ./generateExampleAuthCredentials.sh 101 localhost ca_password auth_password)'
 	exit
 fi
 
 AUTH_ID=$1
 HOST_NAME=$2
-PASSWORD=$3
+CA_PASSWORD=$3
+AUTH_PASSWORD=$4
 
 echo 'Generating credentials for ID:' $AUTH_ID', Host name:' $HOST_NAME
 
@@ -26,10 +27,10 @@ auth_cred_gen() {
 	FILE_PREFIX="Auth"$AUTH_ID$1
 	openssl genrsa -out $KS_DIR/$FILE_PREFIX"Key.pem" 2048
 	openssl req -new -key $KS_DIR/$FILE_PREFIX"Key.pem" -sha256 -out $KS_DIR/$FILE_PREFIX"Req.pem" -subj "/C=US/ST=CA/L=Berkeley/O=EECS/OU=Auth"$AUTH_ID"/CN="$HOST_NAME
-	openssl x509 -req -in $KS_DIR/$FILE_PREFIX"Req.pem" -sha256 -extensions usr_cert -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial \
+	openssl x509 -passin pass:$CA_PASSWORD -req -in $KS_DIR/$FILE_PREFIX"Req.pem" -sha256 -extensions usr_cert -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial \
 		-out $KS_DIR/$FILE_PREFIX"Cert.pem" -days $VAL_DAYS
 
-	openssl pkcs12 -export -out $KS_DIR/$FILE_PREFIX".pfx" -inkey $KS_DIR/$FILE_PREFIX"Key.pem" -in $KS_DIR/$FILE_PREFIX"Cert.pem" -password pass:$PASSWORD
+	openssl pkcs12 -export -out $KS_DIR/$FILE_PREFIX".pfx" -inkey $KS_DIR/$FILE_PREFIX"Key.pem" -in $KS_DIR/$FILE_PREFIX"Cert.pem" -password pass:$AUTH_PASSWORD
 
 	mv $KS_DIR/$FILE_PREFIX"Cert.pem" $CERTS_DIR/$FILE_PREFIX"Cert.pem"
 	rm $KS_DIR/$FILE_PREFIX"Cert.pem"
@@ -40,3 +41,4 @@ auth_cred_gen() {
 
 auth_cred_gen "Internet" 
 auth_cred_gen "Entity" 
+auth_cred_gen "Database" 

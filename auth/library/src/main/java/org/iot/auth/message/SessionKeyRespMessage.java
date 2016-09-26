@@ -89,8 +89,7 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
             payload.concat(sessionKey.serialize());
         }
 
-        payload.concat(AuthCrypto.hash(payload, distCryptoSpec.getHashAlgo()));
-        payload = AuthCrypto.symmetricEncrypt(payload, distKey.getKeyVal(), distCryptoSpec.getCipherAlgo());
+        payload = AuthCrypto.symmetricEncryptAuthenticate(payload, distKey.getKeyVal(), distCryptoSpec);
 
         if (type == MessageType.SESSION_KEY_RESP_WITH_DIST_KEY) {
             Buffer newPayload = new Buffer(encryptedDistKey);

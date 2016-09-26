@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * A SQLite connector Class for CRUD operations on Auth database.
  *
- * @author Salomon Lee
+ * @author Salomon Lee, Hokeun Kim
  */
 public class SQLiteConnector {
     public boolean DEBUG;
@@ -651,6 +651,7 @@ public class SQLiteConnector {
      * @param dbPath
      */
     public SQLiteConnector(String dbPath) {
+        this.DEBUG = false;
         this.dbPath = dbPath;
         try {
             init();
