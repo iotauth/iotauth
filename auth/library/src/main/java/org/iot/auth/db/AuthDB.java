@@ -168,8 +168,8 @@ public class AuthDB {
             SessionKey sessionKey = new SessionKey(sessionKeyID, owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
                     communicationPolicy.getMaxNumSessionKeyOwners(), sessionKeyPurpose.toString(),
                     new Date().getTime() + communicationPolicy.getAbsValidity(), communicationPolicy.getRelValidity(),
-                    communicationPolicy.getCryptoSpec(),
-                    AuthCrypto.generateSymmetricKey(communicationPolicy.getCryptoSpec().getCipherKeySize()));
+                    communicationPolicy.getSessionCryptoSpec(),
+                    AuthCrypto.generateSymmetricKey(communicationPolicy.getSessionCryptoSpec().getCipherKeySize()));
             sessionKeyList.add(sessionKey);
         }
         sessionKeyCount += numKeys;
@@ -302,7 +302,7 @@ public class AuthDB {
                     regEntityTable.getUsePermanentDistKey(),
                     regEntityTable.getPublicKey(),
                     regEntityTable.getDistKeyValidity(),
-                    SymmetricKeyCryptoSpec.fromJSSpec(regEntityTable.getDistCipherAlgo(), regEntityTable.getDistHashAlgo())
+                    SymmetricKeyCryptoSpec.fromSpecString(regEntityTable.getDistCryptoSpec())
             );
             if (regEntityTable.getDistKeyVal() != null) {
                 registeredEntity.setDistributionKey(new DistributionKey(
@@ -317,8 +317,7 @@ public class AuthDB {
     private void loadCommPolicyDB() throws SQLException, ClassNotFoundException {
         sqLiteConnector.selectAllPolicies().forEach(c -> {
             CommunicationPolicy communicationPolicy = new CommunicationPolicy(c.getReqGroup(), c.getTargetType(), c.getTarget(),
-                    c.getMaxNumSessionKeyOwners(),
-                    c.getCipherAlgo(), c.getHashAlgo(),
+                    c.getMaxNumSessionKeyOwners(), c.getSessionCryptoSpec(),
                     c.getAbsValidity(), c.getRelValidity());
             communicationPolicyList.add(communicationPolicy);
             logger.debug("communicationPolicy: {}", communicationPolicy.toString());

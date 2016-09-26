@@ -253,7 +253,7 @@ public abstract class EntityConnectionHandler {
                     throw new InvalidSessionKeyTargetException("Unrecognized Purpose: "
                             + purpose.toString());
                 }
-                cryptoSpec = communicationPolicy.getCryptoSpec();
+                cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
                         new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
@@ -269,7 +269,7 @@ public abstract class EntityConnectionHandler {
                     throw new InvalidSessionKeyTargetException("Unrecognized Purpose: "
                             + purpose.toString());
                 }
-                cryptoSpec = communicationPolicy.getCryptoSpec();
+                cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 SessionKeyPurpose sessionKeyPurpose =
                         new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 sessionKeyList = server.getSessionKeysByPurpose(requestingEntity.getName(), sessionKeyPurpose);

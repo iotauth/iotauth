@@ -37,8 +37,7 @@ public class CachedSessionKeyTable {
         Purpose,
         AbsValidity,
         RelValidity,
-        CipherAlgo,
-        HashAlgo,
+        CryptoSpec,
         KeyVal
     }
 
@@ -50,15 +49,13 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setPurpose(sessionKey.getPurpose());
         cachedSessionKey.setAbsValidity(sessionKey.getAbsValidity().getTime());
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
-        SymmetricKeyCryptoSpec cryptoSpec = sessionKey.getCryptoSpec();
-        cachedSessionKey.setCipherAlgo(SymmetricKeyCryptoSpec.toJSCryptoAlgo(cryptoSpec.getCipherAlgo(), cryptoSpec.getCipherKeySize()));
-        cachedSessionKey.setHashAlgo(SymmetricKeyCryptoSpec.toJSCryptoAlgo(cryptoSpec.getHashAlgo(), -1));
+        cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toSpecString());
         cachedSessionKey.setKeyVal(sessionKey.getKeyVal().getRawBytes());
         return cachedSessionKey;
     }
 
     public SessionKey toSessionKey() {
-        SymmetricKeyCryptoSpec cryptoSpec = SymmetricKeyCryptoSpec.fromJSSpec(getCipherAlgo(), getHashAlgo());
+        SymmetricKeyCryptoSpec cryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(getSessionCryptoSpec());
         SessionKey sessionKey = new SessionKey(getID(), getOwner().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
                 getMaxNumOwners(), getPurpose(),
                 getAbsValidity(), getRelValidity(),
@@ -105,17 +102,11 @@ public class CachedSessionKeyTable {
         this.relValidity = relValidity;
     }
 
-    public String getCipherAlgo() {
-        return cipherAlgo;
+    public String getSessionCryptoSpec() {
+        return sessionCryptoSpec;
     }
-    public void setCipherAlgo(String cipherAlgo) {
-        this.cipherAlgo = cipherAlgo;
-    }
-    public String getHashAlgo() {
-        return hashAlgo;
-    }
-    public void setHashAlgo(String hashAlgo) {
-        this.hashAlgo = hashAlgo;
+    public void setSessionCryptoSpec(String sessionCryptoSpec) {
+        this.sessionCryptoSpec = sessionCryptoSpec;
     }
 
     public byte[] getKeyVal() {
@@ -133,8 +124,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setPurpose(r.getString(c.Purpose.name()));
         cachedSessionKey.setAbsValidity(r.getLong(c.AbsValidity.name()));
         cachedSessionKey.setRelValidity(r.getLong(c.RelValidity.name()));
-        cachedSessionKey.setCipherAlgo(r.getString(c.CipherAlgo.name()));
-        cachedSessionKey.setHashAlgo(r.getString(c.HashAlgo.name()));
+        cachedSessionKey.setSessionCryptoSpec(r.getString(c.CryptoSpec.name()));
         cachedSessionKey.setKeyVal(r.getBytes(c.KeyVal.name()));
         return cachedSessionKey;
     }
@@ -147,8 +137,7 @@ public class CachedSessionKeyTable {
         object.put(c.Purpose.name(), getPurpose());
         object.put(c.AbsValidity.name(), getAbsValidity());
         object.put(c.RelValidity.name(), getRelValidity());
-        object.put(c.CipherAlgo.name(), getCipherAlgo());
-        object.put(c.HashAlgo.name(), getHashAlgo());
+        object.put(c.CryptoSpec.name(), getSessionCryptoSpec());
         object.put(c.KeyVal.name(), getKeyVal());
         return object;
     }
@@ -161,8 +150,7 @@ public class CachedSessionKeyTable {
     private long absValidity;
     private long relValidity;
 
-    private String cipherAlgo;
-    private String hashAlgo;
+    private String sessionCryptoSpec;
 
     private byte[] keyVal;
 }

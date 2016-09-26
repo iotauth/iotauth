@@ -18,7 +18,6 @@ package org.iot.auth.db.dao;
 import org.iot.auth.db.bean.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.Cache;
 
 import java.sql.*;
 import java.util.*;
@@ -61,8 +60,7 @@ public class SQLiteConnector {
         // MaxNumSessionKeyOwners should be greater than or equal to 2
         sql += CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + " INT NOT NULL CHECK(" +
                 CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + " >= 2),";
-        sql += CommunicationPolicyTable.c.CipherAlgorithm.name() + " TEXT NOT NULL,";
-        sql += CommunicationPolicyTable.c.HashAlgorithm.name() + " TEXT NOT NULL,";
+        sql += CommunicationPolicyTable.c.SessionCryptoSpec.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + " TEXT NOT NULL,";
         sql += "PRIMARY KEY (" + CommunicationPolicyTable.c.RequestingGroup.name() + ",";
@@ -85,8 +83,7 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.MaxSessionKeysPerRequest.name() + " INT NOT NULL,";
         sql += RegisteredEntityTable.c.PublKeyFile.name() + " TEXT,";
         sql += RegisteredEntityTable.c.DistValidityPeriod.name() + " TEXT NOT NULL,";
-        sql += RegisteredEntityTable.c.DistCipherAlgo.name() + " TEXT NOT NULL,";
-        sql += RegisteredEntityTable.c.DistHashAlgo.name() + " TEXT NOT NULL,";
+        sql += RegisteredEntityTable.c.DistCryptoSpec.name() + " TEXT NOT NULL,";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + " INT,";
         sql += RegisteredEntityTable.c.DistKeyVal.name() + " BLOB)";
         if (DEBUG) logger.info(sql);
@@ -117,8 +114,7 @@ public class SQLiteConnector {
         sql += CachedSessionKeyTable.c.Purpose.name() + " TEXT NOT NULL,";
         sql += CachedSessionKeyTable.c.AbsValidity.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.RelValidity.name() + " INT NOT NULL,";
-        sql += CachedSessionKeyTable.c.CipherAlgo.name() + " TEXT NOT NULL,";
-        sql += CachedSessionKeyTable.c.HashAlgo.name() + " TEXT NOT NULL,";
+        sql += CachedSessionKeyTable.c.CryptoSpec.name() + " TEXT NOT NULL,";
         sql += CachedSessionKeyTable.c.KeyVal.name() + " BLOB NOT NULL)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
@@ -160,20 +156,19 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
         sql += CommunicationPolicyTable.c.Target.name() + ",";
         sql += CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + ",";
-        sql += CommunicationPolicyTable.c.CipherAlgorithm.name() + ",";
-        sql += CommunicationPolicyTable.c.HashAlgorithm.name() + ",";
+        sql += CommunicationPolicyTable.c.SessionCryptoSpec.name() + ",";
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + ",";
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?)";
+        sql += " VALUES (?,?,?,?,?,?,?)";
+        int index = 1;
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setString(1,policy.getReqGroup());
-        preparedStatement.setString(2,policy.getTargetTypeVal());
-        preparedStatement.setString(3,policy.getTarget());
-        preparedStatement.setInt(4,policy.getMaxNumSessionKeyOwners());
-        preparedStatement.setString(5,policy.getCipherAlgo());
-        preparedStatement.setString(6,policy.getHashAlgo());
-        preparedStatement.setString(7,policy.getAbsValidityStr());
-        preparedStatement.setString(8,policy.getRelValidityStr());
+        preparedStatement.setString(index++,policy.getReqGroup());
+        preparedStatement.setString(index++,policy.getTargetTypeVal());
+        preparedStatement.setString(index++,policy.getTarget());
+        preparedStatement.setInt(index++,policy.getMaxNumSessionKeyOwners());
+        preparedStatement.setString(index++,policy.getSessionCryptoSpec());
+        preparedStatement.setString(index++,policy.getAbsValidityStr());
+        preparedStatement.setString(index++,policy.getRelValidityStr());
         if (DEBUG) logger.info(preparedStatement.toString());
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -204,29 +199,28 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.MaxSessionKeysPerRequest.name() + ",";
         sql += RegisteredEntityTable.c.PublKeyFile.name() + ",";
         sql += RegisteredEntityTable.c.DistValidityPeriod.name() + ",";
-        sql += RegisteredEntityTable.c.DistCipherAlgo.name() + ",";
-        sql += RegisteredEntityTable.c.DistHashAlgo.name() + ",";
+        sql += RegisteredEntityTable.c.DistCryptoSpec.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyVal.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setString(1,regEntity.getName());
-        preparedStatement.setString(2,regEntity.getGroup());
-        preparedStatement.setString(3,regEntity.getDistProtocol());
-        preparedStatement.setBoolean(4,regEntity.getUsePermanentDistKey());
-        preparedStatement.setInt(5,regEntity.getMaxSessionKeysPerRequest());
-        preparedStatement.setString(6,regEntity.getPublicKeyFile());
-        preparedStatement.setString(7,regEntity.getDistValidityPeriod());
-        preparedStatement.setString(8,regEntity.getDistCipherAlgo());
-        preparedStatement.setString(9,regEntity.getDistHashAlgo());
+        int index = 1;
+        preparedStatement.setString(index++,regEntity.getName());
+        preparedStatement.setString(index++,regEntity.getGroup());
+        preparedStatement.setString(index++,regEntity.getDistProtocol());
+        preparedStatement.setBoolean(index++,regEntity.getUsePermanentDistKey());
+        preparedStatement.setInt(index++,regEntity.getMaxSessionKeysPerRequest());
+        preparedStatement.setString(index++,regEntity.getPublicKeyFile());
+        preparedStatement.setString(index++,regEntity.getDistValidityPeriod());
+        preparedStatement.setString(index++,regEntity.getDistCryptoSpec());
         byte[] distKeyVal = regEntity.getDistKeyVal();
         if (distKeyVal != null) {
-            preparedStatement.setLong(10, regEntity.getDistKeyExpirationTime());
-            preparedStatement.setBytes(11,distKeyVal);
+            preparedStatement.setLong(index++, regEntity.getDistKeyExpirationTime());
+            preparedStatement.setBytes(index++,distKeyVal);
         }
         else {
-            preparedStatement.setNull(10, Types.INTEGER);
-            preparedStatement.setNull(11, Types.BLOB);
+            preparedStatement.setNull(index++, Types.INTEGER);
+            preparedStatement.setNull(index++, Types.BLOB);
         }
 
         preparedStatement.toString();
@@ -258,10 +252,11 @@ public class SQLiteConnector {
         sql += TrustedAuthTable.c.CertificatePath.name() + ")";
         sql += " VALUES(?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setInt(1,auth.getId());
-        preparedStatement.setString(2,auth.getHost());
-        preparedStatement.setInt(3,auth.getPort());
-        preparedStatement.setString(4,auth.getCertificatePath());
+        int index = 1;
+        preparedStatement.setInt(index++,auth.getId());
+        preparedStatement.setString(index++,auth.getHost());
+        preparedStatement.setInt(index++,auth.getPort());
+        preparedStatement.setString(index++,auth.getCertificatePath());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -290,20 +285,19 @@ public class SQLiteConnector {
         sql += CachedSessionKeyTable.c.Purpose.name() + ",";
         sql += CachedSessionKeyTable.c.AbsValidity.name() + ",";
         sql += CachedSessionKeyTable.c.RelValidity.name() + ",";
-        sql += CachedSessionKeyTable.c.CipherAlgo.name() + ",";
-        sql += CachedSessionKeyTable.c.HashAlgo.name() + ",";
+        sql += CachedSessionKeyTable.c.CryptoSpec.name() + ",";
         sql += CachedSessionKeyTable.c.KeyVal.name() + ")";
-        sql += " VALUES(?,?,?,?,?,?,?,?,?)";
+        sql += " VALUES(?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setLong(1,cachedSessionKey.getID());
-        preparedStatement.setString(2,cachedSessionKey.getOwner());
-        preparedStatement.setInt(3,cachedSessionKey.getMaxNumOwners());
-        preparedStatement.setString(4,cachedSessionKey.getPurpose());
-        preparedStatement.setLong(5,cachedSessionKey.getAbsValidity());
-        preparedStatement.setLong(6,cachedSessionKey.getRelValidity());
-        preparedStatement.setString(7,cachedSessionKey.getCipherAlgo());
-        preparedStatement.setString(8,cachedSessionKey.getHashAlgo());
-        preparedStatement.setBytes(9,cachedSessionKey.getKeyVal());
+        int index = 1;
+        preparedStatement.setLong(index++,cachedSessionKey.getID());
+        preparedStatement.setString(index++,cachedSessionKey.getOwner());
+        preparedStatement.setInt(index++,cachedSessionKey.getMaxNumOwners());
+        preparedStatement.setString(index++,cachedSessionKey.getPurpose());
+        preparedStatement.setLong(index++,cachedSessionKey.getAbsValidity());
+        preparedStatement.setLong(index++,cachedSessionKey.getRelValidity());
+        preparedStatement.setString(index++,cachedSessionKey.getSessionCryptoSpec());
+        preparedStatement.setBytes(index++,cachedSessionKey.getKeyVal());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -331,8 +325,9 @@ public class SQLiteConnector {
         sql += MetaDataTable.c.Value.name() + ")";
         sql += " VALUES(?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setString(1, metaData.getKey());
-        preparedStatement.setString(2, metaData.getValue());
+        int index = 1;
+        preparedStatement.setString(index++, metaData.getKey());
+        preparedStatement.setString(index++, metaData.getValue());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();

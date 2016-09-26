@@ -39,8 +39,7 @@ public class CommunicationPolicyTable {
         TargetType,
         Target,
         MaxNumSessionKeyOwners,
-        CipherAlgorithm,
-        HashAlgorithm,
+        SessionCryptoSpec,
         AbsoluteValidity,
         RelativeValidity
     }
@@ -54,10 +53,7 @@ public class CommunicationPolicyTable {
     private String absValidityStr;
     private long relValidity;
     private String relValidityStr;
-    private String hashAlgo;
-    private String cipherAlgo;
-
-    private SymmetricKeyCryptoSpec cryptoSpec;
+    private String sessionCryptoSpec;
 
     /**
      * Gets the requesting group type
@@ -118,22 +114,6 @@ public class CommunicationPolicyTable {
         this.maxNumSessionKeyOwners = maxNumSessionKeyOwners;
     }
 
-    /**
-     * Gets the specification of the key used for the cryptography algorithm, it's hash algorithm and key length.<br/>
-     * For more information see {@link SymmetricKeyCryptoSpec}
-     * @return
-     */
-    public SymmetricKeyCryptoSpec getCryptoSpec() {
-        return cryptoSpec;
-    }
-
-
-    public void setCryptoSpec(String cipherAlgo, String hashAlgo) {
-        this.cipherAlgo = cipherAlgo;
-        this.hashAlgo = hashAlgo;
-        this.cryptoSpec = SymmetricKeyCryptoSpec.fromJSSpec(cipherAlgo, hashAlgo);
-    }
-
     public long getAbsValidity() {
         return absValidity;
     }
@@ -150,24 +130,12 @@ public class CommunicationPolicyTable {
         this.relValidity = relValidity;
     }
 
-    public String getHashAlgo() {
-        return hashAlgo;
+    public String getSessionCryptoSpec() {
+        return sessionCryptoSpec;
     }
 
-    public void setHashAlgo(String hashAlgo) {
-        this.hashAlgo = hashAlgo;
-    }
-
-    public String getCipherAlgo() {
-        return cipherAlgo;
-    }
-
-    public void setCipherAlgo(String cipherAlgo) {
-        this.cipherAlgo = cipherAlgo;
-    }
-
-    public void setCryptoSpec(SymmetricKeyCryptoSpec cryptoSpec) {
-        this.cryptoSpec = cryptoSpec;
+    public void setSessionCryptoSpec(String sessionCryptoSpec) {
+        this.sessionCryptoSpec = sessionCryptoSpec;
     }
 
     public String getTargetTypeVal() {
@@ -216,9 +184,7 @@ public class CommunicationPolicyTable {
         policy.setTargetType(CommunicationTargetType.fromStringValue(r.getString(c.TargetType.name())));
         policy.setTarget(r.getString(c.Target.name()));
         policy.setMaxNumSessionKeyOwners(r.getInt(c.MaxNumSessionKeyOwners.name()));
-        policy.setCipherAlgo(r.getString(c.CipherAlgorithm.name()));
-        policy.setHashAlgo(r.getString(c.HashAlgorithm.name()));
-        policy.setCryptoSpec(policy.getCipherAlgo(),policy.getHashAlgo());
+        policy.setSessionCryptoSpec(r.getString(c.SessionCryptoSpec.name()));
         policy.setAbsValidity(DateHelper.parseTimePeriod(r.getString(c.AbsoluteValidity.name())));
         policy.setRelValidity(DateHelper.parseTimePeriod(r.getString(c.RelativeValidity.name())));
         return policy;

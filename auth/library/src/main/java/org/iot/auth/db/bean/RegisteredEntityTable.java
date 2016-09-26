@@ -38,8 +38,7 @@ public class RegisteredEntityTable {
         DistValidityPeriod,
         PublKeyFile,
         PublicKey,
-        DistCipherAlgo,
-        DistHashAlgo,
+        DistCryptoSpec,
         DistKeyExpirationTime,
         DistKeyVal,
         MaxSessionKeysPerRequest
@@ -52,8 +51,7 @@ public class RegisteredEntityTable {
     private String publicKeyFile;
     private String distValidityPeriod;
     private long distKeyValidity;
-    private String distCipherAlgo;
-    private String distHashAlgo;
+    private String distCryptoSpec;
     private long distKeyExpirationTime = -1;
     private byte[] distKeyVal = null;
     private int maxSessionKeysPerRequest;
@@ -116,18 +114,11 @@ public class RegisteredEntityTable {
         this.distValidityPeriod = distValidityPeriod;
     }
 
-    public String getDistCipherAlgo() {
-        return distCipherAlgo;
+    public String getDistCryptoSpec() {
+        return distCryptoSpec;
     }
-    public void setDistCipherAlgo(String distCipherAlgo) {
-        this.distCipherAlgo = distCipherAlgo;
-    }
-
-    public String getDistHashAlgo() {
-        return distHashAlgo;
-    }
-    public void setDistHashAlgo(String distHashAlgo) {
-        this.distHashAlgo = distHashAlgo;
+    public void setDistCryptoSpec(String distCipherAlgo) {
+        this.distCryptoSpec = distCipherAlgo;
     }
 
     public long getDistKeyExpirationTime() {
@@ -179,8 +170,7 @@ public class RegisteredEntityTable {
             entity.setPublicKey(AuthCrypto.loadPublicKey(authDatabaseDir + "/" + entity.getPublicKeyFile()));
         }
         entity.setDistKeyValidity(DateHelper.parseTimePeriod(r.getString(c.DistValidityPeriod.name())));
-        entity.setDistCipherAlgo(r.getString(c.DistCipherAlgo.name()));
-        entity.setDistHashAlgo(r.getString(c.DistHashAlgo.name()));
+        entity.setDistCryptoSpec(r.getString(c.DistCryptoSpec.name()));
         byte[] distKeyVal = r.getBytes(c.DistKeyVal.name());
         if (distKeyVal != null) {
             entity.setDistKeyVal(distKeyVal);

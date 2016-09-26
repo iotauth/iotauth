@@ -42,13 +42,19 @@ public class SymmetricKeyCryptoSpec {
                 hashAlgoKeySize.getCryptoAlgo());
     }
 
-    public static SymmetricKeyCryptoSpec fromJSSpec(String cipherAlgo, String hashAlgo) {
+    public static SymmetricKeyCryptoSpec fromSpecString(String cryptoSpecString) {
+        String[] stringArray = cryptoSpecString.split(":");
+        String cipherAlgo = stringArray[0];
+        String hashAlgo = stringArray[1];
         CryptoAlgoKeySize retCipher = fromJSCryptoAlgo(cipherAlgo);
         CryptoAlgoKeySize retHash = fromJSCryptoAlgo(hashAlgo);
 
         return new SymmetricKeyCryptoSpec(retCipher.getCryptoAlgo(), retCipher.getKeySize(), retHash.getCryptoAlgo());
     }
 
+    public String toSpecString() {
+        return toJSCryptoAlgo(cipherAlgo, cipherKeySize) + ":" + toJSCryptoAlgo(hashAlgo, -1);
+    }
     public String getCipherAlgo() {
         return cipherAlgo;
     }
@@ -67,7 +73,7 @@ public class SymmetricKeyCryptoSpec {
     }
 
     public String toString() {
-            return "CipherAlgorithm: " + cipherAlgo + "\tCipherKeySize: " + cipherKeySize + "\tHashAlgorithm: " + hashAlgo;
+            return "CipherAlgo: " + cipherAlgo + "\tCipherKeySize: " + cipherKeySize + "\tHashAlgorithm: " + hashAlgo;
     }
 
     private String cipherAlgo;

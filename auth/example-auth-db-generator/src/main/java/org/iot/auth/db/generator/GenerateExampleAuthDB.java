@@ -31,7 +31,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -115,8 +114,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(1);
         registeredEntity.setPublicKeyFile("certs/ServerCert.pem");
         registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
         registeredEntity = new RegisteredEntityTable();
@@ -127,8 +125,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/ClientCert.pem");
         registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
         registeredEntity = new RegisteredEntityTable();
@@ -139,8 +136,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(1);
         registeredEntity.setPublicKeyFile("certs/PtServerCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
         registeredEntity = new RegisteredEntityTable();
@@ -151,8 +147,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtClientCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
         // resource-constrained server - no public key file specified
@@ -163,8 +158,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setUsePermanentDistKey(true);
         registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         registeredEntity.setDistKeyVal(AuthCrypto.symmetricEncryptAuthenticate(
                 readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcServerKey.key"),
                 databaseKey, AuthDB.AUTH_DB_CRYPTO_SPEC).getRawBytes());
@@ -179,8 +173,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setUsePermanentDistKey(true);
         registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         registeredEntity.setDistKeyVal(AuthCrypto.symmetricEncryptAuthenticate(
                 readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcClientKey.key"),
                 databaseKey, AuthDB.AUTH_DB_CRYPTO_SPEC).getRawBytes());
@@ -195,8 +188,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtPublisherCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
         registeredEntity = new RegisteredEntityTable();
@@ -207,8 +199,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/PtSubscriberCert.pem");
         registeredEntity.setDistValidityPeriod("3*sec");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
         registeredEntity = new RegisteredEntityTable();
@@ -219,8 +210,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(1);
         registeredEntity.setPublicKeyFile("certs/UdpServerCert.pem");
         registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
 
         registeredEntity = new RegisteredEntityTable();
@@ -231,8 +221,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(5);
         registeredEntity.setPublicKeyFile("certs/UdpClientCert.pem");
         registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCipherAlgo("AES-128-CBC");
-        registeredEntity.setDistHashAlgo("SHA256");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
     }
 
@@ -246,8 +235,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
         communicationPolicyTable.setMaxNumSessionKeyOwners(2);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("1*day");
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -257,8 +245,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
         communicationPolicyTable.setMaxNumSessionKeyOwners(2);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("1*hour");
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -268,8 +255,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
         communicationPolicyTable.setMaxNumSessionKeyOwners(2);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("1*day");
         communicationPolicyTable.setRelValidityStr("2*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -279,8 +265,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
         communicationPolicyTable.setMaxNumSessionKeyOwners(2);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("2*hour");
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -290,8 +275,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
         communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -301,8 +285,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
         communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -312,8 +295,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
         communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -323,8 +305,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
         communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -334,8 +315,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
         communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
@@ -345,8 +325,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
         communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setCipherAlgo("AES-128-CBC");
-        communicationPolicyTable.setHashAlgo("SHA256");
+        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);

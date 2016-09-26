@@ -25,7 +25,7 @@ import org.iot.auth.server.CommunicationTargetType;
 public class CommunicationPolicy {
     public CommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target,
                                int maxNumSessionKeyOwners,
-                               String cipherAlgo, String hashAlgo,
+                               String sessionCryptoSpecString,
                                long absValidity, long relValidity)
     {
         this.reqGroup = reqGroup;
@@ -33,7 +33,7 @@ public class CommunicationPolicy {
         this.target = target;
         this.maxNumSessionKeyOwners = maxNumSessionKeyOwners;
 
-        this.cryptoSpec = SymmetricKeyCryptoSpec.fromJSSpec(cipherAlgo, hashAlgo);
+        this.sessionCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(sessionCryptoSpecString);
 
         this.absValidity = absValidity;
         this.relValidity = relValidity;
@@ -52,8 +52,8 @@ public class CommunicationPolicy {
         return maxNumSessionKeyOwners;
     }
 
-    public SymmetricKeyCryptoSpec getCryptoSpec() {
-        return cryptoSpec;
+    public SymmetricKeyCryptoSpec getSessionCryptoSpec() {
+        return sessionCryptoSpec;
     }
 
     public long getAbsValidity() {
@@ -65,7 +65,7 @@ public class CommunicationPolicy {
 
     public String toString() {
         return "RequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
-                "\t" + cryptoSpec.toString() +
+                "\t" + sessionCryptoSpec.toString() +
                 "\tAbsoluteValidity: " + absValidity + "\tRelativeValidity: " + relValidity;
     }
 
@@ -75,7 +75,7 @@ public class CommunicationPolicy {
     private String target;
     private int maxNumSessionKeyOwners;
 
-    private SymmetricKeyCryptoSpec cryptoSpec;
+    private SymmetricKeyCryptoSpec sessionCryptoSpec;
 
     private long absValidity;
     private long relValidity;
