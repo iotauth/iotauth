@@ -223,6 +223,28 @@ public class GenerateExampleAuthDB {
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
+
+        registeredEntity = new RegisteredEntityTable();
+        registeredEntity.setName(entityPrefix + "safetyCriticalServer");
+        registeredEntity.setGroup("Servers");
+        registeredEntity.setDistProtocol("TCP");
+        registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(1);
+        registeredEntity.setPublicKeyFile("certs/SafetyCriticalServerCert.pem");
+        registeredEntity.setDistValidityPeriod("1*hour");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
+        sqLiteConnector.insertRecords(registeredEntity);
+
+        registeredEntity = new RegisteredEntityTable();
+        registeredEntity.setName(entityPrefix + "safetyCriticalClient");
+        registeredEntity.setGroup("Clients");
+        registeredEntity.setDistProtocol("TCP");
+        registeredEntity.setUsePermanentDistKey(false);
+        registeredEntity.setMaxSessionKeysPerRequest(5);
+        registeredEntity.setPublicKeyFile("certs/SafetyCriticalClientCert.pem");
+        registeredEntity.setDistValidityPeriod("1*hour");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
+        sqLiteConnector.insertRecords(registeredEntity);
     }
 
     private static void initCommPolicyTable(SQLiteConnector sqLiteConnector)
