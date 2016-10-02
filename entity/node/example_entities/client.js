@@ -34,6 +34,7 @@ var clientCommState = {
 var entityInfo;
 var authInfo;
 var targetServerInfoList;
+var cryptoInfo;
 
 // initial states
 var currentState = clientCommState.IDLE;
@@ -108,7 +109,7 @@ function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
         serverHost: serverHost,
         serverPort: serverPort,
         sessionKey: currentSessionKey,
-        sessionCryptoSpec: {cipher: 'AES-128-CBC', hash: 'SHA256'}
+        sessionCryptoSpec: cryptoInfo.sessionCryptoSpec
     };
     var eventHandlers = {
         onClose: onClose,
@@ -383,6 +384,7 @@ var entityConfig = iotAuth.loadEntityConfig(configFilePath);
 entityInfo = entityConfig.entityInfo;
 authInfo = entityConfig.authInfo;
 targetServerInfoList = entityConfig.targetServerInfoList;
+cryptoInfo = entityConfig.cryptoInfo;
 
 if (entityInfo.usePermanentDistKey) {
     var absValidity = new Date().getTime() + iotAuth.parseTimePeriod(entityInfo.distKeyValidity);

@@ -31,6 +31,7 @@ var msgType = iotAuth.msgType;
 var entityInfo;
 var authInfo;
 var listeningServerInfo;
+var cryptoInfo;
 
 // session keys
 var sessionKeyCacheForClients = [];
@@ -230,6 +231,7 @@ var entityConfig = iotAuth.loadEntityConfig(configFilePath);
 entityInfo = entityConfig.entityInfo;
 authInfo = entityConfig.authInfo;
 listeningServerInfo = entityConfig.listeningServerInfo;
+cryptoInfo = entityConfig.cryptoInfo;
 
 if (entityInfo.usePermanentDistKey) {
     var absValidity = new Date().getTime() + iotAuth.parseTimePeriod(entityInfo.distKeyValidity);
@@ -303,7 +305,7 @@ function onData(data, socketID) {
 function initializeSecureServer() {
     var options = {
         serverPort: listeningServerInfo.port,
-        sessionCryptoSpec: {cipher: 'AES-128-CBC', hash: 'SHA256'}
+        sessionCryptoSpec: cryptoInfo.sessionCryptoSpec
     };
     var eventHandlers = {
         onServerError: onServerError,      // for server
