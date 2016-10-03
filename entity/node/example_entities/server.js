@@ -305,7 +305,8 @@ function onData(data, socketID) {
 function initializeSecureServer() {
     var options = {
         serverPort: listeningServerInfo.port,
-        sessionCryptoSpec: cryptoInfo.sessionCryptoSpec
+        sessionCryptoSpec: cryptoInfo.sessionCryptoSpec,
+        sessionProtocol: entityInfo.distProtocol
     };
     var eventHandlers = {
         onServerError: onServerError,      // for server

@@ -109,7 +109,8 @@ function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
         serverHost: serverHost,
         serverPort: serverPort,
         sessionKey: currentSessionKey,
-        sessionCryptoSpec: cryptoInfo.sessionCryptoSpec
+        sessionCryptoSpec: cryptoInfo.sessionCryptoSpec,
+        sessionProtocol: entityInfo.distProtocol
     };
     var eventHandlers = {
         onClose: onClose,
