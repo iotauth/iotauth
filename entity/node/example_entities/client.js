@@ -62,6 +62,9 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
     else {
         console.log('Error! communication target is wrong!');
     }
+    if (callbackParams.callback) {
+        callbackParams.callback();
+    }
 };
 
 var currentSessionKey;
@@ -335,22 +338,29 @@ function commandInterpreter() {
                 return;
             }
             var serverCount = parseInt(message);
-            console.log('start experiments for ' + serverCount + ' servers');
+            var numKeys = 1;
+            console.log('start experiments for ' + serverCount + ' servers with ' + numKeys + ' per session key request');
             var idx = 0;
-            commServerInfo = {name: 'net1.Server', host: 'localhost', port: 21100};
+            commServerInfo = {name: 'net1.Server', host: 'localhost', port: 22100};
             var repeater;
             var repeater2;
             var repeater2 = function() {
                 finComm();
-                commServerInfo.port++;
+                //commServerInfo.port++;
                 idx++;
                 if (idx < serverCount) {
                     setTimeout(repeater, 1000);
                 }
             }
             var repeater = function() {
-                initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', commServerInfo.port);
-                setTimeout(repeater2, 1000);
+                if (sessionKeyCacheForServers.length == 0) {
+                    sendSessionKeyRequest({group: 'Servers'}, numKeys, handleSessionKeyResp,
+                        {targetSessionKeyCache: 'Servers', callback: repeater});
+                }
+                else {
+                    initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', commServerInfo.port);
+                    setTimeout(repeater2, 2000);
+                }
             }
             repeater();
         }

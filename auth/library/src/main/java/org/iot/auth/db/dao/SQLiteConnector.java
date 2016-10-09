@@ -594,6 +594,7 @@ public class SQLiteConnector {
             metaData = MetaDataTable.createRecord(resultSet);
             if (DEBUG) logger.info(metaData.toJSONObject().toJSONString());
         }
+        closeStatement();
         return metaData.getValue();
     }
 
@@ -618,6 +619,7 @@ public class SQLiteConnector {
         boolean result = preparedStatement.execute();
         // It's in auto-commit mode no need for explicit commit
         //_commit();
+        preparedStatement.close();
         return result;
 
     }
