@@ -33,31 +33,36 @@ public class AuthSessionKeyReqMessage {
     private enum key {
         KeyID,
         EntityName,
-        EntityGroup
+        EntityGroup,
+        CachedKeyAuthID
     }
-    public AuthSessionKeyReqMessage(long sessionKeyID, String requestingEntityName, String requestingEntityGroup) {
+    public AuthSessionKeyReqMessage(long sessionKeyID, String requestingEntityName, String requestingEntityGroup, int cachedKeyAuthID) {
         this.sessionKeyID = sessionKeyID;
         this.requestingEntityName = requestingEntityName;
         this.requestingEntityGroup = requestingEntityGroup;
+        this.cachedKeyAuthID = cachedKeyAuthID;
     }
     public JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(key.KeyID, sessionKeyID);
         jsonObject.put(key.EntityName, requestingEntityName);
         jsonObject.put(key.EntityGroup, requestingEntityGroup);
+        jsonObject.put(key.CachedKeyAuthID, cachedKeyAuthID);
         return jsonObject;
     }
     public static AuthSessionKeyReqMessage fromJSONObject(JSONObject jsonObject) {
         Object obj = jsonObject.get(key.KeyID.name());
         Long sessionKeyIDObj = Long.parseLong(obj.toString());
-       ;
+        obj = jsonObject.get(key.CachedKeyAuthID.name());
+        int cachedKeyAuthIDObj = Integer.parseInt(obj.toString());
         return new AuthSessionKeyReqMessage(sessionKeyIDObj,
                 jsonObject.get(key.EntityName.name()).toString(),
-                jsonObject.get(key.EntityGroup.name()).toString());
+                jsonObject.get(key.EntityGroup.name()).toString(),
+                cachedKeyAuthIDObj);
     }
     public String toString() {
         return "KeyID: " + sessionKeyID + ", RequestingEntityName: " + requestingEntityName +
-                ", ReqeustingEntityGroup: " + requestingEntityGroup;
+                ", ReqeustingEntityGroup: " + requestingEntityGroup + ", CachedKeyAuthID: " + cachedKeyAuthID;
     }
     public long getSessionKeyID() {
         return sessionKeyID;
@@ -68,7 +73,9 @@ public class AuthSessionKeyReqMessage {
     public String getRequestingEntityGroup() {
         return requestingEntityGroup;
     }
+    public int getCachedKeyAuthID() { return cachedKeyAuthID; }
     private long sessionKeyID;
     private String requestingEntityName;
     private String requestingEntityGroup;
+    private int cachedKeyAuthID;
 }

@@ -16,9 +16,13 @@
 package org.iot.auth.message;
 
 import org.iot.auth.db.SessionKey;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A class for Auth session key response message to Auth who requested session key(s) on behalf of its
@@ -32,30 +36,49 @@ import org.json.simple.parser.ParseException;
  */
 public class AuthSessionKeyRespMessage {
     private enum key {
-        SessionKey
+        SessionKey,
+        SessionKeyList
     }
-    public AuthSessionKeyRespMessage(SessionKey sessionKey) {
-        this.sessionKey = sessionKey;
+    public AuthSessionKeyRespMessage(List<SessionKey> sessionKeyList) {
+        this.sessionKeyList = sessionKeyList;
     }
     public JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put(key.SessionKey, sessionKey.toJSONObject().toJSONString());
+        JSONArray jsonArray = new JSONArray();
+
+        for (SessionKey sessionKey : sessionKeyList) {
+            JSONObject jsonArrayItem = new JSONObject();
+            jsonArrayItem.put(key.SessionKey.name(), sessionKey.toJSONObject().toJSONString());
+            jsonArray.add(jsonArrayItem);
+        }
+        jsonObject.put(key.SessionKeyList, jsonArray);
+
         return jsonObject;
     }
-    public SessionKey getSessionKey() {
-        return sessionKey;
+    public List<SessionKey> getSessionKeyList() {
+        return sessionKeyList;
     }
     public static AuthSessionKeyRespMessage fromJSONObject(JSONObject jsonObject) throws ParseException {
-        String sessionKeyStr = jsonObject.get(key.SessionKey.toString()).toString();
+        String sessionKeyListStr = jsonObject.get(key.SessionKeyList.name()).toString();
 
-        Object obj = new JSONParser().parse(sessionKeyStr);
-        SessionKey sessionKey = SessionKey.fromJSONObject(
-                (JSONObject) new JSONParser().parse(sessionKeyStr));
+        JSONArray objArray = (JSONArray) new JSONParser().parse(sessionKeyListStr);
+        List<SessionKey> sessionKeyList = new ArrayList<>();
+        for (Object obj : objArray) {
+            JSONObject jsonObj =  (JSONObject)obj;
+            jsonObj = (JSONObject) new JSONParser().parse((jsonObj.get(key.SessionKey.name()).toString()));
+            SessionKey sessionKey = SessionKey.fromJSONObject(jsonObj);
+            sessionKeyList.add(sessionKey);
+        }
 
-        return new AuthSessionKeyRespMessage(sessionKey);
+        return new AuthSessionKeyRespMessage(sessionKeyList);
     }
     public String toString() {
-        return "SessionKey: " + sessionKey.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Session key List: \n");
+        for (SessionKey sessionKey : sessionKeyList) {
+            sb.append(sessionKey.toString() + "\n");
+        }
+        return sb.toString();
     }
-    private SessionKey sessionKey;
+    private List<SessionKey> sessionKeyList;
 }

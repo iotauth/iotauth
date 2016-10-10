@@ -337,11 +337,17 @@ function commandInterpreter() {
                 console.log('specify number of servers!');
                 return;
             }
-            var serverCount = parseInt(message);
+            var args = message.split(' ');
+            var serverCount = parseInt(args[0]);
+            var serverPort = 22100;
+            if (args.length > 1) {
+                serverPort = parseInt(args[1]);
+            }
+            console.log('serverCount: ' + serverCount + ' serverPort: ' + serverPort);
             var numKeys = 1;
             console.log('start experiments for ' + serverCount + ' servers with ' + numKeys + ' per session key request');
             var idx = 0;
-            commServerInfo = {name: 'net1.Server', host: 'localhost', port: 22100};
+            commServerInfo = {name: 'net1.Server', host: 'localhost', port: serverPort};
             var repeater;
             var repeater2;
             var repeater2 = function() {
@@ -349,7 +355,8 @@ function commandInterpreter() {
                 //commServerInfo.port++;
                 idx++;
                 if (idx < serverCount) {
-                    setTimeout(repeater, 1000);
+                    console.log('round ' + (idx + 1));
+                    setTimeout(repeater, 500);
                 }
             }
             var repeater = function() {
@@ -359,7 +366,7 @@ function commandInterpreter() {
                 }
                 else {
                     initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', commServerInfo.port);
-                    setTimeout(repeater2, 2000);
+                    setTimeout(repeater2, 500);
                 }
             }
             repeater();

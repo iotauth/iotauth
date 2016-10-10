@@ -51,6 +51,12 @@ public class SessionKeyReqPurpose {
             if (objTarget.getClass() == Integer.class || objTarget.getClass() == Long.class) {
                 this.targetType = CommunicationTargetType.SESSION_KEY_ID;
             }
+        }else if (purpose.containsKey(cachedKeys)) {
+            objTarget = purpose.get(cachedKeys);
+            logger.info("{}", objTarget.getClass());
+            if (objTarget.getClass() == Integer.class || objTarget.getClass() == Long.class) {
+                this.targetType = CommunicationTargetType.CACHED_SESSION_KEYS;
+            }
         }
 
         if (this.targetType == CommunicationTargetType.UNKNOWN) {
@@ -77,4 +83,5 @@ public class SessionKeyReqPurpose {
     private final String pubTopic = "pubTopic";
     private final String subTopic = "subTopic";
     private final String keyId = "keyId";
+    private final String cachedKeys = "cachedKeys";
 }

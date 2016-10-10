@@ -75,3 +75,8 @@ entity_dist_key_gen "net1" "RcClient" 16	# 16 bytes - 128 bits
 entity_dist_key_gen "net1" "RcServer" 16	# 16 bytes - 128 bits
 entity_dist_key_gen "net2" "RcClient" 16	# 16 bytes - 128 bits
 entity_dist_key_gen "net2" "RcServer" 16	# 16 bytes - 128 bits
+
+entity_dist_key_gen "net1" "RcUdpClient" 16	# 16 bytes - 128 bits
+entity_dist_key_gen "net1" "RcUdpServer" 16	# 16 bytes - 128 bits
+entity_dist_key_gen "net2" "RcUdpClient" 16	# 16 bytes - 128 bits
+entity_dist_key_gen "net2" "RcUdpServer" 16	# 16 bytes - 128 bits

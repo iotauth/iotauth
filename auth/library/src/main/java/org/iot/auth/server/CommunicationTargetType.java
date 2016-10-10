@@ -26,7 +26,8 @@ public enum CommunicationTargetType {
     TARGET_GROUP(1),
     PUBLISH_TOPIC(20),
     SUBSCRIBE_TOPIC(21),
-    SESSION_KEY_ID(30);
+    SESSION_KEY_ID(30),
+    CACHED_SESSION_KEYS(40);
 
     public int getValue() {
         return value;

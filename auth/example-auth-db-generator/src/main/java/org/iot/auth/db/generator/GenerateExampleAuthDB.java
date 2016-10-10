@@ -180,6 +180,36 @@ public class GenerateExampleAuthDB {
         registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
         sqLiteConnector.insertRecords(registeredEntity);
 
+        // resource-constrained UDP server - no public key file specified
+        registeredEntity = new RegisteredEntityTable();
+        registeredEntity.setName(entityPrefix + "rcUdpServer");
+        registeredEntity.setGroup("Servers");
+        registeredEntity.setDistProtocol("UDP");
+        registeredEntity.setUsePermanentDistKey(true);
+        registeredEntity.setMaxSessionKeysPerRequest(30);
+        registeredEntity.setDistValidityPeriod("1*hour");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
+        registeredEntity.setDistKeyVal(AuthCrypto.symmetricEncryptAuthenticate(
+                readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcUdpServerKey.key"),
+                databaseKey, AuthDB.AUTH_DB_CRYPTO_SPEC).getRawBytes());
+        registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
+        sqLiteConnector.insertRecords(registeredEntity);
+
+        // resource-constrained UDP client - no public key file specified
+        registeredEntity = new RegisteredEntityTable();
+        registeredEntity.setName(entityPrefix + "rcUdpClient");
+        registeredEntity.setGroup("Clients");
+        registeredEntity.setDistProtocol("UDP");
+        registeredEntity.setUsePermanentDistKey(true);
+        registeredEntity.setMaxSessionKeysPerRequest(30);
+        registeredEntity.setDistValidityPeriod("1*hour");
+        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
+        registeredEntity.setDistKeyVal(AuthCrypto.symmetricEncryptAuthenticate(
+                readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcUdpClientKey.key"),
+                databaseKey, AuthDB.AUTH_DB_CRYPTO_SPEC).getRawBytes());
+        registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
+        sqLiteConnector.insertRecords(registeredEntity);
+
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "ptPublisher");
         registeredEntity.setGroup("PtPublishers");
@@ -259,7 +289,7 @@ public class GenerateExampleAuthDB {
         communicationPolicyTable.setMaxNumSessionKeyOwners(2);
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("1*day");
-        communicationPolicyTable.setRelValidityStr("20*sec");
+        communicationPolicyTable.setRelValidityStr("2*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
         communicationPolicyTable = new CommunicationPolicyTable();

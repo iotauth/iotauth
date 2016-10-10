@@ -19,6 +19,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.iot.auth.AuthServer;
 import org.iot.auth.db.SessionKey;
+import org.iot.auth.db.SessionKeyPurpose;
 import org.iot.auth.db.TrustedAuth;
 import org.iot.auth.message.AuthSessionKeyReqMessage;
 import org.iot.auth.message.AuthSessionKeyRespMessage;
@@ -34,6 +35,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -97,23 +100,48 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         AuthSessionKeyReqMessage authSessionKeyReqMessage = AuthSessionKeyReqMessage.fromJSONObject(jsonObject);
         logger.info("Received AuthSessionKeyReqMessage: {}", authSessionKeyReqMessage.toString());
 
-        SessionKey sessionKey;
-        try {
-            sessionKey = server.getSessionKeyByID(authSessionKeyReqMessage.getSessionKeyID());
-        } catch (SQLException | ClassNotFoundException e) {
-            logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException("Session key for ID " + authSessionKeyReqMessage.getSessionKeyID() + " cannot be found!");
+        List<SessionKey> sessionKeyList = null;
+        if (authSessionKeyReqMessage.getCachedKeyAuthID() > 0) {
+            if (server.getAuthID() != authSessionKeyReqMessage.getCachedKeyAuthID()) {
+                throw new RuntimeException("Auth ID is not my ID!");
+            }
+            SessionKeyPurpose purpose = new SessionKeyPurpose(CommunicationTargetType.TARGET_GROUP, authSessionKeyReqMessage.getRequestingEntityGroup());
+            try {
+                sessionKeyList = server.getSessionKeysByPurpose(authSessionKeyReqMessage.getRequestingEntityName(), purpose);
+            } catch (SQLException | ClassNotFoundException e) {
+                logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException("Exception occurred while finding cached session keys.");
+            }
+            try {
+                for (SessionKey sessionKey : sessionKeyList) {
+                    server.addSessionKeyOwner(sessionKey.getID(), authSessionKeyReqMessage.getRequestingEntityName());
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException("Exception occurred while adding session key owner for cached session keys.");
+            }
+        }
+        else {
+            SessionKey sessionKey;
+            try {
+                sessionKey = server.getSessionKeyByID(authSessionKeyReqMessage.getSessionKeyID());
+            } catch (SQLException | ClassNotFoundException e) {
+                logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException("Session key for ID " + authSessionKeyReqMessage.getSessionKeyID() + " cannot be found!");
+            }
+
+            try {
+                server.addSessionKeyOwner(authSessionKeyReqMessage.getSessionKeyID(), authSessionKeyReqMessage.getRequestingEntityName());
+            } catch (SQLException | ClassNotFoundException e) {
+                logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException("Exception occurred while adding session key owner.");
+            }
+            // TODO: Check group requirement
+            sessionKeyList = new ArrayList<>();
+            sessionKeyList.add(sessionKey);
         }
 
-        try {
-            server.addSessionKeyOwner(authSessionKeyReqMessage.getSessionKeyID(), authSessionKeyReqMessage.getRequestingEntityName());
-        } catch (SQLException | ClassNotFoundException e) {
-            logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException("Exception occurred while adding session key owner.");
-        }
-        // TODO: Check group requirement
-
-        AuthSessionKeyRespMessage authSessionKeyRespMessage = new AuthSessionKeyRespMessage(sessionKey);
+        AuthSessionKeyRespMessage authSessionKeyRespMessage = new AuthSessionKeyRespMessage(sessionKeyList);
 
         StringBuilder sb = new StringBuilder();
         while (br.ready()) {

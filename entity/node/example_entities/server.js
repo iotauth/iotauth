@@ -157,6 +157,15 @@ function commandInterpreter() {
             console.log('Session keys for Subscribe: ');
             console.log(util.inspect(sessionKeyCacheForSubscribe));
         }
+        else if (command == 'skReq') {
+            console.log('skReqSub (Session key request for target subscribe topic) command');
+            var numKeys = 3;
+            if (message != undefined) {
+                numKeys = parseInt(message);
+            }
+            // specify auth ID
+            sendSessionKeyRequest({cachedKeys: 101}, numKeys, {targetSessionKeyCache: 'Clients'});
+        }
         else if (command == 'skReqSub') {
             console.log('skReqSub (Session key request for target subscribe topic) command');
             var numKeys = 3;
