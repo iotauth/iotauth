@@ -88,7 +88,8 @@ function initMqttSubscribe(topic) {
     // ping request period 600 seconds
     var mqttClient = mqtt.connect('mqtt://localhost', {keepalive: 600});
     mqttClient.on('connect', function () {
-        console.log('connected to the mqtt broker, start subscribing...');
+        console.log('connected to the mqtt broker, started subscribing from local port '
+                    + mqttClient.stream.localPort);
         mqttClient.subscribe(topic);
     });
     mqttClient.on('message', function (topic, message) {
@@ -99,7 +100,7 @@ function initMqttSubscribe(topic) {
             console.log('received secure pub!');
             var ret = iotAuth.parseDecryptSecureMqtt(obj.payload,
             	sessionKeyCacheForSubscribe);
-            if (ret.data.length > 65535) {
+            if (obj.payload.length > 65535) {
             	console.log('seqNum: ' + ret.seqNum);
                 console.log('data is too large to display, to store in file use saveData command');
                 tempLargeDataBuf = ret.data;
@@ -132,6 +133,50 @@ function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
         entityPrivateKey: entityInfo.privateKey
     };
     iotAuth.sendSessionKeyReq(options, handleSessionKeyResp, callbackParams);
+};
+
+function initBroadcastingSubscription() {
+    var PORT = 8088;
+    //var HOST = 'localhost';
+    var MULTICAST_ADDR = '230.185.192.108';
+    var dgram = require('dgram');
+    var client = dgram.createSocket('udp4');
+
+    client.on('listening', function () {
+        var address = client.address();
+        console.log('UDP Client listening on ' + address.address + ":" + address.port);
+        client.setBroadcast(true)
+        //client.setMulticastTTL(128); 
+        //client.addMembership(MULTICAST_ADDR);
+    });
+
+    client.on('message', function (message, remote) {   
+        console.log('A: Epic Command Received. Preparing Relay.');
+        console.log('B: From: ' + remote.address + ':' + remote.port);
+
+
+        var obj = common.parseIoTSP(message);
+        if (obj.msgType == msgType.SECURE_PUB) {
+            console.log('received secure pub via UDP broadcasting!');
+            var ret = iotAuth.parseDecryptSecureMqtt(obj.payload,
+                sessionKeyCacheForSubscribe);
+            if (obj.payload.length > 65535) {
+                console.log('seqNum: ' + ret.seqNum);
+                console.log('data is too large to display, to store in file use saveData command');
+                tempLargeDataBuf = ret.data;
+            }
+            else {
+                console.log('seqNum: ' + ret.seqNum + ' data: : ' + ret.data.toString());
+            }
+        }
+        else {
+            console.log('received INSECURE pub via broadcasting!');
+            // message is Buffer 
+            console.log(message);
+        }
+    });
+
+    client.bind(PORT);
 };
 
 function commandInterpreter() {
@@ -185,6 +230,10 @@ function commandInterpreter() {
         else if (command == 'mqtt') {
             console.log('mqtt command, init mqtt connection');
             initMqttSubscribe('Ptopic');
+        }
+        else if (command == 'bcSub') {
+            console.log('broadcasting subscription command');
+            initBroadcastingSubscription();
         }
         else if (command == 'send') {
             console.log('send command');

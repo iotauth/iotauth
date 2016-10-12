@@ -140,6 +140,59 @@ function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbac
     };
     iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, callbackParams);
 };
+var broadcastingSocket = null;
+function initBroadcastingPublish() {
+    var dgram = require('dgram'); 
+    broadcastingSocket = dgram.createSocket("udp4"); 
+    broadcastingSocket.on('listening', function(){
+        broadcastingSocket.setBroadcast(true);
+        //broadcastingSocket.setMulticastTTL(128);
+        //broadcastingSocket.addMembership('230.185.192.108'); 
+        var address = broadcastingSocket.address();
+        console.log('started udp socket for broadcasting at ' + address.address + ':' + address.port);
+    });
+    broadcastingSocket.bind();
+    return 
+}
+
+
+
+
+function sendSecurePublish(data, protocol) {
+    if (sessionKeyCacheForPublish.length == 0) {
+        console.log('no available keys for publish!');
+        return;
+    }
+    console.error('======== log for experiments: publishing message =========')
+    if (protocol === 'TCP') {
+        if (mqttClient == undefined) {
+            console.log('mqttClient is not initialized!');
+            return;
+        }
+        var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
+            {seqNum: pubSeqNum, data: data}, sessionKeyCacheForPublish[0]);
+        pubSeqNum++;
+        mqttClient.publish('Ptopic', secureMqtt);
+    }
+    else if (protocol === 'UDP') {
+        console.log('with protocol ' + protocol + 'doing broadcast');
+        if (broadcastingSocket == null) {
+            console.error('broadcasting socket is not initialized!');
+            return;
+        }
+
+        var MULTICAST_ADDR = '230.185.192.108';
+        var BROADCAST_ADDR = '255.255.255.255';
+        var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
+            {seqNum: pubSeqNum, data: data}, sessionKeyCacheForPublish[0]);
+        broadcastingSocket.send(secureMqtt, 0, secureMqtt.length, 8088, BROADCAST_ADDR);
+        console.log("Sent " + data.toString() + " to the wire...");
+
+    }
+    else {
+        console.eror('unrecognized protocol! ' + protocol);
+    }
+};
 
 function commandInterpreter() {
     var chunk = process.stdin.read();
@@ -254,43 +307,22 @@ function commandInterpreter() {
         }
         else if (command == 'spub') {
             console.log('spub command, secure publish');
-            if (mqttClient == undefined) {
-                console.log('mqttClient is not initialized!');
-                return;
-            }
-            if (sessionKeyCacheForPublish.length == 0) {
-                console.log('no available keys for publish!');
-                return;
-            }
+
             if (message == undefined) {
                 console.log('no message!');
                 return;
             }
-            var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
-                {seqNum: pubSeqNum, data: new Buffer(message)}, sessionKeyCacheForPublish[0]);
-            pubSeqNum++;
-            mqttClient.publish('Ptopic', secureMqtt);
+            sendSecurePublish(new Buffer(message), entityInfo.distProtocol);
         }
         else if (command == 'spubFile') {
             console.log('spubFile command, secure publish of file');
-            if (mqttClient == undefined) {
-                console.log('mqttClient is not initialized!');
-                return;
-            }
-            if (sessionKeyCacheForPublish.length == 0) {
-                console.log('no available keys!');
-                return;
-            }
             var fileName = '../data_examples/data.bin';
             if (message != undefined) {
                 fileName = message;
             }
             var fileData = fs.readFileSync(fileName);
             console.log('file data length: ' + fileData.length);
-            var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
-                {seqNum: pubSeqNum, data: fileData}, sessionKeyCacheForPublish[0]);
-            pubSeqNum++;
-            mqttClient.publish('Ptopic', secureMqtt);
+            sendSecurePublish(fileData, entityInfo.distProtocol);
         }
         else if (command == 'skReq') {
             console.log('skReq (Session key request for target servers) command');
@@ -330,6 +362,10 @@ function commandInterpreter() {
             }
             fs.writeFileSync(fileName, tempLargeDataBuf);
             console.log('file data saved to ' + fileName);
+        }
+        else if (command == 'initBc') {
+            console.log('init UDP broadcasting command');
+            initBroadcastingPublish();
         }
         else if (command == 'exp1') {
             console.log('experiment for scenario 1 command!');
