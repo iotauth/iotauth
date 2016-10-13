@@ -68,13 +68,32 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
 var connectedClients = [];
 var tempLargeDataBuf;
 
+var publishSeqNum = 0;
 function sendToClients(message) {
+    var securePublish = null;
     for (var i = 0; i < connectedClients.length; i++) {
         if (connectedClients[i] == null) {
             continue;
         }
+        if (sessionKeyCacheForClients.length > 0
+            && sessionKeyCacheForClients[0].id == connectedClients[i].sessionKey.id) {
+            if (securePublish != null) {
+                connectedClients[i].sendRaw(securePublish);
+            }
+            else {
+                var enc = iotAuth.serializeEncryptSessionMessage(
+                    {seqNum: publishSeqNum, data: message}, sessionKeyCacheForClients[0].val);
+                publishSeqNum++;
+                securePublish = common.serializeIoTSP({
+                    msgType: msgType.SECURE_COMM_MSG,
+                    payload: enc
+                });
+                connectedClients[i].sendRaw(securePublish);
+            }
+            continue;
+        }
         try{
-            connectedClients[i].send(new Buffer(message));
+            connectedClients[i].send(message);
         }
         catch (err) {
             console.log('error while sending to client#' + i + ': ' + err.message);
@@ -241,7 +260,7 @@ function commandInterpreter() {
                 console.log('no message!');
                 return;
             }
-            sendToClients(message);
+            sendToClients(new Buffer(message));
         }
         else if (command == 'sendFile') {
             console.log('sendFile command');
@@ -249,6 +268,7 @@ function commandInterpreter() {
             if (message != undefined) {
                 fileName = message;
             }
+            console.error('======== log for experiments: publishing message =========');
             var fileData = fs.readFileSync(fileName);
             console.log('file data length: ' + fileData.length);
             sendToClients(fileData);

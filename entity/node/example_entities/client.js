@@ -163,7 +163,7 @@ function sendSecurePublish(data, protocol) {
         console.log('no available keys for publish!');
         return;
     }
-    console.error('======== log for experiments: publishing message =========')
+    console.error('======== log for experiments: publishing message =========');
     if (protocol === 'TCP') {
         if (mqttClient == undefined) {
             console.log('mqttClient is not initialized!');
@@ -446,6 +446,19 @@ if (entityInfo.usePermanentDistKey) {
         val: entityInfo.permanentDistKey,
         absValidity: new Date(absValidity)
     };
+}
+
+if (process.argv.length > 4) {
+    var commandArg = process.argv[3];
+    var serverPort = 22100;
+    function initCommExp2 () {
+        initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', serverPort);
+    }
+    if (commandArg == 'exp2') {
+        var keyId = parseInt(process.argv[4]);
+        sendSessionKeyRequest({keyId: keyId}, 1, handleSessionKeyResp,
+            {targetSessionKeyCache: 'Servers', callback: initCommExp2});
+    }
 }
 
 process.stdin.on('readable', commandInterpreter);
