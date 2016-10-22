@@ -2,6 +2,9 @@ package org.iot.auth.server;
 
 import com.sun.tools.javac.util.Pair;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.io.RuntimeIOException;
+import org.iot.auth.exception.InvalidMacException;
+import org.iot.auth.exception.MessageIntegrityException;
 import org.slf4j.Logger;
 import org.iot.auth.AuthServer;
 import org.iot.auth.crypto.AuthCrypto;
@@ -115,8 +118,8 @@ public abstract class EntityConnectionHandler {
             // generate distribution key
             // Assuming AES-CBC-128
             DistributionKey distributionKey =
-                    new DistributionKey(AuthCrypto.generateSymmetricKey(requestingEntity.getDistCryptoSpec().getCipherKeySize()),
-                            new Date().getTime() + requestingEntity.getDisKeyValidity());
+                    new DistributionKey(requestingEntity.getDistCryptoSpec(),
+                            requestingEntity.getDisKeyValidity());
             // update distribution key
             server.updateDistributionKey(requestingEntity.getName(), distributionKey);
 
@@ -150,8 +153,14 @@ public abstract class EntityConnectionHandler {
 
             Buffer encPayload = payload.slice(bufferedString.length());
 
-            Buffer decPayload = AuthCrypto.symmetricDecryptAuthenticate(encPayload,
-                    requestingEntity.getDistributionKey().getKeyVal(), requestingEntity.getDistCryptoSpec());
+            Buffer decPayload = null;
+            try {
+                decPayload = requestingEntity.getDistributionKey().decryptVerify(encPayload);
+            } catch (InvalidMacException | MessageIntegrityException e) {
+                getLogger().error("InvalidMacException | MessageIntegrityException {}",
+                        ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeIOException("Integrity error occurred during decryptVerify!");
+            }
 
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
 
@@ -209,7 +218,7 @@ public abstract class EntityConnectionHandler {
         else {
             sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
         }
-        writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey, distCryptoSpec).getRawBytes());
+        writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }
 
     /**

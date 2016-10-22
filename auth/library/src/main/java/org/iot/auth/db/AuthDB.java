@@ -18,6 +18,7 @@ package org.iot.auth.db;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
+import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.bean.CachedSessionKeyTable;
 import org.iot.auth.db.bean.MetaDataTable;
@@ -25,6 +26,7 @@ import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.server.CommunicationTargetType;
+import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +48,8 @@ public class AuthDB {
     private static final Logger logger = LoggerFactory.getLogger(AuthDB.class);
     private static final String AUTH_DB_FILE_NAME = "auth.db";
     // FIXME: should be set by properties
-    public static final int AUTH_DB_KEY_SIZE = 16;     // 128 bit
     public static final String AUTH_DB_PUBLIC_CIPHER = "RSA/ECB/PKCS1PADDING";
+    public static final String AUTH_DB_KEY_ABSOLUTE_VALIDITY = "3650*day";
     public static final SymmetricKeyCryptoSpec AUTH_DB_CRYPTO_SPEC =
             new SymmetricKeyCryptoSpec("AES/CBC/PKCS5Padding", 16, "SHA-256");
 
@@ -93,7 +95,11 @@ public class AuthDB {
 
         String value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.EncryptedDatabaseKey.name());
         Buffer encryptedDatabaseKey = Buffer.fromBase64(value);
-        this.databaseKey = AuthCrypto.privateDecrypt(encryptedDatabaseKey, databasePrivateKey, AUTH_DB_PUBLIC_CIPHER);
+        this.databaseKey = new SymmetricKey(
+                AUTH_DB_CRYPTO_SPEC,
+                new Date().getTime() + DateHelper.parseTimePeriod(AUTH_DB_KEY_ABSOLUTE_VALIDITY),
+                AuthCrypto.privateDecrypt(encryptedDatabaseKey, databasePrivateKey, AUTH_DB_PUBLIC_CIPHER)
+        );
 
         loadRegEntityDB();
         loadCommPolicyDB();
@@ -168,8 +174,7 @@ public class AuthDB {
             SessionKey sessionKey = new SessionKey(sessionKeyID, owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
                     communicationPolicy.getMaxNumSessionKeyOwners(), sessionKeyPurpose.toString(),
                     new Date().getTime() + communicationPolicy.getAbsValidity(), communicationPolicy.getRelValidity(),
-                    communicationPolicy.getSessionCryptoSpec(),
-                    AuthCrypto.generateSymmetricKey(communicationPolicy.getSessionCryptoSpec().getCipherKeySize()));
+                    communicationPolicy.getSessionCryptoSpec());
             sessionKeyList.add(sessionKey);
         }
         sessionKeyCount += numKeys;
@@ -305,9 +310,13 @@ public class AuthDB {
                     SymmetricKeyCryptoSpec.fromSpecString(regEntityTable.getDistCryptoSpec())
             );
             if (regEntityTable.getDistKeyVal() != null) {
-                registeredEntity.setDistributionKey(new DistributionKey(
-                        decryptAuthDBData(new Buffer(regEntityTable.getDistKeyVal())),
-                        regEntityTable.getDistKeyExpirationTime()));
+                registeredEntity.setDistributionKey(
+                        new DistributionKey(
+                                registeredEntity.getDistCryptoSpec(),
+                                regEntityTable.getDistKeyExpirationTime(),
+                                decryptAuthDBData(new Buffer(regEntityTable.getDistKeyVal()))
+                        )
+                );
             }
             registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
             logger.debug("registeredEntity: {}", registeredEntity.toString());
@@ -351,10 +360,16 @@ public class AuthDB {
     }
 
     private Buffer encryptAuthDBData(Buffer input) {
-        return AuthCrypto.symmetricEncryptAuthenticate(input, databaseKey, AUTH_DB_CRYPTO_SPEC);
+        return databaseKey.encryptAuthenticate(input);
     }
     private Buffer decryptAuthDBData(Buffer input) {
-        return AuthCrypto.symmetricDecryptAuthenticate(input, databaseKey, AUTH_DB_CRYPTO_SPEC);
+        try {
+            return databaseKey.decryptVerify(input);
+        }
+        catch (Exception e) {
+            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while encrypting Auth DB Data!");
+        }
     }
 
     private String authDatabaseDir;
@@ -366,5 +381,5 @@ public class AuthDB {
 
     private SQLiteConnector sqLiteConnector;
 
-    private Buffer databaseKey;
+    private SymmetricKey databaseKey;
 }

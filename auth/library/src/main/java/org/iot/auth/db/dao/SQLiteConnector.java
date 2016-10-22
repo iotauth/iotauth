@@ -112,7 +112,7 @@ public class SQLiteConnector {
         sql += CachedSessionKeyTable.c.Owners.name() + " TEXT NOT NULL,";
         sql += CachedSessionKeyTable.c.MaxNumOwners.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.Purpose.name() + " TEXT NOT NULL,";
-        sql += CachedSessionKeyTable.c.AbsValidity.name() + " INT NOT NULL,";
+        sql += CachedSessionKeyTable.c.ExpirationTime.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.RelValidity.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.CryptoSpec.name() + " TEXT NOT NULL,";
         sql += CachedSessionKeyTable.c.KeyVal.name() + " BLOB NOT NULL)";
@@ -283,7 +283,7 @@ public class SQLiteConnector {
         sql += CachedSessionKeyTable.c.Owners.name() + ",";
         sql += CachedSessionKeyTable.c.MaxNumOwners.name() + ",";
         sql += CachedSessionKeyTable.c.Purpose.name() + ",";
-        sql += CachedSessionKeyTable.c.AbsValidity.name() + ",";
+        sql += CachedSessionKeyTable.c.ExpirationTime.name() + ",";
         sql += CachedSessionKeyTable.c.RelValidity.name() + ",";
         sql += CachedSessionKeyTable.c.CryptoSpec.name() + ",";
         sql += CachedSessionKeyTable.c.KeyVal.name() + ")";
@@ -502,7 +502,7 @@ public class SQLiteConnector {
         sql += " WHERE " + CachedSessionKeyTable.c.Purpose.name() + " = " + "'" + purpose + "'";
         sql += " AND " + CachedSessionKeyTable.c.Owners.name() + " NOT LIKE " + "'%" + requestingEntityName + "%'";
         long currentTime = new java.util.Date().getTime();
-        sql += " AND " + CachedSessionKeyTable.c.AbsValidity.name() + " > " + currentTime;
+        sql += " AND " + CachedSessionKeyTable.c.ExpirationTime.name() + " > " + currentTime;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
         List<CachedSessionKeyTable> result = new LinkedList<>();
@@ -526,7 +526,7 @@ public class SQLiteConnector {
         setConnection();
         String sql = "DELETE FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         long currentTime = new java.util.Date().getTime();
-        sql += " WHERE " + CachedSessionKeyTable.c.AbsValidity.name() + " < " + currentTime;
+        sql += " WHERE " + CachedSessionKeyTable.c.ExpirationTime.name() + " < " + currentTime;
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
         boolean result = preparedStatement.execute();

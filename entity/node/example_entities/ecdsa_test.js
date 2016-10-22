@@ -13,44 +13,35 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.db;
-
-import org.iot.auth.crypto.SymmetricKey;
-import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
-import org.iot.auth.io.Buffer;
-
-import java.util.Date;
-
 /**
- * A class for distribution key between an entity and Auth.
- * <pre>
- * DistributionKey Format
- * {
- *      ExpirationTime: /UIntBE, DIST_KEY_EXPIRATION_TIME_SIZE Bytes, Date() format/, // for absolute validity period
- *      val: /Buffer/
- * } </pre>
+ * Example elliptic curve test code
  * @author Hokeun Kim
  */
-public class DistributionKey extends SymmetricKey {
-    private static final int DIST_KEY_EXPIRATION_TIME_SIZE = 6;
+"use strict";
 
-    public DistributionKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime, Buffer keyVal) {
-        super(cryptoSpec, expirationTime, keyVal);
-    }
-    public DistributionKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime) {
-        super(cryptoSpec, new Date().getTime() + expirationTime);
-    }
+var crypto = require('crypto');
+var constants = require('constants');
 
-    public String toString() {
-        return "Expiration Time: " + expirationTime + "\tKeyVal: " + keyVal.toHexString();
-    }
-    public Buffer serialize() {
-        Buffer buf = new Buffer(DIST_KEY_EXPIRATION_TIME_SIZE);
-        int curIndex = 0;
-        buf.putNumber(expirationTime.getTime(), curIndex, DIST_KEY_EXPIRATION_TIME_SIZE);
-        curIndex += DIST_KEY_EXPIRATION_TIME_SIZE;
+var ciphers = crypto.getCiphers();
+//console.log(ciphers);
 
-        buf.concat(keyVal);
-        return buf;
-    }
-}
+var hashes = crypto.getHashes();
+//console.log(hashes);
+
+//const sign = crypto.createSign('ecdsa-with-SHA256');
+const sign = crypto.createSign('ecdsa-with-SHA1');
+
+sign.update('some data to sign');
+
+const private_key = '-----BEGIN EC PRIVATE KEY-----\n' +
+        'MHcCAQEEIF+jnWY1D5kbVYDNvxxo/Y+ku2uJPDwS0r/VuPZQrjjVoAoGCCqGSM49\n' +
+        'AwEHoUQDQgAEurOxfSxmqIRYzJVagdZfMMSjRNNhB8i3mXyIMq704m2m52FdfKZ2\n' +
+        'pQhByd5eyj3lgZ7m7jbchtdgyOF8Io/1ng==\n' +
+        '-----END EC PRIVATE KEY-----\n';
+
+var signature = sign.sign(private_key);
+//console.log(sign.sign(private_key).toString('hex'));
+console.log(signature.length);
+console.log(signature.toString('hex'));
+
+//crypto.setEngine(constants.ENGINE_METHOD_ECDSA);

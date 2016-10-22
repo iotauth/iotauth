@@ -35,7 +35,7 @@ public class CachedSessionKeyTable {
         Owners,
         MaxNumOwners,
         Purpose,
-        AbsValidity,
+        ExpirationTime,
         RelValidity,
         CryptoSpec,
         KeyVal
@@ -47,7 +47,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setOwner(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getOwners()));
         cachedSessionKey.setMaxNumOwners(sessionKey.getMaxNumOwners());
         cachedSessionKey.setPurpose(sessionKey.getPurpose());
-        cachedSessionKey.setAbsValidity(sessionKey.getAbsValidity().getTime());
+        cachedSessionKey.setAbsValidity(sessionKey.getExpirationTime().getTime());
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
         cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toSpecString());
         cachedSessionKey.setKeyVal(sessionKey.getKeyVal().getRawBytes());
@@ -122,7 +122,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setOwner(r.getString(c.Owners.name()));
         cachedSessionKey.setMaxNumOwners(r.getInt(c.MaxNumOwners.name()));
         cachedSessionKey.setPurpose(r.getString(c.Purpose.name()));
-        cachedSessionKey.setAbsValidity(r.getLong(c.AbsValidity.name()));
+        cachedSessionKey.setAbsValidity(r.getLong(c.ExpirationTime.name()));
         cachedSessionKey.setRelValidity(r.getLong(c.RelValidity.name()));
         cachedSessionKey.setSessionCryptoSpec(r.getString(c.CryptoSpec.name()));
         cachedSessionKey.setKeyVal(r.getBytes(c.KeyVal.name()));
@@ -135,7 +135,7 @@ public class CachedSessionKeyTable {
         object.put(c.Owners.name(), getOwner());
         object.put(c.MaxNumOwners.name(), getMaxNumOwners());
         object.put(c.Purpose.name(), getPurpose());
-        object.put(c.AbsValidity.name(), getAbsValidity());
+        object.put(c.ExpirationTime.name(), getAbsValidity());
         object.put(c.RelValidity.name(), getRelValidity());
         object.put(c.CryptoSpec.name(), getSessionCryptoSpec());
         object.put(c.KeyVal.name(), getKeyVal());

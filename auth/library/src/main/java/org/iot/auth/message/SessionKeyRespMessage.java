@@ -73,10 +73,9 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
     /**
      * Serialize the session key response message and encrypt with the specified distribution key.
      * @param distKey A distribution key for encrypting the session key request message.
-     * @param distCryptoSpec Cryptography specifications for the distribution key.
      * @return Buffer for serialized and encrypted message.
      */
-    public Buffer serializeAndEncrypt(DistributionKey distKey, SymmetricKeyCryptoSpec distCryptoSpec) {
+    public Buffer serializeAndEncrypt(DistributionKey distKey) {
         Buffer payload = new Buffer(entityNonce);
         String cryptoSpecString = cryptoSpec.toJSONObject().toString();
         logger.debug("cryptoSpecString: {}", cryptoSpecString);
@@ -89,7 +88,7 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
             payload.concat(sessionKey.serialize());
         }
 
-        payload = AuthCrypto.symmetricEncryptAuthenticate(payload, distKey.getKeyVal(), distCryptoSpec);
+        payload = distKey.encryptAuthenticate(payload);
 
         if (type == MessageType.SESSION_KEY_RESP_WITH_DIST_KEY) {
             Buffer newPayload = new Buffer(encryptedDistKey);

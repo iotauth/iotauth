@@ -15,13 +15,12 @@
 
 package org.iot.auth.db;
 
+import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.io.Buffer;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-import java.util.Date;
 
 /**
  * A class for an instance of a session key that is used for communication between entities.
@@ -29,16 +28,16 @@ import java.util.Date;
  * SessionKey Format
  * {
  *      ID: /UIntBE, SESSION_KEY_ID_SIZE Bytes/,
- *      absValidity: /UIntBE, SESSION_KEY_ABS_VALIDITY_SIZE Bytes, Date() format/, // for absolute validity period
+ *      ExpirationTime: /UIntBE, SESSION_KEY_EXPIRATION_TIME Bytes, Date() format/, // for absolute validity period
  *      relValidity: /UIntBE, SESSION_KEY_REL_VALIDITY_SIZE Bytes, integer in millisecons/, // for relative validity period
  *      val: /Buffer/
  * } </pre>
  * @author Hokeun Kim
  */
 
-public class SessionKey {
+public class SessionKey extends SymmetricKey {
     private static final int SESSION_KEY_ID_SIZE = 8;
-    private static final int SESSION_KEY_ABS_VALIDITY_SIZE = 6;
+    private static final int SESSION_KEY_EXPIRATION_TIME = 6;
     private static final int SESSION_KEY_REL_VALIDITY_SIZE = 6;
 
     public static final String SESSION_KEY_OWNER_NAME_DELIM = ",";
@@ -48,46 +47,49 @@ public class SessionKey {
         Owners,
         MaxNumOwners,
         Purpose,
-        AbsValidity,
+        ExpirationTime,
         RelValidity,
         CryptoSpec,
         KeyVal
     }
 
     public SessionKey(long id, String[] owners, int maxNumOwners, String purpose,
-                      long absValidity, long relValidity,
+                      long expirationTime, long relValidity,
                       SymmetricKeyCryptoSpec cryptoSpec, Buffer keyVal)
     {
-        if (cryptoSpec.getCipherKeySize() != keyVal.length()) {
-            throw new RuntimeException("Wrong key size!");
-        }
+        super(cryptoSpec, expirationTime, keyVal);
         this.id = id;
         this.owners = owners;
-
         this.maxNumOwners = maxNumOwners;
         this.purpose = purpose;
-
-        // from time of generation
-        this.absValidity = new Date(absValidity);
         this.relValidity = relValidity;
+    }
 
-        this.cryptoSpec = cryptoSpec;
-        this.keyVal = keyVal;
+    public SessionKey(long id, String[] owners, int maxNumOwners, String purpose,
+                      long expirationTime, long relValidity,
+                      SymmetricKeyCryptoSpec cryptoSpec)
+    {
+        super(cryptoSpec, expirationTime);
+        this.id = id;
+        this.owners = owners;
+        this.maxNumOwners = maxNumOwners;
+        this.purpose = purpose;
+        this.relValidity = relValidity;
     }
 
     public String toString() {
         return "ID: " + id + "\tOwners: " + String.join(SESSION_KEY_OWNER_NAME_DELIM, owners) +
-                "\tAbsoluteValidity: " + absValidity + "\tRelativeValidity: " + relValidity +
+                "\tAbsoluteValidity: " + expirationTime + "\tRelativeValidity: " + relValidity +
                 "\t" + cryptoSpec.toString() + "\tKeyVal: " + keyVal.toHexString();
     }
 
     public Buffer serialize() {
-        Buffer buf = new Buffer(SESSION_KEY_ID_SIZE + SESSION_KEY_ABS_VALIDITY_SIZE + SESSION_KEY_REL_VALIDITY_SIZE);
+        Buffer buf = new Buffer(SESSION_KEY_ID_SIZE + SESSION_KEY_EXPIRATION_TIME + SESSION_KEY_REL_VALIDITY_SIZE);
         int curIndex = 0;
         buf.putNumber(id, curIndex, SESSION_KEY_ID_SIZE);
         curIndex += SESSION_KEY_ID_SIZE;
-        buf.putNumber(absValidity.getTime(), curIndex, SESSION_KEY_ABS_VALIDITY_SIZE);
-        curIndex += SESSION_KEY_ABS_VALIDITY_SIZE;
+        buf.putNumber(expirationTime.getTime(), curIndex, SESSION_KEY_EXPIRATION_TIME);
+        curIndex += SESSION_KEY_EXPIRATION_TIME;
         buf.putNumber(relValidity, curIndex, SESSION_KEY_REL_VALIDITY_SIZE);
         curIndex += SESSION_KEY_REL_VALIDITY_SIZE;
 
@@ -101,7 +103,7 @@ public class SessionKey {
         jsonObject.put(key.Owners, String.join(SESSION_KEY_OWNER_NAME_DELIM, owners));
         jsonObject.put(key.MaxNumOwners, maxNumOwners);
         jsonObject.put(key.Purpose, purpose);
-        jsonObject.put(key.AbsValidity, absValidity.getTime());
+        jsonObject.put(key.ExpirationTime, expirationTime.getTime());
         jsonObject.put(key.RelValidity, relValidity);
         jsonObject.put(key.CryptoSpec, cryptoSpec.toJSONObject());
         jsonObject.put(key.KeyVal, keyVal.toBase64());
@@ -114,7 +116,7 @@ public class SessionKey {
                 jsonObject.get(key.Owners.name()).toString().split(SESSION_KEY_OWNER_NAME_DELIM),
                 Integer.parseInt(jsonObject.get(key.MaxNumOwners.name()).toString()),
                 jsonObject.get(key.Purpose.name()).toString(),
-                Long.parseLong(jsonObject.get(key.AbsValidity.name()).toString()),
+                Long.parseLong(jsonObject.get(key.ExpirationTime.name()).toString()),
                 Long.parseLong(jsonObject.get(key.RelValidity.name()).toString()),
                 SymmetricKeyCryptoSpec.fromJSONObject(
                         (JSONObject) new JSONParser().parse(jsonObject.get(key.CryptoSpec.name()).toString())),
@@ -138,9 +140,6 @@ public class SessionKey {
         return purpose;
     }
 
-    public Date getAbsValidity() {
-        return absValidity;
-    }
     public long getRelValidity() {
         return relValidity;
     }
@@ -149,9 +148,6 @@ public class SessionKey {
         return cryptoSpec;
     }
 
-    public Buffer getKeyVal() {
-        return keyVal;
-    }
 
     private long id;
     private String[] owners;
@@ -159,10 +155,5 @@ public class SessionKey {
     private int maxNumOwners;
     private String purpose;
 
-    private Date absValidity;
     private long relValidity;
-
-    private SymmetricKeyCryptoSpec cryptoSpec;
-
-    private Buffer keyVal;
 }

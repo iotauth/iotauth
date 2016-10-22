@@ -203,96 +203,96 @@ public class AuthCrypto {
         return new Buffer(randomBytes);
     }
 
-    public static Buffer generateSymmetricKey(int size) {
-        KeyGenerator keyGenerator;
-        try {
-            // TODO: support more cryptos
-            keyGenerator = KeyGenerator.getInstance("AES");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to generate key! \n" + e.getMessage());
-        }
-        // bytes to bits
-        keyGenerator.init(size * 8);
-        SecretKey key = keyGenerator.generateKey();
-        return new Buffer(key.getEncoded());
-    }
+//    public static Buffer generateSymmetricKey(int size) {
+//        KeyGenerator keyGenerator;
+//        try {
+//            // TODO: support more cryptos
+//            keyGenerator = KeyGenerator.getInstance("AES");
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException("Failed to generate key! \n" + e.getMessage());
+//        }
+//        // bytes to bits
+//        keyGenerator.init(size * 8);
+//        SecretKey key = keyGenerator.generateKey();
+//        return new Buffer(key.getEncoded());
+//    }
 
-    public static Buffer symmetricEncryptAuthenticate(Buffer input, Buffer key, SymmetricKeyCryptoSpec cryptoSpec) {
-        Buffer buffer = new Buffer(input);
-        buffer.concat(AuthCrypto.hash(buffer, cryptoSpec.getHashAlgo()));
-        return AuthCrypto.symmetricEncrypt(buffer, key, cryptoSpec.getCipherAlgo());
-    }
+//    public static Buffer symmetricEncryptAuthenticate(Buffer input, Buffer key, SymmetricKeyCryptoSpec cryptoSpec) {
+//        Buffer buffer = new Buffer(input);
+//        buffer.concat(AuthCrypto.hash(buffer, cryptoSpec.getHashAlgo()));
+//        return AuthCrypto.symmetricEncrypt(buffer, key, cryptoSpec.getCipherAlgo());
+//    }
 
-    private static Buffer symmetricEncrypt(Buffer input, Buffer key, String cipherAlgorithm) {
-        Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, cipherAlgorithm, key, null);
+//    private static Buffer symmetricEncrypt(Buffer input, Buffer key, String cipherAlgorithm) {
+//        Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, cipherAlgorithm, key, null);
+//
+//        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+//        try {
+//            // write initialization vector first
+//            byte[] initVector = cipher.getIV();
+//            if (initVector != null) {
+//                byteArrayOutputStream.write(initVector);
+//            }
+//            byteArrayOutputStream.write(cipher.doFinal(input.getRawBytes()));
+//        } catch (IllegalBlockSizeException | BadPaddingException | IOException e) {
+//            throw new RuntimeException("Problem processing " + input.toHexString() + "\n" + e.getMessage());
+//        }
+//
+//        return new Buffer(byteArrayOutputStream.toByteArray());
+//    }
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try {
-            // write initialization vector first
-            byte[] initVector = cipher.getIV();
-            if (initVector != null) {
-                byteArrayOutputStream.write(initVector);
-            }
-            byteArrayOutputStream.write(cipher.doFinal(input.getRawBytes()));
-        } catch (IllegalBlockSizeException | BadPaddingException | IOException e) {
-            throw new RuntimeException("Problem processing " + input.toHexString() + "\n" + e.getMessage());
-        }
+//    public static Buffer symmetricDecryptAuthenticate(Buffer cipherText, Buffer key, SymmetricKeyCryptoSpec cryptoSpec) {
+//        Buffer decPayloadAndMAC = AuthCrypto.symmetricDecrypt(cipherText, key, cryptoSpec.getCipherAlgo());
+//
+//        // Check MAC (message authentication code) value within dec payload
+//        int hashLength = AuthCrypto.getHashLength(cryptoSpec.getHashAlgo());
+//        Buffer decPayload = decPayloadAndMAC.slice(0, decPayloadAndMAC.length() - hashLength);
+//        Buffer receivedMAC = decPayloadAndMAC.slice(decPayloadAndMAC.length() - hashLength);
+//        Buffer computedMAC = AuthCrypto.hash(decPayload, cryptoSpec.getHashAlgo());
+//
+//        if (!receivedMAC.equals(computedMAC)) {
+//            throw new RuntimeException("MAC of session key request is NOT correct!");
+//        }
+//        else {
+//            logger.debug("MAC is correct!");
+//        }
+//        return decPayload;
+//    }
 
-        return new Buffer(byteArrayOutputStream.toByteArray());
-    }
+//    private static Buffer symmetricDecrypt(Buffer cipherText, Buffer key, String cipherAlgorithm) {
+//        Cipher cipher = getCipher(Cipher.DECRYPT_MODE, cipherAlgorithm, key, cipherText);
+//
+//        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+//
+//        int ivSize = 0;
+//        if (cipher.getIV() != null) {
+//            ivSize = cipher.getIV().length;
+//        }
+//        try {
+//            byteArrayOutputStream.write(cipher.doFinal(cipherText.getRawBytes(), ivSize, cipherText.length() - ivSize));
+//        } catch (IllegalBlockSizeException | BadPaddingException | IOException e) {
+//            throw new RuntimeException("Problem processing " + cipherText.toHexString() + "\n" + e.getMessage());
+//        }
+//        return new Buffer(byteArrayOutputStream.toByteArray());
+//    }
 
-    public static Buffer symmetricDecryptAuthenticate(Buffer cipherText, Buffer key, SymmetricKeyCryptoSpec cryptoSpec) {
-        Buffer decPayloadAndMAC = AuthCrypto.symmetricDecrypt(cipherText, key, cryptoSpec.getCipherAlgo());
+//    public static int getHashLength(String hashAlgorithm) throws RuntimeException {
+//        try {
+//            MessageDigest messageDigest = MessageDigest.getInstance(hashAlgorithm);
+//            return messageDigest.getDigestLength();
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException("Failed to initialize messageDigest.\n" + e.getMessage());
+//        }
+//    }
 
-        // Check MAC (message authentication code) value within dec payload
-        int hashLength = AuthCrypto.getHashLength(cryptoSpec.getHashAlgo());
-        Buffer decPayload = decPayloadAndMAC.slice(0, decPayloadAndMAC.length() - hashLength);
-        Buffer receivedMAC = decPayloadAndMAC.slice(decPayloadAndMAC.length() - hashLength);
-        Buffer computedMAC = AuthCrypto.hash(decPayload, cryptoSpec.getHashAlgo());
-
-        if (!receivedMAC.equals(computedMAC)) {
-            throw new RuntimeException("MAC of session key request is NOT correct!");
-        }
-        else {
-            logger.debug("MAC is correct!");
-        }
-        return decPayload;
-    }
-
-    private static Buffer symmetricDecrypt(Buffer cipherText, Buffer key, String cipherAlgorithm) {
-        Cipher cipher = getCipher(Cipher.DECRYPT_MODE, cipherAlgorithm, key, cipherText);
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-        int ivSize = 0;
-        if (cipher.getIV() != null) {
-            ivSize = cipher.getIV().length;
-        }
-        try {
-            byteArrayOutputStream.write(cipher.doFinal(cipherText.getRawBytes(), ivSize, cipherText.length() - ivSize));
-        } catch (IllegalBlockSizeException | BadPaddingException | IOException e) {
-            throw new RuntimeException("Problem processing " + cipherText.toHexString() + "\n" + e.getMessage());
-        }
-        return new Buffer(byteArrayOutputStream.toByteArray());
-    }
-
-    public static int getHashLength(String hashAlgorithm) throws RuntimeException {
-        try {
-            MessageDigest messageDigest = MessageDigest.getInstance(hashAlgorithm);
-            return messageDigest.getDigestLength();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to initialize messageDigest.\n" + e.getMessage());
-        }
-    }
-
-    public static Buffer hash(Buffer input, String hashAlgorithm) throws RuntimeException {
-        try {
-            MessageDigest messageDigest = MessageDigest.getInstance(hashAlgorithm);
-            return new Buffer(messageDigest.digest(input.getRawBytes()));
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to initialize messageDigest.\n" + e.getMessage());
-        }
-    }
+//    public static Buffer hash(Buffer input, String hashAlgorithm) throws RuntimeException {
+//        try {
+//            MessageDigest messageDigest = MessageDigest.getInstance(hashAlgorithm);
+//            return new Buffer(messageDigest.digest(input.getRawBytes()));
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException("Failed to initialize messageDigest.\n" + e.getMessage());
+//        }
+//    }
 
     private PrivateKey loadPrivateKey(String filePath) {
         if (!filePath.endsWith(".der")) {
