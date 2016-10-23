@@ -50,7 +50,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setAbsValidity(sessionKey.getExpirationTime().getTime());
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
         cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toSpecString());
-        cachedSessionKey.setKeyVal(sessionKey.getKeyVal().getRawBytes());
+        cachedSessionKey.setKeyVal(sessionKey.getSerializedKeyVal().getRawBytes());
         return cachedSessionKey;
     }
 

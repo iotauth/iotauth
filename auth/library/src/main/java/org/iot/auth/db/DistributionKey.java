@@ -34,15 +34,15 @@ import java.util.Date;
 public class DistributionKey extends SymmetricKey {
     private static final int DIST_KEY_EXPIRATION_TIME_SIZE = 6;
 
-    public DistributionKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime, Buffer keyVal) {
-        super(cryptoSpec, expirationTime, keyVal);
+    public DistributionKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime, Buffer serializedKeyVal) {
+        super(cryptoSpec, expirationTime, serializedKeyVal);
     }
     public DistributionKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime) {
         super(cryptoSpec, new Date().getTime() + expirationTime);
     }
 
     public String toString() {
-        return "Expiration Time: " + expirationTime + "\tKeyVal: " + keyVal.toHexString();
+        return "Expiration Time: " + expirationTime + "\tCipherKey: " + getCipherKeyVal().toHexString();
     }
     public Buffer serialize() {
         Buffer buf = new Buffer(DIST_KEY_EXPIRATION_TIME_SIZE);
@@ -50,7 +50,7 @@ public class DistributionKey extends SymmetricKey {
         buf.putNumber(expirationTime.getTime(), curIndex, DIST_KEY_EXPIRATION_TIME_SIZE);
         curIndex += DIST_KEY_EXPIRATION_TIME_SIZE;
 
-        buf.concat(keyVal);
+        buf.concat(getSerializedKeyVal());
         return buf;
     }
 }

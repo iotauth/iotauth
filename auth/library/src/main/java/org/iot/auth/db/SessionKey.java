@@ -55,9 +55,9 @@ public class SessionKey extends SymmetricKey {
 
     public SessionKey(long id, String[] owners, int maxNumOwners, String purpose,
                       long expirationTime, long relValidity,
-                      SymmetricKeyCryptoSpec cryptoSpec, Buffer keyVal)
+                      SymmetricKeyCryptoSpec cryptoSpec, Buffer serializedKeyVal)
     {
-        super(cryptoSpec, expirationTime, keyVal);
+        super(cryptoSpec, expirationTime, serializedKeyVal);
         this.id = id;
         this.owners = owners;
         this.maxNumOwners = maxNumOwners;
@@ -80,7 +80,7 @@ public class SessionKey extends SymmetricKey {
     public String toString() {
         return "ID: " + id + "\tOwners: " + String.join(SESSION_KEY_OWNER_NAME_DELIM, owners) +
                 "\tAbsoluteValidity: " + expirationTime + "\tRelativeValidity: " + relValidity +
-                "\t" + cryptoSpec.toString() + "\tKeyVal: " + keyVal.toHexString();
+                "\t" + cryptoSpec.toString() + "\tCipherKey: " + getCipherKeyVal().toHexString();
     }
 
     public Buffer serialize() {
@@ -93,7 +93,7 @@ public class SessionKey extends SymmetricKey {
         buf.putNumber(relValidity, curIndex, SESSION_KEY_REL_VALIDITY_SIZE);
         curIndex += SESSION_KEY_REL_VALIDITY_SIZE;
 
-        buf.concat(keyVal);
+        buf.concat(getSerializedKeyVal());
         return buf;
     }
 
@@ -106,7 +106,7 @@ public class SessionKey extends SymmetricKey {
         jsonObject.put(key.ExpirationTime, expirationTime.getTime());
         jsonObject.put(key.RelValidity, relValidity);
         jsonObject.put(key.CryptoSpec, cryptoSpec.toJSONObject());
-        jsonObject.put(key.KeyVal, keyVal.toBase64());
+        jsonObject.put(key.KeyVal, getSerializedKeyVal().toBase64());
         return jsonObject;
     }
 

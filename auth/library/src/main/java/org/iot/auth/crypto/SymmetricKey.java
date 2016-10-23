@@ -27,15 +27,15 @@ public class SymmetricKey {
      * With given key value
      * @param cryptoSpec
      * @param expirationTime
-     * @param keyVal
+     * @param serializedKeyVal
      */
-    public SymmetricKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime, Buffer keyVal) {
-        if (cryptoSpec.getCipherKeySize() != keyVal.length()) {
+    public SymmetricKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime, Buffer serializedKeyVal) {
+        if (cryptoSpec.getCipherKeySize() != serializedKeyVal.length()) {
             throw new RuntimeException("Wrong key size!");
         }
         this.cryptoSpec = cryptoSpec;
         this.expirationTime = new Date(expirationTime);
-        this.keyVal = new Buffer(keyVal);
+        this.keyVal = new Buffer(serializedKeyVal);
     }
 
     /**
@@ -50,7 +50,10 @@ public class SymmetricKey {
     public Date getExpirationTime() {
         return expirationTime;
     }
-    public Buffer getKeyVal() {
+    public Buffer getSerializedKeyVal() {
+        return keyVal;
+    }
+    public Buffer getCipherKeyVal() {
         return keyVal;
     }
 
@@ -158,7 +161,7 @@ public class SymmetricKey {
         return decPayload;
     }
 
-    protected Buffer keyVal;
+    private Buffer keyVal;
     protected Date expirationTime;
     protected SymmetricKeyCryptoSpec cryptoSpec;
     private Cipher cipher = null;

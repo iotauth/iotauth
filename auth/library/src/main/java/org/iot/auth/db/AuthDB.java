@@ -141,7 +141,7 @@ public class AuthDB {
         registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
 
         sqLiteConnector.updateRegEntityDistKey(entityName, distributionKey.getExpirationTime().getTime(),
-                encryptAuthDBData(distributionKey.getKeyVal()).getRawBytes());
+                encryptAuthDBData(distributionKey.getSerializedKeyVal()).getRawBytes());
     }
 
     /**
