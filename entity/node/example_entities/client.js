@@ -170,7 +170,7 @@ function sendSecurePublish(data, protocol) {
             return;
         }
         var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
-            {seqNum: pubSeqNum, data: data}, sessionKeyCacheForPublish[0]);
+            {seqNum: pubSeqNum, data: data}, sessionKeyCacheForPublish[0], cryptoInfo.sessionCryptoSpec);
         pubSeqNum++;
         mqttClient.publish('Ptopic', secureMqtt);
     }
@@ -184,7 +184,7 @@ function sendSecurePublish(data, protocol) {
         var MULTICAST_ADDR = '230.185.192.108';
         var BROADCAST_ADDR = '255.255.255.255';
         var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
-            {seqNum: pubSeqNum, data: data}, sessionKeyCacheForPublish[0]);
+            {seqNum: pubSeqNum, data: data}, sessionKeyCacheForPublish[0], cryptoInfo.sessionCryptoSpec);
         broadcastingSocket.send(secureMqtt, 0, secureMqtt.length, 8088, BROADCAST_ADDR);
         console.log("Sent " + data.toString() + " to the wire...");
 
@@ -441,11 +441,7 @@ targetServerInfoList = entityConfig.targetServerInfoList;
 cryptoInfo = entityConfig.cryptoInfo;
 
 if (entityInfo.usePermanentDistKey) {
-    var absValidity = new Date().getTime() + iotAuth.parseTimePeriod(entityInfo.distKeyValidity);
-    distributionKey = {
-        val: entityInfo.permanentDistKey,
-        absValidity: new Date(absValidity)
-    };
+    distributionKey = entityInfo.permanentDistKey;
 }
 
 if (process.argv.length > 4) {

@@ -19,6 +19,7 @@ import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.db.DistributionKey;
 import org.iot.auth.db.SessionKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
+import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.BufferedString;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ import java.util.List;
  * SessionKeyResp Format
  * {
  *      entityNonce:   /Buffer/,   (ENTITY_NONCE_SIZE)
- *      cryptoSpec:    /JSON/, (e.g., {cipher: 'AES-128-CBC', hash: 'SHA256'} stringified)
+ *      cryptoSpec:    /JSON/, (e.g., {cipher: 'AES-128-CBC', mac: 'SHA256'} stringified)
  *      sessionKeyList: /UInt32BE for length and List of SessionKey's/
  *      // TODO: who you're talking to? if req included keyId=?
  * } </pre>
@@ -75,7 +76,7 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
      * @param distKey A distribution key for encrypting the session key request message.
      * @return Buffer for serialized and encrypted message.
      */
-    public Buffer serializeAndEncrypt(DistributionKey distKey) {
+    public Buffer serializeAndEncrypt(DistributionKey distKey) throws UseOfExpiredKeyException {
         Buffer payload = new Buffer(entityNonce);
         String cryptoSpecString = cryptoSpec.toJSONObject().toString();
         logger.debug("cryptoSpecString: {}", cryptoSpecString);

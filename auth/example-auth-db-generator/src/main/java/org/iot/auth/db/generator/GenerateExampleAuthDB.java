@@ -98,7 +98,7 @@ public class GenerateExampleAuthDB {
         metaData = new MetaDataTable();
         metaData.setKey(MetaDataTable.key.EncryptedDatabaseKey.name());
         PublicKey databasePublicKey = AuthCrypto.loadPublicKey(databasePublicKeyPath);
-        Buffer encryptedDatabaseKey = AuthCrypto.publicEncrypt(databaseKey.getKeyVal(), databasePublicKey,
+        Buffer encryptedDatabaseKey = AuthCrypto.publicEncrypt(databaseKey.getSerializedKeyVal(), databasePublicKey,
                 AuthDB.AUTH_DB_PUBLIC_CIPHER);
 
         metaData.setValue(encryptedDatabaseKey.toBase64());
@@ -165,8 +165,9 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        registeredEntity.setDistKeyVal(databaseKey.encryptAuthenticate(
-                readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcServerKey.key")).getRawBytes());
+        registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
+                "../entity/credentials/keys/" + networkName + "/RcServerCipherKey.key",
+                "../entity/credentials/keys/" + networkName + "/RcServerMacKey.key"));
         registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
         sqLiteConnector.insertRecords(registeredEntity);
 
@@ -179,8 +180,9 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        registeredEntity.setDistKeyVal(databaseKey.encryptAuthenticate(
-                readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcClientKey.key")).getRawBytes());
+        registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
+                "../entity/credentials/keys/" + networkName + "/RcClientCipherKey.key",
+                "../entity/credentials/keys/" + networkName + "/RcClientMacKey.key"));
         registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
         sqLiteConnector.insertRecords(registeredEntity);
 
@@ -193,8 +195,9 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        registeredEntity.setDistKeyVal(databaseKey.encryptAuthenticate(
-                readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcUdpServerKey.key")).getRawBytes());
+        registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
+                "../entity/credentials/keys/" + networkName + "/RcUdpServerCipherKey.key",
+                "../entity/credentials/keys/" + networkName + "/RcUdpServerMacKey.key"));
         registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
         sqLiteConnector.insertRecords(registeredEntity);
 
@@ -207,8 +210,9 @@ public class GenerateExampleAuthDB {
         registeredEntity.setMaxSessionKeysPerRequest(30);
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        registeredEntity.setDistKeyVal(databaseKey.encryptAuthenticate(
-                readSymmetricKey("../entity/credentials/keys/" + networkName + "/RcUdpClientKey.key")).getRawBytes());
+        registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
+                "../entity/credentials/keys/" + networkName + "/RcUdpClientCipherKey.key",
+                "../entity/credentials/keys/" + networkName + "/RcUdpClientMacKey.key"));
         registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
         sqLiteConnector.insertRecords(registeredEntity);
 
@@ -396,11 +400,20 @@ public class GenerateExampleAuthDB {
     }
 
     private static Buffer readSymmetricKey(String filePath) throws IOException {
-        final int MAX_SYMMETRIC_KEY_SIZE = 32;  // Max symmetric key size: 256 bits
+        final int MAX_SYMMETRIC_KEY_SIZE = 64;  // Max symmetric key size: 256 bits
         FileInputStream inStream = new FileInputStream(filePath);
         byte[] byteArray = new byte[MAX_SYMMETRIC_KEY_SIZE];
         int numBytes = inStream.read(byteArray);
         return new Buffer(byteArray, numBytes);
+    }
+
+    private static byte[] loadEncryptDistributionKey(SymmetricKey databaseKey,
+                                                     String cipherKeyPath,
+                                                     String macKeyPath) throws IOException {
+        Buffer rawCipherKeyVal = readSymmetricKey(cipherKeyPath);
+        Buffer rawMackeyVal = readSymmetricKey(macKeyPath);
+        Buffer serializedKeyVal = SymmetricKey.getSerializedKeyVal(rawCipherKeyVal, rawMackeyVal);
+        return databaseKey.encryptAuthenticate(serializedKeyVal).getRawBytes();
     }
 
     private static final Logger logger = LoggerFactory.getLogger(GenerateExampleAuthDB.class);

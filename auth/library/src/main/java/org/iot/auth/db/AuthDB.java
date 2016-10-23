@@ -24,6 +24,7 @@ import org.iot.auth.db.bean.CachedSessionKeyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
+import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.server.CommunicationTargetType;
 import org.iot.auth.util.DateHelper;
@@ -51,7 +52,7 @@ public class AuthDB {
     public static final String AUTH_DB_PUBLIC_CIPHER = "RSA/ECB/PKCS1PADDING";
     public static final String AUTH_DB_KEY_ABSOLUTE_VALIDITY = "3650*day";
     public static final SymmetricKeyCryptoSpec AUTH_DB_CRYPTO_SPEC =
-            new SymmetricKeyCryptoSpec("AES/CBC/PKCS5Padding", 16, "SHA-256");
+            new SymmetricKeyCryptoSpec("AES/CBC/PKCS5Padding", 16, "HmacSHA256");
 
     public AuthDB(String authDatabaseDir)
     {
@@ -140,7 +141,7 @@ public class AuthDB {
         registeredEntity.setDistributionKey(distributionKey);
         registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
 
-        sqLiteConnector.updateRegEntityDistKey(entityName, distributionKey.getExpirationTime().getTime(),
+        sqLiteConnector.updateRegEntityDistKey(entityName, distributionKey.getRawExpirationTime(),
                 encryptAuthDBData(distributionKey.getSerializedKeyVal()).getRawBytes());
     }
 
@@ -360,7 +361,12 @@ public class AuthDB {
     }
 
     private Buffer encryptAuthDBData(Buffer input) {
-        return databaseKey.encryptAuthenticate(input);
+        try {
+            return databaseKey.encryptAuthenticate(input);
+        } catch (UseOfExpiredKeyException e) {
+            logger.error("UseOfExpiredKeyException {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while encrypting Auth DB Data!");
+        }
     }
     private Buffer decryptAuthDBData(Buffer input) {
         try {
@@ -368,7 +374,7 @@ public class AuthDB {
         }
         catch (Exception e) {
             logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException("Exception occurred while encrypting Auth DB Data!");
+            throw new RuntimeException("Exception occurred while decrypting Auth DB Data!");
         }
     }
 

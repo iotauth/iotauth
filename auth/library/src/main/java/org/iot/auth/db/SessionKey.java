@@ -79,8 +79,8 @@ public class SessionKey extends SymmetricKey {
 
     public String toString() {
         return "ID: " + id + "\tOwners: " + String.join(SESSION_KEY_OWNER_NAME_DELIM, owners) +
-                "\tAbsoluteValidity: " + expirationTime + "\tRelativeValidity: " + relValidity +
-                "\t" + cryptoSpec.toString() + "\tCipherKey: " + getCipherKeyVal().toHexString();
+                "\tAbsoluteValidity: " + getExpirationTime() + "\tRelativeValidity: " + relValidity +
+                "\t" + getCryptoSpec().toString() + "\tCipherKey: " + getCipherKeyVal().toHexString();
     }
 
     public Buffer serialize() {
@@ -88,7 +88,7 @@ public class SessionKey extends SymmetricKey {
         int curIndex = 0;
         buf.putNumber(id, curIndex, SESSION_KEY_ID_SIZE);
         curIndex += SESSION_KEY_ID_SIZE;
-        buf.putNumber(expirationTime.getTime(), curIndex, SESSION_KEY_EXPIRATION_TIME);
+        buf.putNumber(getRawExpirationTime(), curIndex, SESSION_KEY_EXPIRATION_TIME);
         curIndex += SESSION_KEY_EXPIRATION_TIME;
         buf.putNumber(relValidity, curIndex, SESSION_KEY_REL_VALIDITY_SIZE);
         curIndex += SESSION_KEY_REL_VALIDITY_SIZE;
@@ -103,9 +103,9 @@ public class SessionKey extends SymmetricKey {
         jsonObject.put(key.Owners, String.join(SESSION_KEY_OWNER_NAME_DELIM, owners));
         jsonObject.put(key.MaxNumOwners, maxNumOwners);
         jsonObject.put(key.Purpose, purpose);
-        jsonObject.put(key.ExpirationTime, expirationTime.getTime());
+        jsonObject.put(key.ExpirationTime, getRawExpirationTime());
         jsonObject.put(key.RelValidity, relValidity);
-        jsonObject.put(key.CryptoSpec, cryptoSpec.toJSONObject());
+        jsonObject.put(key.CryptoSpec, getCryptoSpec().toJSONObject());
         jsonObject.put(key.KeyVal, getSerializedKeyVal().toBase64());
         return jsonObject;
     }
@@ -142,10 +142,6 @@ public class SessionKey extends SymmetricKey {
 
     public long getRelValidity() {
         return relValidity;
-    }
-
-    public SymmetricKeyCryptoSpec getCryptoSpec() {
-        return cryptoSpec;
     }
 
 

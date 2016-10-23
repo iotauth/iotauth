@@ -42,12 +42,12 @@ public class DistributionKey extends SymmetricKey {
     }
 
     public String toString() {
-        return "Expiration Time: " + expirationTime + "\tCipherKey: " + getCipherKeyVal().toHexString();
+        return "Expiration Time: " + getExpirationTime() + "\tCipherKey: " + getCipherKeyVal().toHexString();
     }
     public Buffer serialize() {
         Buffer buf = new Buffer(DIST_KEY_EXPIRATION_TIME_SIZE);
         int curIndex = 0;
-        buf.putNumber(expirationTime.getTime(), curIndex, DIST_KEY_EXPIRATION_TIME_SIZE);
+        buf.putNumber(getRawExpirationTime(), curIndex, DIST_KEY_EXPIRATION_TIME_SIZE);
         curIndex += DIST_KEY_EXPIRATION_TIME_SIZE;
 
         buf.concat(getSerializedKeyVal());

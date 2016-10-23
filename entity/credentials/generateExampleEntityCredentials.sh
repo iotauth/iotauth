@@ -36,11 +36,13 @@ entity_cred_gen() {
 entity_dist_key_gen() {
 	NET_NAME=$1
 	FILE_PREFIX=$2
-	KEY_SIZE=$3
+	CIPHER_KEY_SIZE=$3
+	MAC_KEY_SIZE=$4
 	KEY_PATH_PREFIX=$KEYS_DIR/$NET_NAME/$FILE_PREFIX
 	ENTITY_NAME=$NET_NAME"."$2
 
-	openssl rand $KEY_SIZE > $KEY_PATH_PREFIX"Key.key"
+	openssl rand $CIPHER_KEY_SIZE > $KEY_PATH_PREFIX"CipherKey.key"
+	openssl rand $MAC_KEY_SIZE > $KEY_PATH_PREFIX"MacKey.key"
 }
 
 mkdir -p $CERTS_DIR/"net1"
@@ -71,12 +73,12 @@ entity_cred_gen "net2" "UdpServer"
 entity_cred_gen "net2" "SafetyCriticalClient"
 entity_cred_gen "net2" "SafetyCriticalServer"
 
-entity_dist_key_gen "net1" "RcClient" 16	# 16 bytes - 128 bits
-entity_dist_key_gen "net1" "RcServer" 16	# 16 bytes - 128 bits
-entity_dist_key_gen "net2" "RcClient" 16	# 16 bytes - 128 bits
-entity_dist_key_gen "net2" "RcServer" 16	# 16 bytes - 128 bits
+entity_dist_key_gen "net1" "RcClient" 16 32	# 16 bytes - 128 bits (AES-128-CBC), 32 bytes - 256 bits (SHA256)
+entity_dist_key_gen "net1" "RcServer" 16 32	# 16 bytes - 128 bits (AES-128-CBC), 32 bytes - 256 bits (SHA256)
+entity_dist_key_gen "net2" "RcClient" 16 32	# 16 bytes - 128 bits (AES-128-CBC), 32 bytes - 256 bits (SHA256)
+entity_dist_key_gen "net2" "RcServer" 16 32	# 16 bytes - 128 bits (AES-128-CBC), 32 bytes - 256 bits (SHA256)
 
-entity_dist_key_gen "net1" "RcUdpClient" 16	# 16 bytes - 128 bits
-entity_dist_key_gen "net1" "RcUdpServer" 16	# 16 bytes - 128 bits
-entity_dist_key_gen "net2" "RcUdpClient" 16	# 16 bytes - 128 bits
-entity_dist_key_gen "net2" "RcUdpServer" 16	# 16 bytes - 128 bits
+entity_dist_key_gen "net1" "RcUdpClient" 16 32	# 16 bytes - 128 bits (AES-128-CBC), 32 bytes - 256 bits (SHA256)
+entity_dist_key_gen "net1" "RcUdpServer" 16 32	# 16 bytes - 128 bits (AES-128-CBC), 32 bytes - 256 bits (SHA256)
+entity_dist_key_gen "net2" "RcUdpClient" 16 32	# 16 bytes - 128 bits (AES-128-CBC), 32 bytes - 256 bits (SHA256)
+entity_dist_key_gen "net2" "RcUdpServer" 16 32	# 16 bytes - 128 bits (AES-128-CBC), 32 bytes - 256 bits (SHA256)

@@ -47,7 +47,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setOwner(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getOwners()));
         cachedSessionKey.setMaxNumOwners(sessionKey.getMaxNumOwners());
         cachedSessionKey.setPurpose(sessionKey.getPurpose());
-        cachedSessionKey.setAbsValidity(sessionKey.getExpirationTime().getTime());
+        cachedSessionKey.setAbsValidity(sessionKey.getRawExpirationTime());
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
         cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toSpecString());
         cachedSessionKey.setKeyVal(sessionKey.getSerializedKeyVal().getRawBytes());

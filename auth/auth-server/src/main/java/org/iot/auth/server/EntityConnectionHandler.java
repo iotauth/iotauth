@@ -5,6 +5,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.iot.auth.exception.InvalidMacException;
 import org.iot.auth.exception.MessageIntegrityException;
+import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.slf4j.Logger;
 import org.iot.auth.AuthServer;
 import org.iot.auth.crypto.AuthCrypto;
@@ -66,7 +67,7 @@ public abstract class EntityConnectionHandler {
      * @throws ClassNotFoundException
      */
     protected void handleSessionKeyReq(byte[] bytes, Buffer authNonce) throws RuntimeException, IOException,
-            ParseException, SQLException, ClassNotFoundException
+            ParseException, SQLException, ClassNotFoundException, UseOfExpiredKeyException
     {
         Buffer buf = new Buffer(bytes);
         MessageType type = MessageType.fromByte(buf.getByte(0));
@@ -144,7 +145,7 @@ public abstract class EntityConnectionHandler {
                 close();
                 return;
             }
-            else if (new Date().getTime() > requestingEntity.getDistributionKey().getExpirationTime().getTime()) {
+            else if (requestingEntity.getDistributionKey().isExpired()) {
                 getLogger().error("Distribution key is expired!");
                 sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
                 close();
@@ -209,7 +210,7 @@ public abstract class EntityConnectionHandler {
      */
     protected void sendSessionKeyResp(DistributionKey distributionKey, SymmetricKeyCryptoSpec distCryptoSpec, Buffer entityNonce,
                                     List<SessionKey> sessionKeyList, SymmetricKeyCryptoSpec sessionCryptoSpec,
-                                    Buffer encryptedDistKey) throws IOException
+                                    Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException
     {
         SessionKeyRespMessage sessionKeyResp;
         if (encryptedDistKey != null) {

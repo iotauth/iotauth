@@ -2,6 +2,7 @@ package org.iot.auth.crypto;
 
 import org.iot.auth.exception.InvalidMacException;
 import org.iot.auth.exception.MessageIntegrityException;
+import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
@@ -30,12 +30,28 @@ public class SymmetricKey {
      * @param serializedKeyVal
      */
     public SymmetricKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime, Buffer serializedKeyVal) {
-        if (cryptoSpec.getCipherKeySize() != serializedKeyVal.length()) {
-            throw new RuntimeException("Wrong key size!");
-        }
         this.cryptoSpec = cryptoSpec;
         this.expirationTime = new Date(expirationTime);
-        this.keyVal = new Buffer(serializedKeyVal);
+
+        int curIndex = 0;
+        int cipherKeySize = serializedKeyVal.getByte(curIndex);
+        curIndex += 1;
+        if (cryptoSpec.getCipherKeySize() != cipherKeySize) {
+            throw new RuntimeException("Wrong cipher key size!");
+        }
+        this.cipherKeyVal = serializedKeyVal.slice(curIndex, curIndex + cipherKeySize);
+        curIndex += cipherKeySize;
+
+        int macKeySize = serializedKeyVal.getByte(curIndex);
+        curIndex += 1;
+        if (cryptoSpec.getMacKeySize() != macKeySize) {
+            throw new RuntimeException("Wrong MAC key size!");
+        }
+        this.macKeyVal = serializedKeyVal.slice(curIndex, curIndex + macKeySize);
+        curIndex += macKeySize;
+        if (curIndex != serializedKeyVal.length()) {
+            throw new RuntimeException("Wrong key size!");
+        }
     }
 
     /**
@@ -44,53 +60,87 @@ public class SymmetricKey {
      * @param expirationTime
      */
     public SymmetricKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime) {
-        this(cryptoSpec, expirationTime, generateCipherKeyValue(cryptoSpec));
+        this(cryptoSpec, expirationTime,
+                getSerializedKeyVal(generateCipherKeyValue(cryptoSpec), generateMacKeyValue(cryptoSpec)));
     }
 
-    public Date getExpirationTime() {
-        return expirationTime;
+    public static Buffer getSerializedKeyVal(Buffer rawCipherKeyVal, Buffer rawMacKeyVal) {
+        int curIndex = 0;
+        Buffer buffer = new Buffer(2 + rawCipherKeyVal.length() + rawMacKeyVal.length());
+        buffer.putByte((byte)rawCipherKeyVal.length(), curIndex);
+        curIndex += 1;
+        buffer.putBytes(rawCipherKeyVal.getRawBytes(), curIndex);
+        curIndex += rawCipherKeyVal.length();
+        buffer.putByte((byte)rawMacKeyVal.length(), curIndex);
+        curIndex += 1;
+        buffer.putBytes(rawMacKeyVal.getRawBytes(), curIndex);
+        return buffer;
     }
     public Buffer getSerializedKeyVal() {
-        return keyVal;
+        return getSerializedKeyVal(cipherKeyVal, macKeyVal);
     }
     public Buffer getCipherKeyVal() {
-        return keyVal;
+        return cipherKeyVal;
     }
 
     private static Buffer generateCipherKeyValue(SymmetricKeyCryptoSpec cryptoSpec) {
-        String[] cipherAlgoTokens = cryptoSpec.getCipherAlgo().split("/");
+        String[] cipherAlgoTokens = cryptoSpec.getCipherAlgorithm().split("/");
         KeyGenerator keyGenerator;
         try {
             // TODO: support more cryptos
             keyGenerator = KeyGenerator.getInstance(cipherAlgoTokens[0]);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to generate key! \n" + e.getMessage());
+            throw new RuntimeException("Failed to generate a cipher key! \n" + e.getMessage());
         }
         keyGenerator.init(8 * cryptoSpec.getCipherKeySize());
         SecretKey key = keyGenerator.generateKey();
         return new Buffer(key.getEncoded());
     }
 
-    private void initializeCipher() {
+    private static Buffer generateMacKeyValue(SymmetricKeyCryptoSpec cryptoSpec) {
+        KeyGenerator keyGenerator;
         try {
-            cipher = Cipher.getInstance(cryptoSpec.getCipherAlgo());
+            keyGenerator = KeyGenerator.getInstance(cryptoSpec.getMacAlgorithm());
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to generate a MAC key! \n" + e.getMessage());
+        }
+        keyGenerator.init(8 * cryptoSpec.getMacKeySize());
+        SecretKey key = keyGenerator.generateKey();
+        return new Buffer(key.getEncoded());
+    }
+
+    private void initializeCipherMac() {
+        try {
+            cipher = Cipher.getInstance(cryptoSpec.getCipherAlgorithm());
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
             throw new RuntimeException("Exception occurred while initializing cipher!");
         }
         String[] cipherAlgoTokens = cipher.getAlgorithm().split("/");
-        cipherKey = new SecretKeySpec(keyVal.getRawBytes(), cipherAlgoTokens[0]);
+        cipherKey = new SecretKeySpec(cipherKeyVal.getRawBytes(), cipherAlgoTokens[0]);
+        try {
+            mac = Mac.getInstance(cryptoSpec.getMacAlgorithm());
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while initializing MAC object!");
+        }
+        SecretKey macKey = new SecretKeySpec(macKeyVal.getRawBytes(), mac.getAlgorithm());
+        try {
+            mac.init(macKey);
+        } catch (InvalidKeyException e) {
+            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while initializing MAC object!");
+        }
     }
 
-    public Buffer encryptAuthenticate(Buffer input) {
-        if (cipher == null) {
-            initializeCipher();
+    public Buffer encryptAuthenticate(Buffer input) throws UseOfExpiredKeyException {
+        if (isExpired()) {
+            throw new UseOfExpiredKeyException("Trying to use an expired key!");
+        }
+        if (cipher == null || mac == null) {
+            initializeCipherMac();
         }
         try {
-            MessageDigest messageDigest = MessageDigest.getInstance(cryptoSpec.getHashAlgo());
-            Buffer buffer = new Buffer(input);
-            buffer.concat(new Buffer(messageDigest.digest(input.getRawBytes())));
-
             cipher.init(Cipher.ENCRYPT_MODE, cipherKey);
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -99,23 +149,37 @@ public class SymmetricKey {
             if (initVector != null) {
                 byteArrayOutputStream.write(initVector);
             }
-            byteArrayOutputStream.write(cipher.doFinal(buffer.getRawBytes()));
-            return new Buffer(byteArrayOutputStream.toByteArray());
+            byteArrayOutputStream.write(cipher.doFinal(input.getRawBytes()));
+            Buffer buffer = new Buffer(byteArrayOutputStream.toByteArray());
+
+            Buffer tag = new Buffer(mac.doFinal(buffer.getRawBytes()));
+            buffer.concat(tag);
+            return buffer;
         }
-        catch (NoSuchAlgorithmException | InvalidKeyException | IOException | BadPaddingException
+        catch (InvalidKeyException | IOException | BadPaddingException
                 | IllegalBlockSizeException e) {
             logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
             throw new RuntimeException("Exception occurred while performing encryptAuthenticate!");
         }
     }
 
-    public Buffer decryptVerify(Buffer input) throws InvalidMacException, MessageIntegrityException {
-        if (cipher == null) {
-            initializeCipher();
+    public Buffer decryptVerify(Buffer input) throws InvalidMacException, MessageIntegrityException,
+            UseOfExpiredKeyException {
+        if (isExpired()) {
+            throw new UseOfExpiredKeyException("Trying to use an expired key!");
+        }
+        if (cipher == null || mac == null) {
+            initializeCipherMac();
+        }
+        Buffer encrypted = input.slice(0, input.length() - mac.getMacLength());
+        Buffer receivedTag = input.slice(input.length() - mac.getMacLength());
+        Buffer computedTag = new Buffer(mac.doFinal(encrypted.getRawBytes()));
+        if (!receivedTag.equals(computedTag)) {
+            throw new InvalidMacException("MAC of session key request is NOT correct!");
         }
 
         int blockSize = cipher.getBlockSize();
-        byte[] initVector = input.slice(0, blockSize).getRawBytes();
+        byte[] initVector = encrypted.slice(0, blockSize).getRawBytes();
         IvParameterSpec ivSpec = new IvParameterSpec(initVector);
         try {
             cipher.init(Cipher.DECRYPT_MODE, cipherKey, ivSpec);
@@ -132,7 +196,7 @@ public class SymmetricKey {
         }
 
         try {
-            byteArrayOutputStream.write(cipher.doFinal(input.getRawBytes(), ivSize, input.length() - ivSize));
+            byteArrayOutputStream.write(cipher.doFinal(encrypted.getRawBytes(), ivSize, encrypted.length() - ivSize));
         } catch (IOException e) {
             logger.error("IOException {}", ExceptionToString.convertExceptionToStackTrace(e));
             throw new RuntimeException("Exception occurred while performing decryptVerify!");
@@ -141,30 +205,30 @@ public class SymmetricKey {
                     ExceptionToString.convertExceptionToStackTrace(e));
             throw new MessageIntegrityException("Integrity error occurred during decryptVerify!");
         }
-        Buffer buffer = new Buffer(byteArrayOutputStream.toByteArray());
-
-        MessageDigest messageDigest = null;
-        try {
-            messageDigest = MessageDigest.getInstance(cryptoSpec.getHashAlgo());
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("NoSuchAlgorithmException {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException("Exception occurred while performing decryptVerify!");
-        }
-        int macLength = messageDigest.getDigestLength();
-        Buffer decPayload = buffer.slice(0, buffer.length() - macLength);
-        Buffer receivedMAC = buffer.slice(buffer.length() - macLength);
-        Buffer computedMAC = new Buffer(messageDigest.digest(decPayload.getRawBytes()));
-
-        if (!receivedMAC.equals(computedMAC)) {
-            throw new InvalidMacException("MAC of session key request is NOT correct!");
-        }
-        return decPayload;
+        return new Buffer(byteArrayOutputStream.toByteArray());
     }
 
-    private Buffer keyVal;
-    protected Date expirationTime;
-    protected SymmetricKeyCryptoSpec cryptoSpec;
+    public SymmetricKeyCryptoSpec getCryptoSpec() {
+        return cryptoSpec;
+    }
+    public Date getExpirationTime() {
+        return expirationTime;
+    }
+    public long getRawExpirationTime() {
+        return expirationTime.getTime();
+    }
+
+    public boolean isExpired() {
+        Date now = new Date();
+        return expirationTime.before(now);
+    }
+
+    private Buffer cipherKeyVal;
+    private Buffer macKeyVal;
+    private Date expirationTime;
+    private SymmetricKeyCryptoSpec cryptoSpec;
     private Cipher cipher = null;
-    private SecretKeySpec cipherKey = null;
+    private Mac mac = null;
+    private SecretKey cipherKey = null;
     protected static final Logger logger = LoggerFactory.getLogger(SymmetricKey.class);
 }

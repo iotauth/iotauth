@@ -219,8 +219,8 @@ public class AuthCrypto {
 
 //    public static Buffer symmetricEncryptAuthenticate(Buffer input, Buffer key, SymmetricKeyCryptoSpec cryptoSpec) {
 //        Buffer buffer = new Buffer(input);
-//        buffer.concat(AuthCrypto.hash(buffer, cryptoSpec.getHashAlgo()));
-//        return AuthCrypto.symmetricEncrypt(buffer, key, cryptoSpec.getCipherAlgo());
+//        buffer.concat(AuthCrypto.mac(buffer, cryptoSpec.getMacAlgorithm()));
+//        return AuthCrypto.symmetricEncrypt(buffer, key, cryptoSpec.getCipherAlgorithm());
 //    }
 
 //    private static Buffer symmetricEncrypt(Buffer input, Buffer key, String cipherAlgorithm) {
@@ -242,13 +242,13 @@ public class AuthCrypto {
 //    }
 
 //    public static Buffer symmetricDecryptAuthenticate(Buffer cipherText, Buffer key, SymmetricKeyCryptoSpec cryptoSpec) {
-//        Buffer decPayloadAndMAC = AuthCrypto.symmetricDecrypt(cipherText, key, cryptoSpec.getCipherAlgo());
+//        Buffer decPayloadAndMAC = AuthCrypto.symmetricDecrypt(cipherText, key, cryptoSpec.getCipherAlgorithm());
 //
 //        // Check MAC (message authentication code) value within dec payload
-//        int hashLength = AuthCrypto.getHashLength(cryptoSpec.getHashAlgo());
+//        int hashLength = AuthCrypto.getHashLength(cryptoSpec.getMacAlgorithm());
 //        Buffer decPayload = decPayloadAndMAC.slice(0, decPayloadAndMAC.length() - hashLength);
 //        Buffer receivedMAC = decPayloadAndMAC.slice(decPayloadAndMAC.length() - hashLength);
-//        Buffer computedMAC = AuthCrypto.hash(decPayload, cryptoSpec.getHashAlgo());
+//        Buffer computedMAC = AuthCrypto.mac(decPayload, cryptoSpec.getMacAlgorithm());
 //
 //        if (!receivedMAC.equals(computedMAC)) {
 //            throw new RuntimeException("MAC of session key request is NOT correct!");
@@ -285,7 +285,7 @@ public class AuthCrypto {
 //        }
 //    }
 
-//    public static Buffer hash(Buffer input, String hashAlgorithm) throws RuntimeException {
+//    public static Buffer mac(Buffer input, String hashAlgorithm) throws RuntimeException {
 //        try {
 //            MessageDigest messageDigest = MessageDigest.getInstance(hashAlgorithm);
 //            return new Buffer(messageDigest.digest(input.getRawBytes()));

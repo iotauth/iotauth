@@ -82,7 +82,7 @@ function sendToClients(message) {
             }
             else {
                 var enc = iotAuth.serializeEncryptSessionMessage(
-                    {seqNum: publishSeqNum, data: message}, sessionKeyCacheForClients[0].val);
+                    {seqNum: publishSeqNum, data: message}, sessionKeyCacheForClients[0], cryptoInfo.sessionCryptoSpec);
                 publishSeqNum++;
                 securePublish = common.serializeIoTSP({
                     msgType: msgType.SECURE_COMM_MSG,
@@ -118,7 +118,7 @@ function initMqttSubscribe(topic) {
         if (obj.msgType == msgType.SECURE_PUB) {
             console.log('received secure pub!');
             var ret = iotAuth.parseDecryptSecureMqtt(obj.payload,
-            	sessionKeyCacheForSubscribe);
+            	sessionKeyCacheForSubscribe, cryptoInfo.sessionCryptoSpec);
             if (obj.payload.length > 65535) {
             	console.log('seqNum: ' + ret.seqNum);
                 console.log('data is too large to display, to store in file use saveData command');
@@ -178,7 +178,7 @@ function initBroadcastingSubscription() {
         if (obj.msgType == msgType.SECURE_PUB) {
             console.log('received secure pub via UDP broadcasting!');
             var ret = iotAuth.parseDecryptSecureMqtt(obj.payload,
-                sessionKeyCacheForSubscribe);
+                sessionKeyCacheForSubscribe, cryptoInfo.sessionCryptoSpec);
             if (obj.payload.length > 65535) {
                 console.log('seqNum: ' + ret.seqNum);
                 console.log('data is too large to display, to store in file use saveData command');
@@ -312,11 +312,7 @@ listeningServerInfo = entityConfig.listeningServerInfo;
 cryptoInfo = entityConfig.cryptoInfo;
 
 if (entityInfo.usePermanentDistKey) {
-    var absValidity = new Date().getTime() + iotAuth.parseTimePeriod(entityInfo.distKeyValidity);
-    distributionKey = {
-        val: entityInfo.permanentDistKey,
-        absValidity: new Date(absValidity)
-    };
+    distributionKey = entityInfo.permanentDistKey;
 }
 
 function onServerListening() {
@@ -326,7 +322,7 @@ function onServerError(message) {
     console.error('Error in server - details: ' + message);
 };
 function onClientRequest(handshake1Payload, serverSocket, sendHandshake2Callback) {
-    var keyId = handshake1Payload.readUIntBE(0, common.S_KEY_ID_SIZE);
+    var keyId = handshake1Payload.readUIntBE(0, common.SESSION_KEY_ID_SIZE);
     console.log('session key id: ' + keyId);
     var sessionKeyFound = false;
     for (var i = 0; i < sessionKeyCacheForClients.length; i++) {
