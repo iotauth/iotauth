@@ -42,7 +42,8 @@ public class DistributionKey extends SymmetricKey {
     }
 
     public String toString() {
-        return "Expiration Time: " + getExpirationTime() + "\tCipherKey: " + getCipherKeyVal().toHexString();
+        return "Expiration Time: " + getExpirationTime() + "\tCipherKey: " + getCipherKeyVal().toHexString() +
+                "\tMacKey: " + getMacKeyVal().toHexString();
     }
     public Buffer serialize() {
         Buffer buf = new Buffer(DIST_KEY_EXPIRATION_TIME_SIZE);

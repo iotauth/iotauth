@@ -80,7 +80,8 @@ public class SessionKey extends SymmetricKey {
     public String toString() {
         return "ID: " + id + "\tOwners: " + String.join(SESSION_KEY_OWNER_NAME_DELIM, owners) +
                 "\tAbsoluteValidity: " + getExpirationTime() + "\tRelativeValidity: " + relValidity +
-                "\t" + getCryptoSpec().toString() + "\tCipherKey: " + getCipherKeyVal().toHexString();
+                "\t" + getCryptoSpec().toString() + "\tCipherKey: " + getCipherKeyVal().toHexString() +
+                "\tMacKey: " + getMacKeyVal().toHexString();
     }
 
     public Buffer serialize() {

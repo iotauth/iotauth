@@ -82,6 +82,9 @@ public class SymmetricKey {
     public Buffer getCipherKeyVal() {
         return cipherKeyVal;
     }
+    public Buffer getMacKeyVal() {
+        return macKeyVal;
+    }
 
     private static Buffer generateCipherKeyValue(SymmetricKeyCryptoSpec cryptoSpec) {
         String[] cipherAlgoTokens = cryptoSpec.getCipherAlgorithm().split("/");
