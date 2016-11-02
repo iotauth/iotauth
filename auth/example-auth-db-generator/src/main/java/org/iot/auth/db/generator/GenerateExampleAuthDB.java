@@ -23,6 +23,7 @@ import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
+import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.util.DateHelper;
 import org.slf4j.Logger;
@@ -107,7 +108,7 @@ public class GenerateExampleAuthDB {
 
     private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, String networkName,
                                                   SymmetricKey databaseKey)
-            throws ClassNotFoundException, SQLException, IOException
+            throws ClassNotFoundException, SQLException, IOException, UseOfExpiredKeyException
     {
         String entityPrefix = networkName + ".";
         RegisteredEntityTable registeredEntity;
@@ -409,7 +410,7 @@ public class GenerateExampleAuthDB {
 
     private static byte[] loadEncryptDistributionKey(SymmetricKey databaseKey,
                                                      String cipherKeyPath,
-                                                     String macKeyPath) throws IOException {
+                                                     String macKeyPath) throws IOException, UseOfExpiredKeyException {
         Buffer rawCipherKeyVal = readSymmetricKey(cipherKeyPath);
         Buffer rawMackeyVal = readSymmetricKey(macKeyPath);
         Buffer serializedKeyVal = SymmetricKey.getSerializedKeyVal(rawCipherKeyVal, rawMackeyVal);

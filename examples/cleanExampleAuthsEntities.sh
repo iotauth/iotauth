@@ -16,5 +16,4 @@ cd $ENTITY_CREDS_DIR
 rm -rf certs keys
 cd ../../
 
-cd entity/auth_certs/
-rm *.pem
+rm -rf entity/auth_certs
