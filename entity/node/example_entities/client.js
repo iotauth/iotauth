@@ -444,9 +444,9 @@ if (entityInfo.usePermanentDistKey) {
     distributionKey = entityInfo.permanentDistKey;
 }
 
-if (process.argv.length > 4) {
+if (process.argv.length > 5) {
     var commandArg = process.argv[3];
-    var serverPort = 22100;
+    var serverPort = parseInt(process.argv[5]);
     function initCommExp2 () {
         initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', serverPort);
     }
