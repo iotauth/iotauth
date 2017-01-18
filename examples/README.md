@@ -33,7 +33,7 @@ This script generates credentials for example Auths and example entities. And it
 
 ### cleanExampleAuthsEntities.sh
 
-This scripts deletes all credentials of example Auths and entities, and deletes databases for example Auths
+This scripts deletes all credentials of example Auths and entities, and deletes databases for example Auths.
 
 # How to run examples
 ---
@@ -90,6 +90,11 @@ See README.md under *auth/*.
 
 1. [Install Ptolemy II](https://chess.eecs.berkeley.edu/ptexternal/) and run the [Cape Code Swarmlet host](https://www.terraswarm.org/accessors/hosts/ptolemy/index.html).
 
-2. Open *$ROOT/entity/capecode/ptClient.xml* and *$ROOT/entity/capecode/ptServer.xml*.
+2. $PTII is for the root directory of the Ptolemy II repository. Open two Cape Code models, $PTII/ptolemy/actor/lib/jjs/modules/iotAuth/demo/SecureCommClient/SecureCommClient.xml and $PTII/ptolemy/actor/lib/jjs/modules/iotAuth/demo/SecureCommServer/SecureCommServer.xml.
 
-3. Run each Cape Code model with Auth101.
+3. Change the value of the parameter 'PROJECT_PATH' of each Cape Code model to $ROOT.
+
+4. Make sure Auth101 is running.
+
+5. Run SecureCommServer.xml first then also run SecureCommClient.xml.
+
