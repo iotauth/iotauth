@@ -92,7 +92,7 @@ See README.md under *auth/*.
 
 2. $PTII is for the root directory of the Ptolemy II repository. Open two Cape Code models, $PTII/ptolemy/actor/lib/jjs/modules/iotAuth/demo/SecureCommClient/SecureCommClient.xml and $PTII/ptolemy/actor/lib/jjs/modules/iotAuth/demo/SecureCommServer/SecureCommServer.xml.
 
-3. Change the value of the parameter 'PROJECT_PATH' of each Cape Code model to $ROOT.
+3. Change the value of the parameter 'IOTAUTH_HOME' of each Cape Code model to $ROOT.
 
 4. Make sure Auth101 is running.
 
