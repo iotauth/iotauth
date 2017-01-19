@@ -3,15 +3,11 @@ package org.iot.auth.server;
 import com.sun.tools.javac.util.Pair;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.io.RuntimeIOException;
-import org.iot.auth.exception.InvalidMacException;
-import org.iot.auth.exception.MessageIntegrityException;
-import org.iot.auth.exception.UseOfExpiredKeyException;
+import org.iot.auth.exception.*;
 import org.slf4j.Logger;
 import org.iot.auth.AuthServer;
-import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.*;
-import org.iot.auth.exception.InvalidSessionKeyTargetException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.BufferedString;
 import org.iot.auth.io.VariableLengthInt;
@@ -26,7 +22,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -55,20 +50,9 @@ public abstract class EntityConnectionHandler {
         writeToSocket(authHello.serialize().getRawBytes());
     }
 
-    /**
-     * Handle a session key request from the connected entity.
-     * @param bytes Raw buffer bytes of the TCP packet received by an entity, to be processed in this method
-     * @param authNonce Auth's random number that was sent to the entity, to be checked with the Auth nonce included
-     *                  in the session key request.
-     * @throws RuntimeException Any security checking fails, including entity's signature and Auth's nonce.
-     * @throws IOException If any IO fails.
-     * @throws ParseException When JSON parsing fails.
-     * @throws SQLException When SQL DB fails.
-     * @throws ClassNotFoundException
-     */
-    protected void handleSessionKeyReq(byte[] bytes, Buffer authNonce) throws RuntimeException, IOException,
-            ParseException, SQLException, ClassNotFoundException, UseOfExpiredKeyException
-    {
+    protected void handleSessionKeyReqInternal(byte[] bytes, Buffer authNonce) throws InvalidSessionKeyTargetException,
+            NoAvailableDistributionKeyException, TooManySessionKeysRequestedException, IOException,
+            UseOfExpiredKeyException, SQLException, ClassNotFoundException, ParseException {
         Buffer buf = new Buffer(bytes);
         MessageType type = MessageType.fromByte(buf.getByte(0));
 
@@ -103,16 +87,8 @@ public abstract class EntityConnectionHandler {
                 throw new RuntimeException("Entity signature verification failed!!");
             }
 
-            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret;
-            try {
-                ret = processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
-            }
-            catch (InvalidSessionKeyTargetException e) {
-                getLogger().info("InvalidSessionKeyTargetException: " + e.getMessage());
-                sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ_TARGET);
-                close();
-                return;
-            }
+            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret =
+                    processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
             List<SessionKey> sessionKeyList = ret.fst;
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.snd;
 
@@ -140,16 +116,10 @@ public abstract class EntityConnectionHandler {
 
             // TODO: check distribution key validity here and if not, refuse request
             if (requestingEntity.getDistributionKey() == null) {
-                getLogger().error("No distribution key is available!");
-                sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
-                close();
-                return;
+                throw new NoAvailableDistributionKeyException("No distribution key is available!");
             }
             else if (requestingEntity.getDistributionKey().isExpired()) {
-                getLogger().error("Distribution key is expired!");
-                sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
-                close();
-                return;
+                throw new UseOfExpiredKeyException("Trying to use an expired distribution key.");
             }
 
             Buffer encPayload = payload.slice(bufferedString.length());
@@ -165,15 +135,8 @@ public abstract class EntityConnectionHandler {
 
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
 
-            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret;
-            try {
-                ret = processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
-            } catch (InvalidSessionKeyTargetException e) {
-                getLogger().info("InvalidSessionKeyTargetException: " + e.getMessage());
-                sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ_TARGET);
-                close();
-                return;
-            }
+            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret =
+                    processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
             List<SessionKey> sessionKeyList = ret.fst;
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.snd;
 
@@ -184,6 +147,50 @@ public abstract class EntityConnectionHandler {
         else {
             getLogger().info("Received unrecognized message from the entity!");
             close();
+        }
+    }
+
+    /**
+     * Handle a session key request from the connected entity.
+     * @param bytes Raw buffer bytes of the TCP packet received by an entity, to be processed in this method
+     * @param authNonce Auth's random number that was sent to the entity, to be checked with the Auth nonce included
+     *                  in the session key request.
+     * @throws RuntimeException Any security checking fails, including entity's signature and Auth's nonce.
+     * @throws IOException If any IO fails.
+     * @throws ParseException When JSON parsing fails.
+     * @throws SQLException When SQL DB fails.
+     * @throws ClassNotFoundException
+     */
+    protected void handleSessionKeyReq(byte[] bytes, Buffer authNonce) throws RuntimeException, IOException,
+            ParseException, SQLException, ClassNotFoundException
+    {
+        try {
+            handleSessionKeyReqInternal(bytes, authNonce);
+        }
+        catch (InvalidSessionKeyTargetException e) {
+            getLogger().info("InvalidSessionKeyTargetException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
+            close();
+            return;
+        }
+        catch (UseOfExpiredKeyException e) {
+            getLogger().info("UseOfExpiredKeyException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
+            close();
+            return;
+        }
+        catch (NoAvailableDistributionKeyException e) {
+            getLogger().info("NoAvailableDistributionKeyException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
+            close();
+            return;
+        }
+        catch (TooManySessionKeysRequestedException e) {
+            getLogger().info("TooManySessionKeysRequestedException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
+            close();
+            return;
+
         }
     }
 
@@ -237,7 +244,8 @@ public abstract class EntityConnectionHandler {
      */
     protected Pair<List<SessionKey>, SymmetricKeyCryptoSpec> processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)
-            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException
+            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
+            TooManySessionKeysRequestedException
     {
         getLogger().debug("Sender entity: {}", sessionKeyReqMessage.getEntityName());
 
@@ -247,6 +255,9 @@ public abstract class EntityConnectionHandler {
         }
         else {
             getLogger().debug("Auth nonce is correct!");
+        }
+        if (sessionKeyReqMessage.getNumKeys() > requestingEntity.getMaxSessionKeysPerRequest()) {
+            throw new TooManySessionKeysRequestedException("More session keys than allowed are requested!");
         }
 
         JSONObject purpose = sessionKeyReqMessage.getPurpose();

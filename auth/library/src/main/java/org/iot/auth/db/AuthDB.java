@@ -308,6 +308,7 @@ public class AuthDB {
                     regEntityTable.getUsePermanentDistKey(),
                     regEntityTable.getPublicKey(),
                     regEntityTable.getDistKeyValidity(),
+                    regEntityTable.getMaxSessionKeysPerRequest(),
                     SymmetricKeyCryptoSpec.fromSpecString(regEntityTable.getDistCryptoSpec())
             );
             if (regEntityTable.getDistKeyVal() != null) {

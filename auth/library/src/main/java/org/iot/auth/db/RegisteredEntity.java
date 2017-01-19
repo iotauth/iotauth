@@ -26,7 +26,8 @@ import java.security.PublicKey;
  */
 public class RegisteredEntity {
     public RegisteredEntity(String name, String group, String distProtocol, boolean usePermanentDistKey,
-                            PublicKey publicKey, long distKeyValidity, SymmetricKeyCryptoSpec distCryptoSpec)
+                            PublicKey publicKey, long distKeyValidity, int maxSessionKeysPerRequest,
+                            SymmetricKeyCryptoSpec distCryptoSpec)
     {
         this.name = name;
         this.group = group;
@@ -34,6 +35,7 @@ public class RegisteredEntity {
         this.usePermanentDistKey = usePermanentDistKey;
         this.publicKey = publicKey;
         this.distKeyValidity = distKeyValidity;
+        this.maxSessionKeysPerRequest = maxSessionKeysPerRequest;
         this.distCryptoSpec = distCryptoSpec;
     }
     public String getName() {
@@ -53,6 +55,9 @@ public class RegisteredEntity {
     }
     public DistributionKey getDistributionKey() {
         return distributionKey;
+    }
+    public int getMaxSessionKeysPerRequest() {
+        return maxSessionKeysPerRequest;
     }
     public SymmetricKeyCryptoSpec getDistCryptoSpec() {
         return distCryptoSpec;
@@ -84,6 +89,7 @@ public class RegisteredEntity {
     private boolean usePermanentDistKey;
     private PublicKey publicKey;
     private long distKeyValidity;
+    private int maxSessionKeysPerRequest;
     private SymmetricKeyCryptoSpec distCryptoSpec;
     private DistributionKey distributionKey = null;
 

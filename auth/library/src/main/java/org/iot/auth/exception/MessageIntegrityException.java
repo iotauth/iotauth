@@ -6,7 +6,7 @@ package org.iot.auth.exception;
  */
 public class MessageIntegrityException extends Exception {
     /**
-     * Create a new InvalidMacException with the given message.
+     * Create a new MessageIntegrityException with the given message.
      * @param message The given message.
      */
     public MessageIntegrityException(String message) {
