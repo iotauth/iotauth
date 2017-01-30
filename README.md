@@ -31,6 +31,10 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 - [Hokeun Kim](http://eecs.berkeley.edu/~hokeunkim) (Project manager & initiator)
 - [Salomon Lee] (https://www.linkedin.com/in/salomon-lee-637b0921) (Software Architect @ AlcaCruz Inc.)
 
+# External libraries
+---
+- **bluecove-2.1.2.jar**: For bluetooth APIs, exists under auth/library/jars
+
 # Disclaimer
 ---
 This project is still in its infancy and currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source codes with caution at their own risk, when the tools provided in this project are used for commercial or safety-critical purposes.
