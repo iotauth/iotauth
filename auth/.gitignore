@@ -1,6 +1,9 @@
 .idea/*
 *.class
-*.jar
+auth-server/target/*.jar
+example-auth-db-generator/target/*.jar
+example-auth-db-generator/target/*.jar
+/auth-server/target/*.jar
 javadoc/*.html
 javadoc/script.js
 javadoc/stylesheet.css
