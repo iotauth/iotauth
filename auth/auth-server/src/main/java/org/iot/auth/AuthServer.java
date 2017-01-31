@@ -15,6 +15,7 @@
 
 package org.iot.auth;
 
+import com.intel.bluetooth.BluetoothServerConnection;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -24,7 +25,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.server.Connector;
+//import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -48,15 +49,17 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.bluetooth.DiscoveryAgent;
+import javax.microedition.io.StreamConnection;
+import javax.microedition.io.StreamConnectionNotifier;
+//import javax.microedition.io.Connector;
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
-import java.io.BufferedReader;
-import java.io.Console;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -70,6 +73,9 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import javax.bluetooth.LocalDevice;
+import javax.bluetooth.BluetoothStateException;
+
 
 /**
  * A main class for Auth, a local authentication/authorization entity for locally
@@ -197,6 +203,9 @@ public class AuthServer {
      * @throws Exception When any exception occurs
      */
     public void begin() throws Exception {
+        EntityBluetoothListener entityBluetoothListener = new EntityBluetoothListener(this);
+        entityBluetoothListener.start();
+
         EntityTcpPortListener entityTcpPortListener = new EntityTcpPortListener(this);
         entityTcpPortListener.start();
 
@@ -444,7 +453,7 @@ public class AuthServer {
         // time out with out requests?
         connector.setIdleTimeout(properties.getTrustedAuthPortIdleTimeout());
 
-        serverForTrustedAuths.setConnectors(new Connector[]{connector});
+        serverForTrustedAuths.setConnectors(new org.eclipse.jetty.server.Connector[]{connector});
 
         return serverForTrustedAuths;
     }
@@ -504,6 +513,67 @@ public class AuthServer {
         HttpClient clientForTrustedAuths = new HttpClient(sslContextFactory);
 
         return clientForTrustedAuths;
+    }
+
+    private class EntityBluetoothListener extends Thread {
+        public EntityBluetoothListener(AuthServer server) {
+            this.server = server;
+        }
+        public void run() {
+            if (!LocalDevice.isPowerOn()) {
+                logger.error("Bluetooth for Auth is not turned on, Bluetooth will be disabled.");
+                return;
+            }
+            StreamConnectionNotifier notifier;
+            StreamConnection connection = null;
+
+            try {
+                final LocalDevice device = LocalDevice.getLocalDevice();
+                device.setDiscoverable(DiscoveryAgent.GIAC); // General/Unlimited Inquiry Access Code (GIAC).
+                String uuidString = "d0c722b07e1511e1b0c40800200c9a66";
+                UUID uuid = new UUID(
+                        new BigInteger(uuidString.substring(0, 16), 16).longValue(),
+                        new BigInteger(uuidString.substring(16), 16).longValue());
+                logger.info(uuid.toString());
+
+                String url = "btspp://localhost:" + uuid.toString().replaceAll("-", "") + ";name=RemoteBluetooth";
+                notifier = (StreamConnectionNotifier) javax.microedition.io.Connector.open(url);
+            }
+            catch (BluetoothStateException e)
+            {
+                throw new RuntimeException(e.getMessage());
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException(e.getMessage());
+            }
+
+            while (isRunning()) {
+                try {
+                    System.out.println("waiting for connection...");
+                    connection = notifier.acceptAndOpen();
+                    System.out.println("After AcceptAndOpen...");
+
+                    DataInputStream dis = connection.openDataInputStream();
+
+                    byte buffer[] = new byte[4096];
+                    int ret = dis.read(buffer, 0, 4095);
+                    buffer[ret] = 0;
+                    logger.info("buffer:" + new String(buffer).trim());
+                    logger.info("ret: " + ret);
+
+                    //Thread processThread = new Thread(new ProcessConnectionThread(connection));
+                    //processThread.start();
+
+                }
+                catch (IOException e)
+                {
+                    throw new RuntimeException(e.getMessage());
+                }
+            }
+
+        }
+        private AuthServer server;
     }
 
     /**
