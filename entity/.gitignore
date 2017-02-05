@@ -1,14 +1,8 @@
-.idea/*
-*/.idea/*
-*/*/.idea/*
-*/*/*/.idea/*
-*/*/*/*/.idea/*
 *.class
 *.jar
 javadoc/*.html
 javadoc/script.js
 javadoc/stylesheet.css
-sessionKeyCount*.txt
 log/*
 */target/*
 auth.db
