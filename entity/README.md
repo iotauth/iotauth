@@ -7,8 +7,6 @@ This directory includes entities in the IoT, to be authenticated/authorized by A
 
 - **auth_certs**: Certificates of Auth, to be created after running the script for generating and copying example Auth/entity credentials.
 
-- **capecode**: Example entities in CapeCode (IoT Modeling environment, for details, see [[1]](https://chess.eecs.berkeley.edu/capecode/), [[2]](https://www.terraswarm.org/accessors/hosts/ptolemy/index.html)) (*Under development*)
-
 - **credentials**: Directory for certificates and keys for entities (including example entities)
 
 - **figures**: Directory for figures explaining example entities.
