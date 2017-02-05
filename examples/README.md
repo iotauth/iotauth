@@ -88,7 +88,7 @@ See README.md under *auth/*.
 
 ### To run example entities written in Cape Code
 
-1. [Install Ptolemy II](https://chess.eecs.berkeley.edu/ptexternal/) and run the [Cape Code Swarmlet host](https://www.terraswarm.org/accessors/hosts/ptolemy/index.html).
+1. [Install Ptolemy II](https://chess.eecs.berkeley.edu/ptexternal/) and run the [Cape Code Swarmlet host](https://www.terraswarm.org/accessors/hosts/ptolemy/index.html). (For more information of Cape Code, see [here](https://chess.eecs.berkeley.edu/capecode/))
 
 2. $PTII is for the root directory of the Ptolemy II repository. Open two Cape Code models, $PTII/ptolemy/actor/lib/jjs/modules/iotAuth/demo/SecureCommClient/SecureCommClient.xml and $PTII/ptolemy/actor/lib/jjs/modules/iotAuth/demo/SecureCommServer/SecureCommServer.xml.
 
