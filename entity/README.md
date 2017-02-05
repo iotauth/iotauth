@@ -9,8 +9,6 @@ This directory includes entities in the IoT, to be authenticated/authorized by A
 
 - **credentials**: Directory for certificates and keys for entities (including example entities)
 
-- **figures**: Directory for figures explaining example entities.
-
 - **node**: Entities implemented using JavaScript on Node.js
 
 	- **data_examples**: Data files used by example entities
