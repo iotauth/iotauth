@@ -23,29 +23,6 @@
 var fs = require('fs');
 var JSON2 = require('JSON2');
 
-
-
-
-/*
-var tcpServerInfoList = [
-    { name: 'net1.server', host: 'localhost', port: 21100 },
-    { name: 'net1.ptServer', host: 'localhost', port: 21200 },
-    { name: 'net1.rcServer', host: 'localhost', port: 21300 },
-    { name: 'net2.server', host: 'localhost', port: 22100 },
-    { name: 'net2.ptServer', host: 'localhost', port: 22200 },
-    { name: 'net2.rcServer', host: 'localhost', port: 22300 }];
-
-var udpServerInfoList = [
-    { name: 'net1.udpServer', host: 'localhost', port: 21400},
-    { name: 'net2.udpServer', host: 'localhost', port: 22400},
-    { name: 'net1.rcUdpServer', host: 'localhost', port: 21600},
-    { name: 'net2.rcUdpServer', host: 'localhost', port: 22600}];
-
-var safetyCriticalServerInfoList = [
-    { name: 'net1.safetyCriticalServer', host: 'localhost', port: 21500},
-    { name: 'net2.safetyCriticalServer', host: 'localhost', port: 22500}];
-*/
-
 var cryptoInfo = {
     publicKeyCryptoSpec: { sign: 'RSA-SHA256' },
     distCryptoSpec: { cipher: 'AES-128-CBC', mac: 'SHA256' },
@@ -69,14 +46,6 @@ var clientList = [
     { name: 'safetyCriticalClient' },
     { name: 'rcUdpClient' }
 ];
- 
-
-// if str.toLowerCase().includes('pt')
-// just add to the server info, don't generate the file
-
-// if str.toLowerCase().includes('udp')
-// if str.toLowerCase().includes('rc')
-// if str.toLowerCase().includes('safetycritical')
 
 var tcpServerInfoList = [];
 var udpServerInfoList = [];
@@ -226,6 +195,10 @@ function writeEntityConfigToFile(netId, entityName, entityConfig) {
 
 function generateEntityConfigs(numNets) {
     for (var netId = 1; netId <= numNets; netId++) {
+        var dirName = getNetName(netId);
+        if (!fs.existsSync(dirName)){
+            fs.mkdirSync(dirName);
+        }
         for (var i = 0; i < clientList.length; i++) {
             if (clientList[i].name == 'ptClient') {
                 continue;
@@ -245,17 +218,3 @@ function generateEntityConfigs(numNets) {
 
 var totalNumberOfNets = 2;
 generateEntityConfigs(totalNumberOfNets);
-
-//var strConfig = fs.readFileSync('template.config', 'utf8');
-// var fileLines = fs.readFileSync('template.config', 'utf8').split('\n');
-// var fileString = "";
-// for (var i = 0; i < fileLines.length; i++) {
-//     var line = fileLines[i].trim();
-//     if (line.startsWith('//') || line.length == 0) {
-//         continue;
-//     }
-//     fileString += line;
-// }
-// var jsonConfig = JSON.parse(fileString);
-
-
