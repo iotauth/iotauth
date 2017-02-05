@@ -1,3 +1,8 @@
+#!/bin/bash
+
+# Script for cleaning example Auths and entities
+# Author: Hokeun Kim
+
 AUTH_CREDS_DIR=auth/credentials/
 AUTH_DATABASES_DIR=auth/databases/
 ENTITY_CREDS_DIR=entity/credentials/

@@ -1,3 +1,8 @@
+#!/bin/bash
+
+# Script for generating example Auths and entities
+# Author: Hokeun Kim
+
 AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
@@ -42,3 +47,9 @@ cp $AUTH_CREDS_DIR/certs/*EntityCert.pem entity/auth_certs
 # Create example databases for Auths
 cd auth/example-auth-db-generator
 ./generateExampleAuthDB.sh
+cd ../..
+
+# Initialize Node.js example entities (npm installation and config file generation)
+cd entity/node
+./initNodeEntities.sh
+cd ../..
