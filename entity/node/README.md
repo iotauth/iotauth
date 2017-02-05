@@ -2,10 +2,12 @@
 ---
 This directory includes entities written in [Node.js](https://nodejs.org/).
 
+To initialize Node.js example entities, required npm packages should be installed and configurations for example entities should be generated. This initialization can be done using a script in this directory, [initNodeEntities](https://github.com/iotauth/iotauth/blob/master/entity/node/initNodeEntities.sh).
+
 # Directory structure
 ---
 
-- **data_examples**: Data examples used by node entities.
+- **data_examples**: Data examples used by Node.js entities.
 
 - **example_entities**: Various example entities written in Node.js.
 
