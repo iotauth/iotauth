@@ -184,8 +184,11 @@ function getEntityConfig(netId, entity) {
     return entityConfig;
 }
 
-function writeEntityConfigToFile(netId, entityName, entityConfig) {
-    var configFilePath = getNetName(netId) + '/' + entityName + '.config';
+function writeEntityConfigToFile(entityConfig) {
+    var entityFullName = entityConfig.entityInfo.name;
+    var separatorIndex = entityFullName.indexOf('.');
+    var configFilePath = entityFullName.substring(0, separatorIndex)
+        + '/' + entityFullName.substring(separatorIndex + 1) + '.config';
     console.log('Writing entityConfig to ' + configFilePath + ' ...');
     fs.writeFileSync(configFilePath,
         JSON2.stringify(entityConfig, null, '\t'),
@@ -193,28 +196,94 @@ function writeEntityConfigToFile(netId, entityName, entityConfig) {
     );
 }
 
-function generateEntityConfigs(numNets) {
+function getEntityConfigs(numNets) {
+    var netConfigList = [];
     for (var netId = 1; netId <= numNets; netId++) {
+        var netConfig = {
+            'netId': netId,
+            'clientConfigList': [],
+            'serverConfigList': []
+        };
         var dirName = getNetName(netId);
         if (!fs.existsSync(dirName)){
             fs.mkdirSync(dirName);
         }
         for (var i = 0; i < clientList.length; i++) {
-            if (clientList[i].name == 'ptClient') {
-                continue;
-            }
-            writeEntityConfigToFile(netId, clientList[i].name, getEntityConfig(netId, clientList[i]));
-            //console.log(JSON2.stringify(getEntityConfig(netId, clientList[i]), null, '\t'));
+            netConfig.clientConfigList.push(getEntityConfig(netId, clientList[i]));
         }
         for (var i = 0; i < serverList.length; i++) {
-            if (serverList[i].name == 'ptServer') {
+            netConfig.serverConfigList.push(getEntityConfig(netId, serverList[i]));
+        }
+        netConfigList.push(netConfig);
+    }
+    return netConfigList;
+}
+
+function generateEntityConfigs(netConfigList) {
+    for (var i = 0; i < netConfigList.length; i++) {
+            var netConfig = netConfigList[i];
+        for (var j = 0; j < netConfig.clientConfigList.length; j++) {
+            var clientConfig = netConfig.clientConfigList[j];
+            if (clientConfig.entityInfo.name.includes('pt')) {
                 continue;
             }
-            writeEntityConfigToFile(netId, serverList[i].name, getEntityConfig(netId, serverList[i]));
-            //console.log(JSON2.stringify(getEntityConfig(netId, serverList[i]), null, '\t'));
+            writeEntityConfigToFile(clientConfig);
+        }
+        for (var j = 0; j < netConfig.serverConfigList.length; j++) {
+            var serverConfig = netConfig.serverConfigList[j];
+            if (serverConfig.entityInfo.name.includes('pt')) {
+                continue;
+            }
+            writeEntityConfigToFile(serverConfig);
         }
     }
 }
 
+function convertToRegisteredEntity(entityConfig) {
+    var registeredEntity = {};
+    registeredEntity.Name = entityConfig.entityInfo.name;
+    registeredEntity.Group = entityConfig.entityInfo.group;
+    registeredEntity.DistProtocol = entityConfig.entityInfo.distProtocol;
+    if (entityConfig.entityInfo.usePermanentDistKey) {
+        registeredEntity.UsePermanentDistKey = 1;
+        registeredEntity.MaxSessionKeysPerRequest = 30;
+    }
+    else {
+        registeredEntity.UsePermanentDistKey = 0;
+        if (entityConfig.entityInfo.name.toLowerCase().includes('server')) {
+            registeredEntity.MaxSessionKeysPerRequest = 1;
+        }
+        else {
+            registeredEntity.MaxSessionKeysPerRequest = 5;
+        }
+    }
+    var separatorIndex = entityConfig.entityInfo.name.lastIndexOf('/');
+    registeredEntity.PublKeyFile = 'certs/'
+        + entityConfig.entityInfo.name.substring(separatorIndex + 1);
+
+    if (entityConfig.entityInfo.name.toLowerCase().includes('pt')) {
+        registeredEntity.DistValidityPeriod = '3*sec';
+    }
+    else {
+        registeredEntity.DistValidityPeriod = '1*hour';
+    }
+}
+
+function convertToRegisteredEntityTable(netConfigList) {
+    var registeredEntityTableList = [];
+    for (var i = 0; i < netConfigList.length; i++) {
+            var netConfig = netConfigList[i];
+        for (var j = 0; j < netConfig.clientConfigList.length; j++) {
+            //writeEntityConfigToFile(clientConfig);
+        }
+        for (var j = 0; j < netConfig.serverConfigList.length; j++) {
+            //writeEntityConfigToFile(serverConfig);
+        }
+    }
+
+}
+
 var totalNumberOfNets = 2;
-generateEntityConfigs(totalNumberOfNets);
+var netConfigList = getEntityConfigs(totalNumberOfNets);
+//console.log(JSON2.stringify(netConfigList[0].clientConfigList, null, '\t'));
+generateEntityConfigs(netConfigList);
