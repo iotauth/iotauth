@@ -29,22 +29,21 @@ var cryptoInfo = {
     sessionCryptoSpec: { cipher: 'AES-128-CBC', mac: 'SHA256' }
 };
 
-var serverList = [
-    { name: 'server', port: 100 },
-    { name: 'ptServer', port: 200 },
-    { name: 'rcServer', port: 300 },
-    { name: 'udpServer', port: 400 },
-    { name: 'safetyCriticalServer', port: 500 },
-    { name: 'rcUdpServer', port: 600 }
-];
-
-var clientList = [
+var entityList = [
     { name: 'client' },
     { name: 'ptClient' },
     { name: 'rcClient' },
     { name: 'udpClient' },
     { name: 'safetyCriticalClient' },
-    { name: 'rcUdpClient' }
+    { name: 'rcUdpClient' },
+    { name: 'server', port: 100 },
+    { name: 'ptServer', port: 200 },
+    { name: 'rcServer', port: 300 },
+    { name: 'udpServer', port: 400 },
+    { name: 'safetyCriticalServer', port: 500 },
+    { name: 'rcUdpServer', port: 600 },
+    { name: 'ptPublisher' },
+    { name: 'ptSubscriber' }
 ];
 
 var tcpServerInfoList = [];
@@ -135,17 +134,20 @@ function getCryptoInfo(entityName) {
 
 function getTargetServerInfoList(netId, entityName) {
     var targetServerInfoList = [];
-    for (var i = 0; i < serverList.length; i++) {
+    for (var i = 0; i < entityList.length; i++) {
+        if (!entityList[i].name.toLowerCase().includes('server')) {
+            continue;
+        }
         var serverInfo = {};
-        serverInfo.name = getNetName(netId) + '.' + serverList[i].name;
-        serverInfo.port = getNetPortBase(netId) + serverList[i].port;
+        serverInfo.name = getNetName(netId) + '.' + entityList[i].name;
+        serverInfo.port = getNetPortBase(netId) + entityList[i].port;
         serverInfo.host = 'localhost';
-        if (serverList[i].name.toLowerCase().includes('udp')) {
+        if (entityList[i].name.toLowerCase().includes('udp')) {
             if (entityName.toLowerCase().includes('udp')) {
                 targetServerInfoList.push(serverInfo);
             }
         }
-        else if (serverList[i].name.toLowerCase().includes('safetycritical')) {
+        else if (entityList[i].name.toLowerCase().includes('safetycritical')) {
             if (entityName.toLowerCase().includes('safetycritical')) {
                 targetServerInfoList.push(serverInfo);
             }
@@ -201,18 +203,14 @@ function getEntityConfigs(numNets) {
     for (var netId = 1; netId <= numNets; netId++) {
         var netConfig = {
             'netId': netId,
-            'clientConfigList': [],
-            'serverConfigList': []
+            'entityConfigList': []
         };
         var dirName = getNetName(netId);
         if (!fs.existsSync(dirName)){
             fs.mkdirSync(dirName);
         }
-        for (var i = 0; i < clientList.length; i++) {
-            netConfig.clientConfigList.push(getEntityConfig(netId, clientList[i]));
-        }
-        for (var i = 0; i < serverList.length; i++) {
-            netConfig.serverConfigList.push(getEntityConfig(netId, serverList[i]));
+        for (var i = 0; i < entityList.length; i++) {
+            netConfig.entityConfigList.push(getEntityConfig(netId, entityList[i]));
         }
         netConfigList.push(netConfig);
     }
@@ -222,19 +220,12 @@ function getEntityConfigs(numNets) {
 function generateEntityConfigs(netConfigList) {
     for (var i = 0; i < netConfigList.length; i++) {
             var netConfig = netConfigList[i];
-        for (var j = 0; j < netConfig.clientConfigList.length; j++) {
-            var clientConfig = netConfig.clientConfigList[j];
-            if (clientConfig.entityInfo.name.includes('pt')) {
+        for (var j = 0; j < netConfig.entityConfigList.length; j++) {
+            var entityConfig = netConfig.entityConfigList[j];
+            if (entityConfig.entityInfo.name.includes('pt')) {
                 continue;
             }
-            writeEntityConfigToFile(clientConfig);
-        }
-        for (var j = 0; j < netConfig.serverConfigList.length; j++) {
-            var serverConfig = netConfig.serverConfigList[j];
-            if (serverConfig.entityInfo.name.includes('pt')) {
-                continue;
-            }
-            writeEntityConfigToFile(serverConfig);
+            writeEntityConfigToFile(entityConfig);
         }
     }
 }
@@ -244,46 +235,86 @@ function convertToRegisteredEntity(entityConfig) {
     registeredEntity.Name = entityConfig.entityInfo.name;
     registeredEntity.Group = entityConfig.entityInfo.group;
     registeredEntity.DistProtocol = entityConfig.entityInfo.distProtocol;
+    // Resource-constrained entity
     if (entityConfig.entityInfo.usePermanentDistKey) {
         registeredEntity.UsePermanentDistKey = 1;
         registeredEntity.MaxSessionKeysPerRequest = 30;
+        var permanentDistKey = entityConfig.entityInfo.permanentDistKey;
+        registeredEntity.DistValidityPeriod = permanentDistKey.validity;
+        // For resource-constrained only
+        var separatorIndex = permanentDistKey.cipherKey.indexOf('/credentials');
+        registeredEntity.DistCipherKeyFilePath = '../entity'
+            + permanentDistKey.cipherKey.substring(separatorIndex);
+        var separatorIndex = permanentDistKey.macKey.indexOf('/credentials');
+        registeredEntity.DistMacKeyFilePath = '../entity'
+            + permanentDistKey.macKey.substring(separatorIndex);
     }
+    // Not resource-constrained entity
     else {
         registeredEntity.UsePermanentDistKey = 0;
+        // MaxSessionKeysPerRequest
         if (entityConfig.entityInfo.name.toLowerCase().includes('server')) {
             registeredEntity.MaxSessionKeysPerRequest = 1;
         }
         else {
             registeredEntity.MaxSessionKeysPerRequest = 5;
         }
+        // DistValidityPeriod
+        if (entityConfig.entityInfo.name.toLowerCase().includes('pt')) {
+            registeredEntity.DistValidityPeriod = '3*sec';
+        }
+        else {
+            registeredEntity.DistValidityPeriod = '1*hour';
+        }
+        var separatorIndex = entityConfig.entityInfo.name.lastIndexOf('/');
+        // Public key setting
+        registeredEntity.PublKeyFile = 'certs/'
+            + entityConfig.entityInfo.name.substring(separatorIndex + 1);
     }
-    var separatorIndex = entityConfig.entityInfo.name.lastIndexOf('/');
-    registeredEntity.PublKeyFile = 'certs/'
-        + entityConfig.entityInfo.name.substring(separatorIndex + 1);
 
-    if (entityConfig.entityInfo.name.toLowerCase().includes('pt')) {
-        registeredEntity.DistValidityPeriod = '3*sec';
-    }
-    else {
-        registeredEntity.DistValidityPeriod = '1*hour';
-    }
+    registeredEntity.DistCryptoSpec = entityConfig.cryptoInfo.distCryptoSpec.cipher
+        + ':' + entityConfig.cryptoInfo.distCryptoSpec.mac;
+    return registeredEntity;
 }
 
 function convertToRegisteredEntityTable(netConfigList) {
     var registeredEntityTableList = [];
     for (var i = 0; i < netConfigList.length; i++) {
-            var netConfig = netConfigList[i];
-        for (var j = 0; j < netConfig.clientConfigList.length; j++) {
-            //writeEntityConfigToFile(clientConfig);
+        var netConfig = netConfigList[i];
+        var registeredEntityTable = {
+            'authId': 100 + netConfig.netId,
+            'registeredEntityList': []
+        };
+        for (var j = 0; j < netConfig.entityConfigList.length; j++) {
+            registeredEntityTable.registeredEntityList.push(
+                convertToRegisteredEntity(netConfig.entityConfigList[j]));
         }
-        for (var j = 0; j < netConfig.serverConfigList.length; j++) {
-            //writeEntityConfigToFile(serverConfig);
-        }
+        registeredEntityTableList.push(registeredEntityTable);
     }
+    return registeredEntityTableList;
+}
 
+function generateRegisteredEntityTables(registeredEntityTableList) {
+    var dirName = 'Auth';
+    if (!fs.existsSync(dirName)){
+        fs.mkdirSync(dirName);
+    }
+    for (var i = 0; i < registeredEntityTableList.length; i++) {
+        var registeredEntityTable = registeredEntityTableList[i];
+        var fileName = 'Auth' + registeredEntityTable.authId + 'RegisteredEntityTable.config';
+        var configFilePath = dirName + '/' + fileName;
+        console.log('Writing entityConfig to ' + configFilePath + ' ...');
+        fs.writeFileSync(configFilePath,
+            JSON2.stringify(registeredEntityTable.registeredEntityList, null, '\t'),
+            'utf8'
+        );
+    }
 }
 
 var totalNumberOfNets = 2;
 var netConfigList = getEntityConfigs(totalNumberOfNets);
-//console.log(JSON2.stringify(netConfigList[0].clientConfigList, null, '\t'));
+//console.log(JSON2.stringify(netConfigList[0].entityConfigList, null, '\t'));
 generateEntityConfigs(netConfigList);
+var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList);
+generateRegisteredEntityTables(registeredEntityTableList);
+//console.log(JSON2.stringify(registeredEntityTableList, null, '\t'));
