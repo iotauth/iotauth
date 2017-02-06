@@ -146,6 +146,7 @@ public class RegisteredEntityTable {
         return toJSONObject().toJSONString();
     }
 
+    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject(){
         JSONObject object = new JSONObject();
         object.put(c.Name.name(), getName());

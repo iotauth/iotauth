@@ -70,6 +70,7 @@ public class SymmetricKeyCryptoSpec {
         return macKeySize;
     }
 
+    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
         object.put(key.cipher, toJSCryptoAlgo(cipherAlgorithm, cipherKeySize));

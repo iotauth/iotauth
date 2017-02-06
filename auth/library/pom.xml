@@ -18,6 +18,11 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <!-- For showing unchecked warnings
+                    <compilerArgs>
+                        <arg>-Xlint:unchecked</arg>
+                    </compilerArgs>
+                    !-->
                 </configuration>
             </plugin>
             <plugin>

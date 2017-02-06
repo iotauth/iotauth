@@ -166,6 +166,7 @@ public class CommunicationPolicyTable {
         this.relValidityStr = relValidityStr;
     }
 
+    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject(){
         JSONObject object = new JSONObject();
         object.put(c.RequestingGroup.name(),getReqGroup());

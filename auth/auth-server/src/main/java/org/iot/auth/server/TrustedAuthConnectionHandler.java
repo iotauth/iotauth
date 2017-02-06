@@ -53,7 +53,17 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         this.server = server;
     }
 
-
+    @SuppressWarnings("unchecked")
+    private JSONObject convertRequestToJSONObject(Request request) {
+        JSONObject jsonObject = new JSONObject();
+        Map<String,String[]> params = request.getParameterMap();
+        for (Map.Entry<String,String[]> entry : params.entrySet()) {
+            String v[] = entry.getValue();
+            Object o = (v.length == 1) ? v[0] : v;
+            jsonObject.put(entry.getKey(), o);
+        }
+        return jsonObject;
+    }
 
     /**
      * This method implements the handle method of AbstractHandler interface, for handling a HTTP request.
@@ -87,13 +97,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
 
         BufferedReader br = baseRequest.getReader();
 
-        JSONObject jsonObject = new JSONObject();
-        Map<String,String[]> params = baseRequest.getParameterMap();
-        for (Map.Entry<String,String[]> entry : params.entrySet()) {
-            String v[] = entry.getValue();
-            Object o = (v.length == 1) ? v[0] : v;
-            jsonObject.put(entry.getKey(), o);
-        }
+        JSONObject jsonObject = convertRequestToJSONObject(baseRequest);
 
         logger.info("Received JSON: {}", jsonObject.toJSONString());
 

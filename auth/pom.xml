@@ -15,12 +15,13 @@
         <module>library</module>
         <module>auth-server</module>
         <module>example-auth-db-generator</module>
-
+        <module>jars/bluecove/bluecove</module>
     </modules>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Adapt this to a version found on
              http://central.maven.org/maven2/org/eclipse/jetty/jetty-maven-plugin/
           -->

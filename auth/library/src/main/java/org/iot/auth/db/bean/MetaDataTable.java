@@ -52,6 +52,7 @@ public class MetaDataTable {
         this.value = value;
     }
 
+    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
         object.put(c.Key.name(), getKey());

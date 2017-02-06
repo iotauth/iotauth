@@ -98,6 +98,7 @@ public class SessionKey extends SymmetricKey {
         return buf;
     }
 
+    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(key.ID, id);

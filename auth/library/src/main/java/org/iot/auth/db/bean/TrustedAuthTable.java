@@ -69,6 +69,7 @@ public class TrustedAuthTable {
         this.certificatePath = certificatePath;
     }
 
+    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
         object.put(c.ID.name(), getId());

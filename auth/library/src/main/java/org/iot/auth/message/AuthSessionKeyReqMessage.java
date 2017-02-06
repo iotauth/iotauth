@@ -42,6 +42,8 @@ public class AuthSessionKeyReqMessage {
         this.requestingEntityGroup = requestingEntityGroup;
         this.cachedKeyAuthID = cachedKeyAuthID;
     }
+
+    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(key.KeyID, sessionKeyID);

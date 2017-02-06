@@ -42,6 +42,8 @@ public class AuthSessionKeyRespMessage {
     public AuthSessionKeyRespMessage(List<SessionKey> sessionKeyList) {
         this.sessionKeyList = sessionKeyList;
     }
+
+    @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray = new JSONArray();
