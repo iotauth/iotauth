@@ -34,11 +34,11 @@ cd $ENTITY_CREDS_DIR
 cd ../../
 
 # Copy Entity certificates to Auth databases
-mkdir -p $AUTH_DATABASES_DIR/auth101/certs/
-mkdir -p $AUTH_DATABASES_DIR/auth102/certs/
+mkdir -p $AUTH_DATABASES_DIR/auth101/entity_certs/
+mkdir -p $AUTH_DATABASES_DIR/auth102/entity_certs/
 
-cp $ENTITY_CREDS_DIR/certs/net1/*.pem $AUTH_DATABASES_DIR/auth101/certs/
-cp $ENTITY_CREDS_DIR/certs/net2/*.pem $AUTH_DATABASES_DIR/auth102/certs/
+cp $ENTITY_CREDS_DIR/certs/net1/*.pem $AUTH_DATABASES_DIR/auth101/entity_certs/
+cp $ENTITY_CREDS_DIR/certs/net2/*.pem $AUTH_DATABASES_DIR/auth102/entity_certs/
 
 # Copy Auth certificates to Entity local directories
 mkdir -p entity/auth_certs

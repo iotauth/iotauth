@@ -14,7 +14,7 @@ rm -rf ca certs keystores
 cd ../../
 
 cd $AUTH_DATABASES_DIR
-rm -rf auth101 auth102
+rm -rf auth*
 cd ../../
 
 cd $ENTITY_CREDS_DIR

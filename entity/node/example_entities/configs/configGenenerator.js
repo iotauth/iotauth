@@ -280,7 +280,7 @@ function convertToRegisteredEntity(entityConfig) {
         }
         var separatorIndex = entityConfig.entityInfo.privateKey.lastIndexOf('/');
         // Public key setting
-        registeredEntity.PublKeyFile = 'certs/'
+        registeredEntity.PublKeyFile = 'entity_certs/'
             + entityConfig.entityInfo.privateKey.substring(separatorIndex + 1).replace('Key.pem', 'Cert.pem');
     }
 
