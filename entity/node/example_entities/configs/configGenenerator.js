@@ -66,7 +66,19 @@ function getKeyPath(netId, entityName, keySuffix) {
 function getEntityInfo(netId, entityName) {
     var entityInfo = {};
     entityInfo.name = getNetName(netId) + '.' + entityName;
-    if (entityName.toLowerCase().includes('client')) {
+    if (entityName.toLowerCase().includes('ptclient')) {
+        entityInfo.group = 'PtClients';
+    }
+    else if (entityName.toLowerCase().includes('ptserver')) {
+        entityInfo.group = 'PtServers';
+    }
+    else if (entityName.toLowerCase().includes('ptpublisher')) {
+        entityInfo.group = 'PtPublishers';
+    }
+    else if (entityName.toLowerCase().includes('ptsubscriber')) {
+        entityInfo.group = 'PtSubscribers';
+    }
+    else if (entityName.toLowerCase().includes('client')) {
         entityInfo.group = 'Clients';
     }
     else if (entityName.toLowerCase().includes('server')) {
@@ -237,7 +249,7 @@ function convertToRegisteredEntity(entityConfig) {
     registeredEntity.DistProtocol = entityConfig.entityInfo.distProtocol;
     // Resource-constrained entity
     if (entityConfig.entityInfo.usePermanentDistKey) {
-        registeredEntity.UsePermanentDistKey = 1;
+        registeredEntity.UsePermanentDistKey = true;
         registeredEntity.MaxSessionKeysPerRequest = 30;
         var permanentDistKey = entityConfig.entityInfo.permanentDistKey;
         registeredEntity.DistValidityPeriod = permanentDistKey.validity;
@@ -251,7 +263,7 @@ function convertToRegisteredEntity(entityConfig) {
     }
     // Not resource-constrained entity
     else {
-        registeredEntity.UsePermanentDistKey = 0;
+        registeredEntity.UsePermanentDistKey = false;
         // MaxSessionKeysPerRequest
         if (entityConfig.entityInfo.name.toLowerCase().includes('server')) {
             registeredEntity.MaxSessionKeysPerRequest = 1;
@@ -266,10 +278,10 @@ function convertToRegisteredEntity(entityConfig) {
         else {
             registeredEntity.DistValidityPeriod = '1*hour';
         }
-        var separatorIndex = entityConfig.entityInfo.name.lastIndexOf('/');
+        var separatorIndex = entityConfig.entityInfo.privateKey.lastIndexOf('/');
         // Public key setting
         registeredEntity.PublKeyFile = 'certs/'
-            + entityConfig.entityInfo.name.substring(separatorIndex + 1);
+            + entityConfig.entityInfo.privateKey.substring(separatorIndex + 1).replace('Key.pem', 'Cert.pem');
     }
 
     registeredEntity.DistCryptoSpec = entityConfig.cryptoInfo.distCryptoSpec.cipher

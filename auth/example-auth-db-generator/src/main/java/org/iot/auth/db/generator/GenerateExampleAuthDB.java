@@ -23,13 +23,20 @@ import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
+import org.iot.auth.exception.InvalidDBDataTypeException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.util.DateHelper;
+import org.iot.auth.util.ExceptionToString;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.sql.SQLException;
@@ -81,7 +88,7 @@ public class GenerateExampleAuthDB {
                 new Date().getTime() + DateHelper.parseTimePeriod(AuthDB.AUTH_DB_KEY_ABSOLUTE_VALIDITY)
         );
         initMetaDataTable(sqLiteConnector, databasePublicKeyPath, databaseKey);
-        initRegisteredEntityTable(sqLiteConnector, networkName, databaseKey);
+        initRegisteredEntityTable(sqLiteConnector, authID, databaseKey);
         initCommPolicyTable(sqLiteConnector);
     }
 
@@ -106,13 +113,60 @@ public class GenerateExampleAuthDB {
         sqLiteConnector.insertRecords(metaData);
     }
 
-    private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, String networkName,
+    private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, int authID,
                                                   SymmetricKey databaseKey)
             throws ClassNotFoundException, SQLException, IOException, UseOfExpiredKeyException
     {
-        String entityPrefix = networkName + ".";
+        JSONParser parser = new JSONParser();
+        String registeredEntityTableConfigFilePath
+                = "../entity/node/example_entities/configs/Auth/Auth" + authID + "RegisteredEntityTable.config";
         RegisteredEntityTable registeredEntity;
 
+        try {
+            JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(registeredEntityTableConfigFilePath));
+
+            for (Object objElement : jsonArray) {
+                registeredEntity = new RegisteredEntityTable();
+                JSONObject jsonObject =  (JSONObject)objElement;
+
+                registeredEntity.setName((String)jsonObject.get(RegisteredEntityTable.c.Name.name()));
+                registeredEntity.setGroup((String)jsonObject.get(RegisteredEntityTable.c.Group.name()));
+                registeredEntity.setDistProtocol((String)jsonObject.get(RegisteredEntityTable.c.DistProtocol.name()));
+                boolean usePermanentDistKey = (Boolean)jsonObject.get(RegisteredEntityTable.c.UsePermanentDistKey.name());
+                registeredEntity.setUsePermanentDistKey(usePermanentDistKey);
+                Object maxSessionKeysPerRequest = jsonObject.get(RegisteredEntityTable.c.MaxSessionKeysPerRequest.name());
+                if (maxSessionKeysPerRequest.getClass() == Integer.class) {
+                    registeredEntity.setMaxSessionKeysPerRequest((Integer)maxSessionKeysPerRequest);
+                }
+                else if (maxSessionKeysPerRequest.getClass() == Long.class) {
+                    registeredEntity.setMaxSessionKeysPerRequest(((Long)maxSessionKeysPerRequest).intValue());
+                }
+                else {
+                    throw new InvalidDBDataTypeException("MaxSessionKeysPerRequest value is neither Integer nor Long.");
+                }
+                String distValidityPeriod = (String)jsonObject.get(RegisteredEntityTable.c.DistValidityPeriod.name());
+                registeredEntity.setDistValidityPeriod(distValidityPeriod);
+                registeredEntity.setDistCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.DistCryptoSpec.name()));
+                if (usePermanentDistKey) {
+                    registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
+                            (String)jsonObject.get("DistCipherKeyFilePath"),
+                            (String)jsonObject.get("DistMacKeyFilePath")));
+                    registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod(distValidityPeriod));
+                }
+                else {
+                    registeredEntity.setPublicKeyFile((String)jsonObject.get(RegisteredEntityTable.c.PublKeyFile.name()));
+                }
+
+                sqLiteConnector.insertRecords(registeredEntity);
+            }
+        }
+        catch (ParseException e) {
+            logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
+        catch (InvalidDBDataTypeException e) {
+            logger.error("InvalidDBDataTypeException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
+/*
         registeredEntity = new RegisteredEntityTable();
         registeredEntity.setName(entityPrefix + "server");
         registeredEntity.setGroup("Servers");
@@ -282,6 +336,7 @@ public class GenerateExampleAuthDB {
         registeredEntity.setDistValidityPeriod("1*hour");
         registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         sqLiteConnector.insertRecords(registeredEntity);
+        */
     }
 
     private static void initCommPolicyTable(SQLiteConnector sqLiteConnector)

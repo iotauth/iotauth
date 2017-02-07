@@ -44,12 +44,12 @@ cp $ENTITY_CREDS_DIR/certs/net2/*.pem $AUTH_DATABASES_DIR/auth102/certs/
 mkdir -p entity/auth_certs
 cp $AUTH_CREDS_DIR/certs/*EntityCert.pem entity/auth_certs
 
-# Create example databases for Auths
-cd auth/example-auth-db-generator
-./generateExampleAuthDB.sh
-cd ../..
-
 # Initialize Node.js example entities (npm installation and config file generation)
 cd entity/node
 ./initNodeEntities.sh
+cd ../..
+
+# Create example databases for Auths
+cd auth/example-auth-db-generator
+./generateExampleAuthDB.sh
 cd ../..
