@@ -53,13 +53,12 @@ public class GenerateExampleAuthDB {
     }
 
     private static void generateAuthDatabase(int authID) throws Exception {
-        String networkName = "";
         String databasePublicKeyPath = "";
+
         SQLiteConnector sqLiteConnector = null;
+        String authDatabaseDir = "databases/auth" + authID;
 
         if (authID == 101) {
-            String authDatabaseDir = "databases/auth101/";
-            networkName = "net1";
 
             String authDBPath = authDatabaseDir + "/auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
@@ -69,8 +68,6 @@ public class GenerateExampleAuthDB {
             databasePublicKeyPath =  "credentials/certs/Auth101DatabaseCert.pem";
         }
         else if (authID == 102) {
-            String authDatabaseDir = "databases/auth102/";
-            networkName = "net2";
 
             String authDBPath = authDatabaseDir + "/auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
@@ -122,6 +119,7 @@ public class GenerateExampleAuthDB {
                 = "../entity/node/example_entities/configs/Auth/Auth" + authID + "RegisteredEntityTable.config";
         RegisteredEntityTable registeredEntity;
 
+        String authDatabaseDir = "databases/auth" + authID;
         try {
             JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(registeredEntityTableConfigFilePath));
 
@@ -149,8 +147,8 @@ public class GenerateExampleAuthDB {
                 registeredEntity.setDistCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.DistCryptoSpec.name()));
                 if (usePermanentDistKey) {
                     registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
-                            (String)jsonObject.get("DistCipherKeyFilePath"),
-                            (String)jsonObject.get("DistMacKeyFilePath")));
+                            authDatabaseDir + "/" + (String)jsonObject.get("DistCipherKeyFilePath"),
+                            authDatabaseDir + "/" + (String)jsonObject.get("DistMacKeyFilePath")));
                     registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod(distValidityPeriod));
                 }
                 else {

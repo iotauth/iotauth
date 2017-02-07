@@ -6,6 +6,8 @@
 AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
+# number of networks (Auths)
+NUM_NET=2
 
 read -s -p "Enter new password for Auth: " MASTER_PASSWORD
 
@@ -16,15 +18,24 @@ AUTH_PASSWORD=$MASTER_PASSWORD
 cd ../
 cd $AUTH_CREDS_DIR
 
-# Generate CA credentials (with password asdf)
+# Generate CA credentials
 ./generateCACredentials.sh $CA_PASSWORD
 
-# Generate Auth credentials (with password asdf)
-./generateExampleAuthCredentials.sh 101 localhost $CA_PASSWORD $AUTH_PASSWORD
-./generateExampleAuthCredentials.sh 102 localhost $CA_PASSWORD $AUTH_PASSWORD
+net_id=1
+while [ "$net_id" -le $NUM_NET ]
+do
+	# Generate Auth credentials
+	./generateExampleAuthCredentials.sh "10"$net_id localhost $CA_PASSWORD $AUTH_PASSWORD
+	# Make directories for Entity certificates and keys for Auth databases
+	mkdir -p ../../$AUTH_DATABASES_DIR"/auth10"$net_id"/entity_certs/"
+	mkdir -p ../../$AUTH_DATABASES_DIR"/auth10"$net_id"/entity_keys/"
+	let "net_id+=1"
+done
+
+# Move to repository root
+cd ../../
 
 # Move to Entity credentials
-cd ../../
 cd $ENTITY_CREDS_DIR
 
 # Generate Entity credentials
@@ -32,13 +43,6 @@ cd $ENTITY_CREDS_DIR
 
 # Move to repository root
 cd ../../
-
-# Copy Entity certificates to Auth databases
-mkdir -p $AUTH_DATABASES_DIR/auth101/entity_certs/
-mkdir -p $AUTH_DATABASES_DIR/auth102/entity_certs/
-
-cp $ENTITY_CREDS_DIR/certs/net1/*.pem $AUTH_DATABASES_DIR/auth101/entity_certs/
-cp $ENTITY_CREDS_DIR/certs/net2/*.pem $AUTH_DATABASES_DIR/auth102/entity_certs/
 
 # Copy Auth certificates to Entity local directories
 mkdir -p entity/auth_certs

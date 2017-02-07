@@ -60,6 +60,7 @@ function getNetName(netId) {
 
 function getKeyPath(netId, entityName, keySuffix) {
     return '../../credentials/keys/' + getNetName(netId) + '/'
+        + capitalizeFirstLetter(getNetName(netId)) + '.'
         + capitalizeFirstLetter(entityName) + keySuffix;
 }
 
@@ -254,11 +255,11 @@ function convertToRegisteredEntity(entityConfig) {
         var permanentDistKey = entityConfig.entityInfo.permanentDistKey;
         registeredEntity.DistValidityPeriod = permanentDistKey.validity;
         // For resource-constrained only
-        var separatorIndex = permanentDistKey.cipherKey.indexOf('/credentials');
-        registeredEntity.DistCipherKeyFilePath = '../entity'
+        var separatorIndex = permanentDistKey.cipherKey.lastIndexOf('/');
+        registeredEntity.DistCipherKeyFilePath = 'entity_keys'
             + permanentDistKey.cipherKey.substring(separatorIndex);
-        var separatorIndex = permanentDistKey.macKey.indexOf('/credentials');
-        registeredEntity.DistMacKeyFilePath = '../entity'
+        separatorIndex = permanentDistKey.macKey.lastIndexOf('/');
+        registeredEntity.DistMacKeyFilePath = 'entity_keys'
             + permanentDistKey.macKey.substring(separatorIndex);
     }
     // Not resource-constrained entity
@@ -280,8 +281,8 @@ function convertToRegisteredEntity(entityConfig) {
         }
         var separatorIndex = entityConfig.entityInfo.privateKey.lastIndexOf('/');
         // Public key setting
-        registeredEntity.PublKeyFile = 'entity_certs/'
-            + entityConfig.entityInfo.privateKey.substring(separatorIndex + 1).replace('Key.pem', 'Cert.pem');
+        registeredEntity.PublKeyFile = 'entity_certs'
+            + entityConfig.entityInfo.privateKey.substring(separatorIndex).replace('Key.pem', 'Cert.pem');
     }
 
     registeredEntity.DistCryptoSpec = entityConfig.cryptoInfo.distCryptoSpec.cipher
