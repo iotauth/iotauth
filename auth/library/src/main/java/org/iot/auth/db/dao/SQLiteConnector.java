@@ -82,10 +82,13 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.UsePermanentDistKey.name() + " BOOLEAN NOT NULL,";
         sql += RegisteredEntityTable.c.MaxSessionKeysPerRequest.name() + " INT NOT NULL,";
         sql += RegisteredEntityTable.c.PublKeyFile.name() + " TEXT,";
-        sql += RegisteredEntityTable.c.DistValidityPeriod.name() + " TEXT NOT NULL,";
+        sql += RegisteredEntityTable.c.DistKeyValidityPeriod.name() + " TEXT NOT NULL,";
+        sql += RegisteredEntityTable.c.PublicKeyCryptoSpec.name() + " TEXT,";
         sql += RegisteredEntityTable.c.DistCryptoSpec.name() + " TEXT NOT NULL,";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + " INT,";
-        sql += RegisteredEntityTable.c.DistKeyVal.name() + " BLOB)";
+        sql += RegisteredEntityTable.c.DistKeyVal.name() + " BLOB,";
+        sql += RegisteredEntityTable.c.BackupToAuthID.name() + " INT,";
+        sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", RegisteredEntityTable.T_REGISTERED_ENTITY);
@@ -197,12 +200,15 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistProtocol.name() + ",";
         sql += RegisteredEntityTable.c.UsePermanentDistKey.name() + ",";
         sql += RegisteredEntityTable.c.MaxSessionKeysPerRequest.name() + ",";
+        sql += RegisteredEntityTable.c.PublicKeyCryptoSpec.name() + ",";
         sql += RegisteredEntityTable.c.PublKeyFile.name() + ",";
-        sql += RegisteredEntityTable.c.DistValidityPeriod.name() + ",";
+        sql += RegisteredEntityTable.c.DistKeyValidityPeriod.name() + ",";
         sql += RegisteredEntityTable.c.DistCryptoSpec.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + ",";
-        sql += RegisteredEntityTable.c.DistKeyVal.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?)";
+        sql += RegisteredEntityTable.c.DistKeyVal.name() + ",";
+        sql += RegisteredEntityTable.c.BackupToAuthID.name() + ",";
+        sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setString(index++,regEntity.getName());
@@ -210,8 +216,9 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,regEntity.getDistProtocol());
         preparedStatement.setBoolean(index++,regEntity.getUsePermanentDistKey());
         preparedStatement.setInt(index++,regEntity.getMaxSessionKeysPerRequest());
+        preparedStatement.setString(index++,regEntity.getPublicKeyCryptoSpec());
         preparedStatement.setString(index++,regEntity.getPublicKeyFile());
-        preparedStatement.setString(index++,regEntity.getDistValidityPeriod());
+        preparedStatement.setString(index++,regEntity.getDistKeyValidityPeriod());
         preparedStatement.setString(index++,regEntity.getDistCryptoSpec());
         byte[] distKeyVal = regEntity.getDistKeyVal();
         if (distKeyVal != null) {
@@ -221,6 +228,19 @@ public class SQLiteConnector {
         else {
             preparedStatement.setNull(index++, Types.INTEGER);
             preparedStatement.setNull(index++, Types.BLOB);
+        }
+
+        if (regEntity.getBackupToAuthID() < 0) {
+            preparedStatement.setNull(index++, Types.INTEGER);
+        }
+        else {
+            preparedStatement.setInt(index++, regEntity.getBackupToAuthID());
+        }
+        if (regEntity.getBackupFromAuthID() < 0) {
+            preparedStatement.setNull(index++, Types.INTEGER);
+        }
+        else {
+            preparedStatement.setInt(index++, regEntity.getBackupFromAuthID());
         }
 
         preparedStatement.toString();

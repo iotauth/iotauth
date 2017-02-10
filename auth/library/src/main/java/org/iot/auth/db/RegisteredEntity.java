@@ -16,7 +16,9 @@
 package org.iot.auth.db;
 
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
+import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.io.Buffer;
+import org.iot.auth.util.DateHelper;
 
 import java.security.PublicKey;
 
@@ -25,18 +27,21 @@ import java.security.PublicKey;
  * @author Hokeun Kim
  */
 public class RegisteredEntity {
-    public RegisteredEntity(String name, String group, String distProtocol, boolean usePermanentDistKey,
-                            PublicKey publicKey, long distKeyValidity, int maxSessionKeysPerRequest,
-                            SymmetricKeyCryptoSpec distCryptoSpec)
+    public RegisteredEntity(RegisteredEntityTable tableElement, DistributionKey distributionKey)
     {
-        this.name = name;
-        this.group = group;
-        this.distProtocol = distProtocol;
-        this.usePermanentDistKey = usePermanentDistKey;
-        this.publicKey = publicKey;
-        this.distKeyValidity = distKeyValidity;
-        this.maxSessionKeysPerRequest = maxSessionKeysPerRequest;
-        this.distCryptoSpec = distCryptoSpec;
+        this.name = tableElement.getName();
+        this.group = tableElement.getGroup();
+        this.distProtocol = tableElement.getDistProtocol();
+        this.usePermanentDistKey = tableElement.getUsePermanentDistKey();
+        this.publicKey = tableElement.getPublicKey();
+        this.publicKeyCryptoSpec = tableElement.getPublicKeyCryptoSpec();
+        this.distKeyValidityPeriod = DateHelper.parseTimePeriod(tableElement.getDistKeyValidityPeriod());
+        this.maxSessionKeysPerRequest = tableElement.getMaxSessionKeysPerRequest();
+        this.distCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(tableElement.getDistCryptoSpec());
+        this.active = tableElement.isActive();
+        this.backupToAuthID = tableElement.getBackupToAuthID();
+        this.backupFromAuthID = tableElement.getBackupFromAuthID();
+        this.distributionKey = distributionKey; // Decrypted from database
     }
     public String getName() {
         return name;
@@ -50,8 +55,8 @@ public class RegisteredEntity {
     public PublicKey getPublicKey() {
         return publicKey;
     }
-    public long getDisKeyValidity() {
-        return distKeyValidity;
+    public long getDistKeyValidityPeriod() {
+        return distKeyValidityPeriod;
     }
     public DistributionKey getDistributionKey() {
         return distributionKey;
@@ -62,12 +67,32 @@ public class RegisteredEntity {
     public SymmetricKeyCryptoSpec getDistCryptoSpec() {
         return distCryptoSpec;
     }
+    public String getPublicKeyCryptoSpec() {
+        return publicKeyCryptoSpec;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public int getBackupToAuthID() {
+        return backupToAuthID;
+    }
+
+    public int getBackupFromAuthID() {
+        return backupFromAuthID;
+    }
+
     public String toString() {
         String ret = "Name: " + name + "\tGroup: " + group +
                 "\tDistProtocol: " + distProtocol +
                 "\tUsePermanentKey: " + usePermanentDistKey +
-                "\tDistKeyValidity: " + distKeyValidity +
-                "\tDistCryptoSpec: " + distCryptoSpec.toString();
+                "\tDistKeyValidityPeriod: " + distKeyValidityPeriod +
+                "\tDistCryptoSpec: " + distCryptoSpec.toString() +
+                "\tActive: " + active +
+                "\tBackupToAuthID: " + backupToAuthID +
+                "\tBackupFromAuthID: " + backupFromAuthID;
+
         ret += "\tDistKey: ";
         if (distributionKey == null) {
             ret += "NULL";
@@ -76,6 +101,7 @@ public class RegisteredEntity {
             ret += distributionKey.toString();
         }
         if (!usePermanentDistKey) {
+            ret += "\tPublicKeyCryptoSpec: " + publicKeyCryptoSpec;
             ret += "\tPublicKey: " + Buffer.toHexString(publicKey.getEncoded());
         }
         return ret;
@@ -83,14 +109,18 @@ public class RegisteredEntity {
     public void setDistributionKey(DistributionKey distributionKey) {
         this.distributionKey = distributionKey;
     }
+
     private String name;
     private String group;
     private String distProtocol;
     private boolean usePermanentDistKey;
     private PublicKey publicKey;
-    private long distKeyValidity;
+    private String publicKeyCryptoSpec;
+    private long distKeyValidityPeriod;
     private int maxSessionKeysPerRequest;
     private SymmetricKeyCryptoSpec distCryptoSpec;
+    private boolean active;
+    private int backupToAuthID;
+    private int backupFromAuthID;
     private DistributionKey distributionKey = null;
-
 }

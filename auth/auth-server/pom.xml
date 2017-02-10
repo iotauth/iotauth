@@ -72,7 +72,7 @@
     <repositories>
         <repository>
             <id>local-library-jars</id>
-            <url>file://${basedir}/../jars</url>
+            <url>file://${basedir}/../../jars</url>
         </repository>
     </repositories>
     

@@ -16,7 +16,6 @@
 package org.iot.auth.db.bean;
 
 import org.iot.auth.crypto.AuthCrypto;
-import org.iot.auth.util.DateHelper;
 import org.json.simple.JSONObject;
 
 import java.security.PublicKey;
@@ -25,23 +24,27 @@ import java.sql.SQLException;
 import java.util.Arrays;
 
 /**
- * @author Salomon Lee
+ * @author Salomon Lee, Hokeun Kim
  */
 public class RegisteredEntityTable {
     public static final String T_REGISTERED_ENTITY = "registered_entity";
+
     public enum c {
         Name,
         Group,
         DistProtocol,
         UsePermanentDistKey,
-        DistKeyValidity,
-        DistValidityPeriod,
+        DistKeyValidityPeriod,
         PublKeyFile,
         PublicKey,
+        PublicKeyCryptoSpec,
         DistCryptoSpec,
         DistKeyExpirationTime,
         DistKeyVal,
-        MaxSessionKeysPerRequest
+        MaxSessionKeysPerRequest,
+        Active,
+        BackupToAuthID,
+        BackupFromAuthID
     }
     private String name;
     private String group;
@@ -49,13 +52,15 @@ public class RegisteredEntityTable {
     private boolean usePermanentDistKey;
     private PublicKey publicKey;
     private String publicKeyFile;
-    private String distValidityPeriod;
-    private long distKeyValidity;
+    private String distKeyValidityPeriod;
+    private String publicKeyCryptoSpec;
     private String distCryptoSpec;
     private long distKeyExpirationTime = -1;
     private byte[] distKeyVal = null;
     private int maxSessionKeysPerRequest;
-
+    private boolean active;
+    private int backupToAuthID = -1;
+    private int backupFromAuthID = -1;
 
     public String getName() {
         return name;
@@ -93,13 +98,6 @@ public class RegisteredEntityTable {
         this.publicKey = publicKey;
     }
 
-    public long getDistKeyValidity() {
-        return distKeyValidity;
-    }
-    public void setDistKeyValidity(long distKeyValidity) {
-        this.distKeyValidity = distKeyValidity;
-    }
-
     public String getPublicKeyFile() {
         return publicKeyFile;
     }
@@ -107,11 +105,19 @@ public class RegisteredEntityTable {
         this.publicKeyFile = publicKeyFile;
     }
 
-    public String getDistValidityPeriod() {
-        return distValidityPeriod;
+    public String getDistKeyValidityPeriod() {
+        return distKeyValidityPeriod;
     }
-    public void setDistValidityPeriod(String distValidityPeriod) {
-        this.distValidityPeriod = distValidityPeriod;
+    public void setDistKeyValidityPeriod(String distKeyValidityPeriod) {
+        this.distKeyValidityPeriod = distKeyValidityPeriod;
+    }
+
+    public String getPublicKeyCryptoSpec() {
+        return publicKeyCryptoSpec;
+    }
+
+    public void setPublicKeyCryptoSpec(String publicKeyCryptoSpec) {
+        this.publicKeyCryptoSpec = publicKeyCryptoSpec;
     }
 
     public String getDistCryptoSpec() {
@@ -142,6 +148,30 @@ public class RegisteredEntityTable {
         this.maxSessionKeysPerRequest = maxSessionKeysPerRequest;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public int getBackupToAuthID() {
+        return backupToAuthID;
+    }
+
+    public void setBackupToAuthID(int backupToAuthID) {
+        this.backupToAuthID = backupToAuthID;
+    }
+
+    public int getBackupFromAuthID() {
+        return backupFromAuthID;
+    }
+
+    public void setBackupFromAuthID(int backupFromAuthID) {
+        this.backupFromAuthID = backupFromAuthID;
+    }
+
     public String toString() {
         return toJSONObject().toJSONString();
     }
@@ -153,10 +183,13 @@ public class RegisteredEntityTable {
         object.put(c.Group.name(), getGroup());
         object.put(c.DistProtocol.name(), getDistProtocol());
         object.put(c.UsePermanentDistKey.name(), getUsePermanentDistKey());
-        object.put(c.DistKeyValidity.name(), getDistKeyValidity());
+        object.put(c.PublicKeyCryptoSpec.name(), getPublicKeyCryptoSpec());
         object.put(c.PublKeyFile.name(), getPublicKeyFile().toString());
         object.put(c.PublicKey.name(), getPublicKey());
         object.put(c.MaxSessionKeysPerRequest.name(), getMaxSessionKeysPerRequest());
+        object.put(c.Active.name(), isActive());
+        object.put(c.BackupToAuthID.name(), getBackupToAuthID());
+        object.put(c.BackupFromAuthID.name(), getBackupFromAuthID());
         return object;
     }
 
@@ -167,10 +200,10 @@ public class RegisteredEntityTable {
         entity.setDistProtocol(r.getString(c.DistProtocol.name()));
         entity.setPublicKeyFile(r.getString(c.PublKeyFile.name()));
         entity.setUsePermanentDistKey(r.getBoolean(c.UsePermanentDistKey.name()));
+        entity.setDistKeyValidityPeriod(r.getString(c.DistKeyValidityPeriod.name()));
         if (!entity.getUsePermanentDistKey()) {
             entity.setPublicKey(AuthCrypto.loadPublicKey(authDatabaseDir + "/" + entity.getPublicKeyFile()));
         }
-        entity.setDistKeyValidity(DateHelper.parseTimePeriod(r.getString(c.DistValidityPeriod.name())));
         entity.setDistCryptoSpec(r.getString(c.DistCryptoSpec.name()));
         byte[] distKeyVal = r.getBytes(c.DistKeyVal.name());
         if (distKeyVal != null) {

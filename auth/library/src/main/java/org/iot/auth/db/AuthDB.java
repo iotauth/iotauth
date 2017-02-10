@@ -300,26 +300,18 @@ public class AuthDB {
     }
 
     private void loadRegEntityDB() throws SQLException, ClassNotFoundException {
+
         sqLiteConnector.selectAllRegEntities(authDatabaseDir).forEach(regEntityTable -> {
-            RegisteredEntity registeredEntity = new RegisteredEntity(
-                    regEntityTable.getName(),
-                    regEntityTable.getGroup(),
-                    regEntityTable.getDistProtocol(),
-                    regEntityTable.getUsePermanentDistKey(),
-                    regEntityTable.getPublicKey(),
-                    regEntityTable.getDistKeyValidity(),
-                    regEntityTable.getMaxSessionKeysPerRequest(),
-                    SymmetricKeyCryptoSpec.fromSpecString(regEntityTable.getDistCryptoSpec())
-            );
+            DistributionKey distributionKey = null;
             if (regEntityTable.getDistKeyVal() != null) {
-                registeredEntity.setDistributionKey(
-                        new DistributionKey(
-                                registeredEntity.getDistCryptoSpec(),
-                                regEntityTable.getDistKeyExpirationTime(),
-                                decryptAuthDBData(new Buffer(regEntityTable.getDistKeyVal()))
-                        )
+                distributionKey = new DistributionKey(
+                    SymmetricKeyCryptoSpec.fromSpecString(regEntityTable.getDistCryptoSpec()),
+                    regEntityTable.getDistKeyExpirationTime(),
+                    decryptAuthDBData(new Buffer(regEntityTable.getDistKeyVal()))
                 );
             }
+            RegisteredEntity registeredEntity = new RegisteredEntity(regEntityTable, distributionKey);
+
             registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
             logger.debug("registeredEntity: {}", registeredEntity.toString());
         });

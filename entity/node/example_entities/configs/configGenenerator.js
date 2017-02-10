@@ -23,12 +23,6 @@
 var fs = require('fs');
 var JSON2 = require('JSON2');
 
-var cryptoInfo = {
-    publicKeyCryptoSpec: { sign: 'RSA-SHA256' },
-    distCryptoSpec: { cipher: 'AES-128-CBC', mac: 'SHA256' },
-    sessionCryptoSpec: { cipher: 'AES-128-CBC', mac: 'SHA256' }
-};
-
 var entityList = [
     { name: 'client' },
     { name: 'ptClient' },
@@ -126,7 +120,13 @@ function getAuthInfo(netId, entityName) {
 
 function getCryptoInfo(entityName) {
     var cryptoInfo = {};
-    if (!entityName.toLowerCase().includes('rc')) {
+    if (entityName.toLowerCase().includes('safetycritical')) {
+        cryptoInfo.publicKeyCryptoSpec = {
+            "sign": "RSA-SHA256",
+            "diffieHellman": "secp128r2"
+        };
+    }
+    else if (!entityName.toLowerCase().includes('rc')) {
         cryptoInfo.publicKeyCryptoSpec = {
             "sign": "RSA-SHA256"
         };
@@ -243,7 +243,7 @@ function generateEntityConfigs(netConfigList) {
     }
 }
 
-function convertToRegisteredEntity(entityConfig) {
+function convertToRegisteredEntity(entityConfig, backupTo) {
     var registeredEntity = {};
     registeredEntity.Name = entityConfig.entityInfo.name;
     registeredEntity.Group = entityConfig.entityInfo.group;
@@ -253,7 +253,7 @@ function convertToRegisteredEntity(entityConfig) {
         registeredEntity.UsePermanentDistKey = true;
         registeredEntity.MaxSessionKeysPerRequest = 30;
         var permanentDistKey = entityConfig.entityInfo.permanentDistKey;
-        registeredEntity.DistValidityPeriod = permanentDistKey.validity;
+        registeredEntity.DistKeyValidityPeriod = permanentDistKey.validity;
         // For resource-constrained only
         var separatorIndex = permanentDistKey.cipherKey.lastIndexOf('/');
         registeredEntity.DistCipherKeyFilePath = 'entity_keys'
@@ -265,6 +265,11 @@ function convertToRegisteredEntity(entityConfig) {
     // Not resource-constrained entity
     else {
         registeredEntity.UsePermanentDistKey = false;
+        registeredEntity.PublicKeyCryptoSpec = entityConfig.cryptoInfo.publicKeyCryptoSpec.sign;
+        // with additional Diffie-Hellman key exchange for key distribution
+        if (entityConfig.cryptoInfo.publicKeyCryptoSpec.diffieHellman) {
+            registeredEntity.PublicKeyCryptoSpec += (':DH-' + entityConfig.cryptoInfo.publicKeyCryptoSpec.diffieHellman);
+        }
         // MaxSessionKeysPerRequest
         if (entityConfig.entityInfo.name.toLowerCase().includes('server')) {
             registeredEntity.MaxSessionKeysPerRequest = 1;
@@ -272,12 +277,12 @@ function convertToRegisteredEntity(entityConfig) {
         else {
             registeredEntity.MaxSessionKeysPerRequest = 5;
         }
-        // DistValidityPeriod
+        // DistKeyValidityPeriod
         if (entityConfig.entityInfo.name.toLowerCase().includes('pt')) {
-            registeredEntity.DistValidityPeriod = '3*sec';
+            registeredEntity.DistKeyValidityPeriod = '3*sec';
         }
         else {
-            registeredEntity.DistValidityPeriod = '1*hour';
+            registeredEntity.DistKeyValidityPeriod = '1*hour';
         }
         var separatorIndex = entityConfig.entityInfo.privateKey.lastIndexOf('/');
         // Public key setting
@@ -287,6 +292,10 @@ function convertToRegisteredEntity(entityConfig) {
 
     registeredEntity.DistCryptoSpec = entityConfig.cryptoInfo.distCryptoSpec.cipher
         + ':' + entityConfig.cryptoInfo.distCryptoSpec.mac;
+
+    registeredEntity.Active = true;
+    registeredEntity.BackupToAuthID = backupTo;
+    //registeredEntity.BackupFromAuthID = 5678;
     return registeredEntity;
 }
 
@@ -298,9 +307,14 @@ function convertToRegisteredEntityTable(netConfigList) {
             'authId': 100 + netConfig.netId,
             'registeredEntityList': []
         };
+        var backupToAuthID = -1;
+        if (netConfigList.length > 1) {
+            backupToAuthID = 100 + (netConfig.netId % netConfigList.length + 1);
+        }
         for (var j = 0; j < netConfig.entityConfigList.length; j++) {
             registeredEntityTable.registeredEntityList.push(
-                convertToRegisteredEntity(netConfig.entityConfigList[j]));
+                convertToRegisteredEntity(netConfig.entityConfigList[j], backupToAuthID)
+            );
         }
         registeredEntityTableList.push(registeredEntityTable);
     }

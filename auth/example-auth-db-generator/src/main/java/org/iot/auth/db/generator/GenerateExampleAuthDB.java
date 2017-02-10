@@ -110,6 +110,30 @@ public class GenerateExampleAuthDB {
         sqLiteConnector.insertRecords(metaData);
     }
 
+    private static long convertObjectToLong(Object obj) throws InvalidDBDataTypeException {
+        if (obj.getClass() == Integer.class) {
+            return (Integer)obj;
+        }
+        else if (obj.getClass() == Long.class) {
+            return (Long)obj;
+        }
+        else {
+            throw new InvalidDBDataTypeException("Wrong class type object for Long!");
+        }
+    }
+
+    private static int convertObjectToInteger(Object obj) throws InvalidDBDataTypeException {
+        if (obj.getClass() == Integer.class) {
+            return (Integer)obj;
+        }
+        else if (obj.getClass() == Long.class) {
+            return ((Long)obj).intValue();
+        }
+        else {
+            throw new InvalidDBDataTypeException("Wrong class type object for Integer!");
+        }
+    }
+
     private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, int authID,
                                                   SymmetricKey databaseKey)
             throws ClassNotFoundException, SQLException, IOException, UseOfExpiredKeyException
@@ -132,18 +156,10 @@ public class GenerateExampleAuthDB {
                 registeredEntity.setDistProtocol((String)jsonObject.get(RegisteredEntityTable.c.DistProtocol.name()));
                 boolean usePermanentDistKey = (Boolean)jsonObject.get(RegisteredEntityTable.c.UsePermanentDistKey.name());
                 registeredEntity.setUsePermanentDistKey(usePermanentDistKey);
-                Object maxSessionKeysPerRequest = jsonObject.get(RegisteredEntityTable.c.MaxSessionKeysPerRequest.name());
-                if (maxSessionKeysPerRequest.getClass() == Integer.class) {
-                    registeredEntity.setMaxSessionKeysPerRequest((Integer)maxSessionKeysPerRequest);
-                }
-                else if (maxSessionKeysPerRequest.getClass() == Long.class) {
-                    registeredEntity.setMaxSessionKeysPerRequest(((Long)maxSessionKeysPerRequest).intValue());
-                }
-                else {
-                    throw new InvalidDBDataTypeException("MaxSessionKeysPerRequest value is neither Integer nor Long.");
-                }
-                String distValidityPeriod = (String)jsonObject.get(RegisteredEntityTable.c.DistValidityPeriod.name());
-                registeredEntity.setDistValidityPeriod(distValidityPeriod);
+                registeredEntity.setMaxSessionKeysPerRequest(
+                        convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.MaxSessionKeysPerRequest.name())));
+                String distValidityPeriod = (String)jsonObject.get(RegisteredEntityTable.c.DistKeyValidityPeriod.name());
+                registeredEntity.setDistKeyValidityPeriod(distValidityPeriod);
                 registeredEntity.setDistCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.DistCryptoSpec.name()));
                 if (usePermanentDistKey) {
                     registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
@@ -152,7 +168,17 @@ public class GenerateExampleAuthDB {
                     registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod(distValidityPeriod));
                 }
                 else {
+                    registeredEntity.setPublicKeyCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.PublicKeyCryptoSpec.name()));
                     registeredEntity.setPublicKeyFile((String)jsonObject.get(RegisteredEntityTable.c.PublKeyFile.name()));
+                }
+
+                if (jsonObject.containsKey(RegisteredEntityTable.c.BackupToAuthID.name())) {
+                    registeredEntity.setBackupToAuthID(
+                            convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.BackupToAuthID.name())));
+                }
+                if (jsonObject.containsKey(RegisteredEntityTable.c.BackupFromAuthID.name())) {
+                    registeredEntity.setBackupFromAuthID(
+                            convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.BackupFromAuthID.name())));
                 }
 
                 sqLiteConnector.insertRecords(registeredEntity);
@@ -164,177 +190,6 @@ public class GenerateExampleAuthDB {
         catch (InvalidDBDataTypeException e) {
             logger.error("InvalidDBDataTypeException {}", ExceptionToString.convertExceptionToStackTrace(e));
         }
-/*
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "server");
-        registeredEntity.setGroup("Servers");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(1);
-        registeredEntity.setPublicKeyFile("certs/ServerCert.pem");
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "client");
-        registeredEntity.setGroup("Clients");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(5);
-        registeredEntity.setPublicKeyFile("certs/ClientCert.pem");
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "ptServer");
-        registeredEntity.setGroup("PtServers");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(1);
-        registeredEntity.setPublicKeyFile("certs/PtServerCert.pem");
-        registeredEntity.setDistValidityPeriod("3*sec");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "ptClient");
-        registeredEntity.setGroup("PtClients");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(5);
-        registeredEntity.setPublicKeyFile("certs/PtClientCert.pem");
-        registeredEntity.setDistValidityPeriod("3*sec");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        // resource-constrained server - no public key file specified
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "rcServer");
-        registeredEntity.setGroup("Servers");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(true);
-        registeredEntity.setMaxSessionKeysPerRequest(30);
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
-                "../entity/credentials/keys/" + networkName + "/RcServerCipherKey.key",
-                "../entity/credentials/keys/" + networkName + "/RcServerMacKey.key"));
-        registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        // resource-constrained client - no public key file specified
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "rcClient");
-        registeredEntity.setGroup("Clients");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(true);
-        registeredEntity.setMaxSessionKeysPerRequest(30);
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
-                "../entity/credentials/keys/" + networkName + "/RcClientCipherKey.key",
-                "../entity/credentials/keys/" + networkName + "/RcClientMacKey.key"));
-        registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        // resource-constrained UDP server - no public key file specified
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "rcUdpServer");
-        registeredEntity.setGroup("Servers");
-        registeredEntity.setDistProtocol("UDP");
-        registeredEntity.setUsePermanentDistKey(true);
-        registeredEntity.setMaxSessionKeysPerRequest(30);
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
-                "../entity/credentials/keys/" + networkName + "/RcUdpServerCipherKey.key",
-                "../entity/credentials/keys/" + networkName + "/RcUdpServerMacKey.key"));
-        registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        // resource-constrained UDP client - no public key file specified
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "rcUdpClient");
-        registeredEntity.setGroup("Clients");
-        registeredEntity.setDistProtocol("UDP");
-        registeredEntity.setUsePermanentDistKey(true);
-        registeredEntity.setMaxSessionKeysPerRequest(30);
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
-                "../entity/credentials/keys/" + networkName + "/RcUdpClientCipherKey.key",
-                "../entity/credentials/keys/" + networkName + "/RcUdpClientMacKey.key"));
-        registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod("365*day"));
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "ptPublisher");
-        registeredEntity.setGroup("PtPublishers");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(5);
-        registeredEntity.setPublicKeyFile("certs/PtPublisherCert.pem");
-        registeredEntity.setDistValidityPeriod("3*sec");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "ptSubscriber");
-        registeredEntity.setGroup("PtSubscribers");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(5);
-        registeredEntity.setPublicKeyFile("certs/PtSubscriberCert.pem");
-        registeredEntity.setDistValidityPeriod("3*sec");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "udpServer");
-        registeredEntity.setGroup("Servers");
-        registeredEntity.setDistProtocol("UDP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(1);
-        registeredEntity.setPublicKeyFile("certs/UdpServerCert.pem");
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "udpClient");
-        registeredEntity.setGroup("Clients");
-        registeredEntity.setDistProtocol("UDP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(5);
-        registeredEntity.setPublicKeyFile("certs/UdpClientCert.pem");
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "safetyCriticalServer");
-        registeredEntity.setGroup("Servers");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(1);
-        registeredEntity.setPublicKeyFile("certs/SafetyCriticalServerCert.pem");
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-
-        registeredEntity = new RegisteredEntityTable();
-        registeredEntity.setName(entityPrefix + "safetyCriticalClient");
-        registeredEntity.setGroup("Clients");
-        registeredEntity.setDistProtocol("TCP");
-        registeredEntity.setUsePermanentDistKey(false);
-        registeredEntity.setMaxSessionKeysPerRequest(5);
-        registeredEntity.setPublicKeyFile("certs/SafetyCriticalClientCert.pem");
-        registeredEntity.setDistValidityPeriod("1*hour");
-        registeredEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
-        sqLiteConnector.insertRecords(registeredEntity);
-        */
     }
 
     private static void initCommPolicyTable(SQLiteConnector sqLiteConnector)

@@ -96,7 +96,7 @@ public abstract class EntityConnectionHandler {
             // Assuming AES-CBC-128
             DistributionKey distributionKey =
                     new DistributionKey(requestingEntity.getDistCryptoSpec(),
-                            requestingEntity.getDisKeyValidity());
+                            requestingEntity.getDistKeyValidityPeriod());
             // update distribution key
             server.updateDistributionKey(requestingEntity.getName(), distributionKey);
 
