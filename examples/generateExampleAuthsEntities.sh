@@ -27,9 +27,36 @@ do
 	# Generate Auth credentials
 	./generateExampleAuthCredentials.sh "10"$net_id localhost $CA_PASSWORD $AUTH_PASSWORD
 	# Make directories for Entity certificates and keys for Auth databases
+	MY_CERTS_DIR="../../"$AUTH_DATABASES_DIR"auth10"$net_id"/my_certs/"
+	mkdir -p $MY_CERTS_DIR
+	mv "certs/Auth10"$net_id*"Cert.pem" $MY_CERTS_DIR
+	MY_KEYSTORES_DIR="../../"$AUTH_DATABASES_DIR"auth10"$net_id"/my_keystores/"
+	mkdir -p $MY_KEYSTORES_DIR
+	mv "keystores/Auth10"$net_id*".pfx" $MY_KEYSTORES_DIR
 	mkdir -p ../../$AUTH_DATABASES_DIR"/auth10"$net_id"/entity_certs/"
 	mkdir -p ../../$AUTH_DATABASES_DIR"/auth10"$net_id"/entity_keys/"
+	mkdir -p ../../$AUTH_DATABASES_DIR"/auth10"$net_id"/trusted_auth_certs/"
 	let "net_id+=1"
+done
+# Move to repository root
+cd ../../
+# Move to Auth databases
+cd $AUTH_DATABASES_DIR
+# Exchange certs among trusted Auths
+my_net_id=1
+while [ "$my_net_id" -le $NUM_NET ]
+do
+	trusted_net_id=1
+	while [ "$trusted_net_id" -le $NUM_NET ]
+	do
+		if [ "$my_net_id" == "$trusted_net_id" ]; then
+			let "trusted_net_id+=1"
+			continue
+		fi
+		cp "auth10"$my_net_id"/my_certs/Auth10"$my_net_id"InternetCert.pem" "auth10"$trusted_net_id"/trusted_auth_certs"
+		let "trusted_net_id+=1"
+	done
+	let "my_net_id+=1"
 done
 
 # Move to repository root
@@ -46,7 +73,7 @@ cd ../../
 
 # Copy Auth certificates to Entity local directories
 mkdir -p entity/auth_certs
-cp $AUTH_CREDS_DIR/certs/*EntityCert.pem entity/auth_certs
+cp $AUTH_DATABASES_DIR/auth10*/my_certs/*EntityCert.pem entity/auth_certs
 
 # Initialize Node.js example entities (npm installation and config file generation)
 cd entity/node

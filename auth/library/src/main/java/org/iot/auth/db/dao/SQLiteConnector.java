@@ -15,6 +15,7 @@
 
 package org.iot.auth.db.dao;
 
+import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,7 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistCryptoSpec.name() + " TEXT NOT NULL,";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + " INT,";
         sql += RegisteredEntityTable.c.DistKeyVal.name() + " BLOB,";
+        sql += RegisteredEntityTable.c.Active.name() + " BOOLEAN NOT NULL,";
         sql += RegisteredEntityTable.c.BackupToAuthID.name() + " INT,";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT)";
         if (DEBUG) logger.info(sql);
@@ -206,9 +208,10 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistCryptoSpec.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyVal.name() + ",";
+        sql += RegisteredEntityTable.c.Active.name() + ",";
         sql += RegisteredEntityTable.c.BackupToAuthID.name() + ",";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setString(index++,regEntity.getName());
@@ -230,6 +233,7 @@ public class SQLiteConnector {
             preparedStatement.setNull(index++, Types.BLOB);
         }
 
+        preparedStatement.setBoolean(index++, regEntity.isActive());
         if (regEntity.getBackupToAuthID() < 0) {
             preparedStatement.setNull(index++, Types.INTEGER);
         }

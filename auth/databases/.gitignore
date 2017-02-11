@@ -1,3 +1,4 @@
 *.pem
 *.db
 *.key
+*.pfx

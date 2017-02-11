@@ -21,7 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * @author Salomon Lee
+ * @author Salomon Lee, Hokeun Kim
  */
 public class TrustedAuthTable {
     public static final String T_TRUSTED_AUTH = "trusted_auth";
@@ -83,7 +83,8 @@ public class TrustedAuthTable {
         return toJSONObject().toString();
     }
 
-    public static TrustedAuthTable createRecord(ResultSet resultSet) throws SQLException {
+    public static TrustedAuthTable createRecord(ResultSet resultSet)
+            throws SQLException {
         TrustedAuthTable trustedAuth = new TrustedAuthTable();
         trustedAuth.setId(resultSet.getInt(c.ID.name()));
         trustedAuth.setHost(resultSet.getString(c.Host.name()));

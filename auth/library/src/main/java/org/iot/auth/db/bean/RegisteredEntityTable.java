@@ -193,24 +193,24 @@ public class RegisteredEntityTable {
         return object;
     }
 
-    public static RegisteredEntityTable createRecord(String authDatabaseDir, ResultSet r) throws SQLException {
+    public static RegisteredEntityTable createRecord(String authDatabaseDir, ResultSet resultSet) throws SQLException {
         RegisteredEntityTable entity = new RegisteredEntityTable();
-        entity.setName(r.getString(c.Name.name()));
-        entity.setGroup(r.getString(c.Group.name()));
-        entity.setDistProtocol(r.getString(c.DistProtocol.name()));
-        entity.setPublicKeyFile(r.getString(c.PublKeyFile.name()));
-        entity.setUsePermanentDistKey(r.getBoolean(c.UsePermanentDistKey.name()));
-        entity.setDistKeyValidityPeriod(r.getString(c.DistKeyValidityPeriod.name()));
+        entity.setName(resultSet.getString(c.Name.name()));
+        entity.setGroup(resultSet.getString(c.Group.name()));
+        entity.setDistProtocol(resultSet.getString(c.DistProtocol.name()));
+        entity.setPublicKeyFile(resultSet.getString(c.PublKeyFile.name()));
+        entity.setUsePermanentDistKey(resultSet.getBoolean(c.UsePermanentDistKey.name()));
+        entity.setDistKeyValidityPeriod(resultSet.getString(c.DistKeyValidityPeriod.name()));
         if (!entity.getUsePermanentDistKey()) {
             entity.setPublicKey(AuthCrypto.loadPublicKey(authDatabaseDir + "/" + entity.getPublicKeyFile()));
         }
-        entity.setDistCryptoSpec(r.getString(c.DistCryptoSpec.name()));
-        byte[] distKeyVal = r.getBytes(c.DistKeyVal.name());
+        entity.setDistCryptoSpec(resultSet.getString(c.DistCryptoSpec.name()));
+        byte[] distKeyVal = resultSet.getBytes(c.DistKeyVal.name());
         if (distKeyVal != null) {
             entity.setDistKeyVal(distKeyVal);
-            entity.setDistKeyExpirationTime(r.getLong(c.DistKeyExpirationTime.name()));
+            entity.setDistKeyExpirationTime(resultSet.getLong(c.DistKeyExpirationTime.name()));
         }
-        entity.setMaxSessionKeysPerRequest(r.getInt(c.MaxSessionKeysPerRequest.name()));
+        entity.setMaxSessionKeysPerRequest(resultSet.getInt(c.MaxSessionKeysPerRequest.name()));
         return entity;
     }
 }

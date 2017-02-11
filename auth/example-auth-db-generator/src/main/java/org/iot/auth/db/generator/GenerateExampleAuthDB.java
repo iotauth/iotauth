@@ -64,8 +64,9 @@ public class GenerateExampleAuthDB {
             sqLiteConnector = new SQLiteConnector(authDBPath);
             //sqLiteConnector.DEBUG = true;
             sqLiteConnector.createTablesIfNotExists();
-            initTrustedAuthTable(sqLiteConnector, 102, "localhost", 22901, "../credentials/certs/Auth102InternetCert.pem");
-            databasePublicKeyPath =  "credentials/certs/Auth101DatabaseCert.pem";
+            initTrustedAuthTable(sqLiteConnector, 102, "localhost", 22901,
+                    "trusted_auth_certs/Auth102InternetCert.pem");
+            databasePublicKeyPath = authDatabaseDir + "/my_certs/Auth101DatabaseCert.pem";
         }
         else if (authID == 102) {
 
@@ -73,8 +74,9 @@ public class GenerateExampleAuthDB {
             sqLiteConnector = new SQLiteConnector(authDBPath);
             //sqLiteConnector.DEBUG = true;
             sqLiteConnector.createTablesIfNotExists();
-            initTrustedAuthTable(sqLiteConnector, 101, "localhost", 21901, "../credentials/certs/Auth101InternetCert.pem");
-            databasePublicKeyPath =  "credentials/certs/Auth102DatabaseCert.pem";
+            initTrustedAuthTable(sqLiteConnector, 101, "localhost", 21901,
+                    "trusted_auth_certs/Auth101InternetCert.pem");
+            databasePublicKeyPath = authDatabaseDir + "/my_certs/Auth102DatabaseCert.pem";
         }
         else {
             logger.error("No such AuthID {}", authID);
@@ -158,20 +160,20 @@ public class GenerateExampleAuthDB {
                 registeredEntity.setUsePermanentDistKey(usePermanentDistKey);
                 registeredEntity.setMaxSessionKeysPerRequest(
                         convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.MaxSessionKeysPerRequest.name())));
-                String distValidityPeriod = (String)jsonObject.get(RegisteredEntityTable.c.DistKeyValidityPeriod.name());
-                registeredEntity.setDistKeyValidityPeriod(distValidityPeriod);
+                String distKeyValidityPeriod = (String)jsonObject.get(RegisteredEntityTable.c.DistKeyValidityPeriod.name());
+                registeredEntity.setDistKeyValidityPeriod(distKeyValidityPeriod);
                 registeredEntity.setDistCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.DistCryptoSpec.name()));
                 if (usePermanentDistKey) {
                     registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
                             authDatabaseDir + "/" + (String)jsonObject.get("DistCipherKeyFilePath"),
                             authDatabaseDir + "/" + (String)jsonObject.get("DistMacKeyFilePath")));
-                    registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod(distValidityPeriod));
+                    registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod(distKeyValidityPeriod));
                 }
                 else {
                     registeredEntity.setPublicKeyCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.PublicKeyCryptoSpec.name()));
                     registeredEntity.setPublicKeyFile((String)jsonObject.get(RegisteredEntityTable.c.PublKeyFile.name()));
                 }
-
+                registeredEntity.setActive((Boolean)jsonObject.get(RegisteredEntityTable.c.Active.name()));
                 if (jsonObject.containsKey(RegisteredEntityTable.c.BackupToAuthID.name())) {
                     registeredEntity.setBackupToAuthID(
                             convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.BackupToAuthID.name())));
