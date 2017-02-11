@@ -218,10 +218,6 @@ function getEntityConfigs(numNets) {
             'netId': netId,
             'entityConfigList': []
         };
-        var dirName = getNetName(netId);
-        if (!fs.existsSync(dirName)){
-            fs.mkdirSync(dirName);
-        }
         for (var i = 0; i < entityList.length; i++) {
             netConfig.entityConfigList.push(getEntityConfig(netId, entityList[i]));
         }
@@ -232,7 +228,11 @@ function getEntityConfigs(numNets) {
 
 function generateEntityConfigs(netConfigList) {
     for (var i = 0; i < netConfigList.length; i++) {
-            var netConfig = netConfigList[i];
+        var dirName = getNetName(netConfigList[i].netId);
+        if (!fs.existsSync(dirName)){
+            fs.mkdirSync(dirName);
+        }
+        var netConfig = netConfigList[i];
         for (var j = 0; j < netConfig.entityConfigList.length; j++) {
             var entityConfig = netConfig.entityConfigList[j];
             if (entityConfig.entityInfo.name.includes('pt')) {
