@@ -1,5 +1,5 @@
 {
-  "name": "iotauth_node_entities",
+  "name": "iotauth_configs",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,8 +8,7 @@
   "author": "Hokeun Kim",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "mqtt": "*",
-    "sleep": "*"
+    "JSON2": "*"
   },
-  "description": "Node.js module with example Node.js entities"
+  "description": "Node.js module for generating config files"
 }

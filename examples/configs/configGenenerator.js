@@ -23,6 +23,8 @@
 var fs = require('fs');
 var JSON2 = require('JSON2');
 
+var ENTITY_CONFIG_DIR = 'entity/node/example_entities/configs/';
+
 var entityList = [
     { name: 'client' },
     { name: 'ptClient' },
@@ -202,7 +204,7 @@ function getEntityConfig(netId, entity) {
 function writeEntityConfigToFile(entityConfig) {
     var entityFullName = entityConfig.entityInfo.name;
     var separatorIndex = entityFullName.indexOf('.');
-    var configFilePath = entityFullName.substring(0, separatorIndex)
+    var configFilePath = ENTITY_CONFIG_DIR + entityFullName.substring(0, separatorIndex)
         + '/' + entityFullName.substring(separatorIndex + 1) + '.config';
     console.log('Writing entityConfig to ' + configFilePath + ' ...');
     fs.writeFileSync(configFilePath,
@@ -227,10 +229,13 @@ function getEntityConfigs(numNets) {
 }
 
 function generateEntityConfigs(netConfigList) {
+    if (!fs.existsSync(ENTITY_CONFIG_DIR)) {
+        fs.mkdirSync(ENTITY_CONFIG_DIR);
+    }
     for (var i = 0; i < netConfigList.length; i++) {
         var dirName = getNetName(netConfigList[i].netId);
-        if (!fs.existsSync(dirName)){
-            fs.mkdirSync(dirName);
+        if (!fs.existsSync(ENTITY_CONFIG_DIR + dirName)){
+            fs.mkdirSync(ENTITY_CONFIG_DIR + dirName);
         }
         var netConfig = netConfigList[i];
         for (var j = 0; j < netConfig.entityConfigList.length; j++) {
@@ -322,7 +327,7 @@ function convertToRegisteredEntityTable(netConfigList) {
 }
 
 function generateRegisteredEntityTables(registeredEntityTableList) {
-    var dirName = 'Auth';
+    var dirName = ENTITY_CONFIG_DIR + 'Auth';
     if (!fs.existsSync(dirName)){
         fs.mkdirSync(dirName);
     }

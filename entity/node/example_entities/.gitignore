@@ -1,0 +1,2 @@
+configs/net*/*.config
+configs/Auth/*.config

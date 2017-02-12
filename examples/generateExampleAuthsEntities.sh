@@ -75,9 +75,14 @@ cd ../../
 mkdir -p entity/auth_certs
 cp $AUTH_DATABASES_DIR/auth10*/my_certs/*EntityCert.pem entity/auth_certs
 
-# Initialize Node.js example entities (npm installation and config file generation)
+# Initialize Node.js example entities (npm installation)
 cd entity/node
 ./initNodeEntities.sh
+cd ../..
+
+# generate configuration files for example Node.js entities
+cd examples/configs
+./initConfigs.sh
 cd ../..
 
 # Create example databases for Auths
