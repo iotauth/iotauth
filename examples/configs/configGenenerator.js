@@ -23,7 +23,10 @@
 var fs = require('fs');
 var JSON2 = require('JSON2');
 
+// this is where the entity config files are generated
 var ENTITY_CONFIG_DIR = 'entity/node/example_entities/configs/';
+
+var AUTH_DB_DIR = 'auth/databases/';
 
 var entityList = [
     { name: 'client' },
@@ -327,12 +330,12 @@ function convertToRegisteredEntityTable(netConfigList) {
 }
 
 function generateRegisteredEntityTables(registeredEntityTableList) {
-    var dirName = ENTITY_CONFIG_DIR + 'Auth';
-    if (!fs.existsSync(dirName)){
-        fs.mkdirSync(dirName);
-    }
     for (var i = 0; i < registeredEntityTableList.length; i++) {
         var registeredEntityTable = registeredEntityTableList[i];
+        var dirName = AUTH_DB_DIR + 'auth' + registeredEntityTable.authId + '/configs/';
+        if (!fs.existsSync(dirName)){
+            fs.mkdirSync(dirName);
+        }
         var fileName = 'Auth' + registeredEntityTable.authId + 'RegisteredEntityTable.config';
         var configFilePath = dirName + '/' + fileName;
         console.log('Writing entityConfig to ' + configFilePath + ' ...');

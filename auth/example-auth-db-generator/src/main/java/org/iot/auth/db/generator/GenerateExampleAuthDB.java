@@ -56,17 +56,17 @@ public class GenerateExampleAuthDB {
         String databasePublicKeyPath = "";
 
         SQLiteConnector sqLiteConnector = null;
-        String authDatabaseDir = "databases/auth" + authID;
+        String authDatabaseDir = "databases/auth" + authID + "/";
 
         if (authID == 101) {
 
-            String authDBPath = authDatabaseDir + "/auth.db";
+            String authDBPath = authDatabaseDir + "auth.db";
             sqLiteConnector = new SQLiteConnector(authDBPath);
             //sqLiteConnector.DEBUG = true;
             sqLiteConnector.createTablesIfNotExists();
             initTrustedAuthTable(sqLiteConnector, 102, "localhost", 22901,
                     "trusted_auth_certs/Auth102InternetCert.pem");
-            databasePublicKeyPath = authDatabaseDir + "/my_certs/Auth101DatabaseCert.pem";
+            databasePublicKeyPath = authDatabaseDir + "my_certs/Auth101DatabaseCert.pem";
         }
         else if (authID == 102) {
 
@@ -76,7 +76,7 @@ public class GenerateExampleAuthDB {
             sqLiteConnector.createTablesIfNotExists();
             initTrustedAuthTable(sqLiteConnector, 101, "localhost", 21901,
                     "trusted_auth_certs/Auth101InternetCert.pem");
-            databasePublicKeyPath = authDatabaseDir + "/my_certs/Auth102DatabaseCert.pem";
+            databasePublicKeyPath = authDatabaseDir + "my_certs/Auth102DatabaseCert.pem";
         }
         else {
             logger.error("No such AuthID {}", authID);
@@ -87,7 +87,8 @@ public class GenerateExampleAuthDB {
                 new Date().getTime() + DateHelper.parseTimePeriod(AuthDB.AUTH_DB_KEY_ABSOLUTE_VALIDITY)
         );
         initMetaDataTable(sqLiteConnector, databasePublicKeyPath, databaseKey);
-        initRegisteredEntityTable(sqLiteConnector, authID, databaseKey);
+        initRegisteredEntityTable(sqLiteConnector, authID, databaseKey,
+                authDatabaseDir + "configs/Auth" + authID + "RegisteredEntityTable.config");
         initCommPolicyTable(sqLiteConnector);
     }
 
@@ -137,17 +138,15 @@ public class GenerateExampleAuthDB {
     }
 
     private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, int authID,
-                                                  SymmetricKey databaseKey)
+                                                  SymmetricKey databaseKey, String tableConfigFilePath)
             throws ClassNotFoundException, SQLException, IOException, UseOfExpiredKeyException
     {
         JSONParser parser = new JSONParser();
-        String registeredEntityTableConfigFilePath
-                = "../entity/node/example_entities/configs/Auth/Auth" + authID + "RegisteredEntityTable.config";
         RegisteredEntityTable registeredEntity;
 
         String authDatabaseDir = "databases/auth" + authID;
         try {
-            JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(registeredEntityTableConfigFilePath));
+            JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
 
             for (Object objElement : jsonArray) {
                 registeredEntity = new RegisteredEntityTable();

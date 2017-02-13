@@ -6,6 +6,7 @@
 AUTH_CREDS_DIR=auth/credentials/
 AUTH_DATABASES_DIR=auth/databases/
 ENTITY_CREDS_DIR=entity/credentials/
+NODE_EXAMPLE_ENTITY_DIR=entity/node/example_entities/
 
 cd ..
 
@@ -22,3 +23,4 @@ rm -rf certs keys
 cd ../../
 
 rm -rf entity/auth_certs
+rm -rf $NODE_EXAMPLE_ENTITY_DIR"configs"
