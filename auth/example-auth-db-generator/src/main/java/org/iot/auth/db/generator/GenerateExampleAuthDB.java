@@ -18,6 +18,7 @@ package org.iot.auth.db.generator;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.db.AuthDB;
+import org.iot.auth.db.CommunicationPolicy;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
@@ -36,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.PublicKey;
@@ -53,30 +55,21 @@ public class GenerateExampleAuthDB {
     }
 
     private static void generateAuthDatabase(int authID) throws Exception {
-        String databasePublicKeyPath = "";
-
-        SQLiteConnector sqLiteConnector = null;
         String authDatabaseDir = "databases/auth" + authID + "/";
+        String databasePublicKeyPath = authDatabaseDir + "my_certs/Auth" + authID + "DatabaseCert.pem";
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(authDatabaseDir + "auth.db");
+        sqLiteConnector.createTablesIfNotExists();
 
         if (authID == 101) {
-
-            String authDBPath = authDatabaseDir + "auth.db";
-            sqLiteConnector = new SQLiteConnector(authDBPath);
             //sqLiteConnector.DEBUG = true;
-            sqLiteConnector.createTablesIfNotExists();
             initTrustedAuthTable(sqLiteConnector, 102, "localhost", 22901,
                     "trusted_auth_certs/Auth102InternetCert.pem");
-            databasePublicKeyPath = authDatabaseDir + "my_certs/Auth101DatabaseCert.pem";
         }
         else if (authID == 102) {
-
-            String authDBPath = authDatabaseDir + "/auth.db";
-            sqLiteConnector = new SQLiteConnector(authDBPath);
             //sqLiteConnector.DEBUG = true;
             sqLiteConnector.createTablesIfNotExists();
             initTrustedAuthTable(sqLiteConnector, 101, "localhost", 21901,
                     "trusted_auth_certs/Auth101InternetCert.pem");
-            databasePublicKeyPath = authDatabaseDir + "my_certs/Auth102DatabaseCert.pem";
         }
         else {
             logger.error("No such AuthID {}", authID);
@@ -89,7 +82,8 @@ public class GenerateExampleAuthDB {
         initMetaDataTable(sqLiteConnector, databasePublicKeyPath, databaseKey);
         initRegisteredEntityTable(sqLiteConnector, authID, databaseKey,
                 authDatabaseDir + "configs/Auth" + authID + "RegisteredEntityTable.config");
-        initCommPolicyTable(sqLiteConnector);
+        initCommPolicyTable(sqLiteConnector, authID,
+                authDatabaseDir + "configs/Auth" + authID + "CommunicationPolicyTable.config");
     }
 
     private static void initMetaDataTable(SQLiteConnector sqLiteConnector,
@@ -142,14 +136,13 @@ public class GenerateExampleAuthDB {
             throws ClassNotFoundException, SQLException, IOException, UseOfExpiredKeyException
     {
         JSONParser parser = new JSONParser();
-        RegisteredEntityTable registeredEntity;
 
         String authDatabaseDir = "databases/auth" + authID;
         try {
             JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
 
             for (Object objElement : jsonArray) {
-                registeredEntity = new RegisteredEntityTable();
+                RegisteredEntityTable registeredEntity = new RegisteredEntityTable();
                 JSONObject jsonObject =  (JSONObject)objElement;
 
                 registeredEntity.setName((String)jsonObject.get(RegisteredEntityTable.c.Name.name()));
@@ -193,110 +186,35 @@ public class GenerateExampleAuthDB {
         }
     }
 
-    private static void initCommPolicyTable(SQLiteConnector sqLiteConnector)
-            throws ClassNotFoundException, SQLException
+    private static void initCommPolicyTable(SQLiteConnector sqLiteConnector, int authID,
+                                            String tableConfigFilePath)
+            throws ClassNotFoundException, SQLException, IOException
     {
-        CommunicationPolicyTable communicationPolicyTable;
+        JSONParser parser = new JSONParser();
+        try {
+            JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
 
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("Clients");
-        communicationPolicyTable.setTargetTypeVal("Group");
-        communicationPolicyTable.setTarget("Servers");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(2);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("1*day");
-        communicationPolicyTable.setRelValidityStr("2*hour");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
+            for (Object objElement : jsonArray) {
+                JSONObject jsonObject =  (JSONObject)objElement;
+                CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
 
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("Clients");
-        communicationPolicyTable.setTargetTypeVal("Group");
-        communicationPolicyTable.setTarget("PtServers");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(2);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("1*hour");
-        communicationPolicyTable.setRelValidityStr("20*sec");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
-
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("PtClients");
-        communicationPolicyTable.setTargetTypeVal("Group");
-        communicationPolicyTable.setTarget("Servers");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(2);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("1*day");
-        communicationPolicyTable.setRelValidityStr("2*hour");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
-
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("PtClients");
-        communicationPolicyTable.setTargetTypeVal("Group");
-        communicationPolicyTable.setTarget("PtServers");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(2);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("2*hour");
-        communicationPolicyTable.setRelValidityStr("20*sec");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
-
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("Clients");
-        communicationPolicyTable.setTargetTypeVal("PubTopic");
-        communicationPolicyTable.setTarget("Ptopic");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("6*hour");
-        communicationPolicyTable.setRelValidityStr("3*hour");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
-
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("Servers");
-        communicationPolicyTable.setTargetTypeVal("SubTopic");
-        communicationPolicyTable.setTarget("Ptopic");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("6*hour");
-        communicationPolicyTable.setRelValidityStr("3*hour");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
-
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("Clients");
-        communicationPolicyTable.setTargetTypeVal("SubTopic");
-        communicationPolicyTable.setTarget("Ptopic");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("6*hour");
-        communicationPolicyTable.setRelValidityStr("3*hour");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
-
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("Servers");
-        communicationPolicyTable.setTargetTypeVal("PubTopic");
-        communicationPolicyTable.setTarget("Ptopic");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("6*hour");
-        communicationPolicyTable.setRelValidityStr("3*hour");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
-
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("PtPublishers");
-        communicationPolicyTable.setTargetTypeVal("PubTopic");
-        communicationPolicyTable.setTarget("Ptopic");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("6*hour");
-        communicationPolicyTable.setRelValidityStr("3*hour");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
-
-        communicationPolicyTable = new CommunicationPolicyTable();
-        communicationPolicyTable.setReqGroup("PtSubscribers");
-        communicationPolicyTable.setTargetTypeVal("SubTopic");
-        communicationPolicyTable.setTarget("Ptopic");
-        communicationPolicyTable.setMaxNumSessionKeyOwners(64);
-        communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
-        communicationPolicyTable.setAbsValidityStr("6*hour");
-        communicationPolicyTable.setRelValidityStr("3*hour");
-        sqLiteConnector.insertRecords(communicationPolicyTable);
+                communicationPolicyTable.setReqGroup((String)jsonObject.get(CommunicationPolicyTable.c.RequestingGroup.name()));
+                communicationPolicyTable.setTargetTypeVal((String)jsonObject.get(CommunicationPolicyTable.c.TargetType.name()));
+                communicationPolicyTable.setTarget((String)jsonObject.get(CommunicationPolicyTable.c.Target.name()));
+                communicationPolicyTable.setMaxNumSessionKeyOwners(
+                        convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name())));
+                communicationPolicyTable.setSessionCryptoSpec((String)jsonObject.get(CommunicationPolicyTable.c.SessionCryptoSpec.name()));
+                communicationPolicyTable.setAbsValidityStr((String)jsonObject.get(CommunicationPolicyTable.c.AbsoluteValidity.name()));
+                communicationPolicyTable.setRelValidityStr((String)jsonObject.get(CommunicationPolicyTable.c.RelativeValidity.name()));
+                sqLiteConnector.insertRecords(communicationPolicyTable);
+            }
+        }
+        catch (ParseException e) {
+            logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
+        catch (InvalidDBDataTypeException e) {
+            logger.error("InvalidDBDataTypeException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
     }
 
     private static void initTrustedAuthTable(SQLiteConnector sqLiteConnector, int id, String host, int port,

@@ -28,6 +28,10 @@ var ENTITY_CONFIG_DIR = 'entity/node/example_entities/configs/';
 
 var AUTH_DB_DIR = 'auth/databases/';
 
+var DEFAULT_CIPHER = 'AES-128-CBC';
+var DEFAULT_MAC = 'SHA256';
+
+
 var entityList = [
     { name: 'client' },
     { name: 'ptClient' },
@@ -44,10 +48,6 @@ var entityList = [
     { name: 'ptPublisher' },
     { name: 'ptSubscriber' }
 ];
-
-var tcpServerInfoList = [];
-var udpServerInfoList = [];
-var safetyCriticalServerInfoList = [];
 
 function capitalizeFirstLetter(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -109,11 +109,19 @@ function getNetPortBase(netId) {
     return 20000 + netId * 1000;
 }
 
+function getAuthPortBase(netId) {
+    return getNetPortBase(netId) + 900;
+}
+
+function getAuthId(netId) {
+    return 100 + netId;
+}
+
 function getAuthInfo(netId, entityName) {
     var authInfo = {};
-    authInfo.id = 100 + netId;
+    authInfo.id = getAuthId(netId);
     authInfo.host = 'localhost';
-    authInfo.port = getNetPortBase(netId) + 900;
+    authInfo.port = getAuthPortBase(netId);
     if (entityName.toLowerCase().includes('udp')) {
         authInfo.port += 2;
     }
@@ -137,12 +145,12 @@ function getCryptoInfo(entityName) {
         };
     }
     cryptoInfo.distCryptoSpec = {
-        "cipher": "AES-128-CBC",
-        "mac": "SHA256"
+        'cipher': DEFAULT_CIPHER,
+        'mac': DEFAULT_MAC
     };
     cryptoInfo.sessionCryptoSpec = {
-        "cipher": "AES-128-CBC",
-        "mac": "SHA256"
+        'cipher': DEFAULT_CIPHER,
+        'mac': DEFAULT_MAC
     };
     if (entityName.toLowerCase().includes('safetycritical')) {
         cryptoInfo.sessionCryptoSpec.diffieHellman = "secp128r2";
@@ -312,12 +320,13 @@ function convertToRegisteredEntityTable(netConfigList) {
     for (var i = 0; i < netConfigList.length; i++) {
         var netConfig = netConfigList[i];
         var registeredEntityTable = {
-            'authId': 100 + netConfig.netId,
+            'authId': getAuthId(netConfig.netId),
             'registeredEntityList': []
         };
         var backupToAuthID = -1;
         if (netConfigList.length > 1) {
-            backupToAuthID = 100 + (netConfig.netId % netConfigList.length + 1);
+            var otherNetId = netConfig.netId % netConfigList.length + 1;
+            backupToAuthID = getAuthId(otherNetId);
         }
         for (var j = 0; j < netConfig.entityConfigList.length; j++) {
             registeredEntityTable.registeredEntityList.push(
@@ -346,6 +355,53 @@ function generateRegisteredEntityTables(registeredEntityTableList) {
     }
 }
 
+function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+    list.push({
+        'RequestingGroup': requestingGroup,
+        'TargetType': 'Group',
+        'Target': target,
+        'MaxNumSessionKeyOwners': 2,
+        'SessionCryptoSpec': DEFAULT_CIPHER + ':' + DEFAULT_MAC,
+        'AbsoluteValidity': absoluteValidity,
+        'RelativeValidity': relativeValidity
+    });
+}
+
+function addPubSubPolicy(list, requestingGroup, isPub) {
+    list.push({
+        'RequestingGroup': requestingGroup,
+        'TargetType': isPub ? 'PubTopic' : 'SubTopic',
+        'Target': 'Ptopic',
+        'MaxNumSessionKeyOwners': 64,
+        'SessionCryptoSpec': DEFAULT_CIPHER + ':' + DEFAULT_MAC,
+        'AbsoluteValidity': '6*hour',
+        'RelativeValidity': '3*hour'
+    });
+}
+
+function generateCommunicationPolicyTables(numberOfAuths) {
+    var policyList = [];
+    addServerClientPolicy(policyList, 'Clients', 'Servers', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'PtClients', 'Servers', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'Clients', 'PtServers', '1*hour', '20*sec');
+    addServerClientPolicy(policyList, 'PtClients', 'PtServers', '2*hour', '20*sec');
+    addPubSubPolicy(policyList, 'Clients', true);
+    addPubSubPolicy(policyList, 'Servers', true);
+    addPubSubPolicy(policyList, 'Clients', false);
+    addPubSubPolicy(policyList, 'Servers', false);
+    addPubSubPolicy(policyList, 'PtPublishers', true);
+    addPubSubPolicy(policyList, 'PtSubscribers', false);
+
+    for (var i = 0; i < numberOfAuths; i++) {
+        var authId = 101 + i;
+        var dirName = AUTH_DB_DIR + 'auth' + authId + '/configs/';
+        var fileName = 'Auth' + authId + 'CommunicationPolicyTable.config';
+        var configFilePath = dirName + fileName;
+        console.log('Writing entityConfig to ' + configFilePath + ' ...');
+        fs.writeFileSync(configFilePath, JSON2.stringify(policyList, null, '\t'), 'utf8');
+    }
+}
+
 if (process.argv.length <= 2) {
     console.log('Error: please specify total number of networks');
     process.exit(1);
@@ -358,4 +414,6 @@ var netConfigList = getEntityConfigs(totalNumberOfNets);
 generateEntityConfigs(netConfigList);
 var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList);
 generateRegisteredEntityTables(registeredEntityTableList);
+generateCommunicationPolicyTables(totalNumberOfNets);
+
 //console.log(JSON2.stringify(registeredEntityTableList, null, '\t'));
