@@ -7,7 +7,7 @@ AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
 # number of networks (Auths)
-NUM_NET=2
+NUM_NETS=2
 
 read -s -p "Enter new password for Auth: " MASTER_PASSWORD
 
@@ -22,7 +22,7 @@ cd $AUTH_CREDS_DIR
 ./generateCACredentials.sh $CA_PASSWORD
 
 net_id=1
-while [ "$net_id" -le $NUM_NET ]
+while [ "$net_id" -le $NUM_NETS ]
 do
 	# Generate Auth credentials
 	./generateExampleAuthCredentials.sh "10"$net_id localhost $CA_PASSWORD $AUTH_PASSWORD
@@ -44,10 +44,10 @@ cd ../../
 cd $AUTH_DATABASES_DIR
 # Exchange certs among trusted Auths
 my_net_id=1
-while [ "$my_net_id" -le $NUM_NET ]
+while [ "$my_net_id" -le $NUM_NETS ]
 do
 	trusted_net_id=1
-	while [ "$trusted_net_id" -le $NUM_NET ]
+	while [ "$trusted_net_id" -le $NUM_NETS ]
 	do
 		if [ "$my_net_id" == "$trusted_net_id" ]; then
 			let "trusted_net_id+=1"
@@ -66,7 +66,7 @@ cd ../../
 cd $ENTITY_CREDS_DIR
 
 # Generate Entity credentials
-./generateExampleEntityCredentials.sh $CA_PASSWORD
+./generateExampleEntityCredentials.sh $NUM_NETS $CA_PASSWORD
 
 # Move to repository root
 cd ../../
@@ -82,7 +82,7 @@ cd ../..
 
 # generate configuration files for example Node.js entities
 cd examples/configs
-./initConfigs.sh
+./initConfigs.sh $NUM_NETS
 cd ../..
 
 # Create example databases for Auths

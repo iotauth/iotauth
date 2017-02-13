@@ -9,16 +9,17 @@ CERTS_DIR="certs"
 KEYS_DIR="keys"
 VAL_DAYS=730
 
-# number of networks (Auths)
-NUM_NET=2
 
-if [ $# != 1 ]
+if [ $# != 2 ]
 then
-	echo 'please provide CA password (e.g., ./generateCACredentials.sh ca_password)'
+	echo "Please provide required arguments (1. number of networks, 2. CA's password)"
+	echo 'Usage: ./generateCACredentials.sh num_nets ca_password'
 	exit
 fi
 
-CA_PASSWORD=$1
+# number of networks (Auths)
+NUM_NETS=$1
+CA_PASSWORD=$2
 
 entity_cred_gen() {
 	NET_ID=$1
@@ -80,7 +81,7 @@ rc_entity_list=(
 )
 
 net_id=1
-while [ "$net_id" -le $NUM_NET ]
+while [ "$net_id" -le $NUM_NETS ]
 do
 	mkdir -p $CERTS_DIR/"net"$net_id
 	mkdir -p $KEYS_DIR/"net"$net_id

@@ -337,7 +337,7 @@ function generateRegisteredEntityTables(registeredEntityTableList) {
             fs.mkdirSync(dirName);
         }
         var fileName = 'Auth' + registeredEntityTable.authId + 'RegisteredEntityTable.config';
-        var configFilePath = dirName + '/' + fileName;
+        var configFilePath = dirName + fileName;
         console.log('Writing entityConfig to ' + configFilePath + ' ...');
         fs.writeFileSync(configFilePath,
             JSON2.stringify(registeredEntityTable.registeredEntityList, null, '\t'),
@@ -346,7 +346,13 @@ function generateRegisteredEntityTables(registeredEntityTableList) {
     }
 }
 
-var totalNumberOfNets = 2;
+if (process.argv.length <= 2) {
+    console.log('Error: please specify total number of networks');
+    process.exit(1);
+}
+
+var totalNumberOfNets = parseInt(process.argv[2]);
+console.log(totalNumberOfNets);
 var netConfigList = getEntityConfigs(totalNumberOfNets);
 //console.log(JSON2.stringify(netConfigList[0].entityConfigList, null, '\t'));
 generateEntityConfigs(netConfigList);
