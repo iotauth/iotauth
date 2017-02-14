@@ -18,7 +18,6 @@ package org.iot.auth.db.generator;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.db.AuthDB;
-import org.iot.auth.db.CommunicationPolicy;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
@@ -37,12 +36,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.sql.SQLException;
 import java.util.Date;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+//import org.apache.commons.cli.ParseException;
 
 /**
  * A program to generate example Auth databases for two example Auths with ID 101 and ID 102.
@@ -50,8 +56,43 @@ import java.util.Date;
  */
 public class GenerateExampleAuthDB {
     public static void main(String[] args) throws Exception {
-        generateAuthDatabase(101);
-        generateAuthDatabase(102);
+        // parsing command line arguments
+        Options options = new Options();
+
+        Option properties = new Option("n", "num_auths", true, "number of example Auths to be generated.");
+        properties.setRequired(false);
+        options.addOption(properties);
+
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd;
+
+        try {
+            cmd = parser.parse(options, args);
+        } catch (org.apache.commons.cli.ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("utility-name", options);
+
+            System.exit(1);
+            return;
+        }
+        String strNumAuths = cmd.getOptionValue("num_auths");
+        if (strNumAuths == null) {
+            logger.error("Number of Auths not specified! (Use option -n to specify the number of Auths to be generated.)");
+            System.exit(1);
+            return;
+        }
+        int numAuths = Integer.parseInt(strNumAuths);
+        logger.info("Number of AUths to be generated: {}", numAuths);
+        if (numAuths > 10 || numAuths < 1) {
+            logger.error("Error: Illegal number of Auths to be generated!");
+            System.exit(1);
+            return;
+        }
+
+        for (int netID = 1; netID <= numAuths; netID++) {
+            generateAuthDatabase(netID + 100);
+        }
     }
 
     private static void generateAuthDatabase(int authID) throws Exception {
@@ -60,21 +101,6 @@ public class GenerateExampleAuthDB {
         SQLiteConnector sqLiteConnector = new SQLiteConnector(authDatabaseDir + "auth.db");
         sqLiteConnector.createTablesIfNotExists();
 
-        if (authID == 101) {
-            //sqLiteConnector.DEBUG = true;
-            initTrustedAuthTable(sqLiteConnector, 102, "localhost", 22901,
-                    "trusted_auth_certs/Auth102InternetCert.pem");
-        }
-        else if (authID == 102) {
-            //sqLiteConnector.DEBUG = true;
-            sqLiteConnector.createTablesIfNotExists();
-            initTrustedAuthTable(sqLiteConnector, 101, "localhost", 21901,
-                    "trusted_auth_certs/Auth101InternetCert.pem");
-        }
-        else {
-            logger.error("No such AuthID {}", authID);
-            return;
-        }
         SymmetricKey databaseKey = new SymmetricKey(
                 AuthDB.AUTH_DB_CRYPTO_SPEC,
                 new Date().getTime() + DateHelper.parseTimePeriod(AuthDB.AUTH_DB_KEY_ABSOLUTE_VALIDITY)
@@ -82,8 +108,10 @@ public class GenerateExampleAuthDB {
         initMetaDataTable(sqLiteConnector, databasePublicKeyPath, databaseKey);
         initRegisteredEntityTable(sqLiteConnector, authID, databaseKey,
                 authDatabaseDir + "configs/Auth" + authID + "RegisteredEntityTable.config");
-        initCommPolicyTable(sqLiteConnector, authID,
+        initCommPolicyTable(sqLiteConnector,
                 authDatabaseDir + "configs/Auth" + authID + "CommunicationPolicyTable.config");
+        initTrustedAuthTable(sqLiteConnector,
+                authDatabaseDir + "configs/Auth" + authID + "TrustedAuthTable.config");
     }
 
     private static void initMetaDataTable(SQLiteConnector sqLiteConnector,
@@ -186,7 +214,7 @@ public class GenerateExampleAuthDB {
         }
     }
 
-    private static void initCommPolicyTable(SQLiteConnector sqLiteConnector, int authID,
+    private static void initCommPolicyTable(SQLiteConnector sqLiteConnector,
                                             String tableConfigFilePath)
             throws ClassNotFoundException, SQLException, IOException
     {
@@ -217,14 +245,30 @@ public class GenerateExampleAuthDB {
         }
     }
 
-    private static void initTrustedAuthTable(SQLiteConnector sqLiteConnector, int id, String host, int port,
-                                             String certificatePath) throws ClassNotFoundException, SQLException {
-        TrustedAuthTable trustedAuth = new TrustedAuthTable();
-        trustedAuth.setId(id);
-        trustedAuth.setHost(host);
-        trustedAuth.setPort(port);
-        trustedAuth.setCertificatePath(certificatePath);
-        sqLiteConnector.insertRecords(trustedAuth);
+    private static void initTrustedAuthTable(SQLiteConnector sqLiteConnector, String tableConfigFilePath)
+            throws ClassNotFoundException, SQLException, IOException
+    {
+        JSONParser parser = new JSONParser();
+        try {
+            JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
+
+            for (Object objElement : jsonArray) {
+                JSONObject jsonObject =  (JSONObject)objElement;
+                TrustedAuthTable trustedAuth = new TrustedAuthTable();
+
+                trustedAuth.setId(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.ID.name())));
+                trustedAuth.setHost((String)jsonObject.get(TrustedAuthTable.c.Host.name()));
+                trustedAuth.setPort(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.Port.name())));
+                trustedAuth.setCertificatePath((String)jsonObject.get(TrustedAuthTable.c.CertificatePath.name()));
+                sqLiteConnector.insertRecords(trustedAuth);
+            }
+        }
+        catch (ParseException e) {
+            logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
+        catch (InvalidDBDataTypeException e) {
+            logger.error("InvalidDBDataTypeException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
     }
 
     private static Buffer readSymmetricKey(String filePath) throws IOException {

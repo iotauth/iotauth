@@ -392,13 +392,37 @@ function generateCommunicationPolicyTables(numberOfAuths) {
     addPubSubPolicy(policyList, 'PtPublishers', true);
     addPubSubPolicy(policyList, 'PtSubscribers', false);
 
-    for (var i = 0; i < numberOfAuths; i++) {
-        var authId = 101 + i;
+    for (var netId = 1; netId <= numberOfAuths; netId++) {
+        var authId = getAuthId(netId);
         var dirName = AUTH_DB_DIR + 'auth' + authId + '/configs/';
         var fileName = 'Auth' + authId + 'CommunicationPolicyTable.config';
         var configFilePath = dirName + fileName;
         console.log('Writing entityConfig to ' + configFilePath + ' ...');
         fs.writeFileSync(configFilePath, JSON2.stringify(policyList, null, '\t'), 'utf8');
+    }
+}
+
+function generateTrustedAuthTables(numberOfAuths) {
+    for (var netId = 1; netId <= numberOfAuths; netId++) {
+        var myAuthId = getAuthId(netId);
+        var trustedAuthList = [];
+        for (var otherNetId = 1; otherNetId <= numberOfAuths; otherNetId++) {
+            if (netId == otherNetId) {
+                continue;
+            }
+            var otherAuthId = getAuthId(otherNetId);
+            trustedAuthList.push({
+                'ID': otherAuthId,
+                'Host': 'localhost',
+                'Port': getAuthPortBase(otherNetId) + 1,
+                'CertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem'
+            });
+        }
+        var dirName = AUTH_DB_DIR + 'auth' + myAuthId + '/configs/';
+        var fileName = 'Auth' + myAuthId + 'TrustedAuthTable.config';
+        var configFilePath = dirName + fileName;
+        console.log('Writing entityConfig to ' + configFilePath + ' ...');
+        fs.writeFileSync(configFilePath, JSON2.stringify(trustedAuthList, null, '\t'), 'utf8');
     }
 }
 
@@ -415,5 +439,6 @@ generateEntityConfigs(netConfigList);
 var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList);
 generateRegisteredEntityTables(registeredEntityTableList);
 generateCommunicationPolicyTables(totalNumberOfNets);
+generateTrustedAuthTables(totalNumberOfNets);
 
 //console.log(JSON2.stringify(registeredEntityTableList, null, '\t'));

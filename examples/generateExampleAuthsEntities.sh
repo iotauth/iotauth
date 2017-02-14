@@ -7,7 +7,7 @@ AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
 # number of networks (Auths)
-NUM_NETS=2
+NUM_NETS=4
 
 read -s -p "Enter new password for Auth: " MASTER_PASSWORD
 
@@ -87,5 +87,5 @@ cd ../..
 
 # Create example databases for Auths
 cd auth/example-auth-db-generator
-./generateExampleAuthDB.sh
+./generateExampleAuthDB.sh $NUM_NETS
 cd ../..

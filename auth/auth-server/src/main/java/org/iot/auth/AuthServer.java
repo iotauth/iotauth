@@ -185,7 +185,7 @@ public class AuthServer {
         }
         String propertiesFilePath = cmd.getOptionValue("properties");
         if (propertiesFilePath == null) {
-            logger.info("No properties file specified! (Use option -p to specify the properties file.)");
+            logger.error("No properties file specified! (Use option -p to specify the properties file.)");
             System.exit(1);
             return;
         }

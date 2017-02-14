@@ -9,7 +9,6 @@ CERTS_DIR="certs"
 KEYS_DIR="keys"
 VAL_DAYS=730
 
-
 if [ $# != 2 ]
 then
 	echo "Please provide required arguments (1. number of networks, 2. CA's password)"
