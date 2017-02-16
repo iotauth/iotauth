@@ -48,6 +48,8 @@ import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.BASE64Encoder;
+import sun.security.provider.X509Factory;
 
 import javax.bluetooth.DiscoveryAgent;
 import javax.microedition.io.StreamConnection;
@@ -67,6 +69,7 @@ import java.net.Socket;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
@@ -703,6 +706,21 @@ public class AuthServer {
     }
     private Map<String, Buffer> nonceMapForUdpPortListener;
     private Map<String, Buffer> responseMapForUdpPortListener;
+
+    public void issueCertificate() {
+        TrustedAuth trustedAuth = db.getTrustedAuthInfo(102);
+        X509Certificate cert = crypto.issueCertificate(trustedAuth.getCertificate());
+        BASE64Encoder encoder = new BASE64Encoder();
+        System.out.println(X509Factory.BEGIN_CERT);
+        try {
+            encoder.encodeBuffer(cert.getEncoded(), System.out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CertificateEncodingException e) {
+            e.printStackTrace();
+        }
+        System.out.println(X509Factory.END_CERT);
+    }
 
     /**
      * Class for suppressing logging by jetty

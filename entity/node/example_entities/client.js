@@ -102,7 +102,7 @@ function onConnection(entityClientSocket) {
 
 function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
     currentSessionKey = sessionKey;
-    console.log(currentSessionKey);
+    console.log('currentSessionKey: ' + currentSessionKey);
     if (currentSecureClient) {
         currentSecureClient.close();
         console.log('Status: Secure connection closed before starting a new connection.');

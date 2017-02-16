@@ -15,36 +15,28 @@
 
 package org.iot.auth.crypto;
 
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.*;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509v1CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.iot.auth.io.Buffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyFactory;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.Signature;
-import java.security.SignatureException;
-import java.security.UnrecoverableEntryException;
+import java.math.BigInteger;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Enumeration;
 
 import javax.crypto.*;
@@ -201,6 +193,34 @@ public class AuthCrypto {
         random.setSeed(seed);
         random.nextBytes(randomBytes);
         return new Buffer(randomBytes);
+    }
+
+    public X509Certificate issueCertificate(X509Certificate certificate) {
+        try {
+            X500Name issuerDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=Auth101, CN=localhost");
+            X500Name subjectDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=Auth102, CN=localhost");
+            BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
+            Date validityStartDate = new Date(System.currentTimeMillis() - 100000);
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.YEAR, 10);
+            Date validityEndDate = new Date(calendar.getTime().getTime());
+            SubjectPublicKeyInfo subPubKeyInfo = SubjectPublicKeyInfo.getInstance(certificate.getPublicKey().getEncoded());
+
+            X509v1CertificateBuilder builder = new X509v1CertificateBuilder(issuerDN, serialNumber, validityStartDate,
+                    validityEndDate, subjectDN, subPubKeyInfo);
+            JcaContentSignerBuilder signerBuilder = new JcaContentSignerBuilder(authSignAlgorithm);
+
+
+            X509CertificateHolder holder = builder.build(signerBuilder.build(authPrivateKeyForEntities));
+
+            return new JcaX509CertificateConverter().getCertificate(holder);
+
+        } catch (CertificateException e) {
+            throw new IllegalArgumentException("Problem loading public key " + "file" + "\n" + e.getMessage());
+        } catch (OperatorCreationException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 //    public static Buffer generateSymmetricKey(int size) {

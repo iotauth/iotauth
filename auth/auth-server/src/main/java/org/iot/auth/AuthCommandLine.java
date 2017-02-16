@@ -40,7 +40,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., show re/cp/ta/sk/maps, clean sk, reset sk): ");
+                logger.info("\nEnter command (e.g., show re/cp/ta/sk/maps, clean sk, reset sk, issue cert [ic] ): ");
                 String command = br.readLine();
                 command = command.trim();
                 if (command.length() == 0) {
@@ -87,6 +87,10 @@ public class AuthCommandLine extends Thread  {
                         logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
                         throw new RuntimeException("Exception occurred while deleting all session keys!");
                     }
+                }
+                else if (command.equals("issue cert") || command.equals("ic")) {
+                    logger.info("\nIssue certificate command\n");
+                    server.issueCertificate();
                 }
                 else {
                     logger.info("Unrecognized command: {}", command);

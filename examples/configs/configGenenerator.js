@@ -196,14 +196,16 @@ function getListeningServerInfo(netId, server) {
     return listeningServerInfo;
 }
 
-function getEntityConfig(netId, entity) {
+function getEntityConfig(netId, entity, numNets) {
     var entityConfig = {};
     entityConfig.entityInfo = getEntityInfo(netId, entity.name);
     entityConfig.authInfo = getAuthInfo(netId, entity.name);
     entityConfig.cryptoInfo = getCryptoInfo(entity.name);
     if (entity.name.toLowerCase().includes('client')) {
-        var targetServerInfoList = getTargetServerInfoList(1, entity.name);
-        targetServerInfoList = targetServerInfoList.concat(getTargetServerInfoList(2, entity.name));
+        var targetServerInfoList = [];
+        for (var otherNetId = 1; otherNetId <= numNets; otherNetId++) {
+            targetServerInfoList = targetServerInfoList.concat(getTargetServerInfoList(otherNetId, entity.name));
+        }
         entityConfig.targetServerInfoList = targetServerInfoList;
     }
     if (entity.name.toLowerCase().includes('server')) {
@@ -232,7 +234,7 @@ function getEntityConfigs(numNets) {
             'entityConfigList': []
         };
         for (var i = 0; i < entityList.length; i++) {
-            netConfig.entityConfigList.push(getEntityConfig(netId, entityList[i]));
+            netConfig.entityConfigList.push(getEntityConfig(netId, entityList[i], numNets));
         }
         netConfigList.push(netConfig);
     }
@@ -347,7 +349,7 @@ function generateRegisteredEntityTables(registeredEntityTableList) {
         }
         var fileName = 'Auth' + registeredEntityTable.authId + 'RegisteredEntityTable.config';
         var configFilePath = dirName + fileName;
-        console.log('Writing entityConfig to ' + configFilePath + ' ...');
+        console.log('Writing Auth config to ' + configFilePath + ' ...');
         fs.writeFileSync(configFilePath,
             JSON2.stringify(registeredEntityTable.registeredEntityList, null, '\t'),
             'utf8'
@@ -397,7 +399,7 @@ function generateCommunicationPolicyTables(numberOfAuths) {
         var dirName = AUTH_DB_DIR + 'auth' + authId + '/configs/';
         var fileName = 'Auth' + authId + 'CommunicationPolicyTable.config';
         var configFilePath = dirName + fileName;
-        console.log('Writing entityConfig to ' + configFilePath + ' ...');
+        console.log('Writing Auth config to ' + configFilePath + ' ...');
         fs.writeFileSync(configFilePath, JSON2.stringify(policyList, null, '\t'), 'utf8');
     }
 }
@@ -421,8 +423,40 @@ function generateTrustedAuthTables(numberOfAuths) {
         var dirName = AUTH_DB_DIR + 'auth' + myAuthId + '/configs/';
         var fileName = 'Auth' + myAuthId + 'TrustedAuthTable.config';
         var configFilePath = dirName + fileName;
-        console.log('Writing entityConfig to ' + configFilePath + ' ...');
+        console.log('Writing Auth config to ' + configFilePath + ' ...');
         fs.writeFileSync(configFilePath, JSON2.stringify(trustedAuthList, null, '\t'), 'utf8');
+    }
+}
+
+function generatePropertiesFiles(numberOfAuths) {
+    for (var netId = 1; netId <= numberOfAuths; netId++) {
+        var authId = getAuthId(netId);
+        var authPortBase = getAuthPortBase(netId);
+        var authDBDir = '../databases/auth' + authId;
+        var authKeystorePrefix = authDBDir + '/my_keystores/Auth' + authId;
+        var properties = {
+            'auth_id': authId,
+            'host_name': '0.0.0.0',
+            'entity_tcp_port': authPortBase,
+            'entity_tcp_port_timeout': 2000,
+            'entity_udp_port': authPortBase + 2, 
+            'entity_udp_port_timeout': 5000,
+            'trusted_auth_port': authPortBase + 1,
+            'trusted_auth_port_idle_timeout': 600000,
+            'entity_key_store_path': authKeystorePrefix + 'Entity.pfx',
+            'internet_key_store_path': authKeystorePrefix + 'Internet.pfx',
+            'database_key_store_path': authKeystorePrefix + 'Database.pfx',
+            'trusted_ca_cert_paths': '../credentials/ca/CACert.pem',
+            'auth_database_dir': authDBDir
+        };
+        var strProperties = '';
+        for (var key in properties) {
+            strProperties += (key + '=' + properties[key] + '\n');
+        }
+        var propertiesDir = 'auth/properties/';
+        var propertiesFilePath = propertiesDir + 'exampleAuth' + authId + '.properties';
+        console.log('Writing Auth properties to ' + propertiesFilePath + ' ...');
+        fs.writeFileSync(propertiesFilePath, strProperties, 'utf8');
     }
 }
 
@@ -440,5 +474,6 @@ var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList);
 generateRegisteredEntityTables(registeredEntityTableList);
 generateCommunicationPolicyTables(totalNumberOfNets);
 generateTrustedAuthTables(totalNumberOfNets);
+generatePropertiesFiles(totalNumberOfNets);
 
 //console.log(JSON2.stringify(registeredEntityTableList, null, '\t'));
