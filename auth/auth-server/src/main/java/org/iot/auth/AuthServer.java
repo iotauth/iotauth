@@ -238,7 +238,6 @@ public class AuthServer {
             ExecutionException, InterruptedException
     {
         org.eclipse.jetty.client.api.Request postRequest = clientForTrustedAuths.POST(uri);
-
         for (final Object key: keyVals.keySet()) {
             Object value = keyVals.get(key);
             postRequest.param(key.toString(), value.toString());

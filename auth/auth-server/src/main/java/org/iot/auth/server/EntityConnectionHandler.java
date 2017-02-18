@@ -266,6 +266,7 @@ public abstract class EntityConnectionHandler {
         SymmetricKeyCryptoSpec cryptoSpec = null;
         List<SessionKey> sessionKeyList = null;
         switch (reqPurpose.getTargetType()) {
+            // If a target or publish-topic is specified, generate new keys
             case TARGET_GROUP:
             case PUBLISH_TOPIC: {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
@@ -283,6 +284,7 @@ public abstract class EntityConnectionHandler {
                         sessionKeyReqMessage.getNumKeys(), communicationPolicy, sessionKeyPurpose);
                 break;
             }
+            // If a subscribe-topic is specified, derive the keys from DB
             case SUBSCRIBE_TOPIC: {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
@@ -299,6 +301,7 @@ public abstract class EntityConnectionHandler {
                 }
                 break;
             }
+            // If a session key id is specified, derive the keys from DB
             case SESSION_KEY_ID: {
                 Object objTarget = reqPurpose.getTarget();
                 SessionKey sessionKey = null;
@@ -335,6 +338,7 @@ public abstract class EntityConnectionHandler {
 
                 break;
             }
+            // If ID of the Auth who caches the keys is specified, talk to that Auth.
             case CACHED_SESSION_KEYS: {
                 Object objTarget = reqPurpose.getTarget();
                 getLogger().debug("objTarget class: {}", objTarget.getClass());

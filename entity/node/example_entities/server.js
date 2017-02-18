@@ -222,12 +222,12 @@ function commandInterpreter() {
             console.log(util.inspect(sessionKeyCacheForSubscribe));
         }
         else if (command == 'skReq') {
-            console.log('skReqSub (Session key request for target subscribe topic) command');
+            console.log('skReq (Session key request for cached keys that will be used by clients) command');
             var numKeys = 3;
             if (message != undefined) {
                 numKeys = parseInt(message);
             }
-            // specify auth ID
+            // specify auth ID as a value
             sendSessionKeyRequest({cachedKeys: 101}, numKeys, {targetSessionKeyCache: 'Clients'});
         }
         else if (command == 'skReqSub') {

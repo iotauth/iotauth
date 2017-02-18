@@ -78,7 +78,7 @@ public class SessionKeyReqPurpose {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqPurpose.class);
 
-
+    // purpose keys
     private final String group = "group";
     private final String pubTopic = "pubTopic";
     private final String subTopic = "subTopic";
