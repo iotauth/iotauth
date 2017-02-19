@@ -15,7 +15,6 @@
 
 package org.iot.auth;
 
-import com.intel.bluetooth.BluetoothServerConnection;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -25,7 +24,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
-//import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -39,13 +37,13 @@ import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.message.AuthHelloMessage;
+import org.iot.auth.message.AuthSessionKeyReqMessage;
 import org.iot.auth.message.MessageType;
 import org.iot.auth.server.CommunicationTargetType;
 import org.iot.auth.server.EntityTcpConnectionHandler;
 import org.iot.auth.server.EntityUdpConnectionHandler;
 import org.iot.auth.server.TrustedAuthConnectionHandler;
 import org.iot.auth.util.ExceptionToString;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.BASE64Encoder;
@@ -54,7 +52,6 @@ import sun.security.provider.X509Factory;
 import javax.bluetooth.DiscoveryAgent;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
-//import javax.microedition.io.Connector;
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
@@ -205,7 +202,7 @@ public class AuthServer {
      * Starts Auth server
      * @throws Exception When any exception occurs
      */
-    public void begin() throws Exception {
+    private void begin() throws Exception {
         EntityBluetoothListener entityBluetoothListener = new EntityBluetoothListener(this);
         entityBluetoothListener.start();
 
@@ -228,21 +225,16 @@ public class AuthServer {
      * Send POST request to the trusted Auth, using HTTPS client, clientForTrustedAuths, this is why this method is
      * within AuthServer, not TrustedAuthConnectionHandler.
      * @param uri Host and port number of the trusted Auth.
-     * @param keyVals Message to be sent to the trusted Auth, in JSON object format.
+     * @param authSessionKeyReqMessage Message to be sent to the trusted Auth.
      * @return HTTP response from the trusted Auth
-     * @throws TimeoutException
-     * @throws ExecutionException
-     * @throws InterruptedException
+     * @throws TimeoutException When timeout occurs.
+     * @throws ExecutionException When an execution error occurs.
+     * @throws InterruptedException When the request is interrupted.
      */
-    public ContentResponse performPostRequest(String uri, JSONObject keyVals) throws TimeoutException,
-            ExecutionException, InterruptedException
+    public ContentResponse performPostRequest(String uri, AuthSessionKeyReqMessage authSessionKeyReqMessage)
+            throws TimeoutException, ExecutionException, InterruptedException
     {
-        org.eclipse.jetty.client.api.Request postRequest = clientForTrustedAuths.POST(uri);
-        for (final Object key: keyVals.keySet()) {
-            Object value = keyVals.get(key);
-            postRequest.param(key.toString(), value.toString());
-        }
-        return postRequest.send();
+        return authSessionKeyReqMessage.sendAsHttpRequest(clientForTrustedAuths.POST(uri));
     }
 
     //////////////////////////////////////////////////
@@ -273,11 +265,11 @@ public class AuthServer {
     public String trustedAuthsToString() { return db.trustedAuthsToString(); }
     /**
      * Method for exposing an AuthDB operation, addSessionKeyOwner
-     * @param keyID
-     * @param newOwner
-     * @return
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @param keyID ID for specifying the session key to be updated.
+     * @param newOwner A new owner (entity) of the session key specified.
+     * @return Whether the operation succeeded.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
      */
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         return db.addSessionKeyOwner(keyID, newOwner);
@@ -285,10 +277,10 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, getCommunicationPolicy
-     * @param reqGroup
-     * @param targetType
-     * @param target
-     * @return
+     * @param reqGroup The requesting group's name in communication policy.
+     * @param targetType The type of the target for communication.
+     * @param target The target's name - can be a group's name or publish-subscribe topic.
+     * @return Communication policy found, or {@code null} if the specified communication policy does not exist.
      */
     public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
         return db.getCommunicationPolicy(reqGroup, targetType, target);
@@ -296,10 +288,10 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, updateDistributionKey
-     * @param entityName
-     * @param distributionKey
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @param entityName The name of entity whose distribution key will be updated.
+     * @param distributionKey New distribution key to be updated with.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
      */
     public void updateDistributionKey(String entityName, DistributionKey distributionKey)
             throws SQLException, ClassNotFoundException {
@@ -308,13 +300,13 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, generateSessionKeys
-     * @param owner
-     * @param numKeys
-     * @param communicationPolicy
-     * @return
-     * @throws IOException
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @param owner The owner who will own the generated session keys.
+     * @param numKeys The number of keys specified.
+     * @param communicationPolicy The communication policy specified.
+     * @return A list of session keys.
+     * @throws IOException If an error occurs in IO.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
      */
     public List<SessionKey> generateSessionKeys(String owner, int numKeys, CommunicationPolicy communicationPolicy,
                                                 SessionKeyPurpose sessionKeyPurpose)
@@ -324,10 +316,10 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, getSessionKeyByID
-     * @param keyID
-     * @return
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @param keyID ID of the session key to be found.
+     * @return Session key specified by keyID, or {@code null} if there is no such session.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
      */
     public SessionKey getSessionKeyByID(long keyID) throws SQLException, ClassNotFoundException {
         return db.getSessionKeyByID(keyID);
@@ -335,11 +327,11 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, getSessionKeysByPurpose
-     * @param requestingEntityName
-     * @param sessionKeyPurpose
-     * @return
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @param requestingEntityName The name of the requester entity.
+     * @param sessionKeyPurpose Session key purpose specified for finding session keys.
+     * @return A list of session keys.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
      */
     public List<SessionKey> getSessionKeysByPurpose(String requestingEntityName, SessionKeyPurpose sessionKeyPurpose)
             throws SQLException, ClassNotFoundException {
@@ -348,9 +340,9 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, sessionKeysToString
-     * @return
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @return Session keys in string with newline separators.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
      */
     public String sessionKeysToString() throws SQLException, ClassNotFoundException {
         return db.sessionKeysToString();
@@ -359,8 +351,6 @@ public class AuthServer {
     /**
      * Method for exposing an AuthDB operation, getTrustedAuthIDByCertificate
      * @return
-     * @throws SQLException
-     * @throws ClassNotFoundException
      */
     public int getTrustedAuthIDByCertificate(X509Certificate cert) {
         return db.getTrustedAuthIDByCertificate(cert);
@@ -368,9 +358,9 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, getRegisteredEntity
-     * @return
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @param entityName The name of entity to be found.
+     * @return RegisteredEntity object specified the entityName, or
+     *         {@code null} if TrustedAuth cannot be found.
      */
     public RegisteredEntity getRegisteredEntity(String entityName) {
         return db.getRegisteredEntity(entityName);
@@ -378,8 +368,9 @@ public class AuthServer {
 
     /**
      *  Method for exposing an AuthDB operation, getTrustedAuthInfo
-     * @param authID
-     * @return
+     * @param authID ID of the trusted Auth to be found.
+     * @return TrustedAuth object specified by ID, or
+     *         {@code null} if TrustedAuth cannot be found.
      */
     public TrustedAuth getTrustedAuthInfo(int authID) {
         return db.getTrustedAuthInfo(authID);
@@ -387,8 +378,6 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, cleanExpiredSessionKeys
-     * @throws SQLException
-     * @throws ClassNotFoundException
      */
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
         db.cleanExpiredSessionKeys();
@@ -396,8 +385,6 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, deleteAllSessionKeys
-     * @throws SQLException
-     * @throws ClassNotFoundException
      */
     public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {
         db.deleteAllSessionKeys();
@@ -413,10 +400,10 @@ public class AuthServer {
      * @param properties Auth server's properties to get paths for key stores and certificates
      * @param authKeyStorePassword Password for Auth's key store that is used for communication with trusted Auths
      * @return HTTPS server object
-     * @throws CertificateException
-     * @throws NoSuchAlgorithmException
-     * @throws KeyStoreException
-     * @throws IOException
+     * @throws CertificateException When there is a problem with certificate.
+     * @throws NoSuchAlgorithmException If the specified algorithm cannot be found.
+     * @throws KeyStoreException When there is a problem with accessing key store.
+     * @throws IOException If there is a problem in IO.
      */
     private Server initServerForTrustedAuths(AuthServerProperties properties, String authKeyStorePassword)
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException
@@ -467,10 +454,10 @@ public class AuthServer {
      * @param properties Auth server's properties to get paths for key stores and certificates
      * @param authKeyStorePassword Password for Auth's key store that is used for communication with trusted Auths
      * @return HTTPS client object
-     * @throws CertificateException
-     * @throws NoSuchAlgorithmException
-     * @throws KeyStoreException
-     * @throws IOException
+     * @throws CertificateException When there is a problem with certificate.
+     * @throws NoSuchAlgorithmException If the specified algorithm cannot be found.
+     * @throws KeyStoreException When there is a problem with accessing key store.
+     * @throws IOException If there is a problem in IO.
      */
     private HttpClient initClientForTrustedAuths(AuthServerProperties properties, String authKeyStorePassword)
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException
@@ -662,11 +649,7 @@ public class AuthServer {
                             continue;
                         }
                         Buffer authNonce = nonceMapForUdpPortListener.get(addressKey);
-                        if (authNonce == null) {
-                            // send alert
-                            continue;
-                        }
-                        else {
+                        if (authNonce != null) {
                             // handle this
                             // let it put to response map
                             // and send the response
@@ -685,7 +668,6 @@ public class AuthServer {
                     */
                 } catch (IOException e) {
                     logger.error("IOException in Entity UDP Port Listener {}", ExceptionToString.convertExceptionToStackTrace(e));
-                    continue;
                 }
             }
         }

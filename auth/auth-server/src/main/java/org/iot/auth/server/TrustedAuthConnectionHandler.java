@@ -24,20 +24,17 @@ import org.iot.auth.db.TrustedAuth;
 import org.iot.auth.message.AuthSessionKeyReqMessage;
 import org.iot.auth.message.AuthSessionKeyRespMessage;
 import org.iot.auth.util.ExceptionToString;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A handler class for connections from other trusted Auths
@@ -53,17 +50,6 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         this.server = server;
     }
 
-    @SuppressWarnings("unchecked")
-    private JSONObject convertRequestToJSONObject(Request request) {
-        JSONObject jsonObject = new JSONObject();
-        Map<String,String[]> params = request.getParameterMap();
-        for (Map.Entry<String,String[]> entry : params.entrySet()) {
-            String v[] = entry.getValue();
-            Object o = (v.length == 1) ? v[0] : v;
-            jsonObject.put(entry.getKey(), o);
-        }
-        return jsonObject;
-    }
 
     /**
      * This method implements the handle method of AbstractHandler interface, for handling a HTTP request.
@@ -95,13 +81,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
 
         logger.info("Requesting Auth info: {}", requestingAuthInfo.toBriefString());
 
-        BufferedReader br = baseRequest.getReader();
-
-        JSONObject jsonObject = convertRequestToJSONObject(baseRequest);
-
-        logger.info("Received JSON: {}", jsonObject.toJSONString());
-
-        AuthSessionKeyReqMessage authSessionKeyReqMessage = AuthSessionKeyReqMessage.fromJSONObject(jsonObject);
+        AuthSessionKeyReqMessage authSessionKeyReqMessage = AuthSessionKeyReqMessage.fromHttpRequest(baseRequest);
         logger.info("Received AuthSessionKeyReqMessage: {}", authSessionKeyReqMessage.toString());
 
         List<SessionKey> sessionKeyList = null;
@@ -146,21 +126,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         }
 
         AuthSessionKeyRespMessage authSessionKeyRespMessage = new AuthSessionKeyRespMessage(sessionKeyList);
-
-        StringBuilder sb = new StringBuilder();
-        while (br.ready()) {
-            sb.append(br.readLine());
-        }
-        String currentData = sb.toString();
-        logger.info("Received contents: {} ", currentData);
-
-        // Declare response encoding and types
-        response.setContentType("text/html; charset=utf-8");
-        // Declare response status code
-        response.setStatus(HttpServletResponse.SC_OK);
-
-        // Write back response
-        response.getWriter().println(authSessionKeyRespMessage.toJSONObject().toJSONString());
+        authSessionKeyRespMessage.sendAsHttpResponse(response);
 
         // Inform jetty that this request has now been handled
         baseRequest.setHandled(true);

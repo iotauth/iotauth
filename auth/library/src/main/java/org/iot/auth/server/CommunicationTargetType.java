@@ -38,22 +38,20 @@ public enum CommunicationTargetType {
     }
 
     public static CommunicationTargetType fromStringValue(String value) {
-        if (value.equals("Group")) {
-            return TARGET_GROUP;
-        }
-        else if (value.equals("PubTopic")) {
-            return PUBLISH_TOPIC;
-        }
-        else if (value.equals("SubTopic")) {
-            return SUBSCRIBE_TOPIC;
-        }
-        else {
-            return UNKNOWN;
+        switch (value) {
+            case "Group":
+                return TARGET_GROUP;
+            case "PubTopic":
+                return PUBLISH_TOPIC;
+            case "SubTopic":
+                return SUBSCRIBE_TOPIC;
+            default:
+                return UNKNOWN;
         }
     }
 
     private static final Map<Integer, CommunicationTargetType> typesByValue =
-            new HashMap<Integer, CommunicationTargetType>();
+            new HashMap<>();
 
     static {
         for (CommunicationTargetType type : CommunicationTargetType.values()) {

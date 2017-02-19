@@ -397,20 +397,19 @@ public abstract class EntityConnectionHandler {
         getLogger().info("Sending auth session key req to Auth {}", trustedAuthID);
         TrustedAuth trustedAuth = server.getTrustedAuthInfo(trustedAuthID);
 
-        ContentResponse res;
+        ContentResponse contentResponse;
         try {
-            res = server.performPostRequest(
+            contentResponse = server.performPostRequest(
                     "https://" + trustedAuth.getHost() + ":" + trustedAuth.getPort(),
-                    authSessionKeyReqMessage.toJSONObject());
+                    authSessionKeyReqMessage);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             getLogger().error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
             throw new RuntimeException();
         }
 
-        getLogger().info("Received contents via https {}", res.getContentAsString());
+        getLogger().info("Received contents via https {}", contentResponse.getContentAsString());
 
-        AuthSessionKeyRespMessage authSessionKeyRespMessage = AuthSessionKeyRespMessage.fromJSONObject(
-                (JSONObject) new JSONParser().parse(res.getContentAsString()));
+        AuthSessionKeyRespMessage authSessionKeyRespMessage = AuthSessionKeyRespMessage.fromHttpResponse(contentResponse);
 
         getLogger().info("Received AuthSessionKeyRespMessage: {}", authSessionKeyRespMessage.toString());
         List<SessionKey> sessionKeyList = authSessionKeyRespMessage.getSessionKeyList();

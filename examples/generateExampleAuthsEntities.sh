@@ -7,7 +7,7 @@ AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
 # number of networks (Auths)
-NUM_NETS=4
+NUM_NETS=2
 
 read -s -p "Enter new password for Auth: " MASTER_PASSWORD
 

@@ -15,12 +15,15 @@
 
 package org.iot.auth.message;
 
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.iot.auth.db.SessionKey;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,17 +37,35 @@ import java.util.List;
  * } </pre>
  * @author Hokeun Kim
  */
-public class AuthSessionKeyRespMessage {
+public class AuthSessionKeyRespMessage extends TrustedAuthMessasge {
     private enum key {
         SessionKey,
         SessionKeyList
     }
+    private List<SessionKey> sessionKeyList;
     public AuthSessionKeyRespMessage(List<SessionKey> sessionKeyList) {
         this.sessionKeyList = sessionKeyList;
     }
 
+    public List<SessionKey> getSessionKeyList() {
+        return sessionKeyList;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Session key List: \n");
+        for (SessionKey sessionKey : sessionKeyList) {
+            sb.append(sessionKey.toString() + "\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Internal helper function to convert AuthSessionKeyResp object to JSON object.
+     * @return JSONObject converted from AuthSessionKeyResp.
+     */
     @SuppressWarnings("unchecked")
-    public JSONObject toJSONObject() {
+    private JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray = new JSONArray();
 
@@ -57,10 +78,25 @@ public class AuthSessionKeyRespMessage {
 
         return jsonObject;
     }
-    public List<SessionKey> getSessionKeyList() {
-        return sessionKeyList;
+
+    /**
+     * Send Auth session key response as HTTP response.
+     * @param response HTTP response object used to send Auth session key response.
+     * @throws IOException If a problem occurs while writing the response.
+     */
+    public void sendAsHttpResponse(HttpServletResponse response) throws IOException {
+        // Declare response encoding and types
+        response.setContentType("text/html; charset=utf-8");
+        // Declare response status code
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        // Write back response
+        //response.getOutputStream().
+        response.getWriter().println(toJSONObject().toJSONString());
     }
-    public static AuthSessionKeyRespMessage fromJSONObject(JSONObject jsonObject) throws ParseException {
+
+    // To receive session key response as HTTP response
+    private static AuthSessionKeyRespMessage fromJSONObject(JSONObject jsonObject) throws ParseException {
         String sessionKeyListStr = jsonObject.get(key.SessionKeyList.name()).toString();
 
         JSONArray objArray = (JSONArray) new JSONParser().parse(sessionKeyListStr);
@@ -74,13 +110,16 @@ public class AuthSessionKeyRespMessage {
 
         return new AuthSessionKeyRespMessage(sessionKeyList);
     }
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Session key List: \n");
-        for (SessionKey sessionKey : sessionKeyList) {
-            sb.append(sessionKey.toString() + "\n");
-        }
-        return sb.toString();
+
+    /**
+     * Receive Auth session key response as HTTP response and convert it to AuthSessionRespMessage.
+     * @param contentResponse HTTP response received.
+     * @return New AuthSessionRespMessage object converted from HTTP response.
+     * @throws ParseException If an error occurs while parsing the HTTP response.
+     */
+    public static AuthSessionKeyRespMessage fromHttpResponse(ContentResponse contentResponse)
+            throws ParseException
+    {
+        return fromJSONObject((JSONObject) new JSONParser().parse(contentResponse.getContentAsString()));
     }
-    private List<SessionKey> sessionKeyList;
 }

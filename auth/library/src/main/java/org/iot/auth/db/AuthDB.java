@@ -68,12 +68,12 @@ public class AuthDB {
     /**
      * Initializes Auth's database by loading database tables
      * @param authKeyStorePassword Password for key stores and trust store for storing certificates of trusted Auths
-     * @throws IOException
-     * @throws CertificateException
-     * @throws NoSuchAlgorithmException
-     * @throws KeyStoreException
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @throws IOException When an error occurs in IO
+     * @throws CertificateException When an error occurs while processing the certificate
+     * @throws NoSuchAlgorithmException When there is no specified algorithm for keystores
+     * @throws KeyStoreException When an error occurs while accessing the key store
+     * @throws SQLException When an error occurs in database
+     * @throws ClassNotFoundException When a specified class is not found
      */
     public void initialize(String authKeyStorePassword, String databaseKeystorePath) throws IOException, CertificateException,
             NoSuchAlgorithmException, KeyStoreException, SQLException, ClassNotFoundException, UnrecoverableEntryException
@@ -146,28 +146,28 @@ public class AuthDB {
     }
 
     /**
+     * Generate session keys and cache the generaged session keys.
      *
-     * @param authID
-     * @param owner
-     * @param numKeys
-     * @param communicationPolicy
-     * @return
-     * @throws IOException
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @param authID ID of the Auth who generates the session keys
+     * @param owner Name of the owner (entity) for the generated session keys
+     * @param numKeys Number of keys to be generated
+     * @param communicationPolicy Corresponding communication policy for the generated session keys
+     * @return A list of generated session keys
+     * @throws IOException When an error occurs in IO
+     * @throws SQLException When an error occurs in database
+     * @throws ClassNotFoundException When a specified class is not found
      */
     public List<SessionKey> generateSessionKeys(int authID, String owner, int numKeys,
                                                 CommunicationPolicy communicationPolicy,
                                                 SessionKeyPurpose sessionKeyPurpose)
             throws IOException, SQLException, ClassNotFoundException
     {
-        List<SessionKey> sessionKeyList = new LinkedList<SessionKey>();
+        List<SessionKey> sessionKeyList = new LinkedList<>();
 
         String value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.SessionKeyCount.name());
         long sessionKeyCount = Long.parseLong(value);
 
-        // FIXME: Create SessionKeyPurpose class and handle it here
-        String purpose = communicationPolicy.getTargetType().name() + ":" + communicationPolicy.getTarget();
+        //String purpose = communicationPolicy.getTargetType().name() + ":" + communicationPolicy.getTarget();
         for (long i = 0; i < numKeys; i++) {
             long curSessionKeyIndex = sessionKeyCount + i;
             // TODO: work on authID encoding
@@ -222,10 +222,21 @@ public class AuthDB {
         sqLiteConnector.deleteAllCachedSessionKeys();
     }
 
+    /**
+     * Get the information object of trusted Auth by its ID.
+     * @param authID ID of the trusted Auth to be found.
+     * @return Information object of trusted Auth.
+     */
     public TrustedAuth getTrustedAuthInfo(int authID) {
         return trustedAuthMap.get(authID);
     }
 
+    /**
+     * Convert session keys into string for display
+     * @return String with session keys separated with newlines
+     * @throws SQLException When an exception occurs in database
+     * @throws ClassNotFoundException When a specified class is not found.
+     */
     public String sessionKeysToString() throws SQLException, ClassNotFoundException {
         StringBuilder sb = new StringBuilder();
 
@@ -346,7 +357,7 @@ public class AuthDB {
         }
     }
 
-    public static long encodeSessionKeyID(int authID, long keyIndex) {
+    private static long encodeSessionKeyID(int authID, long keyIndex) {
         return authID * 100000 + keyIndex;
     }
     public static int decodeAuthIDFromSessionKeyID(long sessionKeyID) {
