@@ -37,7 +37,7 @@ import java.util.concurrent.TimeoutException;
  * } </pre>
  * @author Hokeun Kim
  */
-public class AuthSessionKeyReqMessage extends TrustedAuthMessasge {
+public class AuthSessionKeyReqMessage extends TrustedAuthReqMessasge {
     private enum key {
         KeyID,
         EntityName,
@@ -88,6 +88,7 @@ public class AuthSessionKeyReqMessage extends TrustedAuthMessasge {
             throws TimeoutException, ExecutionException, InterruptedException
     {
         JSONObject jsonObject = this.toJSONObject();
+        postRequest.param(TrustedAuthReqMessasge.TYPE, type.AUTH_SESSION_KEY_REQ.name());
         for (final Object key: jsonObject.keySet()) {
             Object value = jsonObject.get(key);
             postRequest.param(key.toString(), value.toString());

@@ -54,4 +54,10 @@ public class DistributionKey extends SymmetricKey {
         buf.concat(getSerializedKeyVal());
         return buf;
     }
+    public static DistributionKey fromBuffer(SymmetricKeyCryptoSpec cryptoSpec, Buffer buffer) {
+        int curIndex = 0;
+        long expirationTime = buffer.getNumber(curIndex, DIST_KEY_EXPIRATION_TIME_SIZE);
+        curIndex += DIST_KEY_EXPIRATION_TIME_SIZE;
+        return new DistributionKey(cryptoSpec, expirationTime, buffer.slice(curIndex));
+    }
 }

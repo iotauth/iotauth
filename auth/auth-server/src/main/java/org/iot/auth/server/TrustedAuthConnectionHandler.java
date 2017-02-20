@@ -21,8 +21,10 @@ import org.iot.auth.AuthServer;
 import org.iot.auth.db.SessionKey;
 import org.iot.auth.db.SessionKeyPurpose;
 import org.iot.auth.db.TrustedAuth;
+import org.iot.auth.message.AuthBackupReqMessage;
 import org.iot.auth.message.AuthSessionKeyReqMessage;
 import org.iot.auth.message.AuthSessionKeyRespMessage;
+import org.iot.auth.message.TrustedAuthReqMessasge;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +33,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +85,21 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
 
         logger.info("Requesting Auth info: {}", requestingAuthInfo.toBriefString());
 
+        String authReqType = (String)baseRequest.getParameter(TrustedAuthReqMessasge.TYPE);
+        if (authReqType.equals(TrustedAuthReqMessasge.type.AUTH_SESSION_KEY_REQ.name())) {
+            handleAuthSessionKeyReq(baseRequest, response);
+        }
+        else if(authReqType.equals(TrustedAuthReqMessasge.type.BACKUP_REQ.name())) {
+            try {
+                handleBackupReq(baseRequest, response);
+            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                logger.error("Exception while handling Auth backup request {}", ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException();
+            }
+        }
+    }
+
+    private void handleAuthSessionKeyReq(Request baseRequest, HttpServletResponse response) throws IOException {
         AuthSessionKeyReqMessage authSessionKeyReqMessage = AuthSessionKeyReqMessage.fromHttpRequest(baseRequest);
         logger.info("Received AuthSessionKeyReqMessage: {}", authSessionKeyReqMessage.toString());
 
@@ -130,6 +149,11 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
 
         // Inform jetty that this request has now been handled
         baseRequest.setHandled(true);
+    }
+
+    private void handleBackupReq(Request baseRequest, HttpServletResponse response)
+            throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+        AuthBackupReqMessage authBackupReqMessage = AuthBackupReqMessage.fromHttpRequest(baseRequest);
     }
 
     private AuthServer server;

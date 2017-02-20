@@ -50,7 +50,7 @@ public class RegisteredEntityTable {
     private String group;
     private String distProtocol;
     private boolean usePermanentDistKey;
-    private PublicKey publicKey;
+    private PublicKey publicKey = null;
     private String publicKeyFile;
     private String distKeyValidityPeriod;
     private String publicKeyCryptoSpec;
@@ -200,6 +200,7 @@ public class RegisteredEntityTable {
         entity.setDistProtocol(resultSet.getString(c.DistProtocol.name()));
         entity.setPublicKeyFile(resultSet.getString(c.PublKeyFile.name()));
         entity.setUsePermanentDistKey(resultSet.getBoolean(c.UsePermanentDistKey.name()));
+        entity.setPublicKeyCryptoSpec(resultSet.getString(c.PublicKeyCryptoSpec.name()));
         entity.setDistKeyValidityPeriod(resultSet.getString(c.DistKeyValidityPeriod.name()));
         if (!entity.getUsePermanentDistKey()) {
             entity.setPublicKey(AuthCrypto.loadPublicKey(authDatabaseDir + "/" + entity.getPublicKeyFile()));
@@ -211,6 +212,9 @@ public class RegisteredEntityTable {
             entity.setDistKeyExpirationTime(resultSet.getLong(c.DistKeyExpirationTime.name()));
         }
         entity.setMaxSessionKeysPerRequest(resultSet.getInt(c.MaxSessionKeysPerRequest.name()));
+        entity.setActive(resultSet.getBoolean(c.Active.name()));
+        entity.setBackupToAuthID(resultSet.getInt(c.BackupToAuthID.name()));
+        entity.setBackupFromAuthID(resultSet.getInt(c.BackupFromAuthID.name()));
         return entity;
     }
 }

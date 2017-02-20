@@ -15,28 +15,51 @@
 
 package org.iot.auth.db;
 
+import org.bouncycastle.jce.provider.JCERSAPublicKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.io.Buffer;
+import org.iot.auth.io.BufferedString;
+import org.iot.auth.io.VariableLengthInt;
 import org.iot.auth.util.DateHelper;
+import org.json.simple.JSONObject;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 
 /**
  * A class for a registered entity instance.
  * @author Hokeun Kim
  */
 public class RegisteredEntity {
+    private String name;
+    private String group;
+    private String distProtocol;
+    private boolean usePermanentDistKey;
+    private PublicKey publicKey;
+    private String publicKeyCryptoSpec;
+    private long distKeyValidityPeriod;
+    private int maxSessionKeysPerRequest;
+    private SymmetricKeyCryptoSpec distCryptoSpec;
+    private boolean active;
+    private int backupToAuthID;
+    private int backupFromAuthID;
+    private DistributionKey distributionKey = null;
+
     public RegisteredEntity(RegisteredEntityTable tableElement, DistributionKey distributionKey)
     {
         this.name = tableElement.getName();
         this.group = tableElement.getGroup();
         this.distProtocol = tableElement.getDistProtocol();
         this.usePermanentDistKey = tableElement.getUsePermanentDistKey();
+        this.maxSessionKeysPerRequest = tableElement.getMaxSessionKeysPerRequest();
         this.publicKey = tableElement.getPublicKey();
         this.publicKeyCryptoSpec = tableElement.getPublicKeyCryptoSpec();
         this.distKeyValidityPeriod = DateHelper.parseTimePeriod(tableElement.getDistKeyValidityPeriod());
-        this.maxSessionKeysPerRequest = tableElement.getMaxSessionKeysPerRequest();
         this.distCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(tableElement.getDistCryptoSpec());
         this.active = tableElement.isActive();
         this.backupToAuthID = tableElement.getBackupToAuthID();
@@ -52,6 +75,9 @@ public class RegisteredEntity {
     public String getDistProtocol() {
         return distProtocol;
     }
+    public int getMaxSessionKeysPerRequest() {
+        return maxSessionKeysPerRequest;
+    }
     public PublicKey getPublicKey() {
         return publicKey;
     }
@@ -60,9 +86,6 @@ public class RegisteredEntity {
     }
     public DistributionKey getDistributionKey() {
         return distributionKey;
-    }
-    public int getMaxSessionKeysPerRequest() {
-        return maxSessionKeysPerRequest;
     }
     public SymmetricKeyCryptoSpec getDistCryptoSpec() {
         return distCryptoSpec;
@@ -110,17 +133,111 @@ public class RegisteredEntity {
         this.distributionKey = distributionKey;
     }
 
-    private String name;
-    private String group;
-    private String distProtocol;
-    private boolean usePermanentDistKey;
-    private PublicKey publicKey;
-    private String publicKeyCryptoSpec;
-    private long distKeyValidityPeriod;
-    private int maxSessionKeysPerRequest;
-    private SymmetricKeyCryptoSpec distCryptoSpec;
-    private boolean active;
-    private int backupToAuthID;
-    private int backupFromAuthID;
-    private DistributionKey distributionKey = null;
+    private int REG_ENTITY_INT_SIZE = 4;
+
+    // TODO: record the buffer length when concatnating this
+    public Buffer serialize() {
+        // UsePermanentDistKey | Active -> Byte
+        // MaxSessionKeysPerRequest -> INT
+        // BackupToAuthID -> INT
+        // BackupFromAuthID -> INT
+        // DistKeyValidityPeriod -> LONG
+        Buffer buffer = new Buffer(Buffer.BYTE_SIZE + 3 * Buffer.INT_SIZE + Buffer.LONG_SIZE);
+        byte usePermanentDistKeyActive = 0;
+        usePermanentDistKeyActive += (usePermanentDistKey ? 2 : 0);
+        usePermanentDistKeyActive += (active ? 1 : 0);
+        int curIndex = 0;
+
+        buffer.putByte(usePermanentDistKeyActive, curIndex);
+        curIndex += Buffer.BYTE_SIZE;
+        buffer.putInt(maxSessionKeysPerRequest, curIndex);
+        curIndex += Buffer.INT_SIZE;
+        buffer.putInt(backupToAuthID, curIndex);
+        curIndex += Buffer.INT_SIZE;
+        buffer.putInt(backupFromAuthID, curIndex);
+        curIndex += Buffer.INT_SIZE;
+        buffer.putLong(distKeyValidityPeriod, curIndex);
+        curIndex += Buffer.LONG_SIZE;
+
+        // String data
+        buffer.concat(new BufferedString(name).serialize());
+        buffer.concat(new BufferedString(group).serialize());
+        buffer.concat(new BufferedString(distProtocol).serialize());
+        if (publicKeyCryptoSpec == null) {
+            buffer.concat(new BufferedString("").serialize());
+        }
+        else {
+            buffer.concat(new BufferedString(publicKeyCryptoSpec).serialize());
+        }
+        buffer.concat(new BufferedString(distCryptoSpec.toSpecString()).serialize());
+
+        Buffer keyBuffer;
+        if (usePermanentDistKey) {
+            keyBuffer = distributionKey.serialize();
+        }
+        else {
+            keyBuffer = new Buffer(publicKey.getEncoded());
+        }
+        buffer.concat(new VariableLengthInt(keyBuffer.length()).serialize());
+        buffer.concat(keyBuffer);
+        return buffer;
+    }
+
+    public RegisteredEntity(Buffer buffer) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        int curIndex = 0;
+
+        byte usePermanentDistKeyActive = buffer.getByte(curIndex);
+        curIndex += Buffer.BYTE_SIZE;
+
+        this.usePermanentDistKey = (usePermanentDistKeyActive & 2) != 0;
+        this.active = (usePermanentDistKeyActive & 1) != 0;
+
+        this.maxSessionKeysPerRequest = buffer.getInt(curIndex);
+        curIndex += Buffer.INT_SIZE;
+        this.backupToAuthID  = buffer.getInt(curIndex);
+        curIndex += Buffer.INT_SIZE;
+        this.backupFromAuthID  = buffer.getInt(curIndex);
+        curIndex += Buffer.INT_SIZE;
+        this.distKeyValidityPeriod  = buffer.getLong(curIndex);
+        curIndex += Buffer.LONG_SIZE;
+
+        BufferedString bufString;
+        bufString = buffer.getBufferedString(curIndex);
+        curIndex += bufString.length();
+        this.name = bufString.getString();
+        bufString = buffer.getBufferedString(curIndex);
+        curIndex += bufString.length();
+        this.group = bufString.getString();
+        bufString = buffer.getBufferedString(curIndex);
+        curIndex += bufString.length();
+        this.distProtocol = bufString.getString();
+        bufString = buffer.getBufferedString(curIndex);
+        curIndex += bufString.length();
+        this.publicKeyCryptoSpec = bufString.getString();
+        if (this.publicKeyCryptoSpec.length() == 0) {
+            this.publicKeyCryptoSpec = null;
+        }
+        bufString = buffer.getBufferedString(curIndex);
+        curIndex += bufString.length();
+        this.distCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(bufString.getString());
+
+        VariableLengthInt varLenInt = buffer.getVariableLengthInt(curIndex);
+        curIndex += varLenInt.getRawBytes().length;
+        int keyBufferLength = varLenInt.getNum();
+
+        Buffer keyBuffer = buffer.slice(curIndex, curIndex + keyBufferLength);
+        curIndex += keyBufferLength;
+
+        if (usePermanentDistKey) {
+            // parse this to distribution key
+            this.distributionKey = DistributionKey.fromBuffer(this.distCryptoSpec, keyBuffer);
+            //keyBuffer
+        }
+        else {
+            // decode public key
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(keyBuffer.getRawBytes());
+            publicKey = keyFactory.generatePublic(pubSpec);
+        }
+    }
 }

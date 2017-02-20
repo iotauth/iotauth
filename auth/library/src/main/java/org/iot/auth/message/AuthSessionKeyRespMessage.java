@@ -37,7 +37,7 @@ import java.util.List;
  * } </pre>
  * @author Hokeun Kim
  */
-public class AuthSessionKeyRespMessage extends TrustedAuthMessasge {
+public class AuthSessionKeyRespMessage {
     private enum key {
         SessionKey,
         SessionKeyList

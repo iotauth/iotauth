@@ -116,6 +116,14 @@ public class AuthDB {
         return registeredEntityMap.get(entityName);
     }
 
+    /**
+     * Get all registered entities as a list.
+     * @return A list of registered entities.
+     */
+    public List<RegisteredEntity> getAllRegisteredEntitiies() {
+        return new ArrayList<>(registeredEntityMap.values());
+    }
+
     public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
         for (CommunicationPolicy communicationPolicy : communicationPolicyList) {
             if (communicationPolicy.getReqGroup().equals(reqGroup) &&

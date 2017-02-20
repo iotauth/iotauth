@@ -14,7 +14,6 @@ import org.iot.auth.io.VariableLengthInt;
 import org.iot.auth.message.*;
 import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
@@ -395,13 +394,10 @@ public abstract class EntityConnectionHandler {
             int trustedAuthID, AuthSessionKeyReqMessage authSessionKeyReqMessage) throws IOException, ParseException
     {
         getLogger().info("Sending auth session key req to Auth {}", trustedAuthID);
-        TrustedAuth trustedAuth = server.getTrustedAuthInfo(trustedAuthID);
 
         ContentResponse contentResponse;
         try {
-            contentResponse = server.performPostRequest(
-                    "https://" + trustedAuth.getHost() + ":" + trustedAuth.getPort(),
-                    authSessionKeyReqMessage);
+            contentResponse = server.performPostRequestToTrustedAuth(trustedAuthID, authSessionKeyReqMessage);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             getLogger().error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
             throw new RuntimeException();

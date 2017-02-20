@@ -16,7 +16,7 @@
 package org.iot.auth.server;
 
 import org.iot.auth.exception.InvalidSessionKeyTargetException;
-import org.iot.auth.message.TrustedAuthMessasge;
+import org.iot.auth.message.TrustedAuthReqMessasge;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * A class for describing the purpose of session key requests, solely used by EntityConnectionHandler.
  * @author Hokeun Kim
  */
-public class SessionKeyReqPurpose extends TrustedAuthMessasge {
+public class SessionKeyReqPurpose {
     public SessionKeyReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
         // purpose keys
         final String group = "group";

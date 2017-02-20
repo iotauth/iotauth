@@ -40,7 +40,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., show re/cp/ta/sk/maps, clean sk, reset sk, issue cert [ic] ): ");
+                logger.info("\nEnter command (e.g., show re/cp/ta/sk/maps, clean sk, reset sk, issue cert [ic], backup ): ");
                 String command = br.readLine();
                 command = command.trim();
                 if (command.length() == 0) {
@@ -91,6 +91,10 @@ public class AuthCommandLine extends Thread  {
                 else if (command.equals("issue cert") || command.equals("ic")) {
                     logger.info("\nIssue certificate command\n");
                     server.issueCertificate();
+                }
+                else if (command.equals("backup")) {
+                    logger.info("\nBackup command\n");
+                    server.backup();
                 }
                 else {
                     logger.info("Unrecognized command: {}", command);

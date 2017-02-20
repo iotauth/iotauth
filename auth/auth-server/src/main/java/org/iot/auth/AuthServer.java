@@ -36,9 +36,7 @@ import org.iot.auth.config.constants.C;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
-import org.iot.auth.message.AuthHelloMessage;
-import org.iot.auth.message.AuthSessionKeyReqMessage;
-import org.iot.auth.message.MessageType;
+import org.iot.auth.message.*;
 import org.iot.auth.server.CommunicationTargetType;
 import org.iot.auth.server.EntityTcpConnectionHandler;
 import org.iot.auth.server.EntityUdpConnectionHandler;
@@ -224,17 +222,22 @@ public class AuthServer {
     /**
      * Send POST request to the trusted Auth, using HTTPS client, clientForTrustedAuths, this is why this method is
      * within AuthServer, not TrustedAuthConnectionHandler.
-     * @param uri Host and port number of the trusted Auth.
-     * @param authSessionKeyReqMessage Message to be sent to the trusted Auth.
+     * @param trustedAuthID ID of the trusted Auth.
+     * @param trustedAuthReqMessasge Message to be sent to the trusted Auth.
      * @return HTTP response from the trusted Auth
      * @throws TimeoutException When timeout occurs.
      * @throws ExecutionException When an execution error occurs.
      * @throws InterruptedException When the request is interrupted.
      */
-    public ContentResponse performPostRequest(String uri, AuthSessionKeyReqMessage authSessionKeyReqMessage)
+    public ContentResponse performPostRequestToTrustedAuth(int trustedAuthID, TrustedAuthReqMessasge trustedAuthReqMessasge)
             throws TimeoutException, ExecutionException, InterruptedException
     {
-        return authSessionKeyReqMessage.sendAsHttpRequest(clientForTrustedAuths.POST(uri));
+        TrustedAuth trustedAuth = getTrustedAuthInfo(trustedAuthID);
+        if (trustedAuth == null) {
+            throw new RuntimeException("Cannot find trusted Auth ID, " + trustedAuthID);
+        }
+        String uri = "https://" + trustedAuth.getHost() + ":" + trustedAuth.getPort();
+        return trustedAuthReqMessasge.sendAsHttpRequest(clientForTrustedAuths.POST(uri));
     }
 
     //////////////////////////////////////////////////
@@ -504,6 +507,22 @@ public class AuthServer {
         HttpClient clientForTrustedAuths = new HttpClient(sslContextFactory);
 
         return clientForTrustedAuths;
+    }
+
+    public ContentResponse backup() {
+        List<RegisteredEntity> registeredEntities = db.getAllRegisteredEntitiies();
+        AuthBackupReqMessage authBackupReqMessage = new AuthBackupReqMessage(registeredEntities);
+        if (registeredEntities.size() == 0) {
+            logger.info("No registered entities to be backed up.");
+            return null;
+        }
+        int backupToAuthID = registeredEntities.get(0).getBackupToAuthID();
+        try {
+            return performPostRequestToTrustedAuth(backupToAuthID, authBackupReqMessage);
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            logger.error("Exception occurred during backup() {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException();
+        }
     }
 
     private class EntityBluetoothListener extends Thread {
