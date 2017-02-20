@@ -23,6 +23,9 @@ import java.util.Base64;
  * @author Hokeun Kim
  */
 public class Buffer {
+    public static final int BYTE_SIZE = 1;
+    public static final int INT_SIZE = 4;
+    public static final int LONG_SIZE = 8;
 
     public static String toHexString(byte[] bytes, int offset, int length) {
         StringBuilder ret = new StringBuilder();
@@ -101,12 +104,12 @@ public class Buffer {
 
     // 4 bytes
     public void putInt(int value, int index) {
-        putNumber((long) value, index, 4);
+        putNumber((long) value, index, INT_SIZE);
     }
 
     // 8 bytes
     public void putLong(long value, int index) {
-        putNumber(value, index, 8);
+        putNumber(value, index, LONG_SIZE);
     }
 
     public byte getByte(int index) {
@@ -124,7 +127,7 @@ public class Buffer {
             long value = 0;
             for (int i = index; i < index + length; i++) {
                 value <<= 8;
-                value += (long) bytes[i];
+                value += (0xff & bytes[i]);
             }
             return value;
         }
@@ -134,11 +137,11 @@ public class Buffer {
     }
 
     public int getInt(int index) {
-        return (int)getNumber(index, 4);
+        return (int)getNumber(index, INT_SIZE);
     }
 
     public long getLong(int index) {
-        return getNumber(index, 8);
+        return getNumber(index, LONG_SIZE);
     }
 
     // read VariableLengthInt
