@@ -15,19 +15,16 @@
 
 package org.iot.auth.db;
 
-import org.bouncycastle.jce.provider.JCERSAPublicKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.BufferedString;
 import org.iot.auth.io.VariableLengthInt;
 import org.iot.auth.util.DateHelper;
-import org.json.simple.JSONObject;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
@@ -40,15 +37,15 @@ public class RegisteredEntity {
     private String group;
     private String distProtocol;
     private boolean usePermanentDistKey;
-    private PublicKey publicKey;
     private String publicKeyCryptoSpec;
     private long distKeyValidityPeriod;
     private int maxSessionKeysPerRequest;
     private SymmetricKeyCryptoSpec distCryptoSpec;
     private boolean active;
-    private int backupToAuthID;
-    private int backupFromAuthID;
+    private int backupToAuthID = -1;
+    private int backupFromAuthID = -1;
     private DistributionKey distributionKey = null;
+    private PublicKey publicKey;
 
     public RegisteredEntity(RegisteredEntityTable tableElement, DistributionKey distributionKey)
     {
@@ -56,16 +53,54 @@ public class RegisteredEntity {
         this.group = tableElement.getGroup();
         this.distProtocol = tableElement.getDistProtocol();
         this.usePermanentDistKey = tableElement.getUsePermanentDistKey();
-        this.maxSessionKeysPerRequest = tableElement.getMaxSessionKeysPerRequest();
-        this.publicKey = tableElement.getPublicKey();
         this.publicKeyCryptoSpec = tableElement.getPublicKeyCryptoSpec();
         this.distKeyValidityPeriod = DateHelper.parseTimePeriod(tableElement.getDistKeyValidityPeriod());
+        this.maxSessionKeysPerRequest = tableElement.getMaxSessionKeysPerRequest();
         this.distCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(tableElement.getDistCryptoSpec());
         this.active = tableElement.isActive();
         this.backupToAuthID = tableElement.getBackupToAuthID();
         this.backupFromAuthID = tableElement.getBackupFromAuthID();
         this.distributionKey = distributionKey; // Decrypted from database
+        this.publicKey = tableElement.getPublicKey();
     }
+
+    public RegisteredEntityTable toRegisteredEntityTable(String publicKeyFilePath,
+                                                         Buffer serializedDistributionKeyValue,
+                                                         long distKeyExpirationTime) {
+        RegisteredEntityTable tableElement = new RegisteredEntityTable();
+        tableElement.setName(name);
+        tableElement.setGroup(group);
+        tableElement.setDistProtocol(distProtocol);
+        tableElement.setUsePermanentDistKey(usePermanentDistKey);
+        tableElement.setPublicKeyCryptoSpec(publicKeyCryptoSpec);
+        tableElement.setDistKeyValidityPeriod("" + distKeyValidityPeriod);
+        tableElement.setMaxSessionKeysPerRequest(maxSessionKeysPerRequest);
+        tableElement.setDistCryptoSpec(distCryptoSpec.toSpecString());
+        tableElement.setActive(active);
+        tableElement.setBackupToAuthID(backupToAuthID);
+        tableElement.setBackupFromAuthID(backupFromAuthID);
+        if (usePermanentDistKey) {
+            if (serializedDistributionKeyValue == null || distKeyExpirationTime < 0) {
+                throw new RuntimeException("Wrong registered entity information, " +
+                        "uses permanent dist key but no dist key specified.");
+            }
+            else {
+                tableElement.setDistKeyVal(serializedDistributionKeyValue.getRawBytes());
+                tableElement.setDistKeyExpirationTime(distKeyExpirationTime);
+            }
+        }
+        else {
+            if (publicKeyFilePath == null) {
+                throw new RuntimeException("Wrong registered entity information, " +
+                        "does not use permanent dist key but no public key specified.");
+            }
+            else {
+                tableElement.setPublicKeyFile(publicKeyFilePath);
+            }
+        }
+        return tableElement;
+    }
+
     public String getName() {
         return name;
     }
@@ -74,6 +109,9 @@ public class RegisteredEntity {
     }
     public String getDistProtocol() {
         return distProtocol;
+    }
+    public boolean getUsePermanentDistKey() {
+        return usePermanentDistKey;
     }
     public int getMaxSessionKeysPerRequest() {
         return maxSessionKeysPerRequest;
@@ -94,14 +132,21 @@ public class RegisteredEntity {
         return publicKeyCryptoSpec;
     }
 
+    public void setActive(boolean active) { this.active = active; }
     public boolean isActive() {
         return active;
     }
 
+    public void setBackupToAuthID(int backupToAuthID) {
+        this.backupToAuthID = backupToAuthID;
+    }
     public int getBackupToAuthID() {
         return backupToAuthID;
     }
 
+    public void setBackupFromAuthID(int backupFromAuthID) {
+        this.backupFromAuthID = backupFromAuthID;
+    }
     public int getBackupFromAuthID() {
         return backupFromAuthID;
     }

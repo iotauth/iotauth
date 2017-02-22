@@ -18,6 +18,7 @@ package org.iot.auth.server;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.iot.auth.AuthServer;
+import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.SessionKey;
 import org.iot.auth.db.SessionKeyPurpose;
 import org.iot.auth.db.TrustedAuth;
@@ -68,7 +69,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
     public void handle( String target, Request baseRequest, HttpServletRequest request,
                         HttpServletResponse response) throws IOException, ServletException
     {
-        logger.info("Handler reached!, request from: {}:{}",
+        logger.info("Handling request from Trusted Auth at: {}:{}",
                 baseRequest.getRemoteHost(), baseRequest.getRemotePort());
 
         X509Certificate[] certs = (X509Certificate[])request.getAttribute("javax.servlet.request.X509Certificate");
@@ -83,16 +84,18 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
             throw new RuntimeException("Unrecognized Auth");
         }
 
-        logger.info("Requesting Auth info: {}", requestingAuthInfo.toBriefString());
+        logger.info("Information of Trusted Auth which sent the request: {}", requestingAuthInfo.toBriefString());
 
         String authReqType = (String)baseRequest.getParameter(TrustedAuthReqMessasge.TYPE);
         if (authReqType.equals(TrustedAuthReqMessasge.type.AUTH_SESSION_KEY_REQ.name())) {
+            logger.info("The request was {}", TrustedAuthReqMessasge.type.AUTH_SESSION_KEY_REQ.name());
             handleAuthSessionKeyReq(baseRequest, response);
         }
         else if(authReqType.equals(TrustedAuthReqMessasge.type.BACKUP_REQ.name())) {
+            logger.info("The request was {}", TrustedAuthReqMessasge.type.BACKUP_REQ.name());
             try {
-                handleBackupReq(baseRequest, response);
-            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                handleBackupReq(requestingAuthInfo, baseRequest, response);
+            } catch (InvalidKeySpecException | NoSuchAlgorithmException | SQLException | ClassNotFoundException e) {
                 logger.error("Exception while handling Auth backup request {}", ExceptionToString.convertExceptionToStackTrace(e));
                 throw new RuntimeException();
             }
@@ -151,9 +154,16 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         baseRequest.setHandled(true);
     }
 
-    private void handleBackupReq(Request baseRequest, HttpServletResponse response)
-            throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+    private void handleBackupReq(TrustedAuth requestingAuthInfo, Request baseRequest, HttpServletResponse response)
+            throws InvalidKeySpecException, NoSuchAlgorithmException, IOException, SQLException, ClassNotFoundException {
         AuthBackupReqMessage authBackupReqMessage = AuthBackupReqMessage.fromHttpRequest(baseRequest);
+        List<RegisteredEntity> registeredEntities = authBackupReqMessage.getRegisteredEntityList();
+        for (RegisteredEntity registeredEntity: registeredEntities) {
+            registeredEntity.setActive(false);
+            registeredEntity.setBackupToAuthID(-1);
+            registeredEntity.setBackupFromAuthID(requestingAuthInfo.getID());
+        }
+        server.insertRegisteredEntities(authBackupReqMessage.getRegisteredEntityList());
     }
 
     private AuthServer server;

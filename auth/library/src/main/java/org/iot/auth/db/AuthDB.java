@@ -22,6 +22,7 @@ import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.bean.CachedSessionKeyTable;
 import org.iot.auth.db.bean.MetaDataTable;
+import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.exception.UseOfExpiredKeyException;
@@ -32,6 +33,7 @@ import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -122,6 +124,41 @@ public class AuthDB {
      */
     public List<RegisteredEntity> getAllRegisteredEntitiies() {
         return new ArrayList<>(registeredEntityMap.values());
+    }
+
+    public void insertRegisteredEntities(List<RegisteredEntity> registeredEntities) throws IOException,
+            SQLException, ClassNotFoundException {
+        LinkedList<RegisteredEntityTable> tableElements = new LinkedList<>();
+        for (RegisteredEntity registeredEntity: registeredEntities) {
+            Buffer serializedDistributionKeyValue = null;
+            String publicKeyFilePath = null;
+            long distKeyExpirationTime = -1;
+            // save keys first
+            if (registeredEntity.getUsePermanentDistKey()) {
+                // save distribution key as binary value
+                serializedDistributionKeyValue = registeredEntity.getDistributionKey().getSerializedKeyVal();
+                distKeyExpirationTime = registeredEntity.getDistributionKey().getExpirationTime().getTime();
+            }
+            else {
+                // save public key to file
+                String filepath = "entity_certs/" + registeredEntity.getName() + ".der";
+                FileOutputStream fos = new FileOutputStream(this.authDatabaseDir + "/" + filepath);
+                fos.write(registeredEntity.getPublicKey().getEncoded());
+                fos.close();
+                publicKeyFilePath = filepath;
+            }
+
+            RegisteredEntityTable tableElement = registeredEntity.toRegisteredEntityTable(
+                    publicKeyFilePath, serializedDistributionKeyValue, distKeyExpirationTime);
+            // if distribution key exists, encrypt it!
+            if (tableElement.getDistKeyVal() != null) {
+                tableElement.setDistKeyVal(encryptAuthDBData(new Buffer(tableElement.getDistKeyVal())).getRawBytes());
+            }
+
+            tableElements.push(tableElement);
+
+            sqLiteConnector.insertRecords(tableElement);
+        }
     }
 
     public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {

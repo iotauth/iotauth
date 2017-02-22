@@ -15,7 +15,6 @@
 
 package org.iot.auth.db.dao;
 
-import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -234,18 +233,8 @@ public class SQLiteConnector {
         }
 
         preparedStatement.setBoolean(index++, regEntity.isActive());
-        if (regEntity.getBackupToAuthID() < 0) {
-            preparedStatement.setNull(index++, Types.INTEGER);
-        }
-        else {
-            preparedStatement.setInt(index++, regEntity.getBackupToAuthID());
-        }
-        if (regEntity.getBackupFromAuthID() < 0) {
-            preparedStatement.setNull(index++, Types.INTEGER);
-        }
-        else {
-            preparedStatement.setInt(index++, regEntity.getBackupFromAuthID());
-        }
+        preparedStatement.setInt(index++, regEntity.getBackupToAuthID());
+        preparedStatement.setInt(index++, regEntity.getBackupFromAuthID());
 
         preparedStatement.toString();
         if (DEBUG) logger.info("{}",preparedStatement);
@@ -434,7 +423,6 @@ public class SQLiteConnector {
         // It's in auto-commit mode no need for explicit commit
         //_commit();
         return result;
-
     }
 
     /**

@@ -98,7 +98,7 @@ public class AuthServer {
             logger.warn("WARNING! Console is not available, password will appear on screen. Are you sure to continue(y/n)?");
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             String yesOrNo = br.readLine();
-            if (!yesOrNo.equalsIgnoreCase("y")) {
+            if (yesOrNo == null || !yesOrNo.equalsIgnoreCase("y")) {
                 logger.info("Aborting... please run Auth with a console.");
                 System.exit(1);
             }
@@ -391,6 +391,12 @@ public class AuthServer {
      */
     public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {
         db.deleteAllSessionKeys();
+    }
+
+    public void insertRegisteredEntities(List<RegisteredEntity> registeredEntities)
+            throws SQLException, IOException, ClassNotFoundException
+    {
+        db.insertRegisteredEntities(registeredEntities);
     }
     //////////////////////////////////////////////////
     ///

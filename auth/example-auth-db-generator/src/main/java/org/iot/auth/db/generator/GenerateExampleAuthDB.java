@@ -32,6 +32,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.omg.SendingContext.RunTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -279,13 +280,18 @@ public class GenerateExampleAuthDB {
         return new Buffer(byteArray, numBytes);
     }
 
+    private static byte[] encryptDataWithDatabaseKey(SymmetricKey databaseKey, byte[] data)
+            throws UseOfExpiredKeyException {
+        return databaseKey.encryptAuthenticate(new Buffer(data)).getRawBytes();
+    }
+
     private static byte[] loadEncryptDistributionKey(SymmetricKey databaseKey,
                                                      String cipherKeyPath,
                                                      String macKeyPath) throws IOException, UseOfExpiredKeyException {
         Buffer rawCipherKeyVal = readSymmetricKey(cipherKeyPath);
         Buffer rawMackeyVal = readSymmetricKey(macKeyPath);
         Buffer serializedKeyVal = SymmetricKey.getSerializedKeyVal(rawCipherKeyVal, rawMackeyVal);
-        return databaseKey.encryptAuthenticate(serializedKeyVal).getRawBytes();
+        return encryptDataWithDatabaseKey(databaseKey, serializedKeyVal.getRawBytes());
     }
 
     private static final Logger logger = LoggerFactory.getLogger(GenerateExampleAuthDB.class);

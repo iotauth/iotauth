@@ -25,6 +25,10 @@ public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
         this.registeredEntityList = registeredEntityList;
     }
 
+    public List<RegisteredEntity> getRegisteredEntityList() {
+        return registeredEntityList;
+    }
+
     // Because of the class name conflict of Request (client's or server's)
     public ContentResponse sendAsHttpRequest(org.eclipse.jetty.client.api.Request postRequest)
             throws TimeoutException, ExecutionException, InterruptedException
@@ -51,14 +55,11 @@ public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
     {
         int entityCount =  Integer.parseInt(baseRequest.getParameter("EntityCount"));
         InputStream inputStream = baseRequest.getInputStream();
-        int bytesRead = -1;
-
-        Buffer totalBuffer = new Buffer(0);
-        byte[] bytes = new byte[4096];
-        while ((bytesRead = inputStream.read(bytes)) > 0 ) {
-            Buffer currentBuffer = new Buffer(bytes, bytesRead);
-            totalBuffer.concat(currentBuffer);
+        byte[] bytes = new byte[baseRequest.getContentLength()];
+        if (inputStream.read(bytes) != baseRequest.getContentLength()) {
+            throw new RuntimeException("Error occurred in reading content of HTTP request");
         }
+        Buffer totalBuffer = new Buffer(bytes);
         List<RegisteredEntity> registeredEntities = new ArrayList<>(entityCount);
         int curIndex = 0;
         for (int i = 0; i < entityCount; i++) {

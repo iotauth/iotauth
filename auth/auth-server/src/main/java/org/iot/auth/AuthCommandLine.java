@@ -42,6 +42,9 @@ public class AuthCommandLine extends Thread  {
             try {
                 logger.info("\nEnter command (e.g., show re/cp/ta/sk/maps, clean sk, reset sk, issue cert [ic], backup ): ");
                 String command = br.readLine();
+                if (command == null) {
+                    break;
+                }
                 command = command.trim();
                 if (command.length() == 0) {
                     continue;

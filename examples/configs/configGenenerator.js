@@ -313,7 +313,7 @@ function convertToRegisteredEntity(entityConfig, backupTo) {
 
     registeredEntity.Active = true;
     registeredEntity.BackupToAuthID = backupTo;
-    //registeredEntity.BackupFromAuthID = 5678;
+    registeredEntity.BackupFromAuthID = -1;
     return registeredEntity;
 }
 

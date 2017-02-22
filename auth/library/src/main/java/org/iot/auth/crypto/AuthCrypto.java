@@ -20,6 +20,7 @@ import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v1CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.iot.auth.io.Buffer;
@@ -29,12 +30,14 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
@@ -178,12 +181,28 @@ public class AuthCrypto {
             FileInputStream inStream = new FileInputStream(filePath);
             return (X509Certificate) certFactory.generateCertificate(inStream);
         } catch (CertificateException | FileNotFoundException e) {
-            throw new IllegalArgumentException("Problem loading public key " + filePath + "\n" + e.getMessage());
+            throw new IllegalArgumentException("Problem loading certificate key " + filePath + "\n" + e.getMessage());
         }
     }
 
     public static PublicKey loadPublicKey(String filePath) {
-        return loadCertificate(filePath).getPublicKey();
+        if (filePath.endsWith(".pem")) {
+            return loadCertificate(filePath).getPublicKey();
+        }
+        else if (filePath.endsWith(".der")) {
+            try {
+                byte[] keyBytes = Files.readAllBytes(new File(filePath).toPath());
+                X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+                KeyFactory kf = KeyFactory.getInstance("RSA");
+                return kf.generatePublic(spec);
+            }
+            catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+                throw new IllegalArgumentException("Problem loading public key " + filePath + "\n" + e.getMessage());
+            }
+        }
+        else {
+            throw new RuntimeException("Unrecognized file format for public key :" + filePath);
+        }
     }
 
     public static Buffer getRandomBytes(int size) {
