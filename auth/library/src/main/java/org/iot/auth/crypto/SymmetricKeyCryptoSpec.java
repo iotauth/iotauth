@@ -21,7 +21,7 @@ import org.json.simple.JSONObject;
  * A class for symmetric key cryptography specifications
  * @author Hokeun Kim
  */
-public class SymmetricKeyCryptoSpec {
+public class SymmetricKeyCryptoSpec extends CryptoSpec {
 
     private enum key {
         cipher,
@@ -55,7 +55,7 @@ public class SymmetricKeyCryptoSpec {
     }
 
     public String toSpecString() {
-        return toJSCryptoAlgo(cipherAlgorithm, cipherKeySize) + ":" + toJSCryptoAlgo(macAlgorithm, -1);
+        return toJavaScriptSpecString(cipherAlgorithm, cipherKeySize) + ":" + toJavaScriptSpecString(macAlgorithm, -1);
     }
     public String getCipherAlgorithm() {
         return cipherAlgorithm;
@@ -73,8 +73,8 @@ public class SymmetricKeyCryptoSpec {
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
-        object.put(key.cipher, toJSCryptoAlgo(cipherAlgorithm, cipherKeySize));
-        object.put(key.mac, toJSCryptoAlgo(macAlgorithm, -1));
+        object.put(key.cipher, toJavaScriptSpecString(cipherAlgorithm, cipherKeySize));
+        object.put(key.mac, toJavaScriptSpecString(macAlgorithm, -1));
         return object;
     }
 
@@ -87,7 +87,7 @@ public class SymmetricKeyCryptoSpec {
     private String macAlgorithm;
     private int macKeySize;
 
-    private static String toJSCryptoAlgo(String cryptoAlgo, int keySize) {
+    private static String toJavaScriptSpecString(String cryptoAlgo, int keySize) {
         if (cryptoAlgo.equals("AES/CBC/PKCS5Padding")) {
             if (keySize == 16) {
                 return new String("AES-128-CBC");

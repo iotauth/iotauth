@@ -161,6 +161,10 @@ public class RegisteredEntity {
                 "\tBackupToAuthID: " + backupToAuthID +
                 "\tBackupFromAuthID: " + backupFromAuthID;
 
+        if (!usePermanentDistKey) {
+            ret += "\tPublicKeyCryptoSpec: " + publicKeyCryptoSpec;
+        }
+
         ret += "\tDistKey: ";
         if (distributionKey == null) {
             ret += "NULL";
@@ -169,7 +173,6 @@ public class RegisteredEntity {
             ret += distributionKey.toString();
         }
         if (!usePermanentDistKey) {
-            ret += "\tPublicKeyCryptoSpec: " + publicKeyCryptoSpec;
             ret += "\tPublicKey: " + Buffer.toHexString(publicKey.getEncoded());
         }
         return ret;
