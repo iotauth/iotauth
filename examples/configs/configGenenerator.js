@@ -30,6 +30,8 @@ var AUTH_DB_DIR = 'auth/databases/';
 
 var DEFAULT_CIPHER = 'AES-128-CBC';
 var DEFAULT_MAC = 'SHA256';
+// generates 384-bit (48-byte) secret, 128 bit for cipher, 256 bit for MAC
+var DEFAULT_DH = 'secp384r1';
 
 
 var entityList = [
@@ -136,7 +138,7 @@ function getCryptoInfo(entityName) {
     if (entityName.toLowerCase().includes('safetycritical')) {
         cryptoInfo.publicKeyCryptoSpec = {
             "sign": "RSA-SHA256",
-            "diffieHellman": "secp128r2"
+            "diffieHellman": DEFAULT_DH
         };
     }
     else if (!entityName.toLowerCase().includes('rc')) {
@@ -153,7 +155,7 @@ function getCryptoInfo(entityName) {
         'mac': DEFAULT_MAC
     };
     if (entityName.toLowerCase().includes('safetycritical')) {
-        cryptoInfo.sessionCryptoSpec.diffieHellman = "secp128r2";
+        cryptoInfo.sessionCryptoSpec.diffieHellman = DEFAULT_DH;
     }
     return cryptoInfo;
 }

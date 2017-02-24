@@ -259,6 +259,11 @@ function commandInterpreter() {
             console.log('Session keys for Publish: ');
             console.log(util.inspect(sessionKeyCacheForPublish));
         }
+        else if (command == 'showSocket') {
+            console.log('showSocket command. current secure client socket: ');
+            console.log(util.inspect(currentSecureClient));
+            console.log('socket sessionKey:' + util.inspect(currentSecureClient.sessionKey));
+        }
         else if (command == 'send') {
             if (currentState != clientCommState.IN_COMM) {
                 console.log('invalid send command, it is not in IN_COMM state');

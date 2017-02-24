@@ -221,6 +221,13 @@ function commandInterpreter() {
             console.log('Session keys for Subscribe: ');
             console.log(util.inspect(sessionKeyCacheForSubscribe));
         }
+        else if (command == 'showSocket') {
+            console.log('showSocket command. current client sockets [client count: ' + connectedClients.length + ']: ');
+            for (var i = 0; i < connectedClients.length; i++) {
+                console.log('socket ' + i + ': ' + util.inspect(connectedClients[i]));
+                console.log('socket sessionKey:' + util.inspect(connectedClients[i].sessionKey) + '\n');
+            }
+        }
         else if (command == 'skReq') {
             console.log('skReq (Session key request for cached keys that will be used by clients) command');
             var numKeys = 3;
