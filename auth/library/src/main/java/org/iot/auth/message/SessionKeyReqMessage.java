@@ -59,11 +59,8 @@ public class SessionKeyReqMessage extends IoTSPMessage {
         _entityName = bufStr.getString();
         curIndex += bufStr.length();
 
-        // TODO: Now assuming rest of payload is JSON string, should be fixed?
-        //bufStr = decPayload.getBufferedString(curIndex);
-        //System.out.println(bufStr.getString());
-
-        String msg = new String(decPayload.slice(curIndex).getRawBytes());
+        bufStr = decPayload.getBufferedString(curIndex);
+        String msg = bufStr.getString();
         _logger.info("Received JSON: {}", msg);
         _purpose = (JSONObject) new JSONParser().parse(msg);
         curIndex += bufStr.length();

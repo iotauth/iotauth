@@ -146,8 +146,8 @@ function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
         purpose: purpose,
         distProtocol: entityInfo.distProtocol,
         distributionKey: distributionKey,
-        //distributionCryptoSpec,
-        //publicKeyCryptoSpec,
+        distributionCryptoSpec: cryptoInfo.distributionCryptoSpec,
+        publicKeyCryptoSpec: cryptoInfo.publicKeyCryptoSpec,
         authPublicKey: authInfo.publicKey,
         entityPrivateKey: entityInfo.privateKey
     };

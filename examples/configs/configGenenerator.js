@@ -28,6 +28,9 @@ var ENTITY_CONFIG_DIR = 'entity/node/example_entities/configs/';
 
 var AUTH_DB_DIR = 'auth/databases/';
 
+var DEFAULT_SIGN = 'RSA-SHA256';
+var DEFAULT_RSA_KEY_SIZE = 256;     // 2048 bits
+var DEFAULT_RSA_PADDING = 'RSA_PKCS1_PADDING';
 var DEFAULT_CIPHER = 'AES-128-CBC';
 var DEFAULT_MAC = 'SHA256';
 // generates 384-bit (48-byte) secret, 128 bit for cipher, 256 bit for MAC
@@ -135,18 +138,17 @@ function getAuthInfo(netId, entityName) {
 
 function getCryptoInfo(entityName) {
     var cryptoInfo = {};
-    if (entityName.toLowerCase().includes('safetycritical')) {
+    if (!entityName.toLowerCase().includes('rc')) {
         cryptoInfo.publicKeyCryptoSpec = {
-            "sign": "RSA-SHA256",
-            "diffieHellman": DEFAULT_DH
+            'sign': DEFAULT_SIGN,
+            'padding': DEFAULT_RSA_PADDING,
+            'keySize': DEFAULT_RSA_KEY_SIZE
         };
+        if (entityName.toLowerCase().includes('safetycritical')) {
+            cryptoInfo.publicKeyCryptoSpec.diffieHellman = DEFAULT_DH;
+        }
     }
-    else if (!entityName.toLowerCase().includes('rc')) {
-        cryptoInfo.publicKeyCryptoSpec = {
-            "sign": "RSA-SHA256"
-        };
-    }
-    cryptoInfo.distCryptoSpec = {
+    cryptoInfo.distributionCryptoSpec = {
         'cipher': DEFAULT_CIPHER,
         'mac': DEFAULT_MAC
     };
@@ -310,8 +312,8 @@ function convertToRegisteredEntity(entityConfig, backupTo) {
             + entityConfig.entityInfo.privateKey.substring(separatorIndex).replace('Key.pem', 'Cert.pem');
     }
 
-    registeredEntity.DistCryptoSpec = entityConfig.cryptoInfo.distCryptoSpec.cipher
-        + ':' + entityConfig.cryptoInfo.distCryptoSpec.mac;
+    registeredEntity.DistCryptoSpec = entityConfig.cryptoInfo.distributionCryptoSpec.cipher
+        + ':' + entityConfig.cryptoInfo.distributionCryptoSpec.mac;
 
     registeredEntity.Active = true;
     registeredEntity.BackupToAuthID = backupTo;
