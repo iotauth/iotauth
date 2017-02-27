@@ -17,7 +17,6 @@ package org.iot.auth.db.generator;
 
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
-import org.iot.auth.db.AuthDB;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
@@ -32,7 +31,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.omg.SendingContext.RunTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,14 +98,15 @@ public class GenerateExampleAuthDB {
         String authDatabaseDir = "databases/auth" + authID + "/";
         String databasePublicKeyPath = authDatabaseDir + "my_certs/Auth" + authID + "DatabaseCert.pem";
         SQLiteConnector sqLiteConnector = new SQLiteConnector(authDatabaseDir + "auth.db");
+        SymmetricKey databaseKey = new SymmetricKey(
+                SQLiteConnector.AUTH_DB_CRYPTO_SPEC,
+                new Date().getTime() + DateHelper.parseTimePeriod(SQLiteConnector.AUTH_DB_KEY_ABSOLUTE_VALIDITY)
+            );
+        sqLiteConnector.initialize(databaseKey);
         sqLiteConnector.createTablesIfNotExists();
 
-        SymmetricKey databaseKey = new SymmetricKey(
-                AuthDB.AUTH_DB_CRYPTO_SPEC,
-                new Date().getTime() + DateHelper.parseTimePeriod(AuthDB.AUTH_DB_KEY_ABSOLUTE_VALIDITY)
-        );
         initMetaDataTable(sqLiteConnector, databasePublicKeyPath, databaseKey);
-        initRegisteredEntityTable(sqLiteConnector, authID, databaseKey,
+        initRegisteredEntityTable(sqLiteConnector, authID,
                 authDatabaseDir + "configs/Auth" + authID + "RegisteredEntityTable.config");
         initCommPolicyTable(sqLiteConnector,
                 authDatabaseDir + "configs/Auth" + authID + "CommunicationPolicyTable.config");
@@ -130,7 +129,7 @@ public class GenerateExampleAuthDB {
         metaData.setKey(MetaDataTable.key.EncryptedDatabaseKey.name());
         PublicKey databasePublicKey = AuthCrypto.loadPublicKey(databasePublicKeyPath);
         Buffer encryptedDatabaseKey = AuthCrypto.publicEncrypt(databaseKey.getSerializedKeyVal(), databasePublicKey,
-                AuthDB.AUTH_DB_PUBLIC_CIPHER);
+                SQLiteConnector.AUTH_DB_PUBLIC_CIPHER);
 
         metaData.setValue(encryptedDatabaseKey.toBase64());
         sqLiteConnector.insertRecords(metaData);
@@ -161,7 +160,7 @@ public class GenerateExampleAuthDB {
     }
 
     private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, int authID,
-                                                  SymmetricKey databaseKey, String tableConfigFilePath)
+                                                  String tableConfigFilePath)
             throws ClassNotFoundException, SQLException, IOException, UseOfExpiredKeyException
     {
         JSONParser parser = new JSONParser();
@@ -185,7 +184,7 @@ public class GenerateExampleAuthDB {
                 registeredEntity.setDistKeyValidityPeriod(distKeyValidityPeriod);
                 registeredEntity.setDistCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.DistCryptoSpec.name()));
                 if (usePermanentDistKey) {
-                    registeredEntity.setDistKeyVal(loadEncryptDistributionKey(databaseKey,
+                    registeredEntity.setDistKeyVal(loadDistributionKey(
                             authDatabaseDir + "/" + (String)jsonObject.get("DistCipherKeyFilePath"),
                             authDatabaseDir + "/" + (String)jsonObject.get("DistMacKeyFilePath")));
                     registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod(distKeyValidityPeriod));
@@ -280,18 +279,13 @@ public class GenerateExampleAuthDB {
         return new Buffer(byteArray, numBytes);
     }
 
-    private static byte[] encryptDataWithDatabaseKey(SymmetricKey databaseKey, byte[] data)
-            throws UseOfExpiredKeyException {
-        return databaseKey.encryptAuthenticate(new Buffer(data)).getRawBytes();
-    }
-
-    private static byte[] loadEncryptDistributionKey(SymmetricKey databaseKey,
-                                                     String cipherKeyPath,
-                                                     String macKeyPath) throws IOException, UseOfExpiredKeyException {
+    private static byte[] loadDistributionKey(String cipherKeyPath, String macKeyPath)
+            throws IOException, UseOfExpiredKeyException
+    {
         Buffer rawCipherKeyVal = readSymmetricKey(cipherKeyPath);
         Buffer rawMackeyVal = readSymmetricKey(macKeyPath);
         Buffer serializedKeyVal = SymmetricKey.getSerializedKeyVal(rawCipherKeyVal, rawMackeyVal);
-        return encryptDataWithDatabaseKey(databaseKey, serializedKeyVal.getRawBytes());
+        return serializedKeyVal.getRawBytes();
     }
 
     private static final Logger logger = LoggerFactory.getLogger(GenerateExampleAuthDB.class);

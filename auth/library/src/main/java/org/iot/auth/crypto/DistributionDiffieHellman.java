@@ -1,8 +1,6 @@
 package org.iot.auth.crypto;
 
 import org.bouncycastle.asn1.*;
-import org.bouncycastle.asn1.util.ASN1Dump;
-import org.bouncycastle.asn1.x509.X509DefaultEntryConverter;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.ECPointUtil;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
@@ -11,7 +9,6 @@ import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.VariableLengthInt;
-import sun.security.ec.ECKeyPairGenerator;
 import sun.security.ec.ECPublicKeyImpl;
 
 import javax.crypto.KeyAgreement;
@@ -20,8 +17,6 @@ import java.security.*;
 import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 import java.util.Date;
 
 /**
@@ -43,9 +38,7 @@ public class DistributionDiffieHellman {
                                      String keyAgreementAlgorithm, int keySize, long relativeValidityPeriod)
             throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException {
         this.distributionCryptoSpec = distributionCryptoSpec;
-        //this.keyFactory = KeyFactory.getInstance(keyFactoryAlgorithm);
         this.keyAgreementAlgorithm = keyAgreementAlgorithm;
-        // ECKeyPairGenerator
         KeyPairGenerator kpg = KeyPairGenerator.getInstance(keyFactoryAlgorithm);
         kpg.initialize(keySize);
         this.keyPair = kpg.generateKeyPair();
@@ -60,7 +53,6 @@ public class DistributionDiffieHellman {
         PublicKey authPublicParameter = keyPair.getPublic();
         String authPublicParameterFormat = authPublicParameter.getFormat();
         if (authPublicParameterFormat.equals("X.509")) {
-            //X509EncodedKeySpec spec = new X509EncodedKeySpec(authPublicParameter.getEncoded());
             ECPublicKeyImpl ecPublicKey = (ECPublicKeyImpl) authPublicParameter;
             byte[] shit = ecPublicKey.getEncodedInternal();
             ASN1InputStream ans1InputStream = new ASN1InputStream(authPublicParameter.getEncoded());
@@ -70,10 +62,6 @@ public class DistributionDiffieHellman {
             DERBitString bitString = DERBitString.getInstance(sequence.getObjectAt(1));
             byte[] authPublicParameterBytes = bitString.getOctets();
 
-            //authPublicParameter.getClass();
-
-            //String strAuthPublicParameter = authPublicParameter.toString();
-            //byte[] authPublicParameterBytes = Base64.getDecoder().decode(authPublicParameter.getEncoded());
             VariableLengthInt publicParameterLength = new VariableLengthInt(authPublicParameterBytes.length);
             Buffer publicParameterBuffer = new Buffer(publicParameterLength.getRawBytes());
             publicParameterBuffer.concat(new Buffer(authPublicParameterBytes));
@@ -87,13 +75,13 @@ public class DistributionDiffieHellman {
 
     private PublicKey getPublicKeyFromBytes(byte[] pubKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
         ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp384r1");
-        KeyFactory kf = KeyFactory.getInstance("ECDH", new BouncyCastleProvider());
+        KeyFactory keyFactory = KeyFactory.getInstance("ECDH", new BouncyCastleProvider());
 
         ECNamedCurveSpec params = new ECNamedCurveSpec("secp384r1", spec.getCurve(), spec.getG(), spec.getN());
         ECPoint point =  ECPointUtil.decodePoint(params.getCurve(), pubKey);
         ECPublicKeySpec pubKeySpec = new ECPublicKeySpec(point, params);
-        ECPublicKey pk = (ECPublicKey) kf.generatePublic(pubKeySpec);
-        return pk;
+        ECPublicKey ecPublicKey = (ECPublicKey) keyFactory.generatePublic(pubKeySpec);
+        return ecPublicKey;
     }
 
     public DistributionKey deriveDistributionKey(Buffer entityPublicParameterBuffer)
@@ -117,7 +105,6 @@ public class DistributionDiffieHellman {
     }
     private Date expirationTime;
     private KeyPair keyPair;
-    //private KeyFactory keyFactory;
     private String keyAgreementAlgorithm;
     private SymmetricKeyCryptoSpec distributionCryptoSpec;
 }

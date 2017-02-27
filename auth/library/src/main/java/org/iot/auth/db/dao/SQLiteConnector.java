@@ -15,12 +15,23 @@
 
 package org.iot.auth.db.dao;
 
+import org.iot.auth.crypto.AuthCrypto;
+import org.iot.auth.crypto.SymmetricKey;
+import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.bean.*;
+import org.iot.auth.exception.UseOfExpiredKeyException;
+import org.iot.auth.io.Buffer;
+import org.iot.auth.util.DateHelper;
+import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 /**
  * A SQLite connector Class for CRUD operations on Auth database.
@@ -33,9 +44,83 @@ public class SQLiteConnector {
     private Connection connection;
     private Statement statement;
     private String dbPath;
+    private SymmetricKey databaseKey;
+    // FIXME: should be set by properties
+    public static final String AUTH_DB_KEY_ABSOLUTE_VALIDITY = "3650*day";
+    public static final SymmetricKeyCryptoSpec AUTH_DB_CRYPTO_SPEC =
+            new SymmetricKeyCryptoSpec("AES/CBC/PKCS5Padding", 16, "HmacSHA256");
+    public static final String AUTH_DB_PUBLIC_CIPHER = "RSA/ECB/PKCS1PADDING";
 
-    private void init() throws SQLException, ClassNotFoundException {
-        logger.info("DB auth.db opened");
+    /**
+     * Constructor that stores the physical location of the database file.
+     * @param dbPath
+     */
+    public SQLiteConnector(String dbPath)
+    {
+        this.DEBUG = false;
+        this.dbPath = dbPath;
+    }
+
+    /**
+     * Load an encryption key for database.
+     * @param databaseKeystorePath File path of Auth's database keystore.
+     * @param authKeyStorePassword Password for Auth's database keystore
+     * @throws CertificateException When CertificateException occurs.
+     * @throws NoSuchAlgorithmException When NoSuchAlgorithmException occurs.
+     * @throws KeyStoreException When KeyStoreException occurs.
+     * @throws IOException When IOException occurs.
+     * @throws SQLException When SQLException occurs.
+     * @throws ClassNotFoundException When ClassNotFoundException occurs.
+     * @throws UnrecoverableEntryException When UnrecoverableEntryException occurs.
+     */
+    public void initialize(String databaseKeystorePath, String authKeyStorePassword)
+            throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SQLException,
+            ClassNotFoundException, UnrecoverableEntryException
+    {
+        KeyStore databaseKeyStore = AuthCrypto.loadKeyStore(databaseKeystorePath, authKeyStorePassword);
+        if (databaseKeyStore.size() != 1) {
+            throw new IllegalArgumentException("Auth key store must contain one key entry.");
+        }
+        Enumeration<String> aliases = databaseKeyStore.aliases();
+
+        KeyStore.ProtectionParameter protParam =
+                new KeyStore.PasswordProtection(authKeyStorePassword.toCharArray());
+        PrivateKey databasePrivateKey = null;
+        while (aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) databaseKeyStore.getEntry(alias, protParam);
+            logger.debug("Alias {}: , Cert: {}, Key: {}", alias, pkEntry.getCertificate(), pkEntry.getPrivateKey());
+            databasePrivateKey = pkEntry.getPrivateKey();
+        }
+        String value = selectMetaDataValue(MetaDataTable.key.EncryptedDatabaseKey.name());
+        Buffer encryptedDatabaseKey = Buffer.fromBase64(value);
+
+        initialize(new SymmetricKey(
+                AUTH_DB_CRYPTO_SPEC,
+                new Date().getTime() + DateHelper.parseTimePeriod(AUTH_DB_KEY_ABSOLUTE_VALIDITY),
+                AuthCrypto.privateDecrypt(encryptedDatabaseKey, databasePrivateKey, AUTH_DB_PUBLIC_CIPHER)));
+    }
+
+    public void initialize(SymmetricKey databaseKey) {
+        this.databaseKey = databaseKey;
+    }
+
+    private Buffer encryptAuthDBData(Buffer input) {
+        try {
+            return databaseKey.encryptAuthenticate(input);
+        } catch (UseOfExpiredKeyException e) {
+            logger.error("UseOfExpiredKeyException {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while encrypting Auth DB Data!");
+        }
+    }
+    private Buffer decryptAuthDBData(Buffer input) {
+        try {
+            return databaseKey.decryptVerify(input);
+        }
+        catch (Exception e) {
+            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while decrypting Auth DB Data!");
+        }
     }
 
     private void setConnection() throws ClassNotFoundException, SQLException {
@@ -180,6 +265,19 @@ public class SQLiteConnector {
         return result;
     }
 
+    public RegisteredEntityTable encryptRecords(RegisteredEntityTable regEntity) {
+        if (regEntity.getDistKeyVal() != null) {
+            regEntity.setDistKeyVal(encryptAuthDBData(new Buffer(regEntity.getDistKeyVal())).getRawBytes());
+        }
+        return regEntity;
+    }
+    public RegisteredEntityTable decryptRecords(RegisteredEntityTable regEntity) {
+        if (regEntity.getDistKeyVal() != null) {
+            regEntity.setDistKeyVal(decryptAuthDBData(new Buffer(regEntity.getDistKeyVal())).getRawBytes());
+        }
+        return regEntity;
+    }
+
     /**
      * Insert records into RegistrationEntityTable
      *
@@ -194,6 +292,7 @@ public class SQLiteConnector {
      * @see RegisteredEntityTable
      */
     public boolean insertRecords(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
+        regEntity = encryptRecords(regEntity);
         setConnection();
         String sql = "INSERT INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
         sql += RegisteredEntityTable.c.Name.name() + ",";
@@ -277,6 +376,15 @@ public class SQLiteConnector {
         return result;
     }
 
+
+    public CachedSessionKeyTable encryptRecords(CachedSessionKeyTable cachedSessionKey) {
+        cachedSessionKey.setKeyVal(encryptAuthDBData(new Buffer(cachedSessionKey.getKeyVal())).getRawBytes());
+        return cachedSessionKey;
+    }
+    public CachedSessionKeyTable decryptRecords(CachedSessionKeyTable cachedSessionKey) {
+        cachedSessionKey.setKeyVal(decryptAuthDBData(new Buffer(cachedSessionKey.getKeyVal())).getRawBytes());
+        return cachedSessionKey;
+    }
     /**
      * Insert records related to the cached session keys
      *
@@ -290,6 +398,7 @@ public class SQLiteConnector {
      * @see CachedSessionKeyTable
      */
     public boolean insertRecords(CachedSessionKeyTable cachedSessionKey) throws SQLException, ClassNotFoundException {
+        encryptRecords(cachedSessionKey);
         setConnection();
         String sql = "INSERT INTO " + CachedSessionKeyTable.T_CACHED_SESSION_KEY + "(";
         sql += CachedSessionKeyTable.c.ID.name() + ",";
@@ -391,7 +500,7 @@ public class SQLiteConnector {
         List<RegisteredEntityTable> entities = new LinkedList<>();
         while(resultSet.next()) {
             RegisteredEntityTable entity = RegisteredEntityTable.createRecord(authDatabaseDir, resultSet);
-            entities.add(entity);
+            entities.add(decryptRecords(entity));
             if (DEBUG) logger.info(entity.toJSONObject().toJSONString());
         }
         return entities;
@@ -408,9 +517,10 @@ public class SQLiteConnector {
      * or an argument is supplied to this method
      * @throws ClassNotFoundException if the class cannot be located
      */
-    public boolean updateRegEntityDistKey(String regEntityName, long distKeyExpirationTime, byte[] distKeyVal)
+    public boolean updateRegEntityDistKey(String regEntityName, long distKeyExpirationTime, Buffer distKeyVal)
             throws SQLException, ClassNotFoundException
     {
+        distKeyVal = encryptAuthDBData(distKeyVal);
         setConnection();
         String sql = "UPDATE " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         sql += " SET " + RegisteredEntityTable.c.DistKeyExpirationTime.name() + " = " + distKeyExpirationTime;
@@ -418,7 +528,7 @@ public class SQLiteConnector {
         sql += " WHERE " + RegisteredEntityTable.c.Name.name() + " = '" + regEntityName + "'";
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
-        preparedStatement.setBytes(1, distKeyVal);
+        preparedStatement.setBytes(1, distKeyVal.getRawBytes());
         boolean result = preparedStatement.execute();
         // It's in auto-commit mode no need for explicit commit
         //_commit();
@@ -468,7 +578,7 @@ public class SQLiteConnector {
         while (resultSet.next()) {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
             if (DEBUG) logger.info(cachedSessionKey.toJSONObject().toJSONString());
-            cachedSessionKeyList.add(cachedSessionKey);
+            cachedSessionKeyList.add(decryptRecords(cachedSessionKey));
         }
         return cachedSessionKeyList;
     }
@@ -494,7 +604,7 @@ public class SQLiteConnector {
             cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
             if (DEBUG) logger.info(cachedSessionKey.toJSONObject().toJSONString());
         }
-        return cachedSessionKey;
+        return decryptRecords(cachedSessionKey);
     }
 
     /**
@@ -521,7 +631,7 @@ public class SQLiteConnector {
         while (resultSet.next()) {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
             if (DEBUG) logger.info(cachedSessionKey.toJSONObject().toJSONString());
-            result.add(cachedSessionKey);
+            result.add(decryptRecords(cachedSessionKey));
         }
         return result;
     }
@@ -655,19 +765,5 @@ public class SQLiteConnector {
         connection.close();
     }
 
-    /**
-     * Constructor that stores the physical location of the database file.
-     * @param dbPath
-     */
-    public SQLiteConnector(String dbPath) {
-        this.DEBUG = false;
-        this.dbPath = dbPath;
-        try {
-            init();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+
 }
