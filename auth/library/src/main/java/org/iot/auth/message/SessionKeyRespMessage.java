@@ -15,9 +15,8 @@
 
 package org.iot.auth.message;
 
-import org.iot.auth.crypto.AuthCrypto;
-import org.iot.auth.db.DistributionKey;
-import org.iot.auth.db.SessionKey;
+import org.iot.auth.crypto.DistributionKey;
+import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;

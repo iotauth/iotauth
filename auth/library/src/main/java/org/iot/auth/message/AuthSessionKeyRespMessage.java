@@ -16,7 +16,7 @@
 package org.iot.auth.message;
 
 import org.eclipse.jetty.client.api.ContentResponse;
-import org.iot.auth.db.SessionKey;
+import org.iot.auth.crypto.SessionKey;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

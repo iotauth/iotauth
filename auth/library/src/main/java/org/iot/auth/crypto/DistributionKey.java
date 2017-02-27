@@ -13,10 +13,8 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.db;
+package org.iot.auth.crypto;
 
-import org.iot.auth.crypto.SymmetricKey;
-import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.io.Buffer;
 
 import java.util.Date;
@@ -32,7 +30,7 @@ import java.util.Date;
  * @author Hokeun Kim
  */
 public class DistributionKey extends SymmetricKey {
-    private static final int DIST_KEY_EXPIRATION_TIME_SIZE = 6;
+    public static final int DIST_KEY_EXPIRATION_TIME_SIZE = 6;
 
     public DistributionKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime, Buffer serializedKeyVal) {
         super(cryptoSpec, expirationTime, serializedKeyVal);

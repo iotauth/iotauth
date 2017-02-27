@@ -29,10 +29,12 @@ import org.slf4j.LoggerFactory;
  * SessionKeyReq Format
  * {
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
- *      authNonce:    /Buffer/, (AUTH_NONCE_SIZE)
+ *      nonce: /Buffer/, (AUTH_NONCE_SIZE)
+ *      replyNonce:    /Buffer/, (AUTH_NONCE_SIZE)
  *      numKeys: /UInt32BE/,
  *      sender: /string/, (senderLen UInt8)
- *      purpose: /JSON/
+ *      purpose: JSON,
+ *      dhParam: /Buffer/ (optional, Diffie-Hellman parameter)
  * } </pre>
  * @author Hokeun Kim
  */
@@ -46,47 +48,58 @@ public class SessionKeyReqMessage extends IoTSPMessage {
     public SessionKeyReqMessage(MessageType type, Buffer decPayload) throws ParseException {
         super(type);
         int curIndex = 0;
-        _entityNonce = decPayload.slice(curIndex, curIndex + ENTITY_NONCE_SIZE);
+        this.entityNonce = decPayload.slice(curIndex, curIndex + ENTITY_NONCE_SIZE);
         curIndex += ENTITY_NONCE_SIZE;
 
-        _authNonce = decPayload.slice(curIndex, curIndex + AUTH_NONCE_SIZE);
+        this.authNonce = decPayload.slice(curIndex, curIndex + AUTH_NONCE_SIZE);
         curIndex += AUTH_NONCE_SIZE;
 
-        _numKeys = decPayload.getInt(curIndex);
+        this.numKeys = decPayload.getInt(curIndex);
         curIndex += 4;
 
         BufferedString bufStr = decPayload.getBufferedString(curIndex);
-        _entityName = bufStr.getString();
+        this.entityName = bufStr.getString();
         curIndex += bufStr.length();
 
         bufStr = decPayload.getBufferedString(curIndex);
         String msg = bufStr.getString();
-        _logger.info("Received JSON: {}", msg);
-        _purpose = (JSONObject) new JSONParser().parse(msg);
+        logger.info("Received JSON: {}", msg);
+        this.purpose = (JSONObject) new JSONParser().parse(msg);
         curIndex += bufStr.length();
+
+        if (curIndex < decPayload.length()) {
+            this.diffieHellmanParam = decPayload.slice(curIndex);
+        }
+        else {
+            this.diffieHellmanParam = null;
+        }
     }
 
     public Buffer getEntityNonce() {
-        return _entityNonce;
+        return entityNonce;
     }
     public Buffer getAuthNonce() {
-        return _authNonce;
+        return authNonce;
     }
     public String getEntityName() {
-        return _entityName;
+        return entityName;
     }
     public int getNumKeys() {
-        return _numKeys;
+        return numKeys;
     }
     public JSONObject getPurpose() {
-        return _purpose;
+        return purpose;
+    }
+    public Buffer getDiffieHellmanParam() {
+        return diffieHellmanParam;
     }
 
-    private Buffer _entityNonce;
-    private Buffer _authNonce;
-    private int _numKeys;
-    private String _entityName;
-    private JSONObject _purpose;
-    private static final Logger _logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);
+    private Buffer entityNonce;
+    private Buffer authNonce;
+    private int numKeys;
+    private String entityName;
+    private JSONObject purpose;
+    private Buffer diffieHellmanParam;
 
+    private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);
 }

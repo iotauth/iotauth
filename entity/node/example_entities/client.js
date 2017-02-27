@@ -54,10 +54,10 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
     }
     console.log('received ' + sessionKeyList.length + ' keys');
     if (callbackParams.targetSessionKeyCache == 'Servers') {
-    	sessionKeyCacheForServers = sessionKeyCacheForServers.concat(sessionKeyList);
+        sessionKeyCacheForServers = sessionKeyCacheForServers.concat(sessionKeyList);
     }
     else if (callbackParams.targetSessionKeyCache == 'Publish') {
-    	sessionKeyCacheForPublish = sessionKeyCacheForPublish.concat(sessionKeyList);
+        essionKeyCacheForPublish = sessionKeyCacheForPublish.concat(sessionKeyList);
     }
     else {
         console.log('Error! communication target is wrong!');

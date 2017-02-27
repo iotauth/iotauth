@@ -15,6 +15,8 @@
 
 package org.iot.auth.db;
 
+import org.iot.auth.crypto.DistributionKey;
+import org.iot.auth.crypto.PublicKeyCryptoSpec;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.io.Buffer;
@@ -37,7 +39,7 @@ public class RegisteredEntity {
     private String group;
     private String distProtocol;
     private boolean usePermanentDistKey;
-    private String publicKeyCryptoSpec;
+    private PublicKeyCryptoSpec publicKeyCryptoSpec;
     private long distKeyValidityPeriod;
     private int maxSessionKeysPerRequest;
     private SymmetricKeyCryptoSpec distCryptoSpec;
@@ -53,7 +55,9 @@ public class RegisteredEntity {
         this.group = tableElement.getGroup();
         this.distProtocol = tableElement.getDistProtocol();
         this.usePermanentDistKey = tableElement.getUsePermanentDistKey();
-        this.publicKeyCryptoSpec = tableElement.getPublicKeyCryptoSpec();
+        if (tableElement.getPublicKeyCryptoSpec() != null) {
+            this.publicKeyCryptoSpec = PublicKeyCryptoSpec.fromSpecString(tableElement.getPublicKeyCryptoSpec());
+        }
         this.distKeyValidityPeriod = DateHelper.parseTimePeriod(tableElement.getDistKeyValidityPeriod());
         this.maxSessionKeysPerRequest = tableElement.getMaxSessionKeysPerRequest();
         this.distCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(tableElement.getDistCryptoSpec());
@@ -72,7 +76,7 @@ public class RegisteredEntity {
         tableElement.setGroup(group);
         tableElement.setDistProtocol(distProtocol);
         tableElement.setUsePermanentDistKey(usePermanentDistKey);
-        tableElement.setPublicKeyCryptoSpec(publicKeyCryptoSpec);
+        tableElement.setPublicKeyCryptoSpec(publicKeyCryptoSpec.toSpecString());
         tableElement.setDistKeyValidityPeriod("" + distKeyValidityPeriod);
         tableElement.setMaxSessionKeysPerRequest(maxSessionKeysPerRequest);
         tableElement.setDistCryptoSpec(distCryptoSpec.toSpecString());
@@ -128,7 +132,7 @@ public class RegisteredEntity {
     public SymmetricKeyCryptoSpec getDistCryptoSpec() {
         return distCryptoSpec;
     }
-    public String getPublicKeyCryptoSpec() {
+    public PublicKeyCryptoSpec getPublicKeyCryptoSpec() {
         return publicKeyCryptoSpec;
     }
 
@@ -215,7 +219,7 @@ public class RegisteredEntity {
             buffer.concat(new BufferedString("").serialize());
         }
         else {
-            buffer.concat(new BufferedString(publicKeyCryptoSpec).serialize());
+            buffer.concat(new BufferedString(publicKeyCryptoSpec.toSpecString()).serialize());
         }
         buffer.concat(new BufferedString(distCryptoSpec.toSpecString()).serialize());
 
@@ -261,9 +265,12 @@ public class RegisteredEntity {
         this.distProtocol = bufString.getString();
         bufString = buffer.getBufferedString(curIndex);
         curIndex += bufString.length();
-        this.publicKeyCryptoSpec = bufString.getString();
-        if (this.publicKeyCryptoSpec.length() == 0) {
+        String strPublicKeyCryptoSpec = bufString.getString();
+        if (strPublicKeyCryptoSpec.length() == 0) {
             this.publicKeyCryptoSpec = null;
+        }
+        else {
+            this.publicKeyCryptoSpec = PublicKeyCryptoSpec.fromSpecString(strPublicKeyCryptoSpec);
         }
         bufString = buffer.getBufferedString(curIndex);
         curIndex += bufString.length();

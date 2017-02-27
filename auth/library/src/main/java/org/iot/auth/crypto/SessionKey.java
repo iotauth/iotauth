@@ -13,10 +13,8 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.db;
+package org.iot.auth.crypto;
 
-import org.iot.auth.crypto.SymmetricKey;
-import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.io.Buffer;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

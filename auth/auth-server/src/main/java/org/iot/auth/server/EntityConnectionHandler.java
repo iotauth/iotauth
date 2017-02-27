@@ -3,6 +3,9 @@ package org.iot.auth.server;
 import com.sun.tools.javac.util.Pair;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.io.RuntimeIOException;
+import org.iot.auth.crypto.DistributionDiffieHellman;
+import org.iot.auth.crypto.DistributionKey;
+import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.exception.*;
 import org.slf4j.Logger;
 import org.iot.auth.AuthServer;
@@ -16,10 +19,11 @@ import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
+import javax.crypto.KeyAgreement;
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
@@ -91,15 +95,32 @@ public abstract class EntityConnectionHandler {
             List<SessionKey> sessionKeyList = ret.fst;
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.snd;
 
-            // generate distribution key
-            // Assuming AES-CBC-128
-            DistributionKey distributionKey =
-                    new DistributionKey(requestingEntity.getDistCryptoSpec(),
-                            requestingEntity.getDistKeyValidityPeriod());
+            Buffer distributionKeyInfoBuffer;   // either distribution key or DH param to derive distribution key
+            DistributionKey distributionKey;    // generated or derived distriburtion key
+            if (requestingEntity.getPublicKeyCryptoSpec().getDiffieHellman() != null) {
+                try {
+                    DistributionDiffieHellman distributionDiffieHellman = new DistributionDiffieHellman(
+                            requestingEntity.getDistCryptoSpec(), "EC", "ECDH",
+                            384, requestingEntity.getDistKeyValidityPeriod());
+                    distributionKeyInfoBuffer = distributionDiffieHellman.getSerializedBuffer();
+                    distributionKey =
+                            distributionDiffieHellman.deriveDistributionKey(sessionKeyReqMessage.getDiffieHellmanParam());
+                }
+                catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
+                    throw new RuntimeException("Diffie-Hellman failed!" + e.getMessage());
+                }
+            }
+            else {
+                // generate distribution key
+                // Assuming AES-CBC-128
+                distributionKey = new DistributionKey(requestingEntity.getDistCryptoSpec(),
+                                requestingEntity.getDistKeyValidityPeriod());
+                distributionKeyInfoBuffer = distributionKey.serialize();
+            }
             // update distribution key
             server.updateDistributionKey(requestingEntity.getName(), distributionKey);
 
-            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKey.serialize(),
+            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfoBuffer,
                     requestingEntity.getPublicKey());
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
 
