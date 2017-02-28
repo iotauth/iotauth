@@ -125,8 +125,9 @@ public class SQLiteConnector {
 
     private void setConnection() throws ClassNotFoundException, SQLException {
         Class.forName("org.sqlite.JDBC");
-        if (connection == null || connection.isClosed())
+        if (connection == null || connection.isClosed()) {
             connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+        }
     }
 
     /**
