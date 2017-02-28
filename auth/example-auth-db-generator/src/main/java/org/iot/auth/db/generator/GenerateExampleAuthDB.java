@@ -48,7 +48,6 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-//import org.apache.commons.cli.ParseException;
 
 /**
  * A program to generate example Auth databases for two example Auths with ID 101 and ID 102.
@@ -83,7 +82,7 @@ public class GenerateExampleAuthDB {
             return;
         }
         int numAuths = Integer.parseInt(strNumAuths);
-        logger.info("Number of AUths to be generated: {}", numAuths);
+        logger.info("Number of Auths to be generated: {}", numAuths);
         if (numAuths > 10 || numAuths < 1) {
             logger.error("Error: Illegal number of Auths to be generated!");
             System.exit(1);
@@ -134,7 +133,7 @@ public class GenerateExampleAuthDB {
         metaData = new MetaDataTable();
         metaData.setKey(MetaDataTable.key.EncryptedDatabaseKey.name());
         */
-        PublicKey databasePublicKey = AuthCrypto.loadPublicKey(databasePublicKeyPath);
+        PublicKey databasePublicKey = AuthCrypto.loadPublicKeyFromFile(databasePublicKeyPath);
         Buffer encryptedDatabaseKey = AuthCrypto.publicEncrypt(databaseKey.getSerializedKeyVal(), databasePublicKey,
                 SQLiteConnector.AUTH_DB_PUBLIC_CIPHER);
 
@@ -182,7 +181,8 @@ public class GenerateExampleAuthDB {
 
             for (Object objElement : jsonArray) {
                 RegisteredEntityTable registeredEntity = new RegisteredEntityTable();
-                JSONObject jsonObject =  (JSONObject)objElement;
+                JSONObject jsonObject;
+                jsonObject = (JSONObject)objElement;
 
                 registeredEntity.setName((String)jsonObject.get(RegisteredEntityTable.c.Name.name()));
                 registeredEntity.setGroup((String)jsonObject.get(RegisteredEntityTable.c.Group.name()));
@@ -196,13 +196,14 @@ public class GenerateExampleAuthDB {
                 registeredEntity.setDistCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.DistCryptoSpec.name()));
                 if (usePermanentDistKey) {
                     registeredEntity.setDistKeyVal(loadDistributionKey(
-                            authDatabaseDir + "/" + (String)jsonObject.get("DistCipherKeyFilePath"),
-                            authDatabaseDir + "/" + (String)jsonObject.get("DistMacKeyFilePath")));
+                            authDatabaseDir + "/" + jsonObject.get("DistCipherKeyFilePath"),
+                            authDatabaseDir + "/" + jsonObject.get("DistMacKeyFilePath")));
                     registeredEntity.setDistKeyExpirationTime(new Date().getTime() + DateHelper.parseTimePeriod(distKeyValidityPeriod));
                 }
                 else {
                     registeredEntity.setPublicKeyCryptoSpec((String)jsonObject.get(RegisteredEntityTable.c.PublicKeyCryptoSpec.name()));
-                    registeredEntity.setPublicKeyFile((String)jsonObject.get(RegisteredEntityTable.c.PublKeyFile.name()));
+                    registeredEntity.setPublicKey(AuthCrypto.loadPublicKeyFromFile(
+                            authDatabaseDir + "/" + jsonObject.get(RegisteredEntityTable.c.PublicKeyFile.name())));
                 }
                 registeredEntity.setActive((Boolean)jsonObject.get(RegisteredEntityTable.c.Active.name()));
                 if (jsonObject.containsKey(RegisteredEntityTable.c.BackupToAuthID.name())) {

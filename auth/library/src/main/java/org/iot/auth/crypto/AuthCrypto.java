@@ -20,7 +20,6 @@ import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v1CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.iot.auth.io.Buffer;
@@ -185,18 +184,26 @@ public class AuthCrypto {
         }
     }
 
-    public static PublicKey loadPublicKey(String filePath) {
+    public static PublicKey loadPublicKeyFromBytes(byte[] bytes)  {
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(bytes);
+        try {
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return kf.generatePublic(spec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new IllegalArgumentException("Problem loading public key from bytes" + "\n" + e.getMessage());
+        }
+    }
+
+    public static PublicKey loadPublicKeyFromFile(String filePath) {
         if (filePath.endsWith(".pem")) {
             return loadCertificate(filePath).getPublicKey();
         }
         else if (filePath.endsWith(".der")) {
             try {
                 byte[] keyBytes = Files.readAllBytes(new File(filePath).toPath());
-                X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-                KeyFactory kf = KeyFactory.getInstance("RSA");
-                return kf.generatePublic(spec);
+                return loadPublicKeyFromBytes(keyBytes);
             }
-            catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+            catch (IOException e) {
                 throw new IllegalArgumentException("Problem loading public key " + filePath + "\n" + e.getMessage());
             }
         }

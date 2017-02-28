@@ -87,17 +87,20 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         logger.info("Information of Trusted Auth which sent the request: {}", requestingAuthInfo.toBriefString());
 
         String authReqType = (String)baseRequest.getParameter(TrustedAuthReqMessasge.TYPE);
+        logger.info("The request was {}", authReqType);
         if (authReqType.equals(TrustedAuthReqMessasge.type.AUTH_SESSION_KEY_REQ.name())) {
-            logger.info("The request was {}", TrustedAuthReqMessasge.type.AUTH_SESSION_KEY_REQ.name());
             handleAuthSessionKeyReq(baseRequest, response);
+            logger.info("The request {} was successfully handled!", authReqType);
         }
         else if(authReqType.equals(TrustedAuthReqMessasge.type.BACKUP_REQ.name())) {
-            logger.info("The request was {}", TrustedAuthReqMessasge.type.BACKUP_REQ.name());
             try {
                 handleBackupReq(requestingAuthInfo, baseRequest, response);
+                logger.info("The request {} was successfully handled!", authReqType);
             } catch (InvalidKeySpecException | NoSuchAlgorithmException | SQLException | ClassNotFoundException e) {
-                logger.error("Exception while handling Auth backup request {}", ExceptionToString.convertExceptionToStackTrace(e));
-                throw new RuntimeException();
+                logger.error("Exception while handling Auth backup request\n{}",
+                        ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException("Exception while handling Auth backup request\n"
+                        + ExceptionToString.convertExceptionToStackTrace(e));
             }
         }
     }
@@ -164,6 +167,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
             registeredEntity.setBackupFromAuthID(requestingAuthInfo.getID());
         }
         server.insertRegisteredEntities(authBackupReqMessage.getRegisteredEntityList());
+        server.reloadRegEntityDB();
     }
 
     private AuthServer server;

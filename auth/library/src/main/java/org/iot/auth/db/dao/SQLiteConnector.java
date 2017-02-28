@@ -189,12 +189,12 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistProtocol.name() + " TEXT NOT NULL,";
         sql += RegisteredEntityTable.c.UsePermanentDistKey.name() + " BOOLEAN NOT NULL,";
         sql += RegisteredEntityTable.c.MaxSessionKeysPerRequest.name() + " INT NOT NULL,";
-        sql += RegisteredEntityTable.c.PublKeyFile.name() + " TEXT,";
+        sql += RegisteredEntityTable.c.PublicKeyValue.name() + " BLOB,";
         sql += RegisteredEntityTable.c.DistKeyValidityPeriod.name() + " TEXT NOT NULL,";
         sql += RegisteredEntityTable.c.PublicKeyCryptoSpec.name() + " TEXT,";
         sql += RegisteredEntityTable.c.DistCryptoSpec.name() + " TEXT NOT NULL,";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + " INT,";
-        sql += RegisteredEntityTable.c.DistKeyVal.name() + " BLOB,";
+        sql += RegisteredEntityTable.c.DistKeyValue.name() + " BLOB,";
         sql += RegisteredEntityTable.c.Active.name() + " BOOLEAN NOT NULL,";
         sql += RegisteredEntityTable.c.BackupToAuthID.name() + " INT,";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT)";
@@ -324,11 +324,11 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.UsePermanentDistKey.name() + ",";
         sql += RegisteredEntityTable.c.MaxSessionKeysPerRequest.name() + ",";
         sql += RegisteredEntityTable.c.PublicKeyCryptoSpec.name() + ",";
-        sql += RegisteredEntityTable.c.PublKeyFile.name() + ",";
+        sql += RegisteredEntityTable.c.PublicKeyValue.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyValidityPeriod.name() + ",";
         sql += RegisteredEntityTable.c.DistCryptoSpec.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + ",";
-        sql += RegisteredEntityTable.c.DistKeyVal.name() + ",";
+        sql += RegisteredEntityTable.c.DistKeyValue.name() + ",";
         sql += RegisteredEntityTable.c.Active.name() + ",";
         sql += RegisteredEntityTable.c.BackupToAuthID.name() + ",";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ")";
@@ -341,7 +341,13 @@ public class SQLiteConnector {
         preparedStatement.setBoolean(index++,regEntity.getUsePermanentDistKey());
         preparedStatement.setInt(index++,regEntity.getMaxSessionKeysPerRequest());
         preparedStatement.setString(index++,regEntity.getPublicKeyCryptoSpec());
-        preparedStatement.setString(index++,regEntity.getPublicKeyFile());
+        PublicKey publicKey = regEntity.getPublicKey();
+        if (publicKey != null) {
+            preparedStatement.setBytes(index++,publicKey.getEncoded());
+        }
+        else {
+            preparedStatement.setNull(index++, Types.BLOB);
+        }
         preparedStatement.setString(index++,regEntity.getDistKeyValidityPeriod());
         preparedStatement.setString(index++,regEntity.getDistCryptoSpec());
         byte[] distKeyVal = regEntity.getDistKeyVal();
@@ -522,7 +528,7 @@ public class SQLiteConnector {
         ResultSet resultSet = statement.executeQuery(sql);
         List<RegisteredEntityTable> entities = new LinkedList<>();
         while(resultSet.next()) {
-            RegisteredEntityTable entity = RegisteredEntityTable.createRecord(authDatabaseDir, resultSet);
+            RegisteredEntityTable entity = RegisteredEntityTable.createRecord(resultSet);
             entities.add(decryptRecords(entity));
             if (DEBUG) logger.info(entity.toJSONObject().toJSONString());
         }
@@ -547,7 +553,7 @@ public class SQLiteConnector {
         //setConnection();
         String sql = "UPDATE " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         sql += " SET " + RegisteredEntityTable.c.DistKeyExpirationTime.name() + " = " + distKeyExpirationTime;
-        sql += ", " + RegisteredEntityTable.c.DistKeyVal.name() + " = :DistKeyVal";
+        sql += ", " + RegisteredEntityTable.c.DistKeyValue.name() + " = :DistKeyValue";
         sql += " WHERE " + RegisteredEntityTable.c.Name.name() + " = '" + regEntityName + "'";
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);

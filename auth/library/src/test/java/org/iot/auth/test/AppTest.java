@@ -18,6 +18,7 @@ package org.iot.auth.test;
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
 import org.iot.auth.config.constants.ConstantType;
+import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
@@ -109,7 +110,7 @@ public class AppTest {
         SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
         sqLiteConnector.DEBUG = true;
         RegisteredEntityTable regEntity = new RegisteredEntityTable();
-
+        String authDBDir = "../databases/auth101/";
         regEntity.setName("net1.client");
         regEntity.setGroup("Clients");
         regEntity.setDistProtocol("TCP");
@@ -117,7 +118,8 @@ public class AppTest {
         regEntity.setPublicKeyCryptoSpec("RSA-SHA256");
         regEntity.setMaxSessionKeysPerRequest(5);
         regEntity.setDistKeyValidityPeriod("1*hour");
-        regEntity.setPublicKeyFile("entity_certs/Net1.ClientCert.pem");
+        regEntity.setPublicKey(
+                AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.ClientCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
         regEntity.setBackupToAuthID(102);
@@ -130,7 +132,8 @@ public class AppTest {
         regEntity.setPublicKeyCryptoSpec("RSA-SHA256");
         regEntity.setMaxSessionKeysPerRequest(5);
         regEntity.setDistKeyValidityPeriod("3*sec");
-        regEntity.setPublicKeyFile("entity_certs/Net1.PtClientCert.pem");
+        regEntity.setPublicKey(
+                AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.PtClientCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
         regEntity.setBackupToAuthID(102);
@@ -143,7 +146,8 @@ public class AppTest {
         regEntity.setPublicKeyCryptoSpec("RSA-SHA256");
         regEntity.setMaxSessionKeysPerRequest(5);
         regEntity.setDistKeyValidityPeriod("1*hour");
-        regEntity.setPublicKeyFile("entity_certs/Net1.ServerCert.pem");
+        regEntity.setPublicKey(
+                AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.ServerCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
         regEntity.setBackupToAuthID(102);
@@ -156,7 +160,8 @@ public class AppTest {
         regEntity.setPublicKeyCryptoSpec("RSA-SHA256");
         regEntity.setMaxSessionKeysPerRequest(5);
         regEntity.setDistKeyValidityPeriod("3*sec");
-        regEntity.setPublicKeyFile("entity_certs/Net1.PtServerCert.pem");
+        regEntity.setPublicKey(
+                AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.PtServerCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
         regEntity.setBackupToAuthID(102);

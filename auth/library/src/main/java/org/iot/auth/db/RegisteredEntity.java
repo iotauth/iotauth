@@ -68,15 +68,16 @@ public class RegisteredEntity {
         this.publicKey = tableElement.getPublicKey();
     }
 
-    public RegisteredEntityTable toRegisteredEntityTable(String publicKeyFilePath,
-                                                         Buffer serializedDistributionKeyValue,
+    public RegisteredEntityTable toRegisteredEntityTable(Buffer serializedDistributionKeyValue,
                                                          long distKeyExpirationTime) {
         RegisteredEntityTable tableElement = new RegisteredEntityTable();
         tableElement.setName(name);
         tableElement.setGroup(group);
         tableElement.setDistProtocol(distProtocol);
         tableElement.setUsePermanentDistKey(usePermanentDistKey);
-        tableElement.setPublicKeyCryptoSpec(publicKeyCryptoSpec.toSpecString());
+        if (publicKeyCryptoSpec != null) {
+            tableElement.setPublicKeyCryptoSpec(publicKeyCryptoSpec.toSpecString());
+        }
         tableElement.setDistKeyValidityPeriod("" + distKeyValidityPeriod);
         tableElement.setMaxSessionKeysPerRequest(maxSessionKeysPerRequest);
         tableElement.setDistCryptoSpec(distCryptoSpec.toSpecString());
@@ -94,13 +95,15 @@ public class RegisteredEntity {
             }
         }
         else {
+            tableElement.setPublicKey(publicKey);
+            /*
             if (publicKeyFilePath == null) {
                 throw new RuntimeException("Wrong registered entity information, " +
                         "does not use permanent dist key but no public key specified.");
             }
             else {
                 tableElement.setPublicKeyFile(publicKeyFilePath);
-            }
+            }*/
         }
         return tableElement;
     }

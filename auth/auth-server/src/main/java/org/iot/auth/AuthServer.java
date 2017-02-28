@@ -405,6 +405,12 @@ public class AuthServer {
     {
         db.insertRegisteredEntities(registeredEntities);
     }
+
+    public void reloadRegEntityDB()
+            throws SQLException, IOException, ClassNotFoundException
+    {
+        db.reloadRegEntityDB();
+    }
     //////////////////////////////////////////////////
     ///
     /// Above are methods for exposing AuthDB operations, rather than exposing AuthDB object itself
@@ -522,20 +528,38 @@ public class AuthServer {
         return clientForTrustedAuths;
     }
 
-    public ContentResponse backup() {
-        List<RegisteredEntity> registeredEntities = db.getAllRegisteredEntitiies();
-        AuthBackupReqMessage authBackupReqMessage = new AuthBackupReqMessage(registeredEntities);
-        if (registeredEntities.size() == 0) {
-            logger.info("No registered entities to be backed up.");
+    public List<ContentResponse> backup() {
+        int[] trustedAuthIDs = db.getAllTrustedAuthIDs();
+        List<RegisteredEntity> allRegisteredEntities = db.getAllRegisteredEntitiies();
+        List<ContentResponse> ret = new LinkedList<>();
+        if (allRegisteredEntities.size() == 0) {
+            logger.error("No registered entities to be backed up.");
             return null;
         }
-        int backupToAuthID = registeredEntities.get(0).getBackupToAuthID();
-        try {
-            return performPostRequestToTrustedAuth(backupToAuthID, authBackupReqMessage);
-        } catch (TimeoutException | ExecutionException | InterruptedException e) {
-            logger.error("Exception occurred during backup() {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException();
+        for (int i = 0; i < trustedAuthIDs.length; i++) {
+            int backupToAuthID = trustedAuthIDs[i];
+            List<RegisteredEntity> registeredEntitiesToBeBackedUp = new LinkedList<>();
+            for (RegisteredEntity registeredEntity: allRegisteredEntities) {
+                if (registeredEntity.getBackupToAuthID() == backupToAuthID) {
+                    registeredEntitiesToBeBackedUp.add(registeredEntity);
+                }
+            }
+            logger.info("Backing up to Auth" + backupToAuthID);
+
+            logger.info("List of entities to be backed up: ");
+            for (RegisteredEntity registeredEntity: registeredEntitiesToBeBackedUp) {
+                logger.info("{}", registeredEntity.getName());
+            }
+            AuthBackupReqMessage authBackupReqMessage = new AuthBackupReqMessage(registeredEntitiesToBeBackedUp);
+            try {
+                ContentResponse contentResponse = performPostRequestToTrustedAuth(backupToAuthID, authBackupReqMessage);
+                ret.add(contentResponse);
+            } catch (TimeoutException | ExecutionException | InterruptedException e) {
+                logger.error("Exception occurred during backup() {}", ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException();
+            }
         }
+        return ret;
     }
 
     private class EntityBluetoothListener extends Thread {

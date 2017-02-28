@@ -114,17 +114,8 @@ public class AuthDB {
                 serializedDistributionKeyValue = registeredEntity.getDistributionKey().getSerializedKeyVal();
                 distKeyExpirationTime = registeredEntity.getDistributionKey().getExpirationTime().getTime();
             }
-            else {
-                // save public key to file
-                String filepath = "entity_certs/" + registeredEntity.getName() + ".der";
-                FileOutputStream fos = new FileOutputStream(this.authDatabaseDir + "/" + filepath);
-                fos.write(registeredEntity.getPublicKey().getEncoded());
-                fos.close();
-                publicKeyFilePath = filepath;
-            }
-
             RegisteredEntityTable tableElement = registeredEntity.toRegisteredEntityTable(
-                    publicKeyFilePath, serializedDistributionKeyValue, distKeyExpirationTime);
+                    serializedDistributionKeyValue, distKeyExpirationTime);
 
             tableElements.push(tableElement);
 
@@ -244,6 +235,16 @@ public class AuthDB {
         return trustedAuthMap.get(authID);
     }
 
+    public int[] getAllTrustedAuthIDs() {
+        int[] ret = new int[trustedAuthMap.size()];
+        int index = 0;
+        for (int trustedAuthID: trustedAuthMap.keySet()) {
+            ret[index] = trustedAuthID;
+            index++;
+        }
+        return ret;
+    }
+
     /**
      * Convert session keys into string for display
      * @return String with session keys separated with newlines
@@ -331,6 +332,24 @@ public class AuthDB {
                     SymmetricKeyCryptoSpec.fromSpecString(regEntityTable.getDistCryptoSpec()),
                     regEntityTable.getDistKeyExpirationTime(),
                     new Buffer(regEntityTable.getDistKeyVal())
+                );
+            }
+            RegisteredEntity registeredEntity = new RegisteredEntity(regEntityTable, distributionKey);
+
+            registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
+            logger.debug("registeredEntity: {}", registeredEntity.toString());
+        });
+    }
+
+    public void reloadRegEntityDB() throws SQLException, ClassNotFoundException {
+        registeredEntityMap.clear();
+        sqLiteConnector.selectAllRegEntities(authDatabaseDir).forEach(regEntityTable -> {
+            DistributionKey distributionKey = null;
+            if (regEntityTable.getDistKeyVal() != null) {
+                distributionKey = new DistributionKey(
+                        SymmetricKeyCryptoSpec.fromSpecString(regEntityTable.getDistCryptoSpec()),
+                        regEntityTable.getDistKeyExpirationTime(),
+                        new Buffer(regEntityTable.getDistKeyVal())
                 );
             }
             RegisteredEntity registeredEntity = new RegisteredEntity(regEntityTable, distributionKey);
