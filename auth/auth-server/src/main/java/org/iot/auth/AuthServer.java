@@ -444,7 +444,7 @@ public class AuthServer {
         serverTrustStore.load(null, authKeyStorePassword.toCharArray());
         String[] trustedCACertPaths = properties.getTrustedCACertPaths();
         for (int i = 0; i < trustedCACertPaths.length; i++) {
-            serverTrustStore.setCertificateEntry("" + i, AuthCrypto.loadCertificate(trustedCACertPaths[i]));
+            serverTrustStore.setCertificateEntry("" + i, AuthCrypto.loadCertificateFromFile(trustedCACertPaths[i]));
         }
         sslContextFactory.setTrustStore(serverTrustStore);
         sslContextFactory.setNeedClientAuth(true);
@@ -495,7 +495,7 @@ public class AuthServer {
         clientTrustStore.load(null, authKeyStorePassword.toCharArray());
         String[] trustedCACertPaths = properties.getTrustedCACertPaths();
         for (int i = 0; i < trustedCACertPaths.length; i++) {
-            clientTrustStore.setCertificateEntry("" + i, AuthCrypto.loadCertificate(trustedCACertPaths[i]));
+            clientTrustStore.setCertificateEntry("" + i, AuthCrypto.loadCertificateFromFile(trustedCACertPaths[i]));
         }
 
         sslContextFactory.setTrustStore(clientTrustStore);

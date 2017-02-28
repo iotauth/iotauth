@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
 import java.sql.SQLException;
 import java.util.UUID;
 
@@ -41,11 +42,12 @@ import java.util.UUID;
  */
 public class AppTest {
     private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
-    private static final String _dbPath = "auth.db"; //"databases/auth101/auth.db";
-    private boolean _dbCreated = false;
-    private boolean _regEntityInserted = false;
-    private boolean _commPolicyInserted = false;
-    private boolean _trustedAuthInserted = false;
+    private static final String dbPath = "auth.db"; //"databases/auth101/auth.db";
+    private boolean dbCreated = false;
+    private boolean regEntityInserted = false;
+    private boolean commPolicyInserted = false;
+    private boolean trustedAuthInserted = false;
+    private String authDBDir = "../databases/auth101/";
     @Test
     @Category(org.iot.auth.config.constants.C.class)
     public void testConstant(){
@@ -95,22 +97,21 @@ public class AppTest {
     }
 
     public void testDBCreateion() throws SQLException, ClassNotFoundException {
-        File file = new File(_dbPath);
+        File file = new File(dbPath);
         file.delete();
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
         sqLiteConnector.DEBUG = true;
         sqLiteConnector.createTablesIfNotExists();
-        _dbCreated = true;
+        dbCreated = true;
     }
 
     public void testRegEntityInsertion() throws SQLException, ClassNotFoundException {
-        if (!_dbCreated) {
+        if (!dbCreated) {
             testDBCreateion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
         sqLiteConnector.DEBUG = true;
         RegisteredEntityTable regEntity = new RegisteredEntityTable();
-        String authDBDir = "../databases/auth101/";
         regEntity.setName("net1.client");
         regEntity.setGroup("Clients");
         regEntity.setDistProtocol("TCP");
@@ -167,14 +168,14 @@ public class AppTest {
         regEntity.setBackupToAuthID(102);
         sqLiteConnector.insertRecords(regEntity);
 
-        _regEntityInserted = true;
+        regEntityInserted = true;
     }
 
     public void testCommPolicyInsertion() throws SQLException, ClassNotFoundException {
-        if (!_dbCreated) {
+        if (!dbCreated) {
             testDBCreateion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
         sqLiteConnector.DEBUG = true;
         CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
 
@@ -249,31 +250,32 @@ public class AppTest {
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
-        _commPolicyInserted = true;
+        commPolicyInserted = true;
     }
 
-    public void testTrustedAuthInsertion() throws SQLException, ClassNotFoundException {
-        if (!_dbCreated) {
+    public void testTrustedAuthInsertion() throws SQLException, ClassNotFoundException, CertificateEncodingException {
+        if (!dbCreated) {
             testDBCreateion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
         sqLiteConnector.DEBUG = true;
         TrustedAuthTable trustedAuth = new TrustedAuthTable();
         trustedAuth.setId(102);
         trustedAuth.setHost("localhost");
         trustedAuth.setPort(22901);
-        trustedAuth.setCertificatePath("credentials/certs/Auth102InternetCert.pem");
+        trustedAuth.setCertificate(
+                AuthCrypto.loadCertificateFromFile(authDBDir + "trusted_auth_certs/Auth102InternetCert.pem"));
         sqLiteConnector.insertRecords(trustedAuth);
-        _trustedAuthInserted = true;
+        trustedAuthInserted = true;
     }
 
     @Test
     @Category(org.iot.auth.db.dao.SQLiteConnector.class)
     public void testSelectAllCommPolicies() throws SQLException, ClassNotFoundException {
-        if (!_commPolicyInserted) {
+        if (!commPolicyInserted) {
             testCommPolicyInsertion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
         sqLiteConnector.DEBUG = true;
         sqLiteConnector.selectAllPolicies();
     }
@@ -281,10 +283,10 @@ public class AppTest {
     @Test
     @Category(org.iot.auth.db.dao.SQLiteConnector.class)
     public void testSelectAllRegEntities() throws SQLException, ClassNotFoundException, IOException {
-        if (!_regEntityInserted) {
+        if (!regEntityInserted) {
             testRegEntityInsertion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
         sqLiteConnector.DEBUG = true;
         C.PROPERTIES = new AuthServerProperties("../properties/exampleAuth101.properties");
         sqLiteConnector.selectAllRegEntities("../databases/auth101");
@@ -292,11 +294,11 @@ public class AppTest {
 
     @Test
     @Category(org.iot.auth.db.dao.SQLiteConnector.class)
-    public void testSelectAllTrustedAuth() throws SQLException, ClassNotFoundException {
-        if (!_trustedAuthInserted) {
+    public void testSelectAllTrustedAuth() throws SQLException, ClassNotFoundException, CertificateEncodingException {
+        if (!trustedAuthInserted) {
             testTrustedAuthInsertion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(_dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
         sqLiteConnector.DEBUG = true;
         sqLiteConnector.selectAllTrustedAuth();
     }

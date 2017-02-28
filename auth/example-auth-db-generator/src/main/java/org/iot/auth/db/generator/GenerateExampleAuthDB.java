@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.PublicKey;
+import java.security.cert.CertificateEncodingException;
 import java.sql.SQLException;
 import java.util.Date;
 
@@ -50,7 +51,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
 /**
- * A program to generate example Auth databases for two example Auths with ID 101 and ID 102.
+ * A program to generate example Auth databases for example Auths starting from ID 101
+ * The number of Auths is specified as an argument.
  * @author Hokeun Kim
  */
 public class GenerateExampleAuthDB {
@@ -113,7 +115,7 @@ public class GenerateExampleAuthDB {
                 authDatabaseDir + "configs/Auth" + authID + "RegisteredEntityTable.config");
         initCommPolicyTable(sqLiteConnector,
                 authDatabaseDir + "configs/Auth" + authID + "CommunicationPolicyTable.config");
-        initTrustedAuthTable(sqLiteConnector,
+        initTrustedAuthTable(sqLiteConnector, authDatabaseDir,
                 authDatabaseDir + "configs/Auth" + authID + "TrustedAuthTable.config");
         sqLiteConnector.close();
     }
@@ -129,10 +131,6 @@ public class GenerateExampleAuthDB {
         metaData.setValue(Long.toString(0));
         sqLiteConnector.insertRecords(metaData);
 
-        /*
-        metaData = new MetaDataTable();
-        metaData.setKey(MetaDataTable.key.EncryptedDatabaseKey.name());
-        */
         PublicKey databasePublicKey = AuthCrypto.loadPublicKeyFromFile(databasePublicKeyPath);
         Buffer encryptedDatabaseKey = AuthCrypto.publicEncrypt(databaseKey.getSerializedKeyVal(), databasePublicKey,
                 SQLiteConnector.AUTH_DB_PUBLIC_CIPHER);
@@ -140,9 +138,6 @@ public class GenerateExampleAuthDB {
         FileOutputStream fileOutputStream = new FileOutputStream(databaseEncryptionKeyPath);
         fileOutputStream.write(encryptedDatabaseKey.getRawBytes());
         fileOutputStream.close();
-
-        //metaData.setValue(encryptedDatabaseKey.toBase64());
-        //sqLiteConnector.insertRecords(metaData);
     }
 
     private static long convertObjectToLong(Object obj) throws InvalidDBDataTypeException {
@@ -257,9 +252,8 @@ public class GenerateExampleAuthDB {
         }
     }
 
-    private static void initTrustedAuthTable(SQLiteConnector sqLiteConnector, String tableConfigFilePath)
-            throws ClassNotFoundException, SQLException, IOException
-    {
+    private static void initTrustedAuthTable(SQLiteConnector sqLiteConnector, String authDatabaseDir, String tableConfigFilePath)
+            throws ClassNotFoundException, SQLException, IOException, CertificateEncodingException {
         JSONParser parser = new JSONParser();
         try {
             JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
@@ -271,7 +265,9 @@ public class GenerateExampleAuthDB {
                 trustedAuth.setId(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.ID.name())));
                 trustedAuth.setHost((String)jsonObject.get(TrustedAuthTable.c.Host.name()));
                 trustedAuth.setPort(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.Port.name())));
-                trustedAuth.setCertificatePath((String)jsonObject.get(TrustedAuthTable.c.CertificatePath.name()));
+                trustedAuth.setCertificate(
+                        AuthCrypto.loadCertificateFromFile(
+                        authDatabaseDir + "/" + jsonObject.get(TrustedAuthTable.c.CertificatePath.name())));
                 sqLiteConnector.insertRecords(trustedAuth);
             }
         }

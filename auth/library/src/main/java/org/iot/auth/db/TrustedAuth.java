@@ -18,7 +18,8 @@ package org.iot.auth.db;
 import java.security.cert.X509Certificate;
 
 /**
- * Created by hokeunkim on 7/30/16.
+ * Class for information of a trusted Auth.
+ * @author Hokeun Kim
  */
 public class TrustedAuth {
     public TrustedAuth(int id, String host, int port, X509Certificate certificate) {

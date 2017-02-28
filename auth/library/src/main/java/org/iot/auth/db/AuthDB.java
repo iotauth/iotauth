@@ -23,15 +23,12 @@ import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
-import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.server.CommunicationTargetType;
-import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -379,7 +376,7 @@ public class AuthDB {
         for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuth()) {
             TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(),
                     t.getPort(),
-                    AuthCrypto.loadCertificate(authDatabaseDir + "/" + t.getCertificatePath()));
+                    t.getCertificate());
             trustedAuthMap.put(trustedAuth.getID(), trustedAuth);
             // TODO: Add trust store for trusted auth
             trustStoreForTrustedAuths.setCertificateEntry("" + trustedAuth.getID(), trustedAuth.getCertificate());

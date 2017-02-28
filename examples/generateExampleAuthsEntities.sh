@@ -6,6 +6,11 @@
 AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
+
+# Whether to remove unnecessary key, cert, config files to be removed after DB generation
+REMOVE_KEY_CERT_FILES=true
+REMOVE_CONFIG_FILES=true
+
 # number of networks (Auths)
 NUM_NETS=2
 
@@ -33,11 +38,13 @@ do
 	MY_KEYSTORES_DIR="../../"$AUTH_DATABASES_DIR"auth10"$net_id"/my_keystores/"
 	mkdir -p $MY_KEYSTORES_DIR
 	mv "keystores/Auth10"$net_id*".pfx" $MY_KEYSTORES_DIR
-	mkdir -p ../../$AUTH_DATABASES_DIR"/auth10"$net_id"/entity_certs/"
-	mkdir -p ../../$AUTH_DATABASES_DIR"/auth10"$net_id"/entity_keys/"
-	mkdir -p ../../$AUTH_DATABASES_DIR"/auth10"$net_id"/trusted_auth_certs/"
+	CURRENT_AUTH_DB_DIR=../../$AUTH_DATABASES_DIR"/auth10"$net_id
+	mkdir -p $CURRENT_AUTH_DB_DIR"/entity_certs/"
+	mkdir -p $CURRENT_AUTH_DB_DIR"/entity_keys/"
+	mkdir -p $CURRENT_AUTH_DB_DIR"/trusted_auth_certs/"
 	let "net_id+=1"
 done
+
 # Move to repository root
 cd ../../
 # Move to Auth databases
@@ -89,3 +96,19 @@ cd ../..
 cd auth/example-auth-db-generator
 ./generateExampleAuthDB.sh $NUM_NETS
 cd ../..
+
+net_id=1
+while [ "$net_id" -le $NUM_NETS ]
+do
+	CURRENT_AUTH_DB_DIR=$AUTH_DATABASES_DIR"/auth10"$net_id
+	if $REMOVE_KEY_CERT_FILES; then
+		rm -rf $CURRENT_AUTH_DB_DIR"/my_certs/"
+		rm -rf $CURRENT_AUTH_DB_DIR"/entity_certs/"
+		rm -rf $CURRENT_AUTH_DB_DIR"/entity_keys/"
+		rm -rf $CURRENT_AUTH_DB_DIR"/trusted_auth_certs/"
+	fi
+	if $REMOVE_CONFIG_FILES; then
+		rm -rf $CURRENT_AUTH_DB_DIR"/configs/"
+	fi
+	let "net_id+=1"
+done

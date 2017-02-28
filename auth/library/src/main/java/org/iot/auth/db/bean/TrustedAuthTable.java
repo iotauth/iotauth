@@ -15,8 +15,11 @@
 
 package org.iot.auth.db.bean;
 
+import org.iot.auth.crypto.AuthCrypto;
 import org.json.simple.JSONObject;
 
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -29,14 +32,14 @@ public class TrustedAuthTable {
         ID,
         Host,
         Port,
+        CertificateValue,
         CertificatePath
     }
 
     private int id;
     private String host;
     private int port;
-    private String certificatePath;
-
+    private X509Certificate certificate;
     public int getId() {
         return id;
     }
@@ -61,35 +64,42 @@ public class TrustedAuthTable {
         this.port = port;
     }
 
-    public String getCertificatePath() {
-        return certificatePath;
+    public X509Certificate getCertificate() {
+        return certificate;
     }
 
-    public void setCertificatePath(String certificatePath) {
-        this.certificatePath = certificatePath;
+    public void setCertificate(X509Certificate certificate) {
+        this.certificate = certificate;
     }
 
     @SuppressWarnings("unchecked")
-    public JSONObject toJSONObject() {
+    public JSONObject toJSONObject() throws CertificateEncodingException {
         JSONObject object = new JSONObject();
         object.put(c.ID.name(), getId());
         object.put(c.Host.name(), getHost());
         object.put(c.Port.name(), getPort());
-        object.put(c.CertificatePath.name(), getCertificatePath());
+        object.put(c.CertificateValue.name(), getCertificate().getEncoded());
         return object;
     }
 
-    public String toString(){
-        return toJSONObject().toString();
+    public String toString() {
+        try {
+            return toJSONObject().toString();
+        }
+        catch (CertificateEncodingException e) {
+            throw new RuntimeException("Problem converting TrustedAuthTable into String: \n"
+                    + e.getMessage());
+        }
     }
 
     public static TrustedAuthTable createRecord(ResultSet resultSet)
-            throws SQLException {
+            throws SQLException, CertificateEncodingException {
         TrustedAuthTable trustedAuth = new TrustedAuthTable();
         trustedAuth.setId(resultSet.getInt(c.ID.name()));
         trustedAuth.setHost(resultSet.getString(c.Host.name()));
         trustedAuth.setPort(resultSet.getInt(c.Port.name()));
-        trustedAuth.setCertificatePath(resultSet.getString(c.CertificatePath.name()));
+        trustedAuth.setCertificate(
+                AuthCrypto.loadCertificateFromBytes(resultSet.getBytes(c.CertificateValue.name())));
         return trustedAuth;
     }
 }

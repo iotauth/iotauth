@@ -169,18 +169,28 @@ public class AuthCrypto {
         return keyStore;
     }
 
+    public static X509Certificate loadCertificateFromBytes(byte[] bytes) {
+        try {
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            InputStream in = new ByteArrayInputStream(bytes);
+            return (X509Certificate)certFactory.generateCertificate(in);
+        } catch (CertificateException e) {
+            throw new IllegalArgumentException("Problem loading certificate from bytes" + "\n" + e.getMessage());
+        }
+    }
+
     /**
      * Load an X.509 certificate from file.
      * @param filePath Path to the certificate file.
      * @return Loaded X.509 certificate.
      */
-    public static X509Certificate loadCertificate(String filePath) {
+    public static X509Certificate loadCertificateFromFile(String filePath) {
         try {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             FileInputStream inStream = new FileInputStream(filePath);
             return (X509Certificate) certFactory.generateCertificate(inStream);
         } catch (CertificateException | FileNotFoundException e) {
-            throw new IllegalArgumentException("Problem loading certificate key " + filePath + "\n" + e.getMessage());
+            throw new IllegalArgumentException("Problem loading certificate " + filePath + "\n" + e.getMessage());
         }
     }
 
@@ -196,7 +206,7 @@ public class AuthCrypto {
 
     public static PublicKey loadPublicKeyFromFile(String filePath) {
         if (filePath.endsWith(".pem")) {
-            return loadCertificate(filePath).getPublicKey();
+            return loadCertificateFromFile(filePath).getPublicKey();
         }
         else if (filePath.endsWith(".der")) {
             try {

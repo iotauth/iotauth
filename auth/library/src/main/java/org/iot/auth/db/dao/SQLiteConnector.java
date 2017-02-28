@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.sql.*;
 import java.util.*;
@@ -210,7 +211,7 @@ public class SQLiteConnector {
         sql += TrustedAuthTable.c.ID.name() + " INT NOT NULL PRIMARY KEY,";
         sql += TrustedAuthTable.c.Host.name() + " TEXT NOT NULL,";
         sql += TrustedAuthTable.c.Port.name() + " INT NOT NULL,";
-        sql += TrustedAuthTable.c.CertificatePath.name() + " TEXT NOT NULL)";
+        sql += TrustedAuthTable.c.CertificateValue.name() + " BLOB NOT NULL)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", TrustedAuthTable.T_TRUSTED_AUTH);
@@ -384,20 +385,20 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      * @see TrustedAuthTable
      */
-    public boolean insertRecords(TrustedAuthTable auth)  throws SQLException, ClassNotFoundException {
+    public boolean insertRecords(TrustedAuthTable auth) throws SQLException, ClassNotFoundException, CertificateEncodingException {
         //setConnection();
         String sql = "INSERT INTO " + TrustedAuthTable.T_TRUSTED_AUTH + "(";
         sql += TrustedAuthTable.c.ID.name() + ",";
         sql += TrustedAuthTable.c.Host.name() + ",";
         sql += TrustedAuthTable.c.Port.name() + ",";
-        sql += TrustedAuthTable.c.CertificatePath.name() + ")";
+        sql += TrustedAuthTable.c.CertificateValue.name() + ")";
         sql += " VALUES(?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setInt(index++,auth.getId());
         preparedStatement.setString(index++,auth.getHost());
         preparedStatement.setInt(index++,auth.getPort());
-        preparedStatement.setString(index++,auth.getCertificatePath());
+        preparedStatement.setBytes(index++,auth.getCertificate().getEncoded());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -573,7 +574,7 @@ public class SQLiteConnector {
      * or an argument is supplied to this method
      * @throws ClassNotFoundException if the class cannot be located
      */
-    public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, ClassNotFoundException {
+    public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, ClassNotFoundException, CertificateEncodingException {
         //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + TrustedAuthTable.T_TRUSTED_AUTH;
