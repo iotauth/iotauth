@@ -47,6 +47,8 @@ public class AuthServerProperties {
         entity_key_store_path,
         internet_key_store_path,
         database_key_store_path,
+        database_encryption_key_path,
+
         trusted_ca_cert_paths,
 
         auth_database_dir
@@ -70,6 +72,8 @@ public class AuthServerProperties {
     private String entityKeyStorePath;
     private String internetKeyStorePath;
     private String databaseKeyStorePath;
+    private String databaseEncryptionKeyPath;
+
     private String[] trustedCACertPaths;
 
     private String authDatabaseDir;
@@ -121,6 +125,10 @@ public class AuthServerProperties {
             databaseKeyStorePath = prop.getProperty(key.database_key_store_path.toString());
             logger.info("key:value = {}:{}", key.database_key_store_path.toString(), databaseKeyStorePath);
 
+            databaseEncryptionKeyPath = prop.getProperty(key.database_encryption_key_path.toString());
+            logger.info("key:value = {}:{}", key.database_encryption_key_path.toString(), databaseEncryptionKeyPath);
+
+
             trustedCACertPaths = prop.getProperty(key.trusted_ca_cert_paths.toString()).trim().split("\\s*(;|,|\\s+)\\s*");
             logger.info("key:value = {}:{}", key.trusted_ca_cert_paths.toString(), trustedCACertPaths);
 
@@ -170,6 +178,9 @@ public class AuthServerProperties {
     }
     public String getDatabaseKeyStorePath() {
         return databaseKeyStorePath;
+    }
+    public String getDatabaseEncryptionKeyPath() {
+        return databaseEncryptionKeyPath;
     }
     public String[] getTrustedCACertPaths() { return trustedCACertPaths; }
 

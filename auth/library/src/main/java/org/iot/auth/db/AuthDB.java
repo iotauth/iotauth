@@ -68,15 +68,20 @@ public class AuthDB {
      * @throws SQLException When an error occurs in database
      * @throws ClassNotFoundException When a specified class is not found
      */
-    public void initialize(String authKeyStorePassword, String databaseKeystorePath) throws IOException, CertificateException,
-            NoSuchAlgorithmException, KeyStoreException, SQLException, ClassNotFoundException, UnrecoverableEntryException
+    public void initialize(String databaseKeystorePath, String authKeyStorePassword, String databaseEncryptionKeyPath)
+            throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, SQLException,
+            ClassNotFoundException, UnrecoverableEntryException
     {
         sqLiteConnector = new SQLiteConnector(this.authDatabaseDir + "/" + AUTH_DB_FILE_NAME);
-        sqLiteConnector.initialize(databaseKeystorePath, authKeyStorePassword);
+        sqLiteConnector.initialize(databaseKeystorePath, authKeyStorePassword, databaseEncryptionKeyPath);
         //sqLiteConnector.DEBUG = true;
         loadRegEntityDB();
         loadCommPolicyDB();
         loadTrustedAuthDB(authKeyStorePassword);
+    }
+
+    public void close() throws SQLException, IOException, InterruptedException {
+        sqLiteConnector.close();
     }
 
     /**

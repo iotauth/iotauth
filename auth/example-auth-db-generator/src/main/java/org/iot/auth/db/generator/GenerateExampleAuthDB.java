@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.PublicKey;
@@ -96,7 +97,10 @@ public class GenerateExampleAuthDB {
 
     private static void generateAuthDatabase(int authID) throws Exception {
         String authDatabaseDir = "databases/auth" + authID + "/";
+        // TODO: These paths must be given rather than hard-coded?
         String databasePublicKeyPath = authDatabaseDir + "my_certs/Auth" + authID + "DatabaseCert.pem";
+        String databaseEncryptionKeyPath = authDatabaseDir + "my_keystores/Auth" + authID + "Database.bin";
+
         SQLiteConnector sqLiteConnector = new SQLiteConnector(authDatabaseDir + "auth.db");
         SymmetricKey databaseKey = new SymmetricKey(
                 SQLiteConnector.AUTH_DB_CRYPTO_SPEC,
@@ -105,18 +109,19 @@ public class GenerateExampleAuthDB {
         sqLiteConnector.initialize(databaseKey);
         sqLiteConnector.createTablesIfNotExists();
 
-        initMetaDataTable(sqLiteConnector, databasePublicKeyPath, databaseKey);
+        initMetaDataTable(sqLiteConnector, databasePublicKeyPath, databaseKey, databaseEncryptionKeyPath);
         initRegisteredEntityTable(sqLiteConnector, authID,
                 authDatabaseDir + "configs/Auth" + authID + "RegisteredEntityTable.config");
         initCommPolicyTable(sqLiteConnector,
                 authDatabaseDir + "configs/Auth" + authID + "CommunicationPolicyTable.config");
         initTrustedAuthTable(sqLiteConnector,
                 authDatabaseDir + "configs/Auth" + authID + "TrustedAuthTable.config");
+        sqLiteConnector.close();
     }
 
     private static void initMetaDataTable(SQLiteConnector sqLiteConnector,
-                                          String databasePublicKeyPath, SymmetricKey databaseKey)
-            throws ClassNotFoundException, SQLException
+                                          String databasePublicKeyPath, SymmetricKey databaseKey, String databaseEncryptionKeyPath)
+            throws ClassNotFoundException, SQLException, IOException
     {
         MetaDataTable metaData;
 
@@ -125,14 +130,20 @@ public class GenerateExampleAuthDB {
         metaData.setValue(Long.toString(0));
         sqLiteConnector.insertRecords(metaData);
 
+        /*
         metaData = new MetaDataTable();
         metaData.setKey(MetaDataTable.key.EncryptedDatabaseKey.name());
+        */
         PublicKey databasePublicKey = AuthCrypto.loadPublicKey(databasePublicKeyPath);
         Buffer encryptedDatabaseKey = AuthCrypto.publicEncrypt(databaseKey.getSerializedKeyVal(), databasePublicKey,
                 SQLiteConnector.AUTH_DB_PUBLIC_CIPHER);
 
-        metaData.setValue(encryptedDatabaseKey.toBase64());
-        sqLiteConnector.insertRecords(metaData);
+        FileOutputStream fileOutputStream = new FileOutputStream(databaseEncryptionKeyPath);
+        fileOutputStream.write(encryptedDatabaseKey.getRawBytes());
+        fileOutputStream.close();
+
+        //metaData.setValue(encryptedDatabaseKey.toBase64());
+        //sqLiteConnector.insertRecords(metaData);
     }
 
     private static long convertObjectToLong(Object obj) throws InvalidDBDataTypeException {

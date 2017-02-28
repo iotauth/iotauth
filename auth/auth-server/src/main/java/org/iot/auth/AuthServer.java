@@ -112,13 +112,14 @@ public class AuthServer {
             authKeyStorePassword = new String(console.readPassword());
         }
 
-        logger.info("Finished initializing Auth DB.");
 
         authID =  properties.getAuthID();
 
         crypto = new AuthCrypto(properties.getEntityKeyStorePath(), authKeyStorePassword);
         this.db = new AuthDB(properties.getAuthDatabaseDir());
-        db.initialize(authKeyStorePassword, properties.getDatabaseKeyStorePath());
+        db.initialize(properties.getDatabaseKeyStorePath(), authKeyStorePassword,
+                properties.getDatabaseEncryptionKeyPath());
+        logger.info("Finished initializing Auth DB.");
 
         entityTcpPortTimeout = properties.getEntityTcpPortTimeout();
         entityUdpPortTimeout = properties.getEntityUdpPortTimeout();
@@ -219,6 +220,10 @@ public class AuthServer {
 
         serverForTrustedAuths.start();
         serverForTrustedAuths.join();
+    }
+
+    public void end() throws SQLException, IOException, InterruptedException {
+        db.close();
     }
 
     /**

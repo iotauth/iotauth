@@ -358,7 +358,7 @@ public class AuthCrypto {
      * @return Byte array, the binary data of the file
      * @throws IOException If file IO fails.
      */
-    private byte[] readBinaryFile(String filePath) throws IOException {
+    public static byte[] readBinaryFile(String filePath) throws IOException {
         File file = new File(filePath);
         DataInputStream dataInStream = new DataInputStream(new FileInputStream(filePath));
         byte[] bytes = new byte[(int) file.length()];

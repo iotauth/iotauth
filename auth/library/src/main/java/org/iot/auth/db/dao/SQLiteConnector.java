@@ -26,7 +26,7 @@ import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.sql.*;
@@ -45,6 +45,7 @@ public class SQLiteConnector {
     private Statement statement;
     private String dbPath;
     private SymmetricKey databaseKey;
+    private boolean useInMemoryProtection = true;
     // FIXME: should be set by properties
     public static final String AUTH_DB_KEY_ABSOLUTE_VALIDITY = "3650*day";
     public static final SymmetricKeyCryptoSpec AUTH_DB_CRYPTO_SPEC =
@@ -73,7 +74,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException When ClassNotFoundException occurs.
      * @throws UnrecoverableEntryException When UnrecoverableEntryException occurs.
      */
-    public void initialize(String databaseKeystorePath, String authKeyStorePassword)
+    public void initialize(String databaseKeystorePath, String authKeyStorePassword, String databaseEncryptionKeyPath)
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, SQLException,
             ClassNotFoundException, UnrecoverableEntryException
     {
@@ -92,8 +93,10 @@ public class SQLiteConnector {
             logger.debug("Alias {}: , Cert: {}, Key: {}", alias, pkEntry.getCertificate(), pkEntry.getPrivateKey());
             databasePrivateKey = pkEntry.getPrivateKey();
         }
-        String value = selectMetaDataValue(MetaDataTable.key.EncryptedDatabaseKey.name());
-        Buffer encryptedDatabaseKey = Buffer.fromBase64(value);
+        //setConnection();
+        //String value = selectMetaDataValue(MetaDataTable.key.EncryptedDatabaseKey.name());
+
+        Buffer encryptedDatabaseKey = new Buffer(AuthCrypto.readBinaryFile(databaseEncryptionKeyPath));
 
         initialize(new SymmetricKey(
                 AUTH_DB_CRYPTO_SPEC,
@@ -101,7 +104,8 @@ public class SQLiteConnector {
                 AuthCrypto.privateDecrypt(encryptedDatabaseKey, databasePrivateKey, AUTH_DB_PUBLIC_CIPHER)));
     }
 
-    public void initialize(SymmetricKey databaseKey) {
+    public void initialize(SymmetricKey databaseKey) throws SQLException, IOException, ClassNotFoundException {
+        setConnection();
         this.databaseKey = databaseKey;
     }
 
@@ -123,13 +127,31 @@ public class SQLiteConnector {
         }
     }
 
-    private void setConnection() throws ClassNotFoundException, SQLException {
+    private void setConnection() throws ClassNotFoundException, SQLException, IOException {
         Class.forName("org.sqlite.JDBC");
-        if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+        if (useInMemoryProtection) {
+            if (connection == null || connection.isClosed()) {
+                connection = DriverManager.getConnection("jdbc:sqlite:");
+                File file = new File(dbPath);
+                if (file.exists() && !file.isDirectory()) {
+                    Statement stat = connection.createStatement();
+                    stat.executeUpdate("restore from " + dbPath);
+                }
+            }
+        }
+        else {
+            if (connection == null || connection.isClosed()) {
+                connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+            }
         }
     }
-
+    public void close() throws SQLException, IOException {
+        if (useInMemoryProtection) {
+            Statement stat = connection.createStatement();
+            stat.executeUpdate("backup to " + dbPath );
+        }
+        connection.close();
+    }
     /**
      * On cold start it will be needed to create a database and the related tables.
      * @throws SQLException if a database access error occurs;
@@ -138,7 +160,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public void createTablesIfNotExists() throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         String sql = "CREATE TABLE IF NOT EXISTS " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.TargetType.name() + " TEXT NOT NULL,";
@@ -240,7 +262,7 @@ public class SQLiteConnector {
      * @see CommunicationPolicyTable
      */
     public boolean insertRecords(CommunicationPolicyTable policy) throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         String sql = "INSERT INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
@@ -294,7 +316,7 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
         regEntity = encryptRecords(regEntity);
-        setConnection();
+        //setConnection();
         String sql = "INSERT INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
         sql += RegisteredEntityTable.c.Name.name() + ",";
         sql += "'"+ RegisteredEntityTable.c.Group.name() + "',";
@@ -357,7 +379,7 @@ public class SQLiteConnector {
      * @see TrustedAuthTable
      */
     public boolean insertRecords(TrustedAuthTable auth)  throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         String sql = "INSERT INTO " + TrustedAuthTable.T_TRUSTED_AUTH + "(";
         sql += TrustedAuthTable.c.ID.name() + ",";
         sql += TrustedAuthTable.c.Host.name() + ",";
@@ -400,7 +422,7 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(CachedSessionKeyTable cachedSessionKey) throws SQLException, ClassNotFoundException {
         encryptRecords(cachedSessionKey);
-        setConnection();
+        //setConnection();
         String sql = "INSERT INTO " + CachedSessionKeyTable.T_CACHED_SESSION_KEY + "(";
         sql += CachedSessionKeyTable.c.ID.name() + ",";
         sql += CachedSessionKeyTable.c.Owners.name() + ",";
@@ -441,7 +463,7 @@ public class SQLiteConnector {
      * @see MetaDataTable
      */
     public boolean insertRecords(MetaDataTable metaData) throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
 
         String sql = "INSERT INTO " + MetaDataTable.T_META_DATA + "(";
         sql += MetaDataTable.c.Key.name() + ",";
@@ -467,7 +489,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public List<CommunicationPolicyTable> selectAllPolicies() throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
         if (DEBUG) logger.info(sql);
@@ -493,7 +515,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public List<RegisteredEntityTable> selectAllRegEntities(String authDatabaseDir) throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         if (DEBUG) logger.info(sql);
@@ -522,7 +544,7 @@ public class SQLiteConnector {
             throws SQLException, ClassNotFoundException
     {
         distKeyVal = encryptAuthDBData(distKeyVal);
-        setConnection();
+        //setConnection();
         String sql = "UPDATE " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         sql += " SET " + RegisteredEntityTable.c.DistKeyExpirationTime.name() + " = " + distKeyExpirationTime;
         sql += ", " + RegisteredEntityTable.c.DistKeyVal.name() + " = :DistKeyVal";
@@ -546,7 +568,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + TrustedAuthTable.T_TRUSTED_AUTH;
         if (DEBUG) logger.info(sql);
@@ -570,7 +592,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public List<CachedSessionKeyTable> selectAllCachedSessionKey() throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
@@ -594,7 +616,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public CachedSessionKeyTable selectCachedSessionKeyByID(long id) throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         sql += " WHERE " + CachedSessionKeyTable.c.ID.name() + " = " + id;
@@ -619,7 +641,7 @@ public class SQLiteConnector {
      */
     public List<CachedSessionKeyTable> selectCachedSessionKeysByPurpose(String requestingEntityName, String purpose)
             throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         sql += " WHERE " + CachedSessionKeyTable.c.Purpose.name() + " = " + "'" + purpose + "'";
@@ -646,7 +668,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public boolean deleteExpiredCahcedSessionKeys() throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         String sql = "DELETE FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         long currentTime = new java.util.Date().getTime();
         sql += " WHERE " + CachedSessionKeyTable.c.ExpirationTime.name() + " < " + currentTime;
@@ -665,7 +687,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public boolean deleteAllCachedSessionKeys() throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         String sql = "DELETE FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
@@ -683,7 +705,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public boolean appendSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         String sql = "UPDATE " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         sql += " SET " + CachedSessionKeyTable.c.Owners.name() + " = ";
         sql += CachedSessionKeyTable.c.Owners.name() + "|| ',' || " + "'" + newOwner + "'";
@@ -706,7 +728,7 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public String selectMetaDataValue(String key) throws SQLException, ClassNotFoundException {
-        setConnection();
+        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + MetaDataTable.T_META_DATA;
         sql += " WHERE " + MetaDataTable.c.Key.name() + " = '" + key + "'";
@@ -733,7 +755,7 @@ public class SQLiteConnector {
      */
     public boolean updateMetaData(String key, String value) throws SQLException, ClassNotFoundException
     {
-        setConnection();
+        //setConnection();
         String sql = "UPDATE " + MetaDataTable.T_META_DATA;
         sql += " SET " + MetaDataTable.c.Value.name() + " = '" + value + "'";
         sql += " WHERE " + MetaDataTable.c.Key.name() + " = '" + key + "'";
@@ -763,7 +785,7 @@ public class SQLiteConnector {
      * @throws SQLException SQLException if a database access error occurs
      */
     public void closeConnection() throws SQLException {
-        connection.close();
+        //connection.close();
     }
 
 

@@ -450,6 +450,7 @@ function generatePropertiesFiles(numberOfAuths) {
             'entity_key_store_path': authKeystorePrefix + 'Entity.pfx',
             'internet_key_store_path': authKeystorePrefix + 'Internet.pfx',
             'database_key_store_path': authKeystorePrefix + 'Database.pfx',
+            'database_encryption_key_path': authKeystorePrefix + 'Database.bin',
             'trusted_ca_cert_paths': '../credentials/ca/CACert.pem',
             'auth_database_dir': authDBDir
         };

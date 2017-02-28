@@ -37,6 +37,19 @@ public class AuthCommandLine extends Thread  {
     }
 
     public void run() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                try {
+                    server.end();
+                    System.out.println("Shouting down ... KAKAKAKAK");
+                    //some cleaning up code...
+
+                } catch (SQLException | IOException | InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        });
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
