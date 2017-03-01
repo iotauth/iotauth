@@ -51,7 +51,8 @@ public class AuthServerProperties {
 
         trusted_ca_cert_paths,
 
-        auth_database_dir
+        auth_database_dir,
+        auth_db_protection_method,
     }
 
     private Properties prop;
@@ -77,6 +78,7 @@ public class AuthServerProperties {
     private String[] trustedCACertPaths;
 
     private String authDatabaseDir;
+    private int authDBProtectionMethod;
 
     public AuthServerProperties(String propertyFilePath) throws IOException {
         _propertyFilePath = propertyFilePath;
@@ -135,6 +137,9 @@ public class AuthServerProperties {
 
             authDatabaseDir = prop.getProperty(key.auth_database_dir.toString());
             logger.info("key:value = {}:{}", key.auth_database_dir.toString(), authDatabaseDir);
+
+            authDBProtectionMethod = Integer.parseInt(prop.getProperty(key.auth_db_protection_method.toString()));
+            logger.info("key:value = {}:{}", key.auth_db_protection_method.toString(), authDBProtectionMethod);
         }
         else {
             throw new FileNotFoundException("property file (" + _propertyFilePath + ") not found in the classpath");
@@ -187,4 +192,5 @@ public class AuthServerProperties {
     public String getAuthDatabaseDir() {
         return authDatabaseDir;
     }
+    public int getAuthDBProtectionMethod() { return authDBProtectionMethod; }
 }

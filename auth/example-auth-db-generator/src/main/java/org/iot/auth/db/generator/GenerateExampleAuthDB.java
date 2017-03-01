@@ -17,6 +17,8 @@ package org.iot.auth.db.generator;
 
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
+import org.iot.auth.db.AuthDB;
+import org.iot.auth.db.AuthDBProtectionMethod;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
@@ -60,9 +62,12 @@ public class GenerateExampleAuthDB {
         // parsing command line arguments
         Options options = new Options();
 
-        Option properties = new Option("n", "num_auths", true, "number of example Auths to be generated.");
-        properties.setRequired(false);
-        options.addOption(properties);
+        Option option = new Option("n", "num_auths", true, "number of example Auths to be generated.");
+        option.setRequired(true);
+        options.addOption(option);
+        option = new Option("d", "auth_db_protection_method", true, "protection method for Auth DB.");
+        option.setRequired(true);
+        options.addOption(option);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -77,14 +82,13 @@ public class GenerateExampleAuthDB {
             System.exit(1);
             return;
         }
-        String strNumAuths = cmd.getOptionValue("num_auths");
-        if (strNumAuths == null) {
-            logger.error("Number of Auths not specified! (Use option -n to specify the number of Auths to be generated.)");
-            System.exit(1);
-            return;
-        }
-        int numAuths = Integer.parseInt(strNumAuths);
+        int numAuths = Integer.parseInt(cmd.getOptionValue("num_auths"));
+        AuthDBProtectionMethod authDBProtectionMethod = AuthDBProtectionMethod.fromValue(
+                Integer.parseInt(cmd.getOptionValue("auth_db_protection_method")));
+
         logger.info("Number of Auths to be generated: {}", numAuths);
+        logger.info("Specified protection method for Auth DB: {}", authDBProtectionMethod.name());
+
         if (numAuths > 10 || numAuths < 1) {
             logger.error("Error: Illegal number of Auths to be generated!");
             System.exit(1);
@@ -92,17 +96,17 @@ public class GenerateExampleAuthDB {
         }
 
         for (int netID = 1; netID <= numAuths; netID++) {
-            generateAuthDatabase(netID + 100);
+            generateAuthDatabase(netID + 100, authDBProtectionMethod);
         }
     }
 
-    private static void generateAuthDatabase(int authID) throws Exception {
+    private static void generateAuthDatabase(int authID, AuthDBProtectionMethod authDBProtectionMethod) throws Exception {
         String authDatabaseDir = "databases/auth" + authID + "/";
         // TODO: These paths must be given rather than hard-coded?
         String databasePublicKeyPath = authDatabaseDir + "my_certs/Auth" + authID + "DatabaseCert.pem";
         String databaseEncryptionKeyPath = authDatabaseDir + "my_keystores/Auth" + authID + "Database.bin";
 
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(authDatabaseDir + "auth.db");
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(authDatabaseDir + "auth.db", authDBProtectionMethod);
         SymmetricKey databaseKey = new SymmetricKey(
                 SQLiteConnector.AUTH_DB_CRYPTO_SPEC,
                 new Date().getTime() + DateHelper.parseTimePeriod(SQLiteConnector.AUTH_DB_KEY_ABSOLUTE_VALIDITY)

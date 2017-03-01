@@ -19,6 +19,7 @@ import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
 import org.iot.auth.config.constants.ConstantType;
 import org.iot.auth.crypto.AuthCrypto;
+import org.iot.auth.db.AuthDBProtectionMethod;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
@@ -48,6 +49,8 @@ public class AppTest {
     private boolean commPolicyInserted = false;
     private boolean trustedAuthInserted = false;
     private String authDBDir = "../databases/auth101/";
+    private AuthDBProtectionMethod authDBProtectionMethod =
+            AuthDBProtectionMethod.ENCRYPT_ENTIRE_DB;
     @Test
     @Category(org.iot.auth.config.constants.C.class)
     public void testConstant(){
@@ -99,7 +102,7 @@ public class AppTest {
     public void testDBCreateion() throws SQLException, ClassNotFoundException {
         File file = new File(dbPath);
         file.delete();
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
         sqLiteConnector.DEBUG = true;
         sqLiteConnector.createTablesIfNotExists();
         dbCreated = true;
@@ -109,7 +112,7 @@ public class AppTest {
         if (!dbCreated) {
             testDBCreateion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
         sqLiteConnector.DEBUG = true;
         RegisteredEntityTable regEntity = new RegisteredEntityTable();
         regEntity.setName("net1.client");
@@ -175,7 +178,7 @@ public class AppTest {
         if (!dbCreated) {
             testDBCreateion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
         sqLiteConnector.DEBUG = true;
         CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
 
@@ -257,7 +260,7 @@ public class AppTest {
         if (!dbCreated) {
             testDBCreateion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
         sqLiteConnector.DEBUG = true;
         TrustedAuthTable trustedAuth = new TrustedAuthTable();
         trustedAuth.setId(102);
@@ -275,7 +278,7 @@ public class AppTest {
         if (!commPolicyInserted) {
             testCommPolicyInsertion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
         sqLiteConnector.DEBUG = true;
         sqLiteConnector.selectAllPolicies();
     }
@@ -286,7 +289,7 @@ public class AppTest {
         if (!regEntityInserted) {
             testRegEntityInsertion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
         sqLiteConnector.DEBUG = true;
         C.PROPERTIES = new AuthServerProperties("../properties/exampleAuth101.properties");
         sqLiteConnector.selectAllRegEntities("../databases/auth101");
@@ -298,7 +301,7 @@ public class AppTest {
         if (!trustedAuthInserted) {
             testTrustedAuthInsertion();
         }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
         sqLiteConnector.DEBUG = true;
         sqLiteConnector.selectAllTrustedAuth();
     }

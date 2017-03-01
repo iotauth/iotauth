@@ -41,7 +41,7 @@ public class AuthCommandLine extends Thread  {
             public void run() {
                 try {
                     server.end();
-                    System.out.println("Shouting down ... KAKAKAKAK");
+                    logger.info("Shutting down Auth " + server.getAuthID() + " ...");
                     //some cleaning up code...
 
                 } catch (SQLException | IOException | InterruptedException e) {

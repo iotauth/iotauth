@@ -7,12 +7,10 @@ AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
 
-# Whether to remove unnecessary key, cert, config files to be removed after DB generation
-REMOVE_KEY_CERT_FILES=true
-REMOVE_CONFIG_FILES=true
-
 # number of networks (Auths)
 NUM_NETS=2
+# Protection method for Auth DB, see AuthDBProtectionMethod.java for supported methods
+AUTH_DB_PROTECTION_METHOD=2
 
 read -s -p "Enter new password for Auth: " MASTER_PASSWORD
 
@@ -89,12 +87,16 @@ cd ../..
 
 # generate configuration files for example Node.js entities
 cd examples/configs
-./initConfigs.sh $NUM_NETS
+./initConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD
 cd ../..
+
+# Whether to remove unnecessary key, cert, config files to be removed after DB generation
+REMOVE_KEY_CERT_FILES=true
+REMOVE_CONFIG_FILES=true
 
 # Create example databases for Auths
 cd auth/example-auth-db-generator
-./generateExampleAuthDB.sh $NUM_NETS
+./generateExampleAuthDB.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD
 cd ../..
 
 net_id=1

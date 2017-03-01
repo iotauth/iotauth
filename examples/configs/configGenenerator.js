@@ -432,7 +432,7 @@ function generateTrustedAuthTables(numberOfAuths) {
     }
 }
 
-function generatePropertiesFiles(numberOfAuths) {
+function generatePropertiesFiles(numberOfAuths, authDBProtectionMethod) {
     for (var netId = 1; netId <= numberOfAuths; netId++) {
         var authId = getAuthId(netId);
         var authPortBase = getAuthPortBase(netId);
@@ -452,7 +452,8 @@ function generatePropertiesFiles(numberOfAuths) {
             'database_key_store_path': authKeystorePrefix + 'Database.pfx',
             'database_encryption_key_path': authKeystorePrefix + 'Database.bin',
             'trusted_ca_cert_paths': '../credentials/ca/CACert.pem',
-            'auth_database_dir': authDBDir
+            'auth_database_dir': authDBDir,
+            'auth_db_protection_method': authDBProtectionMethod
         };
         var strProperties = '';
         for (var key in properties) {
@@ -465,12 +466,13 @@ function generatePropertiesFiles(numberOfAuths) {
     }
 }
 
-if (process.argv.length <= 2) {
-    console.log('Error: please specify total number of networks');
+if (process.argv.length <= 3) {
+    console.log('Error: please specify [total number of networks] and [Auth DB protection method]');
     process.exit(1);
 }
 
 var totalNumberOfNets = parseInt(process.argv[2]);
+var authDBProtectionMethod = parseInt(process.argv[3]);
 console.log(totalNumberOfNets);
 var netConfigList = getEntityConfigs(totalNumberOfNets);
 //console.log(JSON2.stringify(netConfigList[0].entityConfigList, null, '\t'));
@@ -479,6 +481,6 @@ var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList);
 generateRegisteredEntityTables(registeredEntityTableList);
 generateCommunicationPolicyTables(totalNumberOfNets);
 generateTrustedAuthTables(totalNumberOfNets);
-generatePropertiesFiles(totalNumberOfNets);
+generatePropertiesFiles(totalNumberOfNets, authDBProtectionMethod);
 
 //console.log(JSON2.stringify(registeredEntityTableList, null, '\t'));

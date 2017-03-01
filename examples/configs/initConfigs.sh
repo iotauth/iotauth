@@ -6,14 +6,15 @@
 # install required npm packages for config file generator in Node.js
 npm install
 
-if [ $# != 1 ]
+if [ $# != 2 ]
 then
-	echo "Please provide required argument (number of networks)"
-	echo 'Usage: ./initConfigs.sh NUM_NETS'
+	echo "Please provide required arguments (number of networks, Auth DB protection method)"
+	echo 'Usage: ./initConfigs.sh NUM_NETS AUTH_DB_PROTECTION_METHOD'
 	exit
 fi
 # number of networks (Auths)
 NUM_NETS=$1
+AUTH_DB_PROTECTION_METHOD=$2
 
 cd ../..
-node examples/configs/configGenenerator.js $NUM_NETS
+node examples/configs/configGenenerator.js $NUM_NETS $AUTH_DB_PROTECTION_METHOD

@@ -18,6 +18,7 @@ package org.iot.auth.db.dao;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
+import org.iot.auth.db.AuthDBProtectionMethod;
 import org.iot.auth.db.bean.*;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
@@ -52,15 +53,18 @@ public class SQLiteConnector {
     public static final SymmetricKeyCryptoSpec AUTH_DB_CRYPTO_SPEC =
             new SymmetricKeyCryptoSpec("AES/CBC/PKCS5Padding", 16, "HmacSHA256");
     public static final String AUTH_DB_PUBLIC_CIPHER = "RSA/ECB/PKCS1PADDING";
+    private AuthDBProtectionMethod authDBProtectionMethod;
 
     /**
      * Constructor that stores the physical location of the database file.
      * @param dbPath
      */
-    public SQLiteConnector(String dbPath)
+    public SQLiteConnector(String dbPath, AuthDBProtectionMethod authDBProtectionMethod)
     {
         this.DEBUG = false;
         this.dbPath = dbPath;
+        this.authDBProtectionMethod = authDBProtectionMethod;
+        logger.info("Auth DB protection method selected: {}", authDBProtectionMethod.name());
     }
 
     /**

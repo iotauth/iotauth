@@ -118,7 +118,8 @@ public class AuthServer {
         crypto = new AuthCrypto(properties.getEntityKeyStorePath(), authKeyStorePassword);
         this.db = new AuthDB(properties.getAuthDatabaseDir());
         db.initialize(properties.getDatabaseKeyStorePath(), authKeyStorePassword,
-                properties.getDatabaseEncryptionKeyPath());
+                properties.getDatabaseEncryptionKeyPath(),
+                AuthDBProtectionMethod.fromValue(properties.getAuthDBProtectionMethod()));
         logger.info("Finished initializing Auth DB.");
 
         entityTcpPortTimeout = properties.getEntityTcpPortTimeout();
@@ -222,6 +223,12 @@ public class AuthServer {
         serverForTrustedAuths.join();
     }
 
+    /**
+     * Ends Auth server
+     * @throws SQLException When an SQLException occurs
+     * @throws IOException When an IOException occurs
+     * @throws InterruptedException When an InterruptedException occurs
+     */
     public void end() throws SQLException, IOException, InterruptedException {
         db.close();
     }
