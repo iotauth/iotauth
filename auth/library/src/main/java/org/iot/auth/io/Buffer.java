@@ -43,6 +43,17 @@ public class Buffer {
         return this.toHexString(bytes);
     }
 
+    public String toConsecutiveHexString(byte[] bytes, int offset, int length) {
+        StringBuilder ret = new StringBuilder();
+        for (int i = offset; i < offset + length; i++) {
+            ret.append(String.format("%02x", bytes[i]));
+        }
+        return ret.toString();
+    }
+    public String toConsecutiveHexString() {
+        return toConsecutiveHexString(bytes, 0, bytes.length);
+    }
+
     public Buffer(int size) {
         bytes = new byte[size];
     }

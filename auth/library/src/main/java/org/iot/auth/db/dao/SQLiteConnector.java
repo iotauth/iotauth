@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -47,7 +48,8 @@ public class SQLiteConnector {
     private Statement statement;
     private String dbPath;
     private SymmetricKey databaseKey;
-    private boolean useInMemoryProtection = true;
+    private boolean useInMemoryProtection;
+    private boolean encryptCredentials;
     // FIXME: should be set by properties
     public static final String AUTH_DB_KEY_ABSOLUTE_VALIDITY = "3650*day";
     public static final SymmetricKeyCryptoSpec AUTH_DB_CRYPTO_SPEC =
@@ -65,6 +67,22 @@ public class SQLiteConnector {
         this.dbPath = dbPath;
         this.authDBProtectionMethod = authDBProtectionMethod;
         logger.info("Auth DB protection method selected: {}", authDBProtectionMethod.name());
+        switch (this.authDBProtectionMethod) {
+            case DEBUG:
+                this.encryptCredentials = false;
+                this.useInMemoryProtection = false;
+                break;
+            case ENCRYPT_CREDENTIALS:
+                this.encryptCredentials = true;
+                this.useInMemoryProtection = false;
+                break;
+            case ENCRYPT_ENTIRE_DB:
+                this.encryptCredentials = true;
+                this.useInMemoryProtection = true;
+                break;
+        }
+        logger.info("Credential encryption - {}", this.encryptCredentials ? "ENABLED" : "DISABLED");
+        logger.info("Entire DB encryption - {}", this.useInMemoryProtection ? "ENABLED" : "DISABLED");
     }
 
     /**
@@ -110,8 +128,8 @@ public class SQLiteConnector {
     }
 
     public void initialize(SymmetricKey databaseKey) throws SQLException, IOException, ClassNotFoundException {
-        setConnection();
         this.databaseKey = databaseKey;
+        setConnection();
     }
 
     private Buffer encryptAuthDBData(Buffer input) {
@@ -137,10 +155,17 @@ public class SQLiteConnector {
         if (useInMemoryProtection) {
             if (connection == null || connection.isClosed()) {
                 connection = DriverManager.getConnection("jdbc:sqlite:");
-                File file = new File(dbPath);
-                if (file.exists() && !file.isDirectory()) {
+                File dbFile = new File(dbPath);
+                if (dbFile.exists() && !dbFile.isDirectory()) {
+                    byte[] encryptedDBBytes = Files.readAllBytes(dbFile.toPath());
+                    Buffer encryptedDBBuffer = new Buffer(encryptedDBBytes);
+                    Buffer decryptedDBBuffer = decryptAuthDBData(encryptedDBBuffer);
+                    String tempFilePath = dbPath + AuthCrypto.getRandomBytes(4).toConsecutiveHexString();
+                    File tempFile = new File(tempFilePath);
+                    Files.write(tempFile.toPath(), decryptedDBBuffer.getRawBytes());
                     Statement stat = connection.createStatement();
-                    stat.executeUpdate("restore from " + dbPath);
+                    stat.executeUpdate("restore from " + tempFilePath);
+                    Files.delete(tempFile.toPath());
                 }
             }
         }
@@ -152,8 +177,16 @@ public class SQLiteConnector {
     }
     public void close() throws SQLException, IOException {
         if (useInMemoryProtection) {
+            String tempFilePath = dbPath + AuthCrypto.getRandomBytes(4).toConsecutiveHexString();
             Statement stat = connection.createStatement();
-            stat.executeUpdate("backup to " + dbPath );
+            stat.executeUpdate("backup to " + tempFilePath );
+            File tempFile = new File(tempFilePath);
+            byte[] decryptedDBBytes = Files.readAllBytes(tempFile.toPath());
+            Files.delete(tempFile.toPath());
+            Buffer decryptedDBBuffer = new Buffer(decryptedDBBytes);
+            Buffer encryptedDBBuffer = encryptAuthDBData(decryptedDBBuffer);
+            File dbFile = new File(dbPath);
+            Files.write(dbFile.toPath(), encryptedDBBuffer.getRawBytes());
         }
         connection.close();
     }
@@ -294,12 +327,18 @@ public class SQLiteConnector {
     }
 
     public RegisteredEntityTable encryptRecords(RegisteredEntityTable regEntity) {
+        if (!encryptCredentials) {
+            return regEntity;
+        }
         if (regEntity.getDistKeyVal() != null) {
             regEntity.setDistKeyVal(encryptAuthDBData(new Buffer(regEntity.getDistKeyVal())).getRawBytes());
         }
         return regEntity;
     }
     public RegisteredEntityTable decryptRecords(RegisteredEntityTable regEntity) {
+        if (!encryptCredentials) {
+            return regEntity;
+        }
         if (regEntity.getDistKeyVal() != null) {
             regEntity.setDistKeyVal(decryptAuthDBData(new Buffer(regEntity.getDistKeyVal())).getRawBytes());
         }
@@ -412,10 +451,16 @@ public class SQLiteConnector {
 
 
     public CachedSessionKeyTable encryptRecords(CachedSessionKeyTable cachedSessionKey) {
+        if (!encryptCredentials) {
+            return cachedSessionKey;
+        }
         cachedSessionKey.setKeyVal(encryptAuthDBData(new Buffer(cachedSessionKey.getKeyVal())).getRawBytes());
         return cachedSessionKey;
     }
     public CachedSessionKeyTable decryptRecords(CachedSessionKeyTable cachedSessionKey) {
+        if (!encryptCredentials) {
+            return cachedSessionKey;
+        }
         cachedSessionKey.setKeyVal(decryptAuthDBData(new Buffer(cachedSessionKey.getKeyVal())).getRawBytes());
         return cachedSessionKey;
     }
@@ -554,7 +599,9 @@ public class SQLiteConnector {
     public boolean updateRegEntityDistKey(String regEntityName, long distKeyExpirationTime, Buffer distKeyVal)
             throws SQLException, ClassNotFoundException
     {
-        distKeyVal = encryptAuthDBData(distKeyVal);
+        if (encryptCredentials) {
+            distKeyVal = encryptAuthDBData(distKeyVal);
+        }
         //setConnection();
         String sql = "UPDATE " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         sql += " SET " + RegisteredEntityTable.c.DistKeyExpirationTime.name() + " = " + distKeyExpirationTime;
