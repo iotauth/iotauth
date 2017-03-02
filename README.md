@@ -2,7 +2,7 @@
 ---
 This is a repository for an open-source project of the local authorization entity, Auth, for security of the Internet of Things (IoT). Auth is a local point of authorization, whose main roles are 1) providing authentication/authorization for its locally registered entities or devices, and 2) working as a bridge of authorization between its local entities and the Internet. 
 
-Our conference papers ([IoTDI '17](https://chess.eecs.berkeley.edu/pubs/1187/KimEtAl_SST_IoTDI17.pdf), [FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)) describes a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity). The architecture provides security guarantees while addressing IoT-related issues including resource constraints and intermittent connectivity.
+Our conference papers ([IoTDI '17](https://chess.eecs.berkeley.edu/pubs/1187/KimEtAl_SST_IoTDI2017.pdf), [FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)) describes a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity). The architecture provides security guarantees while addressing IoT-related issues including resource constraints and intermittent connectivity.
 
 This repository includes 1) an open-source Java implementation of Auth and 2) sample codes for local entities to use Auth (authentication/authorization) services provided by Auth in various programming languages for different platforms.
 
