@@ -113,7 +113,9 @@ public class SQLiteConnector {
         while (aliases.hasMoreElements()) {
             String alias = aliases.nextElement();
             KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) databaseKeyStore.getEntry(alias, protParam);
-            logger.debug("Alias {}: , Cert: {}, Key: {}", alias, pkEntry.getCertificate(), pkEntry.getPrivateKey());
+            logger.debug("Alias: {}, ", alias);
+            logger.debug("Cert: {}, ", pkEntry.getCertificate());
+            logger.debug("Key: {}", pkEntry.getPrivateKey());
             databasePrivateKey = pkEntry.getPrivateKey();
         }
         //setConnection();
