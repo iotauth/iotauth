@@ -1,6 +1,5 @@
 package org.iot.auth.server;
 
-import com.sun.tools.javac.util.Pair;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.iot.auth.crypto.DistributionDiffieHellman;
@@ -33,6 +32,21 @@ import java.util.concurrent.TimeoutException;
  * @author Hokeun Kim
  */
 public abstract class EntityConnectionHandler {
+
+    private class SessionKeysAndSpec {
+        private List<SessionKey> sessionKeys;
+        private SymmetricKeyCryptoSpec spec;
+        public SessionKeysAndSpec(List<SessionKey> sessionKeys, SymmetricKeyCryptoSpec spec) {
+            this.sessionKeys = sessionKeys;
+            this.spec = spec;
+        }
+        public List<SessionKey> getSessionKeys() {
+            return sessionKeys;
+        }
+        public SymmetricKeyCryptoSpec getSpec() {
+            return spec;
+        }
+    }
 
     protected EntityConnectionHandler(AuthServer server) {
         this.server = server;
@@ -88,10 +102,10 @@ public abstract class EntityConnectionHandler {
                 throw new RuntimeException("Entity signature verification failed!!");
             }
 
-            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret =
+            SessionKeysAndSpec ret =
                     processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
-            List<SessionKey> sessionKeyList = ret.fst;
-            SymmetricKeyCryptoSpec sessionCryptoSpec = ret.snd;
+            List<SessionKey> sessionKeyList = ret.getSessionKeys();
+            SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
             Buffer distributionKeyInfoBuffer;   // either distribution key or DH param to derive distribution key
             DistributionKey distributionKey;    // generated or derived distriburtion key
@@ -153,10 +167,10 @@ public abstract class EntityConnectionHandler {
 
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
 
-            Pair<List<SessionKey>, SymmetricKeyCryptoSpec> ret =
+            SessionKeysAndSpec ret =
                     processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
-            List<SessionKey> sessionKeyList = ret.fst;
-            SymmetricKeyCryptoSpec sessionCryptoSpec = ret.snd;
+            List<SessionKey> sessionKeyList = ret.getSessionKeys();
+            SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
             sendSessionKeyResp(requestingEntity.getDistributionKey(), requestingEntity.getDistCryptoSpec(), sessionKeyReqMessage.getEntityNonce(),
                     sessionKeyList, sessionCryptoSpec, null);
@@ -260,7 +274,7 @@ public abstract class EntityConnectionHandler {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    protected Pair<List<SessionKey>, SymmetricKeyCryptoSpec> processSessionKeyReq(
+    protected SessionKeysAndSpec processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
             TooManySessionKeysRequestedException
@@ -398,7 +412,7 @@ public abstract class EntityConnectionHandler {
             }
         }
 
-        return new Pair<>(sessionKeyList, cryptoSpec);
+        return new SessionKeysAndSpec(sessionKeyList, cryptoSpec);
     }
 
     /**
@@ -409,7 +423,7 @@ public abstract class EntityConnectionHandler {
      * @throws IOException If IO fails.
      * @throws ParseException If JSON parsing fails.
      */
-    private Pair<List<SessionKey>, SymmetricKeyCryptoSpec> sendAuthSessionKeyReq(
+    private SessionKeysAndSpec sendAuthSessionKeyReq(
             int trustedAuthID, AuthSessionKeyReqMessage authSessionKeyReqMessage) throws IOException, ParseException
     {
         getLogger().info("Sending auth session key req to Auth {}", trustedAuthID);
@@ -435,7 +449,7 @@ public abstract class EntityConnectionHandler {
         else {
             throw new RuntimeException("No session keys received!");
         }
-        return new Pair<>(authSessionKeyRespMessage.getSessionKeyList(), sessionCryptoSpec);
+        return new SessionKeysAndSpec(authSessionKeyRespMessage.getSessionKeyList(), sessionCryptoSpec);
     }
 
     abstract protected Logger getLogger();

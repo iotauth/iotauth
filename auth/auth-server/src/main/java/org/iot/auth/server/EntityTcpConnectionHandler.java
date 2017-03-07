@@ -73,8 +73,9 @@ public class EntityTcpConnectionHandler extends EntityConnectionHandler implemen
                 long currentTime = new Date().getTime();
                 long elapsedTime = currentTime - waitStartedTime;
                 if (timeOut < elapsedTime) {
-                    getLogger().info("Timed out at {}, elapsed: {}, started at {}", new Date(currentTime),
-                            elapsedTime, new Date(waitStartedTime));
+                    getLogger().info("Timed out at " + new Date(currentTime) +
+                            ", elapsed: " + elapsedTime +
+                            ", started at " +  new Date(waitStartedTime));
                     close();
                     return;
                 }
@@ -87,7 +88,6 @@ public class EntityTcpConnectionHandler extends EntityConnectionHandler implemen
             return;
         }
         close();
-        return;
     }
     /**
      * Close TCP connection with the entity.

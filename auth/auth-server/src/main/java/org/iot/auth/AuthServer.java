@@ -135,10 +135,11 @@ public class AuthServer {
         serverForTrustedAuths = initServerForTrustedAuths(properties, authKeyStorePassword);
         clientForTrustedAuths = initClientForTrustedAuths(properties, authKeyStorePassword);
 
-        logger.info("Auth server information. Auth ID: {}, Entity Ports TCP: {} UDP: {}, Trusted auth Port: {}, Host name: {}",
-                properties.getAuthID(), entityTcpPortServerSocket.getLocalPort(), entityUdpPortServerSocket.getLocalPort(),
-                ((ServerConnector) serverForTrustedAuths.getConnectors()[0]).getPort(),
-                properties.getHostName());
+        logger.info("Auth server information. Auth ID: " + properties.getAuthID() +
+                ", Entity Ports TCP: " + entityTcpPortServerSocket.getLocalPort() +
+                " UDP: " + entityUdpPortServerSocket.getLocalPort() +
+                ", Trusted auth Port: " + ((ServerConnector) serverForTrustedAuths.getConnectors()[0]).getPort() +
+                ", Host name: " + properties.getHostName());
 
         setRunning(true);
     }
@@ -672,8 +673,9 @@ public class AuthServer {
                 DatagramPacket receivedPacket = new DatagramPacket(bufferBytes, bufferBytes.length);
                 try {
                     entityUdpPortServerSocket.receive(receivedPacket);
-                    logger.info("Entity Address: {}, Port: {}, Length: {}", receivedPacket.getAddress().toString(),
-                            receivedPacket.getPort(), receivedPacket.getLength());
+                    logger.info("Entity Address: " + receivedPacket.getAddress().toString() +
+                            ", Port: " + receivedPacket.getPort() +
+                            ", Length: " + receivedPacket.getLength());
 
                     String addressKey = receivedPacket.getAddress() + ":" + receivedPacket.getPort();
                     byte[] receivedBytes = receivedPacket.getData();
