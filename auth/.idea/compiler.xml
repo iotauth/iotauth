@@ -13,6 +13,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="auth" target="1.8" />
+      <module name="auth-root" target="1.8" />
       <module name="auth-server" target="1.8" />
       <module name="example-auth-db-generator" target="1.8" />
       <module name="library" target="1.8" />
