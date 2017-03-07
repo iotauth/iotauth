@@ -10,6 +10,13 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        jackOptions {
+            enabled true
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     buildTypes {
         release {
@@ -36,5 +43,7 @@ dependencies {
     compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.56'
     // https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-client
     compile group: 'org.eclipse.jetty', name: 'jetty-client', version: '9.4.2.v20170220'
+    // https://mvnrepository.com/artifact/com.sun.xml.security/xml-security-impl
+    compile group: 'com.sun.xml.security', name: 'xml-security-impl', version: '1.0'
     testCompile 'junit:junit:4.12'
 }
