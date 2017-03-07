@@ -6,3 +6,5 @@ io/*
 message/*
 server/*
 util/*
+AuthCommandLine.java
+AuthServer.java
