@@ -18,6 +18,7 @@ package org.iot.auth.server;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.iot.auth.AuthServer;
+import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.SessionKeyPurpose;

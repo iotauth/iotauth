@@ -19,11 +19,9 @@ import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
-import javax.crypto.KeyAgreement;
 import java.io.IOException;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;

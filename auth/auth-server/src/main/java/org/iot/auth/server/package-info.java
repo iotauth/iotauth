@@ -13,21 +13,14 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.server;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-
 /**
- * @author Salomon Lee
+ * <p>This package contains classes for the server role of Auth when it communicates with
+ * its registered entities or other trusted Auths, as the entities and trusted Auths can connect
+ * to the Auth as clients.</p>
+ * <h3>Enum</h3>
+ * <ul>
+ *     <li>{@link org.iot.auth.db.CommunicationTargetType}</li>
+ * </ul>
+ *
  */
-public class RejectedExecutionHandlerImpl implements RejectedExecutionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(RejectedExecutionHandlerImpl.class);
-    @Override
-    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-        logger.info("{} - {}", r, executor);
-    }
-}
+package org.iot.auth.server;

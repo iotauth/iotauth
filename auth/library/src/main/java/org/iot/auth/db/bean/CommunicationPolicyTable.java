@@ -15,8 +15,7 @@
 
 package org.iot.auth.db.bean;
 
-import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
-import org.iot.auth.server.CommunicationTargetType;
+import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.util.DateHelper;
 import org.json.simple.JSONObject;
 

@@ -39,7 +39,7 @@ import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.message.*;
-import org.iot.auth.server.CommunicationTargetType;
+import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.server.EntityTcpConnectionHandler;
 import org.iot.auth.server.EntityUdpConnectionHandler;
 import org.iot.auth.server.TrustedAuthConnectionHandler;

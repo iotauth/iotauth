@@ -1,7 +1,5 @@
 package org.iot.auth.db;
 
-import org.iot.auth.server.CommunicationTargetType;
-
 /**
  * A class for representing purpose field of cached session key table.
  * @author Hokeun Kim
