@@ -56,7 +56,7 @@ dependencies {
     //compile group: 'org.eclipse.jetty', name: 'jetty-client', version: '9.4.2.v20170220'
 
     // https://mvnrepository.com/artifact/commons-cli/commons-cli
-    //compile group: 'commons-cli', name: 'commons-cli', version: '2.0-gt2-pre1'
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.3.1'
 
     // https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-util
     compile group: 'org.eclipse.jetty', name: 'jetty-util', version: '9.4.2.v20170220'
