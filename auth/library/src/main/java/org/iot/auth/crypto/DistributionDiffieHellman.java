@@ -9,7 +9,6 @@ import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.VariableLengthInt;
-import sun.security.ec.ECPublicKeyImpl;
 
 import javax.crypto.KeyAgreement;
 import java.io.IOException;
@@ -53,8 +52,6 @@ public class DistributionDiffieHellman {
         PublicKey authPublicParameter = keyPair.getPublic();
         String authPublicParameterFormat = authPublicParameter.getFormat();
         if (authPublicParameterFormat.equals("X.509")) {
-            ECPublicKeyImpl ecPublicKey = (ECPublicKeyImpl) authPublicParameter;
-            byte[] shit = ecPublicKey.getEncodedInternal();
             ASN1InputStream ans1InputStream = new ASN1InputStream(authPublicParameter.getEncoded());
             ASN1Primitive primitive = ans1InputStream.readObject();
             ans1InputStream.close();
