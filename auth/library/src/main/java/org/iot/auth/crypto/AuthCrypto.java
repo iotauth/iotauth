@@ -23,13 +23,13 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.iot.auth.io.Buffer;
+import org.iot.auth.io.FileIOHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 
 import java.math.BigInteger;
-import java.nio.file.Files;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -210,7 +210,7 @@ public class AuthCrypto {
         }
         else if (filePath.endsWith(".der")) {
             try {
-                byte[] keyBytes = Files.readAllBytes(new File(filePath).toPath());
+                byte[] keyBytes = FileIOHelper.readFully(filePath);
                 return loadPublicKeyFromBytes(keyBytes);
             }
             catch (IOException e) {

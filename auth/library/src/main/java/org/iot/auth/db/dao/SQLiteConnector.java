@@ -22,13 +22,13 @@ import org.iot.auth.db.AuthDBProtectionMethod;
 import org.iot.auth.db.bean.*;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
+import org.iot.auth.io.FileIOHelper;
 import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -157,15 +157,15 @@ public class SQLiteConnector {
                 connection = DriverManager.getConnection("jdbc:sqlite:");
                 File dbFile = new File(dbPath);
                 if (dbFile.exists() && !dbFile.isDirectory()) {
-                    byte[] encryptedDBBytes = Files.readAllBytes(dbFile.toPath());
+                    byte[] encryptedDBBytes = FileIOHelper.readFully(dbPath);
                     Buffer encryptedDBBuffer = new Buffer(encryptedDBBytes);
                     Buffer decryptedDBBuffer = decryptAuthDBData(encryptedDBBuffer);
                     String tempFilePath = dbPath + AuthCrypto.getRandomBytes(4).toConsecutiveHexString();
                     File tempFile = new File(tempFilePath);
-                    Files.write(tempFile.toPath(), decryptedDBBuffer.getRawBytes());
+                    FileIOHelper.writeFully(tempFilePath, decryptedDBBuffer.getRawBytes());
                     Statement stat = connection.createStatement();
                     stat.executeUpdate("restore from " + tempFilePath);
-                    Files.delete(tempFile.toPath());
+                    tempFile.delete();
                 }
             }
         }
@@ -181,12 +181,11 @@ public class SQLiteConnector {
             Statement stat = connection.createStatement();
             stat.executeUpdate("backup to " + tempFilePath );
             File tempFile = new File(tempFilePath);
-            byte[] decryptedDBBytes = Files.readAllBytes(tempFile.toPath());
-            Files.delete(tempFile.toPath());
+            byte[] decryptedDBBytes = FileIOHelper.readFully(tempFilePath);
+            tempFile.delete();
             Buffer decryptedDBBuffer = new Buffer(decryptedDBBytes);
             Buffer encryptedDBBuffer = encryptAuthDBData(decryptedDBBuffer);
-            File dbFile = new File(dbPath);
-            Files.write(dbFile.toPath(), encryptedDBBuffer.getRawBytes());
+            FileIOHelper.writeFully(dbPath, encryptedDBBuffer.getRawBytes());
         }
         connection.close();
     }
