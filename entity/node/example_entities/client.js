@@ -240,7 +240,7 @@ function commandInterpreter() {
             }
             
             console.log('initComm command targeted to ' + commServerInfo.name);
-            initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', commServerInfo.port);
+            initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), commServerInfo.host, commServerInfo.port);
         }
         else if (command == 'finComm' || command == 'f') {
             if (currentState != clientCommState.IN_COMM) {
@@ -406,7 +406,7 @@ function commandInterpreter() {
                         {targetSessionKeyCache: 'Servers', callback: repeater});
                 }
                 else {
-                    initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), 'localhost', commServerInfo.port);
+                    initSecureCommWithSessionKey(sessionKeyCacheForServers.shift(), commServerInfo.host, commServerInfo.port);
                     setTimeout(repeater2, 500);
                 }
             }
