@@ -14,7 +14,9 @@ then
 fi
 # number of networks (Auths)
 NUM_NETS=$1
+# Protection method for Auth DB, see AuthDBProtectionMethod.java for supported methods
 AUTH_DB_PROTECTION_METHOD=$2
 
 cd ../..
 node examples/configs/configGenenerator.js $NUM_NETS $AUTH_DB_PROTECTION_METHOD
+
