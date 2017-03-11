@@ -33,7 +33,6 @@ auth_cred_gen() {
 	openssl pkcs12 -export -out $KS_DIR/$FILE_PREFIX".pfx" -inkey $KS_DIR/$FILE_PREFIX"Key.pem" -in $KS_DIR/$FILE_PREFIX"Cert.pem" -password pass:$AUTH_PASSWORD
 
 	mv $KS_DIR/$FILE_PREFIX"Cert.pem" $CERTS_DIR/$FILE_PREFIX"Cert.pem"
-	rm $KS_DIR/$FILE_PREFIX"Cert.pem"
 	rm $KS_DIR/$FILE_PREFIX"Key.pem"
 	rm $KS_DIR/$FILE_PREFIX"Req.pem"
 	rm $CA_DIR/CACert.srl

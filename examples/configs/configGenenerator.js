@@ -22,6 +22,7 @@
 
 var fs = require('fs');
 var JSON2 = require('JSON2');
+var readline = require('readline');
 
 // this is where the entity config files are generated
 var ENTITY_CONFIG_DIR = 'entity/node/example_entities/configs/';
@@ -35,7 +36,6 @@ var DEFAULT_CIPHER = 'AES-128-CBC';
 var DEFAULT_MAC = 'SHA256';
 // generates 384-bit (48-byte) secret, 128 bit for cipher, 256 bit for MAC
 var DEFAULT_DH = 'secp384r1';
-
 
 var entityList = [
     { name: 'client' },
@@ -53,6 +53,11 @@ var entityList = [
     { name: 'ptPublisher' },
     { name: 'ptSubscriber' }
 ];
+
+// for host port assignment of Auths and entities
+// structure:
+// { 'entityName': {host: 'localhost', port: 80}, ...}
+var hostPortAssignments = {};
 
 function capitalizeFirstLetter(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -125,7 +130,12 @@ function getAuthId(netId) {
 function getAuthInfo(netId, entityName) {
     var authInfo = {};
     authInfo.id = getAuthId(netId);
-    authInfo.host = 'localhost';
+    if (hostPortAssignments['Auth' + authInfo.id]) {
+        authInfo.host = hostPortAssignments['Auth' + authInfo.id].host;
+    }
+    else {
+        authInfo.host = 'localhost';
+    }
     authInfo.port = getAuthPortBase(netId);
     if (entityName.toLowerCase().includes('udp')) {
         authInfo.port += 2;
@@ -171,7 +181,12 @@ function getTargetServerInfoList(netId, entityName) {
         var serverInfo = {};
         serverInfo.name = getNetName(netId) + '.' + entityList[i].name;
         serverInfo.port = getNetPortBase(netId) + entityList[i].port;
-        serverInfo.host = 'localhost';
+        if (hostPortAssignments[serverInfo.name]) {
+            serverInfo.host = hostPortAssignments[serverInfo.name].host;
+        }
+        else {
+            serverInfo.host = 'localhost';
+        }
         if (entityList[i].name.toLowerCase().includes('udp')) {
             if (entityName.toLowerCase().includes('udp')) {
                 targetServerInfoList.push(serverInfo);
@@ -417,9 +432,13 @@ function generateTrustedAuthTables(numberOfAuths) {
                 continue;
             }
             var otherAuthId = getAuthId(otherNetId);
+            var otherAuthHost = 'localhost';
+            if (hostPortAssignments['Auth' + otherAuthId]) {
+                otherAuthHost = hostPortAssignments['Auth' + otherAuthId].host;
+            }
             trustedAuthList.push({
                 'ID': otherAuthId,
-                'Host': 'localhost',
+                'Host': otherAuthHost,
                 'Port': getAuthPortBase(otherNetId) + 1,
                 'CertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem'
             });
@@ -471,9 +490,43 @@ if (process.argv.length <= 3) {
     process.exit(1);
 }
 
+function parseHostPortAssignments(assignmentFilePath) {
+    var assignments = {};
+    var lineReader = readline.createInterface({
+        input: fs.createReadStream(assignmentFilePath)
+    });
+    var lines = fs.readFileSync(assignmentFilePath, 'utf-8').split('\n');
+    console.log(lines.length);
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line.startsWith('//') || line.length == 0) {
+            continue;
+        }
+        console.log('line from file: ', line);
+        var tokens = line.split(/[ \t]+/);
+        if (tokens.length < 2) {
+            throw 'wrong format for host-port assignment! line: ' + line;
+        }
+        var assignment = {host: tokens[1]};
+        if (tokens.length > 2) {
+            assignment.port = parseInt(tokens[2]);
+        }
+        assignments[tokens[0]] = assignment;
+    }
+    return assignments;
+}
+
 var totalNumberOfNets = parseInt(process.argv[2]);
 var authDBProtectionMethod = parseInt(process.argv[3]);
-console.log(totalNumberOfNets);
+console.log('Total number of nets: ' + totalNumberOfNets + ', Auth DB protection method: ', authDBProtectionMethod);
+
+if (process.argv.length >= 5) {
+    var assignmentFilePath = process.argv[4];
+    console.log('Given host port assignment file: ' + assignmentFilePath);
+    hostPortAssignments = parseHostPortAssignments(assignmentFilePath);
+    console.log('address assignments -');
+    console.log(hostPortAssignments);
+}
 var netConfigList = getEntityConfigs(totalNumberOfNets);
 //console.log(JSON2.stringify(netConfigList[0].entityConfigList, null, '\t'));
 generateEntityConfigs(netConfigList);

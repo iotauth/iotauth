@@ -7,10 +7,10 @@ AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
 
-if [ $# != 2 ]
+if [ $# -lt 2 ]
 then
 	echo "Please provide required arguments (number of networks, Auth DB protection method)"
-	echo 'Usage: ./generateCredentialsAndConfigs.sh NUM_NETS AUTH_DB_PROTECTION_METHOD'
+	echo 'Usage: ./generateCredentialsAndConfigs.sh NUM_NETS AUTH_DB_PROTECTION_METHOD HOST_PORT_ASSIGNMENT_FILE(optional)'
 	exit
 fi
 
@@ -18,6 +18,34 @@ fi
 NUM_NETS=$1
 # Protection method for Auth DB, see AuthDBProtectionMethod.java for supported methods
 AUTH_DB_PROTECTION_METHOD=$2
+# optional configuration for host port assignemt for network entities
+if [ $# -ge 3 ]
+then
+	HOST_PORT_ASSIGNMENT_FILE=$3
+fi
+
+# if host port assignment file is given
+if [ ${HOST_PORT_ASSIGNMENT_FILE+x} ]
+then
+	echo "Given host port assignment file:" $HOST_PORT_ASSIGNMENT_FILE
+	if ((BASH_VERSINFO[0] < 4))
+	then
+		echo "You need at least version 4 to use host port assignment file!"
+		echo "ignoring host port assignment file ..."
+	else
+		echo "Reading host port assignment file ..."
+		declare -A HOST_PORT_ASSIGNMENT_MAP
+		while IFS='' read -r line || [[ -n "$line" ]]; do
+			if [[ $line != //* ]];
+			then
+				assignment=($line)
+				HOST_PORT_ASSIGNMENT_MAP[${assignment[0]}]=${assignment[1]}
+			fi
+		done < "$HOST_PORT_ASSIGNMENT_FILE";
+	fi
+else
+	echo "No host port assignment file specified, using localhost and default port numbers ..."
+fi
 
 read -s -p "Enter new password for Auth: " MASTER_PASSWORD
 
@@ -31,11 +59,19 @@ cd $AUTH_CREDS_DIR
 # Generate CA credentials
 ./generateCACredentials.sh $CA_PASSWORD
 
+
 net_id=1
 while [ "$net_id" -le $NUM_NETS ]
 do
 	# Generate Auth credentials
-	./generateExampleAuthCredentials.sh "10"$net_id localhost $CA_PASSWORD $AUTH_PASSWORD
+	AUTH_HOST=${HOST_PORT_ASSIGNMENT_MAP["Auth10"${net_id}]}
+	if [ ${AUTH_HOST+x} ]
+	then
+		echo "given host name for Auth10"$net_id "is" $AUTH_HOST
+	else
+		AUTH_HOST="localhost"
+	fi
+	./generateExampleAuthCredentials.sh "10"$net_id $AUTH_HOST $CA_PASSWORD $AUTH_PASSWORD
 	# Make directories for Entity certificates and keys for Auth databases
 	MY_CERTS_DIR="../../"$AUTH_DATABASES_DIR"auth10"$net_id"/my_certs/"
 	mkdir -p $MY_CERTS_DIR
@@ -94,6 +130,6 @@ cd ../..
 
 # generate configuration files for example Node.js entities
 cd examples/configs
-./initConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD
+./initConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD $HOST_PORT_ASSIGNMENT_FILE
 cd ../..
 
