@@ -26,8 +26,8 @@ mkdir -p $KS_DIR
 auth_cred_gen() {
 	FILE_PREFIX="Auth"$AUTH_ID$1
 	openssl genrsa -out $KS_DIR/$FILE_PREFIX"Key.pem" 2048
-	openssl req -new -key $KS_DIR/$FILE_PREFIX"Key.pem" -sha256 -out $KS_DIR/$FILE_PREFIX"Req.pem" -subj "/C=US/ST=CA/L=Berkeley/O=EECS/OU=Auth"$AUTH_ID"/CN="$HOST_NAME
-	openssl x509 -passin pass:$CA_PASSWORD -req -in $KS_DIR/$FILE_PREFIX"Req.pem" -sha256 -extensions usr_cert -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial \
+	openssl req -new -key $KS_DIR/$FILE_PREFIX"Key.pem" -sha256 -out $KS_DIR/$FILE_PREFIX"Req.pem" -subj "/C=US/ST=CA/L=Berkeley/O=EECS/OU=Auth"$AUTH_ID"/CN="$HOST_NAME -config san.cnf
+	openssl x509 -passin pass:$CA_PASSWORD -req -in $KS_DIR/$FILE_PREFIX"Req.pem" -sha256 -extensions req_ext -extfile san.cnf -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial \
 		-out $KS_DIR/$FILE_PREFIX"Cert.pem" -days $VAL_DAYS
 
 	openssl pkcs12 -export -out $KS_DIR/$FILE_PREFIX".pfx" -inkey $KS_DIR/$FILE_PREFIX"Key.pem" -in $KS_DIR/$FILE_PREFIX"Cert.pem" -password pass:$AUTH_PASSWORD
