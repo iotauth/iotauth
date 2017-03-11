@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Script for generating credentials (public/private key pairs, symmetric crypto keys).
 # Author: Hokeun Kim
+# Script for generating credentials of example entities (public/private key pairs, symmetric crypto keys).
+
+echo "*SCRIPT- generateExampleAuthCredentials.sh: For generating credentials for example entities (public/private key pairs, symmetric crypto keys)"
 
 #directory constants
 CA_DIR="../../auth/credentials/ca"

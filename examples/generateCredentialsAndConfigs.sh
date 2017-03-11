@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# Script for generating credentials for example Auths and entities
 # Author: Hokeun Kim
+# Script for generating credentials and configurations for example Auths and entities
+
+echo "*SCRIPT- generateCredentialsAndConfigs.sh: For generating credentials and configurations for example Auths and entities"
+
 
 AUTH_CREDS_DIR=auth/credentials/
 ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
+
 
 if [ $# -lt 2 ]
 then
@@ -25,13 +29,14 @@ then
 fi
 
 # if host port assignment file is given
-if [ ${HOST_PORT_ASSIGNMENT_FILE+x} ]
+if [ ${HOST_PORT_ASSIGNMENT_FILE} ]
 then
 	echo "Given host port assignment file:" $HOST_PORT_ASSIGNMENT_FILE
 	if ((BASH_VERSINFO[0] < 4))
 	then
 		echo "You need at least version 4 to use host port assignment file!"
 		echo "ignoring host port assignment file ..."
+		HOST_PORT_ASSIGNMENT_FILE=""
 	else
 		echo "Reading host port assignment file ..."
 		declare -A HOST_PORT_ASSIGNMENT_MAP
@@ -65,7 +70,7 @@ while [ "$net_id" -le $NUM_NETS ]
 do
 	# Generate Auth credentials
 	AUTH_HOST=${HOST_PORT_ASSIGNMENT_MAP["Auth10"${net_id}]}
-	if [ ${AUTH_HOST+x} ]
+	if [ ${AUTH_HOST} ]
 	then
 		echo "given host name for Auth10"$net_id "is" $AUTH_HOST
 	else

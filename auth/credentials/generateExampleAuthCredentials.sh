@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Author: Hokeun Kim
+# Script for generating credentials for example Auths
+
+echo "*SCRIPT- generateExampleAuthCredentials.sh: For generating credentials for example Auths"
+
 #directory constants
 CA_DIR="ca"
 CERTS_DIR="certs"

@@ -484,12 +484,6 @@ function generatePropertiesFiles(numberOfAuths, authDBProtectionMethod) {
         fs.writeFileSync(propertiesFilePath, strProperties, 'utf8');
     }
 }
-
-if (process.argv.length <= 3) {
-    console.log('Error: please specify [total number of networks] and [Auth DB protection method]');
-    process.exit(1);
-}
-
 function parseHostPortAssignments(assignmentFilePath) {
     var assignments = {};
     var lineReader = readline.createInterface({
@@ -514,6 +508,15 @@ function parseHostPortAssignments(assignmentFilePath) {
         assignments[tokens[0]] = assignment;
     }
     return assignments;
+}
+
+// beginning of script execution
+
+console.log('*SCRIPT- configGeneration.sh: For generating configuration files for example Auths and entities');
+
+if (process.argv.length <= 3) {
+    console.log('Error: please specify [total number of networks] and [Auth DB protection method]');
+    process.exit(1);
 }
 
 var totalNumberOfNets = parseInt(process.argv[2]);

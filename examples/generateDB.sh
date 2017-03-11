@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Script for generating credentials for example Auths and entities
 # Author: Hokeun Kim
+# Script for generating DB of example Auths based on generated credentials and configurations
+
+echo "*SCRIPT- generateDB.sh: For generating DB of example Auths based on generated credentials and configurations"
 
 AUTH_DATABASES_DIR=auth/databases/
 
