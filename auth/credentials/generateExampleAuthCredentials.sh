@@ -27,13 +27,28 @@ echo 'Generating credentials for ID:' $AUTH_ID', Host name:' $HOST_NAME
 mkdir -p $CERTS_DIR
 mkdir -p $KS_DIR
 
-#$1 is credential type (Internet of Entity)
+#$1 is credential type (Internet, Entity or Database)
 auth_cred_gen() {
 	FILE_PREFIX="Auth"$AUTH_ID$1
 	openssl genrsa -out $KS_DIR/$FILE_PREFIX"Key.pem" 2048
-	openssl req -new -key $KS_DIR/$FILE_PREFIX"Key.pem" -sha256 -out $KS_DIR/$FILE_PREFIX"Req.pem" -subj "/C=US/ST=CA/L=Berkeley/O=EECS/OU=Auth"$AUTH_ID"/CN="$HOST_NAME -config san.cnf
-	openssl x509 -passin pass:$CA_PASSWORD -req -in $KS_DIR/$FILE_PREFIX"Req.pem" -sha256 -extensions req_ext -extfile san.cnf -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial \
-		-out $KS_DIR/$FILE_PREFIX"Cert.pem" -days $VAL_DAYS
+	if [[ $HOST_NAME =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo $HOST_NAME is an IP address, adding a subject alternative name.
+	    # to create san.cnf for given host name
+	    sed "s/ALTERNATIVE_IP_ADDRESS/"$HOST_NAME"/g" san.cnf.template > san.cnf
+	    openssl req -new -key $KS_DIR/$FILE_PREFIX"Key.pem" -sha256 -out $KS_DIR/$FILE_PREFIX"Req.pem" \
+	        -subj "/C=US/ST=CA/L=Berkeley/O=EECS/OU=Auth"$AUTH_ID"/CN="$HOST_NAME -config san.cnf
+	    openssl x509 -passin pass:$CA_PASSWORD -req -in $KS_DIR/$FILE_PREFIX"Req.pem" -sha256 \
+	        -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial -out $KS_DIR/$FILE_PREFIX"Cert.pem" \
+	        -days $VAL_DAYS -extensions req_ext -extfile san.cnf
+    else
+        # ordinary network address no need to add subject alternative name
+	    openssl req -new -key $KS_DIR/$FILE_PREFIX"Key.pem" -sha256 -out $KS_DIR/$FILE_PREFIX"Req.pem" \
+	        -subj "/C=US/ST=CA/L=Berkeley/O=EECS/OU=Auth"$AUTH_ID"/CN="$HOST_NAME
+	    openssl x509 -passin pass:$CA_PASSWORD -req -in $KS_DIR/$FILE_PREFIX"Req.pem" -sha256 \
+	        -CA $CA_DIR/CACert.pem -CAkey $CA_DIR/CAKey.pem -CAcreateserial -out $KS_DIR/$FILE_PREFIX"Cert.pem" \
+	        -days $VAL_DAYS
+    fi
+	
 
 	openssl pkcs12 -export -out $KS_DIR/$FILE_PREFIX".pfx" -inkey $KS_DIR/$FILE_PREFIX"Key.pem" -in $KS_DIR/$FILE_PREFIX"Cert.pem" -password pass:$AUTH_PASSWORD
 
