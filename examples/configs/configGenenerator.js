@@ -22,7 +22,6 @@
 
 var fs = require('fs');
 var JSON2 = require('JSON2');
-var readline = require('readline');
 
 // this is where the entity config files are generated
 var ENTITY_CONFIG_DIR = 'entity/node/example_entities/configs/';
@@ -486,9 +485,6 @@ function generatePropertiesFiles(numberOfAuths, authDBProtectionMethod) {
 }
 function parseHostPortAssignments(assignmentFilePath) {
     var assignments = {};
-    var lineReader = readline.createInterface({
-        input: fs.createReadStream(assignmentFilePath)
-    });
     var lines = fs.readFileSync(assignmentFilePath, 'utf-8').split('\n');
     console.log(lines.length);
     for (var i = 0; i < lines.length; i++) {
