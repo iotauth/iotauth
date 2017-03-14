@@ -169,9 +169,13 @@ public class AuthServer {
         // parsing command line arguments
         Options options = new Options();
 
-        Option properties = new Option("p", "properties", true, "properties file path");
-        properties.setRequired(false);
-        options.addOption(properties);
+        Option propertiesOption = new Option("p", "properties", true, "properties file path");
+        propertiesOption.setRequired(true);
+        options.addOption(propertiesOption);
+
+        Option basePathOption = new Option("b", "base_path", true, "base directory path to read files specified in properties");
+        basePathOption.setRequired(false);
+        options.addOption(basePathOption);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -194,7 +198,8 @@ public class AuthServer {
         }
         logger.info("Properties file specified: {}", propertiesFilePath);
 
-        C.PROPERTIES = new AuthServerProperties(propertiesFilePath);
+        String basePath = cmd.getOptionValue("base_path");
+        C.PROPERTIES = new AuthServerProperties(propertiesFilePath, basePath);
         logger.info("Finished loading Auth Server properties.");
 
         AuthServer authServer = new AuthServer(C.PROPERTIES);

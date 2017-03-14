@@ -80,8 +80,12 @@ public class AuthServerProperties {
     private String authDatabaseDir;
     private int authDBProtectionMethod;
 
-    public AuthServerProperties(String propertyFilePath) throws IOException {
+    public AuthServerProperties(String propertyFilePath, String basePath) throws IOException {
         _propertyFilePath = propertyFilePath;
+
+        if (basePath == null) {
+            basePath =  "";
+        }
 
         prop = new Properties();
         File propertyFile = new File(_propertyFilePath);
@@ -118,24 +122,27 @@ public class AuthServerProperties {
             logger.info("key:value = {}:{}", key.trusted_auth_port_idle_timeout.toString(), trustedAuthPortIdleTimeout);
 
 
-            entityKeyStorePath = prop.getProperty(key.entity_key_store_path.toString());
+            entityKeyStorePath = basePath + prop.getProperty(key.entity_key_store_path.toString());
             logger.info("key:value = {}:{}", key.entity_key_store_path.toString(), entityKeyStorePath);
 
-            internetKeyStorePath = prop.getProperty(key.internet_key_store_path.toString());
+            internetKeyStorePath = basePath + prop.getProperty(key.internet_key_store_path.toString());
             logger.info("key:value = {}:{}", key.internet_key_store_path.toString(), internetKeyStorePath);
 
-            databaseKeyStorePath = prop.getProperty(key.database_key_store_path.toString());
+            databaseKeyStorePath = basePath + prop.getProperty(key.database_key_store_path.toString());
             logger.info("key:value = {}:{}", key.database_key_store_path.toString(), databaseKeyStorePath);
 
-            databaseEncryptionKeyPath = prop.getProperty(key.database_encryption_key_path.toString());
+            databaseEncryptionKeyPath = basePath + prop.getProperty(key.database_encryption_key_path.toString());
             logger.info("key:value = {}:{}", key.database_encryption_key_path.toString(), databaseEncryptionKeyPath);
 
 
             trustedCACertPaths = prop.getProperty(key.trusted_ca_cert_paths.toString()).trim().split("\\s*(;|,|\\s+)\\s*");
+            for (int i = 0; i < trustedCACertPaths.length; i++) {
+                trustedCACertPaths[i] = basePath + trustedCACertPaths[i];
+            }
             logger.info("key:value = {}:{}", key.trusted_ca_cert_paths.toString(), trustedCACertPaths);
 
 
-            authDatabaseDir = prop.getProperty(key.auth_database_dir.toString());
+            authDatabaseDir = basePath + prop.getProperty(key.auth_database_dir.toString());
             logger.info("key:value = {}:{}", key.auth_database_dir.toString(), authDatabaseDir);
 
             authDBProtectionMethod = Integer.parseInt(prop.getProperty(key.auth_db_protection_method.toString()));
