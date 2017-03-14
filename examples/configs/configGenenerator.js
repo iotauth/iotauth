@@ -55,7 +55,8 @@ var entityList = [
 
 // for host port assignment of Auths and entities
 // structure:
-// { 'entityName': {host: 'localhost', port: 80}, ...}
+// wifi field is only for Auths hosting other entities
+// { 'entityName': {host: 'localhost', wifi: 10.0.1.1, port: 80}, ...}
 var hostPortAssignments = {};
 
 function capitalizeFirstLetter(str) {
@@ -130,7 +131,7 @@ function getAuthInfo(netId, entityName) {
     var authInfo = {};
     authInfo.id = getAuthId(netId);
     if (hostPortAssignments['Auth' + authInfo.id]) {
-        authInfo.host = hostPortAssignments['Auth' + authInfo.id].host;
+        authInfo.host = hostPortAssignments['Auth' + authInfo.id].wifi;
     }
     else {
         authInfo.host = 'localhost';
@@ -499,7 +500,17 @@ function parseHostPortAssignments(assignmentFilePath) {
         }
         var assignment = {host: tokens[1]};
         if (tokens.length > 2) {
-            assignment.port = parseInt(tokens[2]);
+            // if it's Auth, then take tokens[2] as a wifi address
+            if (tokens[0].toLowerCase().startsWith("auth")) {
+                assignment.wifi = tokens[2];
+                if (tokens.length > 3) {
+                    assignment.port = parseInt(tokens[3]);
+                }
+            }
+            // if it's an entity then take tokens[2] as a port number
+            else {
+                assignment.port = parseInt(tokens[2]);
+            }
         }
         assignments[tokens[0]] = assignment;
     }

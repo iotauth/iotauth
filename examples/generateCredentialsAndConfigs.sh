@@ -41,9 +41,12 @@ then
 		echo "Reading host port assignment file ..."
 		declare -A HOST_PORT_ASSIGNMENT_MAP
 		while IFS='' read -r line || [[ -n "$line" ]]; do
-			if [[ $line != //* ]];
+		    # get trimmed line, removing leading and trailing spaces
+		    trimmed_line="$(echo -e "${line}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+		    # if not comment and not empty line
+			if [[ $trimmed_line != //* ]] && [ ${#trimmed_line} -gt 0 ];
 			then
-				assignment=($line)
+				assignment=($trimmed_line)
 				HOST_PORT_ASSIGNMENT_MAP[${assignment[0]}]=${assignment[1]}
 			fi
 		done < "$HOST_PORT_ASSIGNMENT_FILE";
