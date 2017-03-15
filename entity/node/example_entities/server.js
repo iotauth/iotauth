@@ -21,8 +21,8 @@
 "use strict";
 
 var fs = require('fs');
-var iotAuth = require('iotAuth')
-var common = require('common');
+var iotAuth = require('../accessors/node_modules/iotAuth')
+var common = require('../accessors/node_modules/common');
 var mqtt = require('mqtt');
 var util = require('util');
 var msgType = iotAuth.msgType;
@@ -81,7 +81,7 @@ function sendToClients(message) {
                 connectedClients[i].sendRaw(securePublish);
             }
             else {
-                var enc = iotAuth.serializeEncryptSessionMessage(
+                var enc = common.symmetricEncryptAuthenticate(
                     {seqNum: publishSeqNum, data: message}, sessionKeyCacheForClients[0], cryptoInfo.sessionCryptoSpec);
                 publishSeqNum++;
                 securePublish = common.serializeIoTSP({

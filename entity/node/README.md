@@ -7,6 +7,8 @@ To initialize Node.js example entities, required npm packages should be installe
 # Directory structure
 ---
 
+- **accessors**: Secure communication accessors for Node.js host.
+
 - **data_examples**: Data examples used by Node.js entities.
 
 - **example_entities**: Various example entities written in Node.js.

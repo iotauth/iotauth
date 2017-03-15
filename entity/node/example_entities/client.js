@@ -20,7 +20,7 @@
 "use strict";
 
 var fs = require('fs');
-var iotAuth = require('iotAuth');
+var iotAuth = require('../accessors/node_modules/iotAuth');
 var mqtt = require('mqtt');
 var util = require('util');
 var msgType = iotAuth.msgType;

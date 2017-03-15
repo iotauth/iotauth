@@ -16,7 +16,7 @@ if len(sys.argv) >= 3:
 	serverPort = int(sys.argv[3])
 
 for i in range(client_count):
-	os.system('node client configs/net1/client.config exp2 ' + keyId + ' ' + str(serverPort) + ' &')
+	os.system('node clientWithAccessor configs/net1/client.config exp2 ' + keyId + ' ' + str(serverPort) + ' &')
 	time.sleep(0.5)
 
 
