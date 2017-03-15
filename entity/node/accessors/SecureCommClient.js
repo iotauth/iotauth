@@ -24,7 +24,6 @@ var mqtt = require('mqtt');
 var util = require('util');
 var msgType = iotAuth.msgType;
 
-
 var clientCommState = {
     IDLE: 0,
     IN_COMM: 30                    // Session message
@@ -52,7 +51,6 @@ function SecureCommClient(configFilePath) {
 	authInfo = entityConfig.authInfo;
 	targetServerInfoList = entityConfig.targetServerInfoList;
 	cryptoInfo = entityConfig.cryptoInfo;
-	currentDistributionKey = null;
 }
 
 function onClose() {
@@ -62,6 +60,7 @@ function onClose() {
     }
 };
 
+// event handlers
 function onError(message) {
 	outputs.error = message;
 	if (outputHandlers.error) {
@@ -197,6 +196,9 @@ SecureCommClient.prototype.initialize = function() {
 	currentState = clientCommState.IDLE;
 	if (entityInfo.usePermanentDistKey) {
     	currentDistributionKey = entityInfo.permanentDistKey;
+	}
+	else {
+		currentDistributionKey = null;
 	}
 	parameters =  {
 		numKeysPerRequest: 3
