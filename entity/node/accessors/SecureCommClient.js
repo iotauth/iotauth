@@ -42,8 +42,8 @@ var currentSessionKey;
 var currentSecureClient;
 
 var parameters = {};
-
 var outputs = {};
+var outputHandlers = {};
 
 // constructor
 function SecureCommClient(configFilePath) {
@@ -56,26 +56,33 @@ function SecureCommClient(configFilePath) {
 }
 
 function onClose() {
-    console.log('secure connection with the server closed.');
+    outputs.connected = false;
+    if (outputHandlers.connected) {
+    	outputHandlers.connected(false);
+    }
 };
+
 function onError(message) {
-    console.error('Error in secure comm - details: ' + message);
+	outputs.error = message;
+	if (outputHandlers.error) {
+		outputHandlers.error(message);
+	}
 };
+
 function onData(data) {
-    console.log('data received from server via secure communication');
 	outputs.received = data;
-    if (data.length > 65535) {
-        console.log('data is too large to display, to store in file use saveData command');
-    }
-    else {
-        console.log(data.toString());
+    if (outputHandlers.received) {
+    	outputHandlers.received(data);
     }
 };
+
 function onConnection(entityClientSocket) {
-    console.log('communication initialization succeeded');
     currentSecureClient = entityClientSocket;
     currentState = clientCommState.IN_COMM;
     outputs.connected = true;
+    if (outputHandlers.connected) {
+    	outputHandlers.connected(true);
+    }
 };
 
 function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
@@ -196,6 +203,12 @@ SecureCommClient.prototype.initialize = function() {
     };
     outputs = {
     	connected: false,
+    	error: null,
+    	received: null
+    };
+    outputHandlers = {
+    	connected: null,
+    	error: null,
     	received: null
     };
 	console.log('current parameters: ' + util.inspect(parameters));
@@ -217,6 +230,10 @@ SecureCommClient.prototype.setParameter = function(key, value) {
 
 SecureCommClient.prototype.latestOutput = function(key) {
 	return outputs[key];
+}
+
+SecureCommClient.prototype.setOutputHandler = function(key, handler) {
+	return outputHandlers[key] = handler;
 }
 
 //////// Supportive interfaces

@@ -22,6 +22,27 @@
 var fs = require('fs');
 var SecureCommClient = require('../accessors/SecureCommClient');
 
+function connectedHandler(connected) {
+    if (connected == true) {
+        console.log('Handler: communication initialization succeeded');
+    }
+    else {
+        console.log('Handler: secure connection with the server closed.');
+    }
+};
+function errorHandler(message) {
+    console.error('Handler: Error in secure comm - details: ' + message);
+};
+function receivedHandler(data) {
+    console.log('Handler: data received from server via secure communication');
+    if (data.length > 65535) {
+        console.log('Handler: data is too large to display, to store in file use saveData command');
+    }
+    else {
+        console.log(data.toString());
+    }
+};
+
 var configFilePath = 'configs/net1/client.config';
 if (process.argv.length > 2) {
     configFilePath = process.argv[2];
@@ -29,6 +50,9 @@ if (process.argv.length > 2) {
 
 var secureCommClient = new SecureCommClient(configFilePath);
 secureCommClient.initialize();
+secureCommClient.setOutputHandler('connected', connectedHandler);
+secureCommClient.setOutputHandler('error', errorHandler);
+secureCommClient.setOutputHandler('received', receivedHandler);
 
 // For publish-subscribe experiments based individual secure connection using proposed approach
 if (process.argv.length > 5) {
