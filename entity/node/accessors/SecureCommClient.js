@@ -20,7 +20,6 @@
 "use strict";
 
 var iotAuth = require('iotAuth');
-var mqtt = require('mqtt');
 var util = require('util');
 var msgType = iotAuth.msgType;
 
@@ -30,17 +29,20 @@ var clientCommState = {
 };
 var currentState;
 
-var currentSessionKeyList = [];
 var entityInfo;
 var authInfo;
 var targetServerInfoList;
 var cryptoInfo;
 var currentDistributionKey;
 
+var currentSessionKeyList = [];
 var currentSessionKey;
+
 var currentSecureClient;
 
-var parameters = {};
+var parameters =  {
+	numKeysPerRequest: 3
+};
 var outputs = {};
 var outputHandlers = {};
 
@@ -200,9 +202,6 @@ SecureCommClient.prototype.initialize = function() {
 	else {
 		currentDistributionKey = null;
 	}
-	parameters =  {
-		numKeysPerRequest: 3
-    };
     outputs = {
     	connected: false,
     	error: null,

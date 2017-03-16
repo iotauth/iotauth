@@ -112,6 +112,10 @@ function commandInterpreter() {
         }
         else if (command == 'sendTo') {
             console.log('sendTo command (sending to a specific client- usage: sendTo [socketID] [message]');
+            if (message == undefined) {
+                console.log('no specify both socket ID and message!');
+                return;
+            }
             message = message.trim();
             idx = message.indexOf(' ');
             if (idx < 0) {
