@@ -23,6 +23,28 @@
 var fs = require('fs');
 var SecureCommServer = require('../accessors/SecureCommServer');
 
+function connectionHandler(info) {
+    console.log('Handler: ' + info);
+}
+
+function errorHandler(info) {
+    console.error('Handler: ' + info);
+}
+
+function listeningHandler(port) {
+    console.log('Handler: listening on port ' + port);
+}
+
+function receivedHandler(received) {
+    if (received.data.length > 65535) {
+        console.log('Handler: ' + 'socketID: ' + received.id);
+        console.log('data is too large to display, to store in file use saveData command');
+    }
+    else {
+        console.log('Handler: ' + 'socketID: ' + received.id + ' data: ' + received.data.toString());
+    }
+}
+
 // to be loaded from config file
 var entityInfo;
 var authInfo;
@@ -36,77 +58,10 @@ if (process.argv.length > 2) {
 
 var secureCommServer = new SecureCommServer(configFilePath);
 secureCommServer.initialize();
-
-/*
-// session keys
-var sessionKeyCacheForClients = [];
-var sessionKeyCacheForSubscribe = [];
-
-
-function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
-    if (receivedDistKey != null) {
-        console.log('updating distribution key: ' + util.inspect(receivedDistKey));
-        distributionKey = receivedDistKey;
-    }
-    console.log('received ' + sessionKeyList.length + ' keys');
-    if (callbackParams.targetSessionKeyCache == 'Clients') {
-    	sessionKeyCacheForClients = sessionKeyCacheForClients.concat(sessionKeyList);
-    }
-    else if (callbackParams.targetSessionKeyCache == 'Subscribe') {
-    	sessionKeyCacheForSubscribe = sessionKeyCacheForSubscribe.concat(sessionKeyList);
-    }
-    // session key request was triggered by a client request
-    else if (callbackParams.targetSessionKeyCache == 'none') {
-        if (sessionKeyList[0].id == callbackParams.keyId) {
-            console.log('Session key id is as expected');
-            callbackParams.sendHandshake2Callback(callbackParams.handshake1Payload,
-                callbackParams.serverSocket, sessionKeyList[0]);
-        }
-        else {
-            console.error('Session key id is NOT as expected');
-        }
-    }
-};
-
-var connectedClients = [];
-var tempLargeDataBuf;
-
-var publishSeqNum = 0;
-function sendToClients(message) {
-    var securePublish = null;
-    for (var i = 0; i < connectedClients.length; i++) {
-        if (connectedClients[i] == null) {
-            continue;
-        }
-        if (sessionKeyCacheForClients.length > 0
-            && sessionKeyCacheForClients[0].id == connectedClients[i].sessionKey.id) {
-            if (securePublish != null) {
-                connectedClients[i].sendRaw(securePublish);
-            }
-            else {
-                var enc = common.symmetricEncryptAuthenticate(
-                    {seqNum: publishSeqNum, data: message}, sessionKeyCacheForClients[0], cryptoInfo.sessionCryptoSpec);
-                publishSeqNum++;
-                securePublish = common.serializeIoTSP({
-                    msgType: msgType.SECURE_COMM_MSG,
-                    payload: enc
-                });
-                connectedClients[i].sendRaw(securePublish);
-            }
-            continue;
-        }
-        try{
-            connectedClients[i].send(message);
-        }
-        catch (err) {
-            console.log('error while sending to client#' + i + ': ' + err.message);
-            console.log('removing this client from the list...');
-            connectedClients[i] = null;
-        }
-    }
-};
-
-*/
+secureCommServer.setOutputHandler('connection', connectionHandler);
+secureCommServer.setOutputHandler('error', errorHandler);
+secureCommServer.setOutputHandler('listening', listeningHandler);
+secureCommServer.setOutputHandler('received', receivedHandler);
 
 function commandInterpreter() {
     var chunk = process.stdin.read();
@@ -125,18 +80,11 @@ function commandInterpreter() {
 
         if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');
-            console.log('distribution key: '+ util.inspect(distributionKey));
-            console.log('Session keys for Clients: ');
-            console.log(util.inspect(sessionKeyCacheForClients));
-            console.log('Session keys for Subscribe: ');
-            console.log(util.inspect(sessionKeyCacheForSubscribe));
+            console.log(secureCommServer.showKeys());
         }
         else if (command == 'showSocket') {
-            console.log('showSocket command. current client sockets [client count: ' + connectedClients.length + ']: ');
-            for (var i = 0; i < connectedClients.length; i++) {
-                console.log('socket ' + i + ': ' + util.inspect(connectedClients[i]));
-                console.log('socket sessionKey:' + util.inspect(connectedClients[i].sessionKey) + '\n');
-            }
+            console.log('showSocket command. current secure client socket: ');
+            console.log(secureCommServer.showSocket());
         }
         else if (command == 'skReq') {
             console.log('skReq (Session key request for cached keys that will be used by clients) command');
@@ -144,16 +92,7 @@ function commandInterpreter() {
             if (message != undefined) {
                 numKeys = parseInt(message);
             }
-            // specify auth ID as a value
-            sendSessionKeyRequest({cachedKeys: 101}, numKeys, {targetSessionKeyCache: 'Clients'});
-        }
-        else if (command == 'skReqSub') {
-            console.log('skReqSub (Session key request for target subscribe topic) command');
-            var numKeys = 3;
-            if (message != undefined) {
-                numKeys = parseInt(message);
-            }
-            sendSessionKeyRequest({subTopic: 'Ptopic'}, numKeys, {targetSessionKeyCache: 'Subscribe'});
+            secureCommServer.getSessionKeysForFutureClients(numKeys);
         }
         else if (command == 'skReqPub') {
             console.log('skReqSub (Session key request for target publish topic) command');
@@ -161,23 +100,27 @@ function commandInterpreter() {
             if (message != undefined) {
                 numKeys = parseInt(message);
             }
-            sendSessionKeyRequest({pubTopic: 'Ptopic'}, numKeys, {targetSessionKeyCache: 'Clients'});
-        }
-        else if (command == 'mqtt') {
-            console.log('mqtt command, init mqtt connection');
-            initMqttSubscribe('Ptopic');
-        }
-        else if (command == 'bcSub') {
-            console.log('broadcasting subscription command');
-            initBroadcastingSubscription();
+            secureCommServer.getSessionKeysForPublish(numKeys);
         }
         else if (command == 'send') {
-            console.log('send command');
+            console.log('send command (sending to all connected clients)');
             if (message == undefined) {
                 console.log('no message!');
                 return;
             }
-            sendToClients(new Buffer(message));
+            secureCommServer.provideInput('toSend', {data: new Buffer(message), id: socketID});
+        }
+        else if (command == 'sendTo') {
+            console.log('sendTo command (sending to a specific client- usage: sendTo [socketID] [message]');
+            message = message.trim();
+            idx = message.indexOf(' ');
+            if (idx < 0) {
+                console.log('Please specify both socket ID and message!');
+                return;
+            }
+            var socketID = parseInt(message.slice(0, idx));
+            message = message.slice(idx + 1);
+            secureCommServer.provideInput('toSend', {data: new Buffer(message), id: socketID});
         }
         else if (command == 'sendFile') {
             console.log('sendFile command');
@@ -188,27 +131,38 @@ function commandInterpreter() {
             console.error('======== log for experiments: publishing message =========');
             var fileData = fs.readFileSync(fileName);
             console.log('file data length: ' + fileData.length);
-            sendToClients(fileData);
+            secureCommServer.provideInput('toSend', {data: fileData, id: null});
+        }
+        else if (command == 'sendFileTo') {
+            console.log('sendFileTo command');
+            if (message == undefined) {
+                console.log('socketID must be specified!');
+                return;
+            }
+            var args = message.split(' ');
+            var socketID = parseInt(args[0]);
+            var fileName = '../data_examples/data.bin';
+            if (args.length > 1) {
+                fileName = args[1];
+            }
+            console.error('======== log for experiments: publishing message =========');
+            var fileData = fs.readFileSync(fileName);
+            console.log('file data length: ' + fileData.length);
+            secureCommServer.provideInput('toSend', {data: fileData, id: socketID});
         }
         else if (command == 'saveData') {
             console.log('saveData command');
-            if (tempLargeDataBuf == undefined) {
+            var received = secureCommServer.latestOutput('received');
+            if (received == undefined) {
                 console.log('No data to be saved!');
+                return;
             }
-            var fileName = '../data_examples/tempLargeData.bin';
+            var fileName = '../data_examples/receivedData.bin';
             if (message != undefined) {
                 fileName = message;
             }
-            fs.writeFileSync(fileName, tempLargeDataBuf);
+            fs.writeFileSync(fileName, received);
             console.log('file data saved to ' + fileName);
-        }
-        else if (command == 'exp2') {
-            console.log('exp2 command, experiment setup for scenario 2 with broker');
-            console.log('connecting to mqtt with topic Ptopic');
-            initMqttSubscribe('Ptopic');
-            console.log('requesting 1 key for subscribe');
-            var numKeys = 1;
-            sendSessionKeyRequest({subTopic: 'Ptopic'}, numKeys, {targetSessionKeyCache: 'Subscribe'});
         }
         else {
             console.log('unrecognized command: ' + command);

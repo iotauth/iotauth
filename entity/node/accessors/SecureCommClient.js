@@ -58,7 +58,7 @@ function onClose() {
     if (outputHandlers.connected) {
     	outputHandlers.connected(false);
     }
-};
+}
 
 // event handlers
 function onError(message) {
@@ -66,14 +66,14 @@ function onError(message) {
 	if (outputHandlers.error) {
 		outputHandlers.error(message);
 	}
-};
+}
 
 function onData(data) {
 	outputs.received = data;
     if (outputHandlers.received) {
     	outputHandlers.received(data);
     }
-};
+}
 
 function onConnection(entityClientSocket) {
     currentSecureClient = entityClientSocket;
@@ -82,7 +82,7 @@ function onConnection(entityClientSocket) {
     if (outputHandlers.connected) {
     	outputHandlers.connected(true);
     }
-};
+}
 
 function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
     currentSessionKey = sessionKey;
@@ -106,7 +106,7 @@ function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
         onConnection: onConnection
     };
     iotAuth.initializeSecureCommunication(options, eventHandlers);
-};
+}
 
 function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameters) {
     if (receivedDistKey != null) {
@@ -124,7 +124,7 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
     if (callbackParameters.callback) {
         callbackParameters.callback();
     }
-};
+}
 
 function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbackParameters) {
     var options = {
@@ -141,7 +141,7 @@ function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbac
         entityPrivateKey: entityInfo.privateKey
     };
     iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, callbackParameters);
-};
+}
 
 /*
 serverHostPort = {
@@ -214,7 +214,7 @@ SecureCommClient.prototype.initialize = function() {
     	received: null
     };
 	console.log('current parameters: ' + util.inspect(parameters));
-};
+}
 
 SecureCommClient.prototype.provideInput = function(port, input) {
 	if (port == 'serverHostPort') {
@@ -223,7 +223,7 @@ SecureCommClient.prototype.provideInput = function(port, input) {
 	else if (port == 'toSend') {
 		toSendInputHandler(input);
 	}
-};
+}
 
 SecureCommClient.prototype.setParameter = function(key, value) {
 	parameters[key] = value;
@@ -242,11 +242,11 @@ SecureCommClient.prototype.setOutputHandler = function(key, handler) {
 
 SecureCommClient.prototype.getTargetServerInfoList = function() {
 	return targetServerInfoList;
-};
+}
 
 SecureCommClient.prototype.getEntityInfo = function() {
 	return entityInfo;
-};
+}
 
 SecureCommClient.prototype.showKeys = function() {
     var result = '';
@@ -254,14 +254,14 @@ SecureCommClient.prototype.showKeys = function() {
     result += 'Session keys for Servers: \n';
     result += util.inspect(currentSessionKeyList) + '\n';
     return result;
-};
+}
 
 SecureCommClient.prototype.showSocket = function() {
     var result = '';
     result += util.inspect(currentSecureClient) + '\n';
     if (currentSecureClient) {
-    result += 'socket sessionKey:' + util.inspect(currentSecureClient.sessionKey) + '\n';
-}
+    	result += 'socket sessionKey:' + util.inspect(currentSecureClient.sessionKey) + '\n';
+	}
     return result;
 }
 

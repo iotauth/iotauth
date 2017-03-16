@@ -81,7 +81,7 @@ function sendToClients(message) {
                 connectedClients[i].sendRaw(securePublish);
             }
             else {
-                var enc = common.symmetricEncryptAuthenticate(
+                var enc = common.serializeEncryptSessionMessage(
                     {seqNum: publishSeqNum, data: message}, sessionKeyCacheForClients[0], cryptoInfo.sessionCryptoSpec);
                 publishSeqNum++;
                 securePublish = common.serializeIoTSP({

@@ -29,10 +29,12 @@ function connectedHandler(connected) {
     else {
         console.log('Handler: secure connection with the server closed.');
     }
-};
+}
+
 function errorHandler(message) {
     console.error('Handler: Error in secure comm - details: ' + message);
-};
+}
+
 function receivedHandler(data) {
     console.log('Handler: data received from server via secure communication');
     if (data.length > 65535) {
@@ -41,7 +43,7 @@ function receivedHandler(data) {
     else {
         console.log(data.toString());
     }
-};
+}
 
 var configFilePath = 'configs/net1/client.config';
 if (process.argv.length > 2) {
