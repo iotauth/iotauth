@@ -10,11 +10,11 @@ This directory includes entities in the IoT, to be authenticated/authorized by A
 - **credentials**: Directory for certificates and keys for entities (including example entities)
 
 - **node**: Entities implemented using JavaScript on Node.js
-
+	- **accessors**: Secure Communication Accessors to be used to build entities running on Node.js host. For more information, see [this website](https://accessors.org).
 	- **data_examples**: Data files used by example entities
 	- **example_entities**: Sample codes and configurations for example entities, client.js and server.js
 		- **common**: Common JavaScript files imported by example entities.
 		- **configs**: Configuration files for example entities
 		- **experimentalConfigs**: Configuration files for entities used for experiments
 
-	- **node_modules**: Node modules used by entities in JavaScript on Node.js
+	- **node_modules**: This directory will be generated after npm installation to store necessary node modules used by entities in JavaScript on Node.js
