@@ -29,10 +29,7 @@ var clientCommState = {
 };
 var currentState;
 
-var entityInfo;
-var authInfo;
-var targetServerInfoList;
-var cryptoInfo;
+var entityConfig;
 var currentDistributionKey;
 
 var currentSessionKeyList = [];
@@ -48,11 +45,7 @@ var outputHandlers = {};
 
 // constructor
 function SecureCommClient(configFilePath) {
-	var entityConfig = iotAuth.loadEntityConfig(configFilePath);
-	entityInfo = entityConfig.entityInfo;
-	authInfo = entityConfig.authInfo;
-	targetServerInfoList = entityConfig.targetServerInfoList;
-	cryptoInfo = entityConfig.cryptoInfo;
+	entityConfig = iotAuth.loadEntityConfig(configFilePath);
 }
 
 function onClose() {
@@ -98,8 +91,8 @@ function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
         serverHost: serverHost,
         serverPort: serverPort,
         sessionKey: currentSessionKey,
-        sessionCryptoSpec: cryptoInfo.sessionCryptoSpec,
-        sessionProtocol: entityInfo.distProtocol
+        sessionCryptoSpec: entityConfig.cryptoInfo.sessionCryptoSpec,
+        sessionProtocol: entityConfig.entityInfo.distProtocol
     };
     var eventHandlers = {
         onClose: onClose,
@@ -129,20 +122,11 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
 }
 
 function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbackParameters) {
-    var options = {
-        authHost: authInfo.host,
-        authPort: authInfo.port,
-        entityName: entityInfo.name,
-        numKeysPerRequest: numKeys,
-        purpose: purpose,
-        distProtocol: entityInfo.distProtocol,
-        distributionKey: currentDistributionKey,
-        distributionCryptoSpec: cryptoInfo.distributionCryptoSpec,
-        publicKeyCryptoSpec: cryptoInfo.publicKeyCryptoSpec,
-        authPublicKey: authInfo.publicKey,
-        entityPrivateKey: entityInfo.privateKey
+    var options = iotAuth.getSessionKeyReqOptions(entityConfig, currentDistributionKey, purpose, numKeys);
+    var eventHandlers = {
+        onError: onError
     };
-    iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, callbackParameters);
+    iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, eventHandlers, callbackParameters);
 }
 
 /*
@@ -196,8 +180,8 @@ function toSendInputHandler(toSend) {
 SecureCommClient.prototype.initialize = function() {
 	console.log('initializing...');
 	currentState = clientCommState.IDLE;
-	if (entityInfo.usePermanentDistKey) {
-    	currentDistributionKey = entityInfo.permanentDistKey;
+	if (entityConfig.entityInfo.usePermanentDistKey) {
+    	currentDistributionKey = entityConfig.entityInfo.permanentDistKey;
 	}
 	else {
 		currentDistributionKey = null;
@@ -240,11 +224,11 @@ SecureCommClient.prototype.setOutputHandler = function(key, handler) {
 //////// Supportive interfaces
 
 SecureCommClient.prototype.getTargetServerInfoList = function() {
-	return targetServerInfoList;
+	return entityConfig.targetServerInfoList;
 }
 
 SecureCommClient.prototype.getEntityInfo = function() {
-	return entityInfo;
+	return entityConfig.entityInfo;
 }
 
 SecureCommClient.prototype.showKeys = function() {

@@ -27,10 +27,7 @@ var util = require('util');
 var msgType = iotAuth.msgType;
 
 // to be loaded from config file
-var entityInfo;
-var authInfo;
-var targetServerInfoList;
-var cryptoInfo;
+var entityConfig;
 var currentDistributionKey;
 
 var currentSessionKeyList = [];
@@ -44,10 +41,7 @@ var outputHandlers = {};
 
 // constructor
 function SecureSubscriber(configFilePath) {
-	var entityConfig = iotAuth.loadEntityConfig(configFilePath);
-	entityInfo = entityConfig.entityInfo;
-	authInfo = entityConfig.authInfo;
-	cryptoInfo = entityConfig.cryptoInfo;
+	entityConfig = iotAuth.loadEntityConfig(configFilePath);
 }
 
 function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameters) {
@@ -63,23 +57,6 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
     }
 }
 
-function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
-    var options = {
-        authHost: authInfo.host,
-        authPort: authInfo.port,
-        entityName: entityInfo.name,
-        numKeysPerRequest: numKeys,
-        purpose: purpose,
-        distProtocol: entityInfo.distProtocol,
-        distributionKey: currentDistributionKey,
-        distributionCryptoSpec: cryptoInfo.distributionCryptoSpec,
-        publicKeyCryptoSpec: cryptoInfo.publicKeyCryptoSpec,
-        authPublicKey: authInfo.publicKey,
-        entityPrivateKey: entityInfo.privateKey
-    };
-    iotAuth.sendSessionKeyReq(options, handleSessionKeyResp, callbackParams);
-};
-
 function onError(message) {
     outputs.error = message;
     if (outputHandlers.error) {
@@ -87,9 +64,17 @@ function onError(message) {
     }
 }
 
+function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
+    var options = iotAuth.getSessionKeyReqOptions(entityConfig, currentDistributionKey, purpose, numKeys);
+    var eventHandlers = {
+        onError: onError
+    };
+    iotAuth.sendSessionKeyReq(options, handleSessionKeyResp, eventHandlers, callbackParams);
+};
+
 function processData(buf, sessionKey, topic) {
     var ret = iotAuth.parseDecryptSecureMqtt(buf,
-    	[sessionKey], cryptoInfo.sessionCryptoSpec);
+    	[sessionKey], entityConfig.cryptoInfo.sessionCryptoSpec);
     outputs.received = ret.data;
     outputs.receivedTopic = currentTopic;
 	console.log('seqNum: ' + ret.seqNum);
@@ -173,16 +158,16 @@ function initBroadcastingSubscription(broadcastingPort) {
 
 function subscribeInputHandler(topic) {
 	var info = null;
-    if (entityInfo.distProtocol == 'TCP') {
+    if (entityConfig.entityInfo.distProtocol == 'TCP') {
         initMqttSubscribe(topic);
         info = 'subscribed on topic: ' + topic;
     }
-    else if (entityInfo.distProtocol == 'UDP') {
+    else if (entityConfig.entityInfo.distProtocol == 'UDP') {
         initBroadcastingSubscription(topic);
         info = 'started listening to udp broadcast on multicast addr:port - ' + topic;
     }
     else {
-    	throw 'unrecognized protocol!' + entityInfo.distProtocol;
+    	throw 'unrecognized protocol!' + entityConfig.entityInfo.distProtocol;
     }
     outputs.subscription = info;
     if (outputHandlers.subscription) {
@@ -192,13 +177,13 @@ function subscribeInputHandler(topic) {
 
 function unsubscribeInputHandler(topic) {
 	var info = 'nothing to unsubscribe';
-    if (entityInfo.distProtocol == 'TCP') {
+    if (entityConfig.entityInfo.distProtocol == 'TCP') {
         if (mqttClient) {
         	mqttClient.unsubscribe(topic);
         	info = 'unsubscribed from topic: ' + topic;
         }
     }
-    else if (entityInfo.distProtocol == 'UDP') {
+    else if (entityConfig.entityInfo.distProtocol == 'UDP') {
 		if (udpListeningSocket) {
 			var socketAddr = udpListeningSocket.address();
 			udpListeningSocket.close();
@@ -207,7 +192,7 @@ function unsubscribeInputHandler(topic) {
 		}
 	}
     else {
-    	throw 'unrecognized protocol!' + entityInfo.distProtocol;
+    	throw 'unrecognized protocol!' + entityConfig.entityInfo.distProtocol;
     }
     outputs.subscription = info;
     if (outputHandlers.subscription) {
@@ -220,9 +205,9 @@ function unsubscribeInputHandler(topic) {
 SecureSubscriber.prototype.initialize = function() {
     mqttClient = null;
     udpListeningSocket = null;
-    console.log('initializing... Protocol: ' + entityInfo.distProtocol);
-    if (entityInfo.usePermanentDistKey) {
-        currentDistributionKey = entityInfo.permanentDistKey;
+    console.log('initializing... Protocol: ' + entityConfig.entityInfo.distProtocol);
+    if (entityConfig.entityInfo.usePermanentDistKey) {
+        currentDistributionKey = entityConfig.entityInfo.permanentDistKey;
     }
     else {
         currentDistributionKey = null;
@@ -261,7 +246,7 @@ SecureSubscriber.prototype.setOutputHandler = function(key, handler) {
 //////// Supportive interfaces
 
 SecureSubscriber.prototype.getEntityInfo = function() {
-    return entityInfo;
+    return entityConfig.entityInfo;
 }
 
 SecureSubscriber.prototype.showKeys = function() {

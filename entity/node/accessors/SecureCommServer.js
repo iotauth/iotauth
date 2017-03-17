@@ -27,10 +27,7 @@ var util = require('util');
 var msgType = iotAuth.msgType;
 
 // to be loaded from config file
-var entityInfo;
-var authInfo;
-var listeningServerInfo;
-var cryptoInfo;
+var entityConfig;
 var currentDistributionKey;
 
 // for managing connected clients, can be accessed using socketID
@@ -45,11 +42,7 @@ var outputHandlers = {};
 
 // constructor
 function SecureCommServer(configFilePath) {
-	var entityConfig = iotAuth.loadEntityConfig(configFilePath);
-	entityInfo = entityConfig.entityInfo;
-	authInfo = entityConfig.authInfo;
-	listeningServerInfo = entityConfig.listeningServerInfo;
-	cryptoInfo = entityConfig.cryptoInfo;
+	entityConfig = iotAuth.loadEntityConfig(configFilePath);
 }
 
 function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
@@ -74,36 +67,27 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
     }
 }
 
+function onServerError(message) {
+    var info = 'Error in server - details: ' + message;
+    outputs.error = info;
+    if (outputHandlers.error) {
+        outputHandlers.error(info);
+    }
+}
+
 function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
-    var options = {
-        authHost: authInfo.host,
-        authPort: authInfo.port,
-        entityName: entityInfo.name,
-        numKeysPerRequest: numKeys,
-        purpose: purpose,
-        distProtocol: entityInfo.distProtocol,
-        distributionKey: currentDistributionKey,
-        distributionCryptoSpec: cryptoInfo.distributionCryptoSpec,
-        publicKeyCryptoSpec: cryptoInfo.publicKeyCryptoSpec,
-        authPublicKey: authInfo.publicKey,
-        entityPrivateKey: entityInfo.privateKey
+    var options = iotAuth.getSessionKeyReqOptions(entityConfig, currentDistributionKey, purpose, numKeys);
+    var eventHandlers = {
+        onError: onServerError
     };
-    iotAuth.sendSessionKeyReq(options, handleSessionKeyResp, callbackParams);
+    iotAuth.sendSessionKeyReq(options, handleSessionKeyResp, eventHandlers, callbackParams);
 }
 
 // event handlers for listening server
 function onServerListening() {
-	outputs.listening = listeningServerInfo.port;
+	outputs.listening = entityConfig.listeningServerInfo.port;
 	if (outputHandlers.listening) {
-		outputHandlers.listening(listeningServerInfo.port);
-	}
-}
-
-function onServerError(message) {
-	var info = 'Error in server - details: ' + message;
-	outputs.error = info;
-	if (outputHandlers.error) {
-		outputHandlers.error(info);
+		outputHandlers.listening(entityConfig.listeningServerInfo.port);
 	}
 }
 
@@ -207,7 +191,8 @@ function toSendInputHandler(toSend) {
 	            }
 	            else {
 	                var enc = common.serializeEncryptSessionMessage(
-	                    {seqNum: publishSeqNum, data: toSend.data}, sessionKeyCacheForClients[0], cryptoInfo.sessionCryptoSpec);
+	                    {seqNum: publishSeqNum, data: toSend.data},
+                        sessionKeyCacheForClients[0], entityConfig.cryptoInfo.sessionCryptoSpec);
 	                publishSeqNum++;
 	                securePublish = common.serializeIoTSP({
 	                    msgType: msgType.SECURE_COMM_MSG,
@@ -233,8 +218,8 @@ function toSendInputHandler(toSend) {
 //////// Main interfaces
 
 SecureCommServer.prototype.initialize = function() {
-	if (entityInfo.usePermanentDistKey) {
-	    currentDistributionKey = entityInfo.permanentDistKey;
+	if (entityConfig.entityInfo.usePermanentDistKey) {
+	    currentDistributionKey = entityConfig.entityInfo.permanentDistKey;
 	}
 	else {
 		currentDistributionKey = null;
@@ -255,9 +240,9 @@ SecureCommServer.prototype.initialize = function() {
     publishSeqNum = 0;		// for experiments with shared key and individual secure connections
 	console.log('initializing secure comm server...');
     var options = {
-        serverPort: listeningServerInfo.port,
-        sessionCryptoSpec: cryptoInfo.sessionCryptoSpec,
-        sessionProtocol: entityInfo.distProtocol
+        serverPort: entityConfig.listeningServerInfo.port,
+        sessionCryptoSpec: entityConfig.cryptoInfo.sessionCryptoSpec,
+        sessionProtocol: entityConfig.entityInfo.distProtocol
     };
     var eventHandlers = {
         onServerError: onServerError,      // for server
@@ -289,7 +274,7 @@ SecureCommServer.prototype.setOutputHandler = function(key, handler) {
 //////// Supportive interfaces
 
 SecureCommServer.prototype.getEntityInfo = function() {
-	return entityInfo;
+	return entityConfig.entityInfo;
 }
 
 SecureCommServer.prototype.getSessionKeysForFutureClients = function(numKeys) {

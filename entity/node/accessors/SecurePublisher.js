@@ -26,9 +26,7 @@ var util = require('util');
 var msgType = iotAuth.msgType;
 
 // to be loaded from config file
-var entityInfo;
-var authInfo;
-var cryptoInfo;
+var entityConfig;
 var currentDistributionKey;
 
 var currentSessionKeyList = [];
@@ -47,10 +45,7 @@ var outputHandlers = {};
 
 // constructor
 function SecurePublisher(configFilePath) {
-    var entityConfig = iotAuth.loadEntityConfig(configFilePath);
-    entityInfo = entityConfig.entityInfo;
-    authInfo = entityConfig.authInfo;
-    cryptoInfo = entityConfig.cryptoInfo;
+    entityConfig = iotAuth.loadEntityConfig(configFilePath);
 }
 
 function onConnection(info) {
@@ -95,20 +90,11 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
 };
 
 function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbackParams) {
-    var options = {
-        authHost: authInfo.host,
-        authPort: authInfo.port,
-        entityName: entityInfo.name,
-        numKeysPerRequest: numKeys,
-        purpose: purpose,
-        distProtocol: entityInfo.distProtocol,
-        distributionKey: currentDistributionKey,
-        distributionCryptoSpec: cryptoInfo.distributionCryptoSpec,
-        publicKeyCryptoSpec: cryptoInfo.publicKeyCryptoSpec,
-        authPublicKey: authInfo.publicKey,
-        entityPrivateKey: entityInfo.privateKey
+    var options = iotAuth.getSessionKeyReqOptions(entityConfig, currentDistributionKey, purpose, numKeys);
+    var eventHandlers = {
+        onError: onError
     };
-    iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, callbackParams);
+    iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, eventHandlers, callbackParams);
 };
 
 function initBroadcastingPublish() {
@@ -154,7 +140,7 @@ function sendSecurePublish(data, protocol) {
             return;
         }
         var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
-            {seqNum: pubSeqNum, data: data}, currentSessionKeyList[0], cryptoInfo.sessionCryptoSpec);
+            {seqNum: pubSeqNum, data: data}, currentSessionKeyList[0], entityConfig.cryptoInfo.sessionCryptoSpec);
         pubSeqNum++;
         mqttClient.publish('Ptopic', secureMqtt);
     }
@@ -168,7 +154,7 @@ function sendSecurePublish(data, protocol) {
         var MULTICAST_ADDR = '230.185.192.108';
         var BROADCAST_ADDR = '255.255.255.255';
         var secureMqtt = iotAuth.encryptSerializeSecureqMqtt(
-            {seqNum: pubSeqNum, data: data}, currentSessionKeyList[0], cryptoInfo.sessionCryptoSpec);
+            {seqNum: pubSeqNum, data: data}, currentSessionKeyList[0], entityConfig.cryptoInfo.sessionCryptoSpec);
         pubSeqNum++;
         broadcastingSocket.send(secureMqtt, 0, secureMqtt.length, 8088, BROADCAST_ADDR);
         console.log("Sent " + data.toString() + " to the wire...");
@@ -180,7 +166,7 @@ function sendSecurePublish(data, protocol) {
 };
 
 function toPublishInputHandler(toPublish) {
-    sendSecurePublish(toPublish, entityInfo.distProtocol);
+    sendSecurePublish(toPublish, entityConfig.entityInfo.distProtocol);
 }
 
 //////// Main interfaces
@@ -188,21 +174,21 @@ function toPublishInputHandler(toPublish) {
 SecurePublisher.prototype.initialize = function() {
     mqttClient = null;
     broadcastingSocket = null;
-    console.log('initializing... Protocol: ' + entityInfo.distProtocol);
-    if (entityInfo.usePermanentDistKey) {
-        currentDistributionKey = entityInfo.permanentDistKey;
+    console.log('initializing... Protocol: ' + entityConfig.entityInfo.distProtocol);
+    if (entityConfig.entityInfo.usePermanentDistKey) {
+        currentDistributionKey = entityConfig.entityInfo.permanentDistKey;
     }
     else {
         currentDistributionKey = null;
     }
-    if (entityInfo.distProtocol == 'TCP') {
+    if (entityConfig.entityInfo.distProtocol == 'TCP') {
         mqttPublish();
     }
-    else if (entityInfo.distProtocol == 'UDP') {
+    else if (entityConfig.entityInfo.distProtocol == 'UDP') {
         initBroadcastingPublish();
     }
     else {
-        throw 'failed to initialize! unrecognized protocol: ' + entityInfo.distProtocol;
+        throw 'failed to initialize! unrecognized protocol: ' + entityConfig.entityInfo.distProtocol;
     }
     outputs = {
         connection: null,
@@ -240,7 +226,7 @@ SecurePublisher.prototype.setOutputHandler = function(key, handler) {
 //////// Supportive interfaces
 
 SecurePublisher.prototype.getEntityInfo = function() {
-    return entityInfo;
+    return entityConfig.entityInfo;
 }
 
 SecurePublisher.prototype.showKeys = function() {
