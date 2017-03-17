@@ -3,8 +3,8 @@
 # Temp file name for sed command
 TEMP_FILE=temp20170306.txt
 
-cp -r ../auth/library/src/main/java/org/iot/auth/* app/src/main/java/org/iot/auth/
-cp -r ../auth/auth-server/src/main/java/org/iot/auth/* app/src/main/java/org/iot/auth/
+cp -r ../../auth/library/src/main/java/org/iot/auth/* app/src/main/java/org/iot/auth/
+cp -r ../../auth/auth-server/src/main/java/org/iot/auth/* app/src/main/java/org/iot/auth/
 
 # To replace String.join with android.text.TextUtils.join
 SESSION_KEY_JAVA_FILE=app/src/main/java/org/iot/auth/crypto/SessionKey.java
