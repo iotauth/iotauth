@@ -28,7 +28,6 @@ var msgType = iotAuth.msgType;
 // to be loaded from config file
 var entityInfo;
 var authInfo;
-var targetServerInfoList;
 var cryptoInfo;
 var currentDistributionKey;
 
@@ -47,17 +46,13 @@ var outputs = {};
 var outputHandlers = {};
 
 // constructor
+function SecurePublisher(configFilePath) {
+    var entityConfig = iotAuth.loadEntityConfig(configFilePath);
+    entityInfo = entityConfig.entityInfo;
+    authInfo = entityConfig.authInfo;
+    cryptoInfo = entityConfig.cryptoInfo;
+}
 
-function onClose() {
-    console.log('secure connection with the server closed.');
-};
-
-function onError(message) {
-    outputs.error = message;
-    if (outputHandlers.error) {
-        outputHandlers.error(message);
-    }
-};
 function onConnection(info) {
     outputs.connection = info;
     if (outputHandlers.connection) {
@@ -66,21 +61,20 @@ function onConnection(info) {
     if (currentSessionKeyList.length > 0) {
         onReady('publisher is ready');
     }
-};
+}
+
+function onError(message) {
+    outputs.error = message;
+    if (outputHandlers.error) {
+        outputHandlers.error(message);
+    }
+}
 
 function onReady(info) {
     outputs.ready = info;
     if (outputHandlers.ready) {
         outputHandlers.ready(info);
     }
-}
-
-function SecurePublisher(configFilePath) {
-    var entityConfig = iotAuth.loadEntityConfig(configFilePath);
-    entityInfo = entityConfig.entityInfo;
-    authInfo = entityConfig.authInfo;
-    targetServerInfoList = entityConfig.targetServerInfoList;
-    cryptoInfo = entityConfig.cryptoInfo;
 }
 
 function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {

@@ -61,12 +61,12 @@ function commandInterpreter() {
             message = input.slice(idx + 1);
         }
 
-         if (command == 'showKeys') {
+        if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');
             console.log(securePublisher.showKeys());
         }
         else if (command == 'showSocket') {
-            console.log('showSocket command. current secure client socket: ');
+            console.log('showSocket command. current secure publication socket: ');
             console.log(securePublisher.showSocket());
         }
         else if (command == 'spub') {
