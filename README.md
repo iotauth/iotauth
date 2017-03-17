@@ -17,9 +17,9 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 
 # Directory structure
 ---
-- **accessors**: Directory for accessors to use Auth service (*under development*) for details of accessors see [this website](https://www.terraswarm.org/accessors/)
+- **android**: Directory for Auth and entities for Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
-- **entity**: Directory for entities in the IoT, to be authenticated/authorized by Auth
+- **entity**: Directory for entities in the IoT, to be authenticated/authorized by Auth, also includes [a directory](https://github.com/iotauth/iotauth/tree/master/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
 - **examples**: Directory for scripts and descriptions to run example Auths and entities.
 
 # Quick start with example Auths and entities
@@ -41,4 +41,4 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 ---
 This project is still in its infancy and currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source codes with caution at their own risk, when the tools provided in this project are used for commercial or safety-critical purposes.
 
-*Last updated on February 28, 2017*
+*Last updated on March 16, 2017*
