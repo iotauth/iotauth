@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+# A Python script for removing features that are not supported in Android
+# from AuthServer.java and AuthCommandLine.java.
+# Author: Hokeun Kim
+
 authServerFileName = "app/src/main/java/org/iot/auth/AuthServer.java"
 authCommandFileName = "app/src/main/java/org/iot/auth/AuthCommandLine.java"
 

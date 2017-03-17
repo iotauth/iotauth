@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
         String propertiesFilePath = "properties";
         try {
             System.out.println("We're gonna do something!");
-            AuthServerProperties properties = new AuthServerProperties(propertiesFilePath);
+            AuthServerProperties properties = new AuthServerProperties(propertiesFilePath, "");
             AuthServer authServer = new AuthServer(properties);
         }
         catch (Exception e) {
