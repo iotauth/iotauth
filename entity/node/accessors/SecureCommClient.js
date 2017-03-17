@@ -118,12 +118,12 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
     console.log('received ' + sessionKeyList.length + ' keys');
     currentSessionKeyList = currentSessionKeyList.concat(sessionKeyList);
 
-    if (currentSessionKeyList.length > 0) {
+    if (currentSessionKeyList.length > 0 && callbackParameters != null) {
         initSecureCommWithSessionKey(currentSessionKeyList.shift(),
             callbackParameters.host, callbackParameters.port);
     }
 
-    if (callbackParameters.callback) {
+    if (callbackParameters != null && callbackParameters.callback) {
         callbackParameters.callback();
     }
 }
@@ -262,6 +262,11 @@ SecureCommClient.prototype.showSocket = function() {
     	result += 'socket sessionKey:' + util.inspect(currentSecureClient.sessionKey) + '\n';
 	}
     return result;
+}
+
+SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
+    sendSessionKeyRequest({group: 'Servers'}, numKeys,
+        handleSessionKeyResp, null);
 }
 
 module.exports = SecureCommClient;

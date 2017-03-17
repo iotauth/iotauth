@@ -139,9 +139,16 @@ function commandInterpreter() {
 
             secureCommClient.provideInput('toSend', fileData);
         }
-        
         else if (command == 'skReq') {
-            console.log('skReq (Set number of session keys per request) command');
+            console.log('skReq (Session key request for cached keys that will be used to connect to servers) command');
+            var numKeys = 3;
+            if (message != undefined) {
+                numKeys = parseInt(message);
+            }
+            secureCommClient.getSessionKeysForCaching(numKeys);
+        }
+        else if (command == 'numKeys') {
+            console.log('numKeys (Set number of session keys per request) command');
             var numKeys = 3;
             if (message != undefined) {
                 numKeys = parseInt(message);
