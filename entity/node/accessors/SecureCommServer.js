@@ -242,7 +242,8 @@ SecureCommServer.prototype.initialize = function() {
     var options = {
         serverPort: entityConfig.listeningServerInfo.port,
         sessionCryptoSpec: entityConfig.cryptoInfo.sessionCryptoSpec,
-        sessionProtocol: entityConfig.entityInfo.distProtocol
+        sessionProtocol: entityConfig.entityInfo.distProtocol,
+        handshakeTimeout: entityConfig.entityInfo.connectionTimeout
     };
     var eventHandlers = {
         onServerError: onServerError,      // for server

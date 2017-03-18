@@ -92,7 +92,8 @@ function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
         serverPort: serverPort,
         sessionKey: currentSessionKey,
         sessionCryptoSpec: entityConfig.cryptoInfo.sessionCryptoSpec,
-        sessionProtocol: entityConfig.entityInfo.distProtocol
+        sessionProtocol: entityConfig.entityInfo.distProtocol,
+        handshakeTimeout: entityConfig.entityInfo.connectionTimeout
     };
     var eventHandlers = {
         onClose: onClose,

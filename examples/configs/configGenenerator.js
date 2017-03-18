@@ -111,6 +111,12 @@ function getEntityInfo(netId, entityName) {
     else {
         entityInfo.usePermanentDistKey = false;
     }
+    if (entityInfo.distProtocol == 'TCP') {
+        entityInfo.connectionTimeout = 1500;
+    }
+    else {
+        entityInfo.connectionTimeout = 3000;
+    }
     entityInfo.privateKey = getKeyPath(netId, entityName, 'Key.pem');
     return entityInfo;
 }
