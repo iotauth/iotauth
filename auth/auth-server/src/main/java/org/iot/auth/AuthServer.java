@@ -91,27 +91,16 @@ public class AuthServer {
         this.isRunning = running;
     }
 
-    public AuthServer(AuthServerProperties properties) throws Exception {
-
-        // TODO: replace this with password input
-        Console console = System.console();
+    public AuthServer(AuthServerProperties properties, String givenAuthPassword) throws Exception {
         String authKeyStorePassword;
-        if (console == null) {
-            logger.warn("WARNING! Console is not available, password will appear on screen. Are you sure to continue(y/n)?");
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            String yesOrNo = br.readLine();
-            if (yesOrNo == null || !yesOrNo.equalsIgnoreCase("y")) {
-                logger.info("Aborting... please run Auth with a console.");
-                System.exit(1);
-            }
-            logger.info("Warning! This can be insecure! - Please enter Auth password: ");
-            authKeyStorePassword = br.readLine();
+        if (givenAuthPassword == null) {
+            authKeyStorePassword = readPasswordFromCommandLine();
         }
         else {
-            logger.info("Please enter Auth password: ");
-            authKeyStorePassword = new String(console.readPassword());
+            logger.warn("WARNING! Auth's password is given as a program argument!");
+            logger.warn("WARNING! DO NOT give password using a program argument unless you are running experiments or debugging.");
+            authKeyStorePassword = givenAuthPassword;
         }
-
 
         authID =  properties.getAuthID();
 
@@ -140,8 +129,27 @@ public class AuthServer {
                 " UDP: " + entityUdpPortServerSocket.getLocalPort() +
                 ", Trusted auth Port: " + ((ServerConnector) serverForTrustedAuths.getConnectors()[0]).getPort() +
                 ", Host name: " + properties.getHostName());
+    }
 
-        setRunning(true);
+    private String readPasswordFromCommandLine() throws IOException {
+        Console console = System.console();
+        String authKeyStorePassword;
+        if (console == null) {
+            logger.warn("WARNING! Console is not available, password will appear on screen. Are you sure to continue(y/n)?");
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            String yesOrNo = br.readLine();
+            if (yesOrNo == null || !yesOrNo.equalsIgnoreCase("y")) {
+                logger.info("Aborting... please run Auth with a console.");
+                System.exit(1);
+            }
+            logger.info("Warning! This can be insecure! - Please enter Auth password: ");
+            authKeyStorePassword = br.readLine();
+        }
+        else {
+            logger.info("Please enter Auth password: ");
+            authKeyStorePassword = new String(console.readPassword());
+        }
+        return authKeyStorePassword;
     }
 
     /**
@@ -177,6 +185,11 @@ public class AuthServer {
         basePathOption.setRequired(false);
         options.addOption(basePathOption);
 
+        Option passwordOption = new Option("s", "password", true,
+                "password for Auth, DO NOT USE THIS OPTION in actual deployment, use only for experiments or debugging");
+        passwordOption.setRequired(false);
+        options.addOption(passwordOption);
+
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -202,7 +215,18 @@ public class AuthServer {
         C.PROPERTIES = new AuthServerProperties(propertiesFilePath, basePath);
         logger.info("Finished loading Auth Server properties.");
 
-        AuthServer authServer = new AuthServer(C.PROPERTIES);
+        String authPassword = cmd.getOptionValue("password");
+
+        AuthServer authServer;
+        /*
+        if (authPassword != null) {
+            authServer = new AuthServer(C.PROPERTIES, authPassword);
+        }
+        else {
+        */
+            authServer = new AuthServer(C.PROPERTIES, authPassword);
+        //}
+
         authServer.begin();
     }
 
@@ -211,6 +235,7 @@ public class AuthServer {
      * @throws Exception When any exception occurs
      */
     private void begin() throws Exception {
+        setRunning(true);
         EntityBluetoothListener entityBluetoothListener = new EntityBluetoothListener(this);
         entityBluetoothListener.start();
 
