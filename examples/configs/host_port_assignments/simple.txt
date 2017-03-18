@@ -1,5 +1,0 @@
-// Name host ports (optional)
-Auth101		10.0.0.1
-Auth102		10.0.0.2
-net1.client	10.0.0.3
-net2.server	10.0.0.4
