@@ -74,17 +74,15 @@ See README.md under *auth/*.
 
 3. Run 'node server.js configs/net1/server.config' in a separate terminal, to execute net1.server.
 
-4. Within net1.client, enter 'skReq' to send a session key request to Auth101.
+4. Within net1.client, enter 'initComm net1.server' to start a secure communication with net1.server. This will trigger a session key request to Auth101 by net1.client, before net1.client connects to net1.server.
 
-5. Within net1.client, enter 'initComm net1.server' to start a secure communication with net1.server.
+5. Within net1.client, enter 'send blah blah' to send a (encrypted) message to net1.server, do the same within net1.server to send a (encrypted) message to net1.client.
 
-6. Within net1.client, enter 'send blah blah' to send a (encrypted) message to net1.server, do the same within net1.server to send a (encrypted) message to net1.client.
+6. Within net1.client, enter 'finComm' to end the secure communication with net1.server.
 
-7. Within net1.client, enter 'finComm' to end the secure communication with net1.server.
+7. For entities in net2 registered with Auth102, run 'node client.js configs/net2/client.config', to execute net2.client, and run 'node server.js configs/net2/server.config', to execute net2.server.
 
-8. For entities in net2 registered with Auth102, run 'node client.js configs/net2/client.config', to execute net2.client, and run 'node server.js configs/net2/server.config', to execute net2.server.
-
-9. Do the same within net2.client and net2.server as in the steps 4-7.
+8. Do the same within net2.client and net2.server as in the steps 4-7.
 
 ### To run example entities written in Cape Code
 
