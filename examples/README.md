@@ -19,19 +19,25 @@ Database tables for storing authorization information should be initialized for 
 
 # Script details
 ---
-### generateExampleAuthsEntities.sh
+### generatAll.sh
 
-This script generates credentials for example Auths and example entities. And it copies certificates (public keys) of entities to Auths' databases, and copies certificates (public keys) of Auths to entities' local directories. This script uses following helper scripts.
+This script generates credentials and configuration files for example Auths and entities. This script includes two main scripts, *examples/generateCredentialsAndConfigs.sh* and *auth/example-auth-db-generator/generateExampleAuthDB.sh*.
 
-- **auth/credentials/generateCACredentials.sh**: This helper script generates credentials (public key, private key) for certificate authority which signs certificates of example Auths and entities.
+- **examples/generateCredentialsAndConfigs.sh**: This script first generates credentials (public/private key pairs and symmetric encryption keys) for example Auths and entities and places the credentials in specified local directories for Auths and entities. And then it also creates configuration files for example Auths and entities. This script uses following helper scripts.
 
-- **auth/credentials/generateExampleAuthCredentials.sh**: This helper script generates credentials for example Auths.
+  - **auth/credentials/generateCACredentials.sh**: Generates credentials (public key, private key) for a certificate authority (CA) which signs certificates of example Auths and entities.
 
-- **entity/credentials/generateExampleEntityCredentials.sh**: This helper script generates credentials for example entities.
+  - **auth/credentials/generateExampleAuthCredentials.sh**: Creates credentials for example Auths.
 
-- **auth/example-auth-db-generator/generateExampleAuthDB.sh**: This helper script generates databases for Example Auths
+  - **entity/credentials/generateExampleEntityCredentials.sh**: Generates credentials for example entities.
+  
+  - **entity/node/initNodeEntities.sh**: Initializes Node.js example entities. This process includes Node.js npm installation.
+  
+  - **examples/configs/initConfigs.sh**: Generates configuration files for example Auths and entities.
 
-### cleanExampleAuthsEntities.sh
+- **auth/example-auth-db-generator/generateExampleAuthDB.sh**: This script compiles the DB generator program, *example-auth-db generator* and creates SQLite databases for Example Auths using the newly created credentials for Auths and entities.
+
+### cleanAll.sh
 
 This scripts deletes all credentials of example Auths and entities, and deletes databases for example Auths.
 
