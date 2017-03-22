@@ -12,25 +12,40 @@ NUM_NETS=2
 AUTH_DB_PROTECTION_METHOD=1
 # file for host and port assignment of Auth and entities
 HOST_PORT_ASSIGNMENT_FILE=""
+# Whether to show help
+SHOW_HELP=false
+# Generate credentials and configs
+GEN_CRED_CONFIG=true
+# Generate Auth databases
+GEN_AUTH_DB=true
 
 # parsing command line arguments
 # -n for number of nets, -d for DB protection method and -a for host port assignment
-while [[ $# -gt 1 ]]
+while [[ $# -gt 0 ]]
 do
 	key="$1"
 
 	case $key in
-		-n|--numnets)
+		-n|--num-nets)
 			NUM_NETS="$2"
 			shift # past argument
 		;;
-		-d|--dbprotect)
+		-d|--db-protect)
 			AUTH_DB_PROTECTION_METHOD="$2"
 			shift # past argument
 		;;
-		-a|--hostportassign)
+		-a|--host-port-assign)
 			HOST_PORT_ASSIGNMENT_FILE="$2"
 			shift # past argument
+		;;
+		-gc|--gen-cred-config-only)
+			GEN_AUTH_DB=false
+		;;
+		-gd|--gen-db-only)
+			GEN_CRED_CONFIG=false
+		;;
+		-h|--help)
+			SHOW_HELP=true
 		;;
 		*)
 			# unknown option
@@ -39,14 +54,35 @@ do
 	shift # past argument or value
 done
 
+if [ "$SHOW_HELP" = true ] ; then
+	echo "Usage: ./generateAll.sh [options]"
+	echo
+	echo "Options:"
+	echo "  -n,--num-nets <arg>             Number of networks (Auths). Default value is 2."
+	echo "  -d,--db-protect <arg>           Auth DB protection method [0-2]. Default value is 1."
+	echo "                                  [0: No encryption, 1: Encrypt credentials, 2: Encrypt entire DB]"
+	echo "  -a,--host-port-assign <arg>     Path for host and port assignment file."
+	echo "  -gc,--gen-cred-config-only      Generate credentials and configuration files only."
+	echo "                                  (without generating Auth DBs.)"
+	echo "  -gd,--gen-db-only               Generate Auth databases only."
+	echo "                                  (Skip generation of credentials and configuration files.)"
+	echo "  -h,--help                       Show this help."
+	exit
+fi
+
 echo "Example generation options:"
 echo NUM_NETS					= $NUM_NETS
 echo AUTH_DB_PROTECTION_METHOD	= $AUTH_DB_PROTECTION_METHOD
 echo HOST_PORT_ASSIGNMENT_FILE	= $HOST_PORT_ASSIGNMENT_FILE
 
 # generate credentials and configs
-./generateCredentialsAndConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD $HOST_PORT_ASSIGNMENT_FILE
+if [ "$GEN_CRED_CONFIG" = true ] ; then
+	echo "Generating credentials and configuration files..."
+	./generateCredentialsAndConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD $HOST_PORT_ASSIGNMENT_FILE
+fi
 
-# generate Auth DBs
-./generateDB.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD
-
+if [ "$GEN_AUTH_DB" = true ] ; then
+	echo "Generating auth databases..."
+	# generate Auth DBs
+	./generateDB.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD
+fi

@@ -21,7 +21,7 @@ Database tables for storing authorization information should be initialized for 
 ---
 ### generatAll.sh
 
-This script generates credentials and configuration files for example Auths and entities. This script includes two main scripts, *examples/generateCredentialsAndConfigs.sh* and *auth/example-auth-db-generator/generateExampleAuthDB.sh*.
+This script generates credentials and configuration files for example Auths and entities. This script includes two main scripts, *examples/generateCredentialsAndConfigs.sh* and *auth/example-auth-db-generator/generateExampleAuthDB.sh*. To see detailed information and options for the script, use './generateAll.sh --help'.
 
 - **examples/generateCredentialsAndConfigs.sh**: This script first generates credentials (public/private key pairs and symmetric encryption keys) for example Auths and entities and places the credentials in specified local directories for Auths and entities. And then it also creates configuration files for example Auths and entities. This script uses following helper scripts.
 
