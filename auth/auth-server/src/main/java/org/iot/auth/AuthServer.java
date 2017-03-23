@@ -57,7 +57,10 @@ import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -71,10 +74,12 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.Timer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.BluetoothStateException;
+import javax.swing.*;
 
 
 /**
@@ -135,15 +140,49 @@ public class AuthServer {
         Console console = System.console();
         String authKeyStorePassword;
         if (console == null) {
-            logger.warn("WARNING! Console is not available, password will appear on screen. Are you sure to continue(y/n)?");
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            String yesOrNo = br.readLine();
-            if (yesOrNo == null || !yesOrNo.equalsIgnoreCase("y")) {
-                logger.info("Aborting... please run Auth with a console.");
-                System.exit(1);
+            String classPath = System.getProperty("java.class.path");
+            if (classPath.contains("IntelliJ IDEA")) {
+                logger.info("You must be using IntelliJ IDEA, using popup window to get the password");
+
+                JPasswordField passwordField = new JPasswordField();
+                JOptionPane jop = new JOptionPane(passwordField, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+                JDialog dialog = jop.createDialog("Password:");
+                dialog.addComponentListener(new ComponentAdapter() {
+                    @Override
+                    public void componentShown(ComponentEvent e) {
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                passwordField.requestFocusInWindow();
+                            }
+                        });
+                        super.componentShown(e);
+                    }
+                });
+                dialog.setVisible(true);
+                int result = (Integer) jop.getValue();
+                dialog.dispose();
+                char[] password = null;
+                if (result == JOptionPane.OK_OPTION) {
+                    password = passwordField.getPassword();
+                }
+                else {
+                    logger.info("Aborting... please enter your password.");
+                    System.exit(1);
+                }
+                authKeyStorePassword = new String(password);
             }
-            logger.info("Warning! This can be insecure! - Please enter Auth password: ");
-            authKeyStorePassword = br.readLine();
+            else {
+                logger.warn("WARNING! Console is not available, password will appear on screen. Are you sure to continue(y/n)?");
+                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                String yesOrNo = br.readLine();
+                if (yesOrNo == null || !yesOrNo.equalsIgnoreCase("y")) {
+                    logger.info("Aborting... please run Auth with a console.");
+                    System.exit(1);
+                }
+                logger.info("Warning! This can be insecure! - Please enter Auth password: ");
+                authKeyStorePassword = br.readLine();
+            }
         }
         else {
             logger.info("Please enter Auth password: ");
