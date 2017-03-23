@@ -17,7 +17,6 @@ package org.iot.auth.db.generator;
 
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
-import org.iot.auth.db.AuthDB;
 import org.iot.auth.db.AuthDBProtectionMethod;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.MetaDataTable;
@@ -269,6 +268,7 @@ public class GenerateExampleAuthDB {
                 trustedAuth.setId(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.ID.name())));
                 trustedAuth.setHost((String)jsonObject.get(TrustedAuthTable.c.Host.name()));
                 trustedAuth.setPort(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.Port.name())));
+                trustedAuth.setHeartbeatPeriod(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.HeartbeatPeriod.name())));
                 trustedAuth.setCertificate(
                         AuthCrypto.loadCertificateFromFile(
                         authDatabaseDir + "/" + jsonObject.get(TrustedAuthTable.c.CertificatePath.name())));

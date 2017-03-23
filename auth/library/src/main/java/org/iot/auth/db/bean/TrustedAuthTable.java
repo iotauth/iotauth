@@ -32,6 +32,7 @@ public class TrustedAuthTable {
         ID,
         Host,
         Port,
+        HeartbeatPeriod,
         CertificateValue,
         CertificatePath
     }
@@ -40,6 +41,7 @@ public class TrustedAuthTable {
     private String host;
     private int port;
     private X509Certificate certificate;
+    private int heartbeatPeriod;
     public int getId() {
         return id;
     }
@@ -64,6 +66,14 @@ public class TrustedAuthTable {
         this.port = port;
     }
 
+    public int getHeartbeatPeriod() {
+        return heartbeatPeriod;
+    }
+
+    public void setHeartbeatPeriod(int heartbeatPeriod) {
+        this.heartbeatPeriod = heartbeatPeriod;
+    }
+
     public X509Certificate getCertificate() {
         return certificate;
     }
@@ -78,6 +88,7 @@ public class TrustedAuthTable {
         object.put(c.ID.name(), getId());
         object.put(c.Host.name(), getHost());
         object.put(c.Port.name(), getPort());
+        object.put(c.HeartbeatPeriod.name(), getHeartbeatPeriod());
         object.put(c.CertificateValue.name(), getCertificate().getEncoded());
         return object;
     }
@@ -98,6 +109,7 @@ public class TrustedAuthTable {
         trustedAuth.setId(resultSet.getInt(c.ID.name()));
         trustedAuth.setHost(resultSet.getString(c.Host.name()));
         trustedAuth.setPort(resultSet.getInt(c.Port.name()));
+        trustedAuth.setHeartbeatPeriod(resultSet.getInt(c.HeartbeatPeriod.name()));
         trustedAuth.setCertificate(
                 AuthCrypto.loadCertificateFromBytes(resultSet.getBytes(c.CertificateValue.name())));
         return trustedAuth;

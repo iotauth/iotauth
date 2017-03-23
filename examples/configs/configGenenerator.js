@@ -446,7 +446,8 @@ function generateTrustedAuthTables(numberOfAuths) {
                 'ID': otherAuthId,
                 'Host': otherAuthHost,
                 'Port': getAuthPortBase(otherNetId) + 1,
-                'CertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem'
+                'CertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem',
+                'HeartbeatPeriod': 3000 // 3 seconds
             });
         }
         var dirName = AUTH_DB_DIR + 'auth' + myAuthId + '/configs/';
