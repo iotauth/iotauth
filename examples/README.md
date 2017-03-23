@@ -19,7 +19,7 @@ Database tables for storing authorization information should be initialized for 
 
 # Script details
 ---
-### generatAll.sh
+### generateAll.sh
 
 This script generates credentials and configuration files for example Auths and entities. This script includes two main scripts, *examples/generateCredentialsAndConfigs.sh* and *auth/example-auth-db-generator/generateExampleAuthDB.sh*. To see detailed information and options for the script, use './generateAll.sh --help'.
 
@@ -52,9 +52,11 @@ For this section, we use *$ROOT* for the root directory of this repository.
 
 2. Run the script *generateAll.sh*, by entering './generateAll.sh'. To run the script OpenSSL and Maven command line tools should be installed a priory. If you're using Mac OS X, they can be installed using [Homebrew](http://brew.sh/), by entering 'brew install openssl' and 'brew install maven'.
 
-3. If the script (generateExampleAuthsEntities.sh) finishes without an error, the credentials for Auths and entities and databases for Auths should be created. Here are instructions for running example Auths and entities.
+3. You will be prompted to enter password for keystores of Auths. Enter you password to proceed.
 
-4. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanAll.sh*, with the command './cleanAll.sh'.
+4. If the script (generateExampleAuthsEntities.sh) finishes without an error, the credentials for Auths and entities and databases for Auths should be created. Here are instructions for running example Auths and entities.
+
+5. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanAll.sh*, with the command './cleanAll.sh'.
 
 ### To run example Auths (in command line)
 
