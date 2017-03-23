@@ -57,10 +57,10 @@ import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -74,6 +74,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -99,7 +100,7 @@ public class AuthServer {
     public AuthServer(AuthServerProperties properties, String givenAuthPassword) throws Exception {
         String authKeyStorePassword;
         if (givenAuthPassword == null) {
-            authKeyStorePassword = readPasswordFromCommandLine();
+            authKeyStorePassword = readPassword();
         }
         else {
             logger.warn("WARNING! Auth's password is given as a program argument!");
@@ -136,17 +137,39 @@ public class AuthServer {
                 ", Host name: " + properties.getHostName());
     }
 
-    private String readPasswordFromCommandLine() throws IOException {
+    /**
+     * Let the user enter a password. If connected to a console, get the
+     * password from the commandline. Else, assuming that the server is
+     * running inside an IDE, either raise a dialog, or get the password
+     * from the IDE console (password will show in plain text). Note that
+     * if no password is entered, this method terminates the entire program!
+     * @return Password entered by user.
+     * @throws IOException If the input stream throws an exception.
+     */
+    private String readPassword() throws IOException {
         Console console = System.console();
         String authKeyStorePassword;
         if (console == null) {
-            String classPath = System.getProperty("java.class.path");
-            if (classPath.contains("IntelliJ IDEA")) {
-                logger.info("You must be using IntelliJ IDEA, using popup window to get the password");
+            if (GraphicsEnvironment.isHeadless()) {
+                // Assuming we are running in IDE, password will show.
+                logger.warn("WARNING! Console is not available, password will appear on screen. Are you sure to continue(y/n)?");
+                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                String yesOrNo = br.readLine();
+                if (yesOrNo == null || !yesOrNo.equalsIgnoreCase("y")) {
+                    logger.info("Aborting... please run Auth with a console.");
+                    System.exit(1);
+                }
+                logger.info("Warning! This can be insecure! - Please enter Auth password: ");
+                authKeyStorePassword = br.readLine();
+            } else {
 
                 JPasswordField passwordField = new JPasswordField();
-                JOptionPane jop = new JOptionPane(passwordField, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-                JDialog dialog = jop.createDialog("Password:");
+                JPanel panel = new JPanel();
+                panel.setLayout(new GridLayout(2, 1));
+                panel.add(new JLabel("Please enter your password."));
+                panel.add(passwordField);
+                JOptionPane jop = new JOptionPane(panel, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+                JDialog dialog = jop.createDialog("Enter Password");
                 dialog.addComponentListener(new ComponentAdapter() {
                     @Override
                     public void componentShown(ComponentEvent e) {
@@ -165,23 +188,11 @@ public class AuthServer {
                 char[] password = null;
                 if (result == JOptionPane.OK_OPTION) {
                     password = passwordField.getPassword();
-                }
-                else {
-                    logger.info("Aborting... please enter your password.");
+                } else {
+                    logger.info("Aborting... no password given..");
                     System.exit(1);
                 }
                 authKeyStorePassword = new String(password);
-            }
-            else {
-                logger.warn("WARNING! Console is not available, password will appear on screen. Are you sure to continue(y/n)?");
-                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-                String yesOrNo = br.readLine();
-                if (yesOrNo == null || !yesOrNo.equalsIgnoreCase("y")) {
-                    logger.info("Aborting... please run Auth with a console.");
-                    System.exit(1);
-                }
-                logger.info("Warning! This can be insecure! - Please enter Auth password: ");
-                authKeyStorePassword = br.readLine();
             }
         }
         else {
