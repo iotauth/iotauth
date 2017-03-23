@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth.iml" filepath="$PROJECT_DIR$/.idea/modules/auth.iml" />
       <module fileurl="file://$PROJECT_DIR$/auth-root.iml" filepath="$PROJECT_DIR$/auth-root.iml" />
       <module fileurl="file://$PROJECT_DIR$/auth-server/auth-server.iml" filepath="$PROJECT_DIR$/auth-server/auth-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/example-auth-db-generator/example-auth-db-generator.iml" filepath="$PROJECT_DIR$/example-auth-db-generator/example-auth-db-generator.iml" />
