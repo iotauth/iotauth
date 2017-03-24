@@ -70,25 +70,22 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
     public void handle( String target, Request baseRequest, HttpServletRequest request,
                         HttpServletResponse response) throws IOException, ServletException
     {
-        logger.info("Handling request from Trusted Auth at: {}:{}",
+        logger.info("Received request from Trusted Auth at: {}:{}",
                 baseRequest.getRemoteHost(), baseRequest.getRemotePort());
 
         X509Certificate[] certs = (X509Certificate[])request.getAttribute("javax.servlet.request.X509Certificate");
-        // Alias == ID
         int requestingAuthID = server.getTrustedAuthIDByCertificate(certs[0]);
-        logger.info("Alias: {} ", requestingAuthID);
 
         // TODO: Check client (trusted Auth) identity before sending response
         TrustedAuth requestingAuthInfo = server.getTrustedAuthInfo(requestingAuthID);
 
         if (requestingAuthInfo == null) {
-            throw new RuntimeException("Unrecognized Auth");
+            throw new RuntimeException("Unrecognized Auth, Alias: " + requestingAuthID);
         }
 
-        logger.info("Information of Trusted Auth which sent the request: {}", requestingAuthInfo.toBriefString());
+        logger.info("Information of Trusted Auth which sent the request: " + requestingAuthInfo.toBriefString());
 
-        String authReqType = (String)baseRequest.getParameter(TrustedAuthReqMessasge.TYPE);
-        logger.info("The request was {}", authReqType);
+        String authReqType = baseRequest.getParameter(TrustedAuthReqMessasge.TYPE);
         if (authReqType.equals(TrustedAuthReqMessasge.type.AUTH_SESSION_KEY_REQ.name())) {
             handleAuthSessionKeyReq(baseRequest, response);
             logger.info("The request {} was successfully handled!", authReqType);
@@ -103,6 +100,10 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
                 throw new RuntimeException("Exception while handling Auth backup request\n"
                         + ExceptionToString.convertExceptionToStackTrace(e));
             }
+        }
+        else {
+            logger.info("Unknown request! " + authReqType);
+
         }
     }
 

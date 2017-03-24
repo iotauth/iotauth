@@ -33,7 +33,7 @@ public class HeartbeatSender {
     private final int[] trustedAuthIDs;
     private AuthServer server;
     private final ScheduledExecutorService scheduler;
-    private static final Logger logger = LoggerFactory.getLogger(AuthServer.class);
+    private static final Logger logger = LoggerFactory.getLogger(HeartbeatSender.class);
 
     public HeartbeatSender(AuthServer server, int[] trustedAuthIDs) {
         this.server = server;
@@ -44,23 +44,22 @@ public class HeartbeatSender {
         for (int i = 0; i < trustedAuthIDs.length; i++) {
             TrustedAuth trustedAuth = server.getTrustedAuthInfo(trustedAuthIDs[i]);
             final Runnable beeper = new Runnable() {
+                private int failureCount = 0;
                 public void run() {
                     AuthHeartbeatReqMessage heartbeatReqMessage = new AuthHeartbeatReqMessage();
                     try {
                         ContentResponse response = server.performPostRequestToTrustedAuth(trustedAuth.getID(), heartbeatReqMessage);
-                        logger.info("Response content: " + response.getContentAsString());
-                    } catch (TimeoutException e) {
-                        logger.info("Problem with " + trustedAuth.getID());
-                        logger.error("TimeoutException {}", ExceptionToString.convertExceptionToStackTrace(e));
-                    } catch (ExecutionException e) {
-                        logger.info(trustedAuth.getID() + " is down...");
-                        logger.info(e.getLocalizedMessage());
-                        //logger.error("ExecutionException {}", ExceptionToString.convertExceptionToStackTrace(e));
-                    } catch (InterruptedException e) {
-                        logger.info("Problem with " + trustedAuth.getID());
-                        logger.error("InterruptedException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                        failureCount = 0;
+                        logger.info(trustedAuth.getID() + " is up!" +
+                                " Failure Count: " + failureCount);
+                        //        " Response content: " + response.getContentAsString());
+                    } catch (TimeoutException | ExecutionException | InterruptedException e) {
+                        failureCount++;
+                        logger.info(trustedAuth.getID() + " is down..." +
+                                " Failure Count: " + failureCount +
+                                " The reason is: " + e.getLocalizedMessage()
+                        );
                     }
-                    logger.info("beep Auth" + trustedAuth.getID());
                 }
             };
             final int currentHeartbeatPeriod = trustedAuth.getHeartbeatPeriod();
