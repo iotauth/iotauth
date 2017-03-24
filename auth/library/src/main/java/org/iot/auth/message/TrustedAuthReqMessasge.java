@@ -17,7 +17,8 @@ public abstract class TrustedAuthReqMessasge {
     public static final String TYPE = "TYPE";
     public enum type {
         AUTH_SESSION_KEY_REQ,
-        BACKUP_REQ
+        BACKUP_REQ,
+        HEARTBEAT_REQ
     }
     @SuppressWarnings("unchecked")
     protected static JSONObject convertRequestToJSONObject(Request request) {
