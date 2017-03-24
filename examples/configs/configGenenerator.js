@@ -430,30 +430,40 @@ function generateCommunicationPolicyTables(numberOfAuths) {
 }
 
 function generateTrustedAuthTables(numberOfAuths, authDBconfig) {
+    if (authDBconfig == null) {
+        throw "No Auth DB config!";
+    }
+    var defaultValues = authDBconfig.defaultValues;
+    if (defaultValues == null) {
+        throw "Auth DB config is not properly specified, no default values!\n" + util.inspect(authDBconfig);
+    }
+    var authTrustMap = authDBconfig.authTrustMap;
     for (var netId = 1; netId <= numberOfAuths; netId++) {
         var myAuthId = getAuthId(netId);
         var trustedAuthList = [];
         for (var otherNetId = 1; otherNetId <= numberOfAuths; otherNetId++) {
-            if (netId == otherNetId) {
+            var otherAuthId = getAuthId(otherNetId);
+            if (myAuthId == otherAuthId) {
                 continue;
             }
-            var otherAuthId = getAuthId(otherNetId);
+            if (authTrustMap != null) {
+                if (authTrustMap[myAuthId] == null
+                    || (authTrustMap[myAuthId].indexOf(otherAuthId) < 0))
+                {
+                    continue;
+                }
+            }
             var otherAuthHost = 'localhost';
             if (hostPortAssignments['Auth' + otherAuthId]) {
                 otherAuthHost = hostPortAssignments['Auth' + otherAuthId].host;
-            }
-            if (authDBconfig == null) {
-                throw "No Auth DB config!";
-            }
-            else if (authDBconfig.heartbeatPeriod == null) {
-                throw "Auth DB config is not properly specified!\n" + util.inspect(authDBconfig);
             }
             trustedAuthList.push({
                 'ID': otherAuthId,
                 'Host': otherAuthHost,
                 'Port': getAuthPortBase(otherNetId) + 1,
                 'CertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem',
-                'HeartbeatPeriod': authDBconfig.heartbeatPeriod 
+                'HeartbeatPeriod': defaultValues.heartbeatPeriod,
+                'FailureThreshold': defaultValues.failureThreshold
             });
         }
         var dirName = AUTH_DB_DIR + 'auth' + myAuthId + '/configs/';

@@ -15,15 +15,15 @@
 
 package org.iot.auth.server;
 
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.iot.auth.AuthServer;
 import org.iot.auth.db.TrustedAuth;
+import org.iot.auth.message.AuthHeartbeatReqMessage;
+import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Class for creating threads that send heartbeat requests to other trusted Auths
@@ -45,6 +45,21 @@ public class HeartbeatSender {
             TrustedAuth trustedAuth = server.getTrustedAuthInfo(trustedAuthIDs[i]);
             final Runnable beeper = new Runnable() {
                 public void run() {
+                    AuthHeartbeatReqMessage heartbeatReqMessage = new AuthHeartbeatReqMessage();
+                    try {
+                        ContentResponse response = server.performPostRequestToTrustedAuth(trustedAuth.getID(), heartbeatReqMessage);
+                        logger.info("Response content: " + response.getContentAsString());
+                    } catch (TimeoutException e) {
+                        logger.info("Problem with " + trustedAuth.getID());
+                        logger.error("TimeoutException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                    } catch (ExecutionException e) {
+                        logger.info(trustedAuth.getID() + " is down...");
+                        logger.info(e.getLocalizedMessage());
+                        //logger.error("ExecutionException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                    } catch (InterruptedException e) {
+                        logger.info("Problem with " + trustedAuth.getID());
+                        logger.error("InterruptedException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                    }
                     logger.info("beep Auth" + trustedAuth.getID());
                 }
             };

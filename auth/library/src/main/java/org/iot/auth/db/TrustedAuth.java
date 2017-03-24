@@ -22,11 +22,13 @@ import java.security.cert.X509Certificate;
  * @author Hokeun Kim
  */
 public class TrustedAuth {
-    public TrustedAuth(int id, String host, int port, int heartbeatPeriod, X509Certificate certificate) {
+    public TrustedAuth(int id, String host, int port, int heartbeatPeriod, int failureThreshold,
+                       X509Certificate certificate) {
         this.id = id;
         this.host = host;
         this.port = port;
         this.heartbeatPeriod = heartbeatPeriod;
+        this.failureThreshold = failureThreshold;
         this.certificate = certificate;
     }
 
@@ -46,17 +48,25 @@ public class TrustedAuth {
         return heartbeatPeriod;
     }
 
+    public int getFailureThreshold() {
+        return failureThreshold;
+    }
+
     public X509Certificate getCertificate() {
         return certificate;
     }
 
     public String toString() {
         return "ID: " + id + "\tHost: " + host + "\tPort: " + port +
+                "\tHeartbeatPeriod: " + heartbeatPeriod +
+                "\tFailureThreshold: " + failureThreshold +
                 "\tCertificate: " + certificate;
     }
 
     public String toBriefString() {
         return "ID: " + id + "\tHost: " + host + "\tPort: " + port +
+                "\tHeartbeatPeriod: " + heartbeatPeriod +
+                "\tFailureThreshold: " + failureThreshold +
                 "\tCertificate: " + certificate.getSubjectDN();
     }
 
@@ -64,5 +74,6 @@ public class TrustedAuth {
     private String host;
     private int port;
     private int heartbeatPeriod;
+    private int failureThreshold;
     private X509Certificate certificate;
 }

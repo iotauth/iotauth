@@ -378,6 +378,7 @@ public class AuthDB {
             TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(),
                     t.getPort(),
                     t.getHeartbeatPeriod(),
+                    t.getFailureThreshold(),
                     t.getCertificate());
             trustedAuthMap.put(trustedAuth.getID(), trustedAuth);
             // TODO: Add trust store for trusted auth

@@ -250,6 +250,7 @@ public class SQLiteConnector {
         sql += TrustedAuthTable.c.Host.name() + " TEXT NOT NULL,";
         sql += TrustedAuthTable.c.Port.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + " INT NOT NULL,";
+        sql += TrustedAuthTable.c.FailureThreshold.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.CertificateValue.name() + " BLOB NOT NULL)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
@@ -437,14 +438,16 @@ public class SQLiteConnector {
         sql += TrustedAuthTable.c.Host.name() + ",";
         sql += TrustedAuthTable.c.Port.name() + ",";
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + ",";
+        sql += TrustedAuthTable.c.FailureThreshold.name() + ",";
         sql += TrustedAuthTable.c.CertificateValue.name() + ")";
-        sql += " VALUES(?,?,?,?,?)";
+        sql += " VALUES(?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setInt(index++,auth.getId());
         preparedStatement.setString(index++,auth.getHost());
         preparedStatement.setInt(index++,auth.getPort());
         preparedStatement.setInt(index++,auth.getHeartbeatPeriod());
+        preparedStatement.setInt(index++,auth.getFailureThreshold());
         preparedStatement.setBytes(index++,auth.getCertificate().getEncoded());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
