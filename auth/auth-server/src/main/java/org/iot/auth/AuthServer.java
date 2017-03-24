@@ -76,8 +76,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.BluetoothStateException;
 import javax.swing.*;
@@ -297,6 +296,9 @@ public class AuthServer {
 
         AuthCommandLine authCommandLine = new AuthCommandLine(this);
         authCommandLine.start();
+
+        HeartbeatSender heartbeatSender = new HeartbeatSender(this, db.getAllTrustedAuthIDs());
+        heartbeatSender.start();
 
         clientForTrustedAuths.start();
 
@@ -818,6 +820,47 @@ public class AuthServer {
         }
         private AuthServer server;
     }
+
+    /**
+     * Class for a thread that sends hearbeat request to other trusted Auths
+     */
+    private class HeartbeatSender {
+        public HeartbeatSender(AuthServer server, int[] trustedAuthIDs) {
+            this.server = server;
+            this.trustedAuthIDs = trustedAuthIDs;
+            scheduler = Executors.newScheduledThreadPool(trustedAuthIDs.length);
+        }
+        public void start() {
+            for (int i = 0; i < trustedAuthIDs.length; i++) {
+                TrustedAuth trustedAuth = server.getTrustedAuthInfo(trustedAuthIDs[i]);
+                final Runnable beeper = new Runnable() {
+                    public void run() {
+                        logger.info("beep Auth" + trustedAuth.getID());
+                    }
+                };
+                final int currentHeartbeatPeriod = trustedAuth.getHeartbeatPeriod();
+                if (currentHeartbeatPeriod <= 0) {
+                    logger.info("Not scheduling heartbeat to Auth" + trustedAuth.getID() +
+                            " since the period is set.");
+                    continue;
+                }
+                logger.info("scheduling a task of sending heartbeat to Auth" + trustedAuth.getID() +
+                        " every " + currentHeartbeatPeriod + "second(s).");
+                final ScheduledFuture<?> beeperHandle =
+                        scheduler.scheduleWithFixedDelay(beeper, currentHeartbeatPeriod, currentHeartbeatPeriod, TimeUnit.SECONDS);
+                // use the following code to remove the handler
+                /*
+                scheduler.schedule(new Runnable() {
+                    public void run() { beeperHandle.cancel(true); }
+                }, 1000*10, TimeUnit.MILLISECONDS);
+                */
+            }
+        }
+        private final int[] trustedAuthIDs;
+        private AuthServer server;
+        private final ScheduledExecutorService scheduler;
+    }
+
     public String showAllUdpPortListenerMaps() {
         StringBuilder sb = new StringBuilder();
         sb.append("Nonce Map\n");

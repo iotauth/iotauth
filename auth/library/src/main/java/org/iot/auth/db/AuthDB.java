@@ -377,6 +377,7 @@ public class AuthDB {
         for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuth()) {
             TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(),
                     t.getPort(),
+                    t.getHeartbeatPeriod(),
                     t.getCertificate());
             trustedAuthMap.put(trustedAuth.getID(), trustedAuth);
             // TODO: Add trust store for trusted auth

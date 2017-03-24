@@ -429,7 +429,7 @@ function generateCommunicationPolicyTables(numberOfAuths) {
     }
 }
 
-function generateTrustedAuthTables(numberOfAuths) {
+function generateTrustedAuthTables(numberOfAuths, authDBconfig) {
     for (var netId = 1; netId <= numberOfAuths; netId++) {
         var myAuthId = getAuthId(netId);
         var trustedAuthList = [];
@@ -442,12 +442,18 @@ function generateTrustedAuthTables(numberOfAuths) {
             if (hostPortAssignments['Auth' + otherAuthId]) {
                 otherAuthHost = hostPortAssignments['Auth' + otherAuthId].host;
             }
+            if (authDBconfig == null) {
+                throw "No Auth DB config!";
+            }
+            else if (authDBconfig.heartbeatPeriod == null) {
+                throw "Auth DB config is not properly specified!\n" + util.inspect(authDBconfig);
+            }
             trustedAuthList.push({
                 'ID': otherAuthId,
                 'Host': otherAuthHost,
                 'Port': getAuthPortBase(otherNetId) + 1,
                 'CertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem',
-                'HeartbeatPeriod': 3000 // 3 seconds
+                'HeartbeatPeriod': authDBconfig.heartbeatPeriod 
             });
         }
         var dirName = AUTH_DB_DIR + 'auth' + myAuthId + '/configs/';
@@ -524,21 +530,38 @@ function parseHostPortAssignments(assignmentFilePath) {
     return assignments;
 }
 
+function loadJsonWithComments(inputFileName) {
+    var fileLines = fs.readFileSync(inputFileName, 'utf8').split('\n');
+    var fileString = "";
+    for (var i = 0; i < fileLines.length; i++) {
+        var line = fileLines[i].trim();
+        if (line.startsWith('//') || line.length == 0) {
+            continue;
+        }
+        fileString += line;
+    }
+    var jsonObject = JSON.parse(fileString);
+    return jsonObject;
+}
+
 // beginning of script execution
 
 console.log('*SCRIPT- configGeneration.sh: For generating configuration files for example Auths and entities');
 
-if (process.argv.length <= 3) {
-    console.log('Error: please specify [total number of networks] and [Auth DB protection method]');
+if (process.argv.length <= 4) {
+    console.log('Error: please specify [total number of networks], [Auth DB protection method], [Auth DB configuration file]');
     process.exit(1);
 }
 
 var totalNumberOfNets = parseInt(process.argv[2]);
 var authDBProtectionMethod = parseInt(process.argv[3]);
-console.log('Total number of nets: ' + totalNumberOfNets + ', Auth DB protection method: ', authDBProtectionMethod);
+var authDBConfigFile = process.argv[4];
+console.log('Total number of nets: ' + totalNumberOfNets);
+console.log('Auth DB protection method: ', authDBProtectionMethod);
+console.log('Auth DB configuration file: ', authDBConfigFile);
 
-if (process.argv.length >= 5) {
-    var assignmentFilePath = process.argv[4];
+if (process.argv.length >= 6) {
+    var assignmentFilePath = process.argv[5];
     console.log('Given host port assignment file: ' + assignmentFilePath);
     hostPortAssignments = parseHostPortAssignments(assignmentFilePath);
     console.log('address assignments -');
@@ -550,7 +573,8 @@ generateEntityConfigs(netConfigList);
 var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList);
 generateRegisteredEntityTables(registeredEntityTableList);
 generateCommunicationPolicyTables(totalNumberOfNets);
-generateTrustedAuthTables(totalNumberOfNets);
+var authDBconfig = loadJsonWithComments(authDBConfigFile);
+generateTrustedAuthTables(totalNumberOfNets, authDBconfig);
 generatePropertiesFiles(totalNumberOfNets, authDBProtectionMethod);
 
 //console.log(JSON2.stringify(registeredEntityTableList, null, '\t'));

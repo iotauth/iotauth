@@ -22,10 +22,11 @@ import java.security.cert.X509Certificate;
  * @author Hokeun Kim
  */
 public class TrustedAuth {
-    public TrustedAuth(int id, String host, int port, X509Certificate certificate) {
+    public TrustedAuth(int id, String host, int port, int heartbeatPeriod, X509Certificate certificate) {
         this.id = id;
         this.host = host;
         this.port = port;
+        this.heartbeatPeriod = heartbeatPeriod;
         this.certificate = certificate;
     }
 
@@ -39,6 +40,10 @@ public class TrustedAuth {
 
     public int getPort() {
         return port;
+    }
+
+    public int getHeartbeatPeriod() {
+        return heartbeatPeriod;
     }
 
     public X509Certificate getCertificate() {
@@ -58,5 +63,6 @@ public class TrustedAuth {
     private int id;
     private String host;
     private int port;
+    private int heartbeatPeriod;
     private X509Certificate certificate;
 }

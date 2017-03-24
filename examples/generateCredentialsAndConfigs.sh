@@ -11,10 +11,10 @@ ENTITY_CREDS_DIR=entity/credentials/
 AUTH_DATABASES_DIR=auth/databases/
 
 
-if [ $# -lt 2 ]
+if [ $# -lt 3 ]
 then
-	echo "Please provide required arguments (number of networks, Auth DB protection method)"
-	echo 'Usage: ./generateCredentialsAndConfigs.sh NUM_NETS AUTH_DB_PROTECTION_METHOD HOST_PORT_ASSIGNMENT_FILE(optional)'
+	echo "Please provide required arguments (number of networks, Auth DB protection method, Auth DB configuration file)"
+	echo 'Usage: ./generateCredentialsAndConfigs.sh NUM_NETS AUTH_DB_PROTECTION_METHOD AUTH_DB_CONFIG_FILE HOST_PORT_ASSIGNMENT_FILE(optional)'
 	exit
 fi
 
@@ -22,10 +22,12 @@ fi
 NUM_NETS=$1
 # Protection method for Auth DB, see AuthDBProtectionMethod.java for supported methods
 AUTH_DB_PROTECTION_METHOD=$2
+# Auth DB configuration file
+AUTH_DB_CONFIG_FILE=$3
 # optional configuration for host port assignemt for network entities
-if [ $# -ge 3 ]
+if [ $# -ge 4 ]
 then
-	HOST_PORT_ASSIGNMENT_FILE=$3
+	HOST_PORT_ASSIGNMENT_FILE=$4
 fi
 
 # if host port assignment file is given
@@ -138,6 +140,6 @@ cd ../..
 
 # generate configuration files for example Node.js entities
 cd examples/configs
-./initConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD $HOST_PORT_ASSIGNMENT_FILE
+./initConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD $AUTH_DB_CONFIG_FILE $HOST_PORT_ASSIGNMENT_FILE
 cd ../..
 

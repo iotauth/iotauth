@@ -12,6 +12,8 @@ NUM_NETS=2
 AUTH_DB_PROTECTION_METHOD=1
 # file for host and port assignment of Auth and entities
 HOST_PORT_ASSIGNMENT_FILE=""
+# file for auth DB configuration
+AUTH_DB_CONFIG_FILE="configs/defaultAuthDB.config"
 # Whether to show help
 SHOW_HELP=false
 # Generate credentials and configs
@@ -38,6 +40,10 @@ do
 			HOST_PORT_ASSIGNMENT_FILE="$2"
 			shift # past argument
 		;;
+		-c|--auth-db-config)
+			AUTH_DB_CONFIG_FILE="$2"
+			shift # past argument
+		;;
 		-gc|--gen-cred-config-only)
 			GEN_AUTH_DB=false
 		;;
@@ -62,6 +68,7 @@ if [ "$SHOW_HELP" = true ] ; then
 	echo "  -d,--db-protect <arg>           Auth DB protection method [0-2]. Default value is 1."
 	echo "                                  [0: No encryption, 1: Encrypt credentials, 2: Encrypt entire DB]"
 	echo "  -a,--host-port-assign <arg>     Path for host and port assignment file."
+	echo "  -c,--auth-db-config <arg>       Path for Auth DB configuration file."
 	echo "  -gc,--gen-cred-config-only      Generate credentials and configuration files only."
 	echo "                                  (without generating Auth DBs.)"
 	echo "  -gd,--gen-db-only               Generate Auth databases only."
@@ -71,14 +78,15 @@ if [ "$SHOW_HELP" = true ] ; then
 fi
 
 echo "Example generation options:"
-echo NUM_NETS					= $NUM_NETS
-echo AUTH_DB_PROTECTION_METHOD	= $AUTH_DB_PROTECTION_METHOD
-echo HOST_PORT_ASSIGNMENT_FILE	= $HOST_PORT_ASSIGNMENT_FILE
+echo NUM_NETS                   = $NUM_NETS
+echo AUTH_DB_PROTECTION_METHOD  = $AUTH_DB_PROTECTION_METHOD
+echo HOST_PORT_ASSIGNMENT_FILE  = $HOST_PORT_ASSIGNMENT_FILE
+echo AUTH_DB_CONFIG_FILE        = $AUTH_DB_CONFIG_FILE
 
 # generate credentials and configs
 if [ "$GEN_CRED_CONFIG" = true ] ; then
 	echo "Generating credentials and configuration files..."
-	./generateCredentialsAndConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD $HOST_PORT_ASSIGNMENT_FILE
+	./generateCredentialsAndConfigs.sh $NUM_NETS $AUTH_DB_PROTECTION_METHOD $AUTH_DB_CONFIG_FILE $HOST_PORT_ASSIGNMENT_FILE
 fi
 
 if [ "$GEN_AUTH_DB" = true ] ; then
