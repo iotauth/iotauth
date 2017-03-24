@@ -1,7 +1,7 @@
 # Auth directory
 
 This directory includes an open-source implementation of Auth, using the IntelliJ IDEA.
-We strongly recommand looking into [*examples*](https://github.com/iotauth/iotauth/tree/master/examples) before setting up the environment, since this includes ways to locally generate your own credentials that will be used by Auth for actual execution of Auth.
+We strongly recommend looking into [*examples*](https://github.com/iotauth/iotauth/tree/master/examples) before setting up the environment, since this includes ways to locally generate your own credentials that will be used by Auth for actual execution of Auth.
 
 # Directory structure
 ---
