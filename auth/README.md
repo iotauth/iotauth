@@ -15,36 +15,37 @@ We strongly recommend looking into [*examples*](https://github.com/iotauth/iotau
 
 # Using IntelliJ IDEA
 ---
-Install IntelliJ IDEA https://www.jetbrains.com/idea/
+Install IntelliJ IDEA https://www.jetbrains.com/idea/.
+For the following instructions, we use $ROOT to indicate the root directory of this repository.
 
-Open project from IntelliJ IDEA
+* First, open project ($Root/auth) from IntelliJ IDEA
 
-Run -> Run/Debug configurations
-- Check "single instance only"
+* To import Maven dependencies,
+  * Right click on pom.xml
+  * Select Maven -> Reimport
 
-To import Maven dependencies,
-- Right click on pom.xml
-- Select Maven -> Reimport
+* To enable Maven projects auto-import,
+  * On menu, click on
+    * File | Other Settings | Default Settings
+  * In the pop-up window, select 
+    * Build, Execution, Deployment -> Build Tools -> Maven -> Importing
+  * Check
+    * Import Maven projects automatically
 
-To enable Maven projects auto-import,
-- On menu, click on
--- File | Other Settings | Default Settings
-- In the pop-up window, select 
--- Build, Execution, Deployment -> Build Tools -> Maven -> Importing
-- Check
--- Import Maven projects automatically
+* To build jar
+  * In maven project tab, inside auth-server -> lifecycle 
+  * Select from clean to install and run (click on the green triangle at the top of Maven Project tab)
 
-To build jar
-- In maven project tab, inside auth-server -> lifecycle 
-- select from clean to install and run (click on the green triangle at the top of Maven Project tab)
+* To run jar file
+  * See the [this](https://github.com/iotauth/iotauth/blob/master/auth/auth-server/README.md) (the README file of auth-server module.)
 
-To run jar file
-- java -jar target/auth-server-0.0.1-jar-with-dependencies.jar -p authServer2.properties
+* To generate JavaDoc
+  * In IntelliJ IDEA, Tools -> Generate JavaDoc, set output directory $ROOT/auth/doc and click OK. The directory will be created automatically.
 
-To generate Javadoc
-- in IntelliJ IDEA, Tools -> Generate JavaDoc, set output directory (e.g., auth/target/doc) and click OK
-
-To configure run/debug configurations for example Auths,
+* Run -> Run/Debug configurations
+  * Check "single instance only"
+  
+* To configure run/debug configurations for example Auths,
 
 ![Image of Auth101 Config](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/auth101_intellij_config.png)
 
