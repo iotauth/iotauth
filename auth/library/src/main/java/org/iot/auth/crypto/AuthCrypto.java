@@ -90,13 +90,13 @@ public class AuthCrypto {
 
     /**
      * Check if a signature is valid for the given data and public key.
-     * @param data Data used to generate signature
-     * @param signature
-     * @param publicKey
-     * @return
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidKeyException
-     * @throws SignatureException
+     * @param data Data used to generate signature.
+     * @param signature A digital signature to be verified.
+     * @param publicKey A public key to be used for signature verification.
+     * @return Whether the signature is verified.
+     * @throws NoSuchAlgorithmException If the algorithm specified in the key store is invalid.
+     * @throws InvalidKeyException If the key is not valid.
+     * @throws SignatureException If the signature is not valid.
      */
     public boolean verifySignedData(Buffer data, Buffer signature, PublicKey publicKey)
             throws NoSuchAlgorithmException, InvalidKeyException, SignatureException
@@ -148,8 +148,8 @@ public class AuthCrypto {
      * @return Key store object loaded from the key store file.
      * @throws IOException When file IO fails.
      * @throws KeyStoreException When loading key store fails.
-     * @throws CertificateException
-     * @throws NoSuchAlgorithmException
+     * @throws CertificateException When there is an error in certificate.
+     * @throws NoSuchAlgorithmException When the algorithm is not supported.
      */
     public static KeyStore loadKeyStore(String filePath, String password) throws IOException, KeyStoreException,
             CertificateException, NoSuchAlgorithmException {

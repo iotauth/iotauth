@@ -39,10 +39,10 @@ import java.util.Date;
  */
 public class SymmetricKey {
     /**
-     * With given key value
-     * @param cryptoSpec
-     * @param expirationTime
-     * @param serializedKeyVal
+     * Constructor with given key value
+     * @param cryptoSpec Given cryptography specification for the symmetric key.
+     * @param expirationTime Expiration time of the symmetric key.
+     * @param serializedKeyVal Serialized key value which includes encryption and/or MAC keys.
      */
     public SymmetricKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime, Buffer serializedKeyVal) {
         this.cryptoSpec = cryptoSpec;
@@ -70,9 +70,9 @@ public class SymmetricKey {
     }
 
     /**
-     * For creating new key value
-     * @param cryptoSpec
-     * @param expirationTime
+     * For creating with new key value
+     * @param cryptoSpec Given cryptography specification for the symmetric key.
+     * @param expirationTime Expiration time of the symmetric key.
      */
     public SymmetricKey(SymmetricKeyCryptoSpec cryptoSpec, long expirationTime) {
         this(cryptoSpec, expirationTime,

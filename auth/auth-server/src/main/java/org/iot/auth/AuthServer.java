@@ -404,6 +404,7 @@ public class AuthServer {
      * @param owner The owner who will own the generated session keys.
      * @param numKeys The number of keys specified.
      * @param communicationPolicy The communication policy specified.
+     * @param sessionKeyPurpose The purpose Auth generates session keys for.
      * @return A list of session keys.
      * @throws IOException If an error occurs in IO.
      * @throws SQLException if database error occurs.
@@ -451,7 +452,8 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, getTrustedAuthIDByCertificate
-     * @return
+     * @param cert The certificate of Auth that we search for.
+     * @return ID of the trusted Auth specified by the certificate.
      */
     public int getTrustedAuthIDByCertificate(X509Certificate cert) {
         return db.getTrustedAuthIDByCertificate(cert);
@@ -479,6 +481,8 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, cleanExpiredSessionKeys
+     * @throws SQLException If an error occurs in SQL processing.
+     * @throws ClassNotFoundException If the class is not found.
      */
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
         db.cleanExpiredSessionKeys();
@@ -486,6 +490,8 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, deleteAllSessionKeys
+     * @throws SQLException If an error occurs in SQL processing.
+     * @throws ClassNotFoundException If the class is not found.
      */
     public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {
         db.deleteAllSessionKeys();

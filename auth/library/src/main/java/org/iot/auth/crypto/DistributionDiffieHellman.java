@@ -47,6 +47,9 @@ public class DistributionDiffieHellman {
      *                              Allowed algorithms: DiffieHellman, ECDH, ECMQV
      * @param keySize The key size; an algorithm-specific metric, such as modulus length, specified in number of bits.
      * @param relativeValidityPeriod The relative validity period for the distribution key to be derived.
+     * @throws NoSuchAlgorithmException When the algorithm is not supported.
+     * @throws InvalidKeySpecException When the key specification is not valid.
+     * @throws InvalidKeyException When the key is invalid.
      */
     public DistributionDiffieHellman(SymmetricKeyCryptoSpec distributionCryptoSpec, String keyFactoryAlgorithm,
                                      String keyAgreementAlgorithm, int keySize, long relativeValidityPeriod)

@@ -74,6 +74,7 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
      * Serialize the session key response message and encrypt with the specified distribution key.
      * @param distKey A distribution key for encrypting the session key request message.
      * @return Buffer for serialized and encrypted message.
+     * @throws UseOfExpiredKeyException If an expired key is used for encryption.
      */
     public Buffer serializeAndEncrypt(DistributionKey distKey) throws UseOfExpiredKeyException {
         Buffer payload = new Buffer(entityNonce);

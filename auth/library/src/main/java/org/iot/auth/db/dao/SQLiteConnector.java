@@ -59,7 +59,8 @@ public class SQLiteConnector {
 
     /**
      * Constructor that stores the physical location of the database file.
-     * @param dbPath
+     * @param dbPath Path for the SQLite database file.
+     * @param authDBProtectionMethod Protection level of auth DB.
      */
     public SQLiteConnector(String dbPath, AuthDBProtectionMethod authDBProtectionMethod)
     {
@@ -87,8 +88,9 @@ public class SQLiteConnector {
 
     /**
      * Load an encryption key for database.
-     * @param databaseKeystorePath File path of Auth's database keystore.
-     * @param authKeyStorePassword Password for Auth's database keystore
+     * @param databaseKeystorePath File path for database keystore (public, private key pair)
+     * @param authKeyStorePassword Password for key stores and trust store for storing certificates of trusted Auths
+     * @param databaseEncryptionKeyPath File path for database encryption key (symmetric), ecrypted with public key
      * @throws CertificateException When CertificateException occurs.
      * @throws NoSuchAlgorithmException When NoSuchAlgorithmException occurs.
      * @throws KeyStoreException When KeyStoreException occurs.
@@ -429,6 +431,7 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      * @throws ClassNotFoundException if the class cannot be located
+     * @throws CertificateEncodingException If there is a problem in certificate encoding.
      * @see TrustedAuthTable
      */
     public boolean insertRecords(TrustedAuthTable auth) throws SQLException, ClassNotFoundException, CertificateEncodingException {
@@ -631,6 +634,7 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      * @throws ClassNotFoundException if the class cannot be located
+     * @throws CertificateEncodingException If there is a problem in certificate encoding.
      */
     public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, ClassNotFoundException, CertificateEncodingException {
         //setConnection();
@@ -697,6 +701,8 @@ public class SQLiteConnector {
 
     /**
      * Select session keys with the same purpose and that is not expired yet.
+     * @param requestingEntityName the name of the requesting entity for cached session keys.
+     *                             to be used for adding the entity as an owner of the session keys.
      * @param purpose the given purpose of the session key
      * @return returns the list of session keys with the given session key
      * @throws SQLException if a database access error occurs;

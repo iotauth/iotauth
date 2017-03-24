@@ -65,7 +65,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
      *                this handler.
      * @param response The response to be sent to the requester (trusted Auth).
      * @throws IOException If any IO fails.
-     * @throws ServletException
+     * @throws ServletException If the serverlet fails.
      */
     public void handle( String target, Request baseRequest, HttpServletRequest request,
                         HttpServletResponse response) throws IOException, ServletException
@@ -100,6 +100,9 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
                 throw new RuntimeException("Exception while handling Auth backup request\n"
                         + ExceptionToString.convertExceptionToStackTrace(e));
             }
+        }
+        else if(authReqType.equals(TrustedAuthReqMessasge.type.HEARTBEAT_REQ.name())) {
+
         }
         else {
             logger.info("Unknown request! " + authReqType);

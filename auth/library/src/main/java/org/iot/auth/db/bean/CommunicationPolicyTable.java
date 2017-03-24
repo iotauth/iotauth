@@ -23,9 +23,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Communication Policy Table schema definition.  <br/>
- * It is not a formal BEAN but it is inspired by the concept.  <br/>
- * This class will store and process the data used to define the communication policy. <br/>
+ * Communication Policy Table schema definition.  <br>
+ * It is not a formal BEAN but it is inspired by the concept.  <br>
+ * This class will store and process the data used to define the communication policy. <br>
  * The communication policy is stored on a sqlite database.
  *
  * @author Salomon Lee, Hokeun Kim
@@ -56,7 +56,7 @@ public class CommunicationPolicyTable {
 
     /**
      * Gets the requesting group type
-     * @return the requested group
+     * @return the requesting group
      */
     public String getReqGroup() {
         return reqGroup;
@@ -64,14 +64,14 @@ public class CommunicationPolicyTable {
 
     /**
      * Sets the value for requesting group
-     * @param reqGroup
+     * @param reqGroup the requesting group
      */
     public void setReqGroup(String reqGroup) {
         this.reqGroup = reqGroup;
     }
 
     /**
-     * Gets the communication target type. <br/>
+     * Gets the communication target type. <br>
      * For more information {@link CommunicationTargetType}
      * @return the CommunicationTargetType
      */
@@ -80,9 +80,9 @@ public class CommunicationPolicyTable {
     }
 
     /**
-     * Sets the value for the communication target type.<br/>
+     * Sets the value for the communication target type.<br>
      * For more information {@link CommunicationTargetType}
-     * @param targetType
+     * @param targetType Given type of communication target
      */
     public void setTargetType(CommunicationTargetType targetType) {
         this.targetType = targetType;
@@ -98,7 +98,7 @@ public class CommunicationPolicyTable {
 
     /**
      * Sets the target to communicate
-     * @param target
+     * @param target Given communication target
      */
     public void setTarget(String target) {
         this.target = target;

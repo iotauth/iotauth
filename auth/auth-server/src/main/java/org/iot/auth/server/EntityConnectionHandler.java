@@ -206,7 +206,7 @@ public abstract class EntityConnectionHandler {
      * @throws IOException If any IO fails.
      * @throws ParseException When JSON parsing fails.
      * @throws SQLException When SQL DB fails.
-     * @throws ClassNotFoundException
+     * @throws ClassNotFoundException When class is not found.
      */
     protected void handleSessionKeyReq(byte[] bytes, Buffer authNonce) throws RuntimeException, IOException,
             ParseException, SQLException, ClassNotFoundException
@@ -261,6 +261,7 @@ public abstract class EntityConnectionHandler {
      *                         cryptography. If null, it means the session key request was encrypted with a distribution
      *                         key that is shared a priory, so no need to include it.
      * @throws IOException If TCP socket IO fails.
+     * @throws UseOfExpiredKeyException When an expired key is used.
      */
     protected void sendSessionKeyResp(DistributionKey distributionKey, SymmetricKeyCryptoSpec distCryptoSpec, Buffer entityNonce,
                                     List<SessionKey> sessionKeyList, SymmetricKeyCryptoSpec sessionCryptoSpec,
@@ -284,10 +285,12 @@ public abstract class EntityConnectionHandler {
      * @param authNonce Auth nonce to be checked with the nonce in the session key request message.
      * @return A pair of resulting session key list and usage (cryptography) specification for the session keys. The
      * session keys can be either generated or retrieved from a trusted Auth.
-     * @throws IOException
-     * @throws ParseException
-     * @throws SQLException
-     * @throws ClassNotFoundException
+     * @throws IOException If IO fails.
+     * @throws ParseException If JSON parsing fails.
+     * @throws SQLException When there is a problem in SQL
+     * @throws ClassNotFoundException When class is not found.
+     * @throws InvalidSessionKeyTargetException If the target of session key request is not valid.
+     * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
      */
     protected SessionKeysAndSpec processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)

@@ -23,4 +23,4 @@ auth-server/auth-server.iml
 example-auth-db-generator/target/*
 example-auth-db-generator/example-auth-db-generator.iml
 *.iml
-
+doc/*

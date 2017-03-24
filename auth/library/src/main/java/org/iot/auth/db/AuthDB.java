@@ -56,13 +56,17 @@ public class AuthDB {
 
     /**
      * Initializes Auth's database by loading database tables
+     * @param databaseKeystorePath File path for database keystore (public, private key pair)
      * @param authKeyStorePassword Password for key stores and trust store for storing certificates of trusted Auths
+     * @param databaseEncryptionKeyPath File path for database encryption key (symmetric), ecrypted with public key
+     * @param authDBProtectionMethod Type of protection method for Auth DB
      * @throws IOException When an error occurs in IO
      * @throws CertificateException When an error occurs while processing the certificate
      * @throws NoSuchAlgorithmException When there is no specified algorithm for keystores
      * @throws KeyStoreException When an error occurs while accessing the key store
      * @throws SQLException When an error occurs in database
      * @throws ClassNotFoundException When a specified class is not found
+     * @throws UnrecoverableEntryException If an entry in keystore is not recoverable
      */
     public void initialize(String databaseKeystorePath, String authKeyStorePassword, String databaseEncryptionKeyPath,
                            AuthDBProtectionMethod authDBProtectionMethod)
@@ -157,6 +161,7 @@ public class AuthDB {
      * @param owner Name of the owner (entity) for the generated session keys
      * @param numKeys Number of keys to be generated
      * @param communicationPolicy Corresponding communication policy for the generated session keys
+     * @param sessionKeyPurpose Purpose specified by session key request
      * @return A list of generated session keys
      * @throws IOException When an error occurs in IO
      * @throws SQLException When an error occurs in database
