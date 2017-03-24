@@ -1,6 +1,7 @@
 # Auth directory
 
-This directory includes an open-source implementation of Auth, using IntelliJ IDEA
+This directory includes an open-source implementation of Auth, using the IntelliJ IDEA.
+We strongly recommand looking into [*examples*](https://github.com/iotauth/iotauth/tree/master/examples) before setting up the environment, since this includes ways to locally generate your own credentials that will be used by Auth for actual execution of Auth.
 
 # Directory structure
 ---
@@ -8,8 +9,9 @@ This directory includes an open-source implementation of Auth, using IntelliJ ID
 - **credentials**: Directory for certificates and keystores of Auth
 - **databases**: Directory for SQLite database and entity/trusted Auth certificates
 - **example-auth-db-generator**: Directory for example-auth-db-generato module
+- **jars**: Directory for storing external jar files
+- **library**: Directory for library module (on which *auth-server* and *example-auth-db-generator* depend)
 - **properties**: Properties files for auth server
-- **src**: Directory for source codes and resources
 
 # Using IntelliJ IDEA
 ---
@@ -31,17 +33,6 @@ To enable Maven projects auto-import,
 -- Build, Execution, Deployment -> Build Tools -> Maven -> Importing
 - Check
 -- Import Maven projects automatically
-
-To generate example Auth databases
-- Use src/test/java/org/iot/auth/test/GenExampleAuthDB.java
-
-To initialize example with auth101 and auth102
-- go into scripts
-- run ./genExampleAuthsEntities.sh
-- run the test GenExampleAuthDB (in test-unit/src/main/java/org/iot/auth/test/GenExampleAuthDB.java)
-
-To remove example
-- run ./cleanExampleAuthsEntities.sh
 
 To build jar
 - In maven project tab, inside auth-server -> lifecycle 
