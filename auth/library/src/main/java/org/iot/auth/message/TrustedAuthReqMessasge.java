@@ -19,6 +19,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.server.Request;
 import org.json.simple.JSONObject;
 
+import java.security.cert.CertificateEncodingException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;

@@ -18,10 +18,12 @@ import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.cert.X509Certificate;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * A thread for processing command line interface.
@@ -120,7 +122,10 @@ public class AuthCommandLine extends Thread  {
                 }
                 else if (command.equals("issue cert") || command.equals("ic")) {
                     logger.info("\nIssue certificate command\n");
-                    server.issueCertificate();
+                    List<X509Certificate> backupCertificates = server.issueBackupCertificate();
+                    for (X509Certificate backupCertificate: backupCertificates) {
+                        logger.info(backupCertificate.toString());
+                    }
                 }
                 else if (command.equals("backup")) {
                     logger.info("\nBackup command\n");
@@ -130,8 +135,8 @@ public class AuthCommandLine extends Thread  {
                     logger.info("Unrecognized command: {}", command);
                 }
             }
-            catch (IOException e) {
-                logger.error("IOException {}", ExceptionToString.convertExceptionToStackTrace(e));
+            catch (Exception e) {
+                logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
             }
         }
     }

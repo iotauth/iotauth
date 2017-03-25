@@ -233,14 +233,20 @@ public class AuthCrypto {
         return new Buffer(randomBytes);
     }
 
-    public X509Certificate issueCertificate(X509Certificate certificate) {
+    public X509Certificate issueCertificate(X509Certificate certificate,
+                                            int issuerAuthID, int subjectAuthID) {
         try {
-            X500Name issuerDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=Auth101, CN=localhost");
-            X500Name subjectDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=Auth102, CN=localhost");
+            String issuerOU = "Auth" + issuerAuthID;
+            String subjectOU = "Auth" + subjectAuthID;
+            X500Name issuerDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + issuerOU + ", CN=localhost");
+            X500Name subjectDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + subjectOU + ", CN=localhost");
             BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
-            Date validityStartDate = new Date(System.currentTimeMillis() - 100000);
+            // 100 seconds before now
+            Date validityStartDate = new Date(System.currentTimeMillis() - 100 * 1000);
             Calendar calendar = Calendar.getInstance();
-            calendar.add(Calendar.YEAR, 10);
+            // 24 hours after now
+            calendar.add(Calendar.HOUR, 24);
+            //calendar.add(Calendar.YEAR, 24);
             Date validityEndDate = new Date(calendar.getTime().getTime());
             SubjectPublicKeyInfo subPubKeyInfo = SubjectPublicKeyInfo.getInstance(certificate.getPublicKey().getEncoded());
 
@@ -254,7 +260,7 @@ public class AuthCrypto {
             return new JcaX509CertificateConverter().getCertificate(holder);
 
         } catch (CertificateException e) {
-            throw new IllegalArgumentException("Problem loading public key " + "file" + "\n" + e.getMessage());
+            throw new IllegalArgumentException("Problem dealing with a certificate in issuing" + "\n" + e.getMessage());
         } catch (OperatorCreationException e) {
             e.printStackTrace();
         }

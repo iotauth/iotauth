@@ -649,6 +649,7 @@ public class AuthServer {
             logger.error("No registered entities to be backed up.");
             return null;
         }
+
         for (int i = 0; i < trustedAuthIDs.length; i++) {
             int backupToAuthID = trustedAuthIDs[i];
             List<RegisteredEntity> registeredEntitiesToBeBackedUp = new LinkedList<>();
@@ -657,13 +658,21 @@ public class AuthServer {
                     registeredEntitiesToBeBackedUp.add(registeredEntity);
                 }
             }
-            logger.info("Backing up to Auth" + backupToAuthID);
 
-            logger.info("List of entities to be backed up: ");
-            for (RegisteredEntity registeredEntity: registeredEntitiesToBeBackedUp) {
-                logger.info("{}", registeredEntity.getName());
+            if (registeredEntitiesToBeBackedUp.size() == 0) {
+                logger.info("no entities to be backed up to Auth " + backupToAuthID);
+                continue;
             }
-            AuthBackupReqMessage authBackupReqMessage = new AuthBackupReqMessage(registeredEntitiesToBeBackedUp);
+            logger.info("Trying to back up to Auth" + backupToAuthID);
+            TrustedAuth backupToAuth = getTrustedAuthInfo(backupToAuthID);
+            X509Certificate backupCertificate = crypto.issueCertificate(backupToAuth.getEntityCertificate(), authID, backupToAuthID);
+
+            StringBuilder builder = new StringBuilder();
+            for (RegisteredEntity registeredEntity: registeredEntitiesToBeBackedUp) {
+                builder.append("\n" + registeredEntity.getName());
+            }
+            logger.info("List of entities to be backed up: " + builder.toString());
+            AuthBackupReqMessage authBackupReqMessage = new AuthBackupReqMessage(backupCertificate, registeredEntitiesToBeBackedUp);
             try {
                 ContentResponse contentResponse = performPostRequestToTrustedAuth(backupToAuthID, authBackupReqMessage);
                 ret.add(contentResponse);
@@ -861,9 +870,23 @@ public class AuthServer {
     private Map<String, Buffer> nonceMapForUdpPortListener;
     private Map<String, Buffer> responseMapForUdpPortListener;
 
-    public void issueCertificate() {
+    public List<X509Certificate> issueBackupCertificate() {
+        Set<Integer> backupAuthIDSet = new HashSet<>();
+        for (RegisteredEntity registeredEntity: db.getAllRegisteredEntitiies()) {
+            backupAuthIDSet.add(registeredEntity.getBackupToAuthID());
+        }
+        Iterator<Integer> itr = backupAuthIDSet.iterator();
+        List<X509Certificate> ret = new LinkedList<>();
+        while (itr.hasNext()) {
+            int backupAuthID = itr.next();
+            TrustedAuth trustedAuth = db.getTrustedAuthInfo(backupAuthID);
+            X509Certificate cert = crypto.issueCertificate(
+                    trustedAuth.getEntityCertificate(), getAuthID(), backupAuthID);
+            ret.add(cert);
+        }
+        return ret;
+        /*
         TrustedAuth trustedAuth = db.getTrustedAuthInfo(102);
-        X509Certificate cert = crypto.issueCertificate(trustedAuth.getEntityCertificate());
         BASE64Encoder encoder = new BASE64Encoder();
         System.out.println(X509Factory.BEGIN_CERT);
         try {
@@ -874,6 +897,7 @@ public class AuthServer {
             e.printStackTrace();
         }
         System.out.println(X509Factory.END_CERT);
+        */
     }
 
     /**
