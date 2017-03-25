@@ -19,6 +19,7 @@ import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.AuthDBProtectionMethod;
+import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.*;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
@@ -819,7 +820,7 @@ public class SQLiteConnector {
      * @param key the key value of the metadata to update
      * @param value the value to update
      * @return <code>true</code> if the update is successful; otherwise <code>false</code>
-     * @throws SQLException  if a database access error occurs;
+     * @throws SQLException If a database access error occurs;
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      * @throws ClassNotFoundException if the class cannot be located
@@ -845,7 +846,7 @@ public class SQLiteConnector {
      * <pre>
      *     Recomended to be used after execute the sql through the ${@link Connection}
      * </pre>
-     * @throws SQLException SQLException if a database access error occurs
+     * @throws SQLException If a database access error occurs
      */
     public void closeStatement() throws SQLException {
         statement.close();
@@ -853,11 +854,24 @@ public class SQLiteConnector {
 
     /**
      * Close the connection to the database.
-     * @throws SQLException SQLException if a database access error occurs
+     * @throws SQLException If a database access error occurs
      */
     public void closeConnection() throws SQLException {
         //connection.close();
     }
 
 
+    /**
+     * Delete registered entities except for those originally its own.
+     * @return <code>true</code> if the delete is successful; otherwise, <code>false</code>
+     * @throws SQLException If a database access error occurs
+     */
+    public boolean deleteBackedUpRegisteredEntities() throws SQLException {
+        String sql = "DELETE FROM " + RegisteredEntityTable.T_REGISTERED_ENTITY;
+        sql += " WHERE " + RegisteredEntityTable.c.BackupFromAuthID.name() + " >= 0";
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        boolean result = preparedStatement.execute();
+        return result;
+    }
 }

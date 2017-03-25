@@ -344,6 +344,10 @@ public class AuthDB {
         });
     }
 
+    public void deleteBackedUpRegisteredEntities() throws SQLException {
+        sqLiteConnector.deleteBackedUpRegisteredEntities();
+    }
+
     public void reloadRegEntityDB() throws SQLException, ClassNotFoundException {
         registeredEntityMap.clear();
         sqLiteConnector.selectAllRegEntities(authDatabaseDir).forEach(regEntityTable -> {

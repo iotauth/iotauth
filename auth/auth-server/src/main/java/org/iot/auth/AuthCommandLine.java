@@ -53,7 +53,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., show re/cp/ta/sk/maps, clean sk, reset sk, issue cert [ic], backup ): ");
+                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps, clean sk, reset sk, issue cert [ic], backup ): ");
                 String command = br.readLine();
                 if (command == null) {
                     break;
@@ -62,8 +62,10 @@ public class AuthCommandLine extends Thread  {
                 if (command.length() == 0) {
                     continue;
                 }
-                // show sk (show session keys)
-                if (command.equals("show re")) {
+                if (command.equals("help")) {
+                    logger.info(getHelp());
+                }
+                else if (command.equals("show re")) {
                     logger.info("\nShow registered entities command\n{}", server.registeredEntitiesToString());
                 }
                 else if (command.equals("show cp")) {
@@ -73,6 +75,7 @@ public class AuthCommandLine extends Thread  {
                     logger.info("\nShow trusted Auths command\n{}", server.trustedAuthsToString());
                 }
                 else if (command.equals("show sk")) {
+                    // show sk (show session keys)
                     try {
                         logger.info("\nShow session keys command\n{}", server.sessionKeysToString());
                     }
@@ -104,6 +107,17 @@ public class AuthCommandLine extends Thread  {
                         throw new RuntimeException("Exception occurred while deleting all session keys!");
                     }
                 }
+                else if (command.equals("reset re")) {
+                    logger.info("\nReset registered entities (delete all entities backed up from other Auths)\n");
+                    try {
+                        server.deleteBackedUpRegisteredEntities();
+                        server.reloadRegEntityDB();
+                    }
+                    catch (SQLException | ClassNotFoundException e) {
+                        logger.error("SQLException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                        throw new RuntimeException("Exception occurred while deleting all session keys!");
+                    }
+                }
                 else if (command.equals("issue cert") || command.equals("ic")) {
                     logger.info("\nIssue certificate command\n");
                     server.issueCertificate();
@@ -120,6 +134,19 @@ public class AuthCommandLine extends Thread  {
                 logger.error("IOException {}", ExceptionToString.convertExceptionToStackTrace(e));
             }
         }
+    }
+
+    private String getHelp() {
+        return "\n" +
+                "show re            : Show registered entities\n" +
+                "show cp            : Show communication policies\n" +
+                "show ta            : Show trusted Auths\n" +
+                "show maps          : Show maps for UDP listener port\n" +
+                "clean sk           : Clean expired session keys\n" +
+                "reset sk           : Reset cached session key table (Delete all session keys)\n" +
+                "reset re           : Reset registered entities (delete all entities backed up from other Auths)\n" +
+                "issue cert [or ic] : Issue certificate\n" +
+                "backup             : Backup registered entities to a trusted Auth";
     }
     private AuthServer server;
     private static final Logger logger = LoggerFactory.getLogger(AuthCommandLine.class);

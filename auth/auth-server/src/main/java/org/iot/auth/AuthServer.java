@@ -515,6 +515,10 @@ public class AuthServer {
         db.insertRegisteredEntities(registeredEntities);
     }
 
+    public void deleteBackedUpRegisteredEntities() throws SQLException {
+        db.deleteBackedUpRegisteredEntities();
+    }
+
     public void reloadRegEntityDB()
             throws SQLException, IOException, ClassNotFoundException
     {
