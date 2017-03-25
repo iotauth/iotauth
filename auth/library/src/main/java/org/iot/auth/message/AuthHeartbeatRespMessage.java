@@ -15,9 +15,58 @@
 
 package org.iot.auth.message;
 
-/**
- * Created by hokeunkim on 3/24/17.
- */
-public class AuthHeartbeatRespMessage {
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.iot.auth.io.Buffer;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * Class for a response message to a heartbeat request.
+ *
+ * @author Hokeun Kim
+ */
+public class AuthHeartbeatRespMessage extends TrustedAuthRespMessage  {
+    public AuthHeartbeatRespMessage(Buffer nonce) {
+        heartbeatResponseNonce = new Buffer(nonce);
+    }
+
+    public Buffer getHeartbeatResponseNonce() {
+        return heartbeatResponseNonce;
+    }
+
+    @Override
+    public void sendAsHttpResponse(HttpServletResponse response) throws IOException {
+        // Declare response encoding and types
+        response.setContentType("text/html; charset=utf-8");
+        // Declare response status code
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        // Write back response
+        //response.getOutputStream().
+        response.getOutputStream().write(heartbeatResponseNonce.getRawBytes());
+    }
+
+    public static AuthHeartbeatRespMessage fromAuthHeartbeatReq(AuthHeartbeatReqMessage request) {
+        byte[] bytes = request.getHeartbeatNonce().getRawBytes();
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte)~bytes[i];
+        }
+        return new AuthHeartbeatRespMessage(new Buffer(bytes));
+    }
+
+    public static AuthHeartbeatRespMessage fromHttpResponse(ContentResponse contentResponse) {
+        byte[] bytes = contentResponse.getContent();
+        return new AuthHeartbeatRespMessage(new Buffer(bytes));
+    }
+
+    public boolean verifyResponse(Buffer sentNonce) {
+        byte[] bytes = sentNonce.getRawBytes();
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte)~bytes[i];
+        }
+        return heartbeatResponseNonce.equals(new Buffer(bytes));
+    }
+
+    Buffer heartbeatResponseNonce;
 }

@@ -18,8 +18,9 @@ package org.iot.auth.server;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.iot.auth.AuthServer;
 import org.iot.auth.db.TrustedAuth;
+import org.iot.auth.exception.InvalidNonceException;
 import org.iot.auth.message.AuthHeartbeatReqMessage;
-import org.iot.auth.util.ExceptionToString;
+import org.iot.auth.message.AuthHeartbeatRespMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,20 +46,41 @@ public class HeartbeatSender {
             TrustedAuth trustedAuth = server.getTrustedAuthInfo(trustedAuthIDs[i]);
             final Runnable beeper = new Runnable() {
                 private int failureCount = 0;
+                private boolean isTrustedAuthAlive = false;
                 public void run() {
                     AuthHeartbeatReqMessage heartbeatReqMessage = new AuthHeartbeatReqMessage();
                     try {
                         ContentResponse response = server.performPostRequestToTrustedAuth(trustedAuth.getID(), heartbeatReqMessage);
-                        failureCount = 0;
-                        logger.info(trustedAuth.getID() + " is up!" +
-                                " Failure Count: " + failureCount);
+                        AuthHeartbeatRespMessage heartbeatRespMessage = AuthHeartbeatRespMessage.fromHttpResponse(response);
+                        logger.debug(heartbeatReqMessage.getHeartbeatNonce().toHexString());
+                        logger.debug(heartbeatRespMessage.getHeartbeatResponseNonce().toHexString());
+                        boolean isValidResponse = heartbeatRespMessage.verifyResponse(heartbeatReqMessage.getHeartbeatNonce());
+                        logger.debug("Is Valid Response: " + isValidResponse);
+                        if (isValidResponse) {
+                            failureCount = 0;
+                            if (!isTrustedAuthAlive) {
+                                isTrustedAuthAlive = true;
+                                // TODO: notify server
+                                logger.info(trustedAuth.getID() + " is up!" +
+                                        " Failure Count: " + failureCount);
+                            }
+                        }
+                        else {
+                            throw new InvalidNonceException("Auth heartbeat response nonce is not valid");
+                        }
                         //        " Response content: " + response.getContentAsString());
-                    } catch (TimeoutException | ExecutionException | InterruptedException e) {
-                        failureCount++;
-                        logger.info(trustedAuth.getID() + " is down..." +
-                                " Failure Count: " + failureCount +
-                                " The reason is: " + e.getLocalizedMessage()
-                        );
+                    } catch (TimeoutException | ExecutionException | InterruptedException | InvalidNonceException e) {
+                        if (isTrustedAuthAlive) {
+                            failureCount++;
+                            if (failureCount >= trustedAuth.getFailureThreshold()) {
+                                isTrustedAuthAlive = false;
+                                // TODO: notify server so that it can take action for failed Auth...
+                                logger.info(trustedAuth.getID() + " is down..." +
+                                        " Failure Count: " + failureCount +
+                                        " The reason is: " + e.getLocalizedMessage()
+                                );
+                            }
+                        }
                     }
                 }
             };

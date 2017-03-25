@@ -37,7 +37,7 @@ import java.util.List;
  * } </pre>
  * @author Hokeun Kim
  */
-public class AuthSessionKeyRespMessage {
+public class AuthSessionKeyRespMessage extends TrustedAuthRespMessage {
     private enum key {
         SessionKey,
         SessionKeyList
@@ -84,6 +84,7 @@ public class AuthSessionKeyRespMessage {
      * @param response HTTP response object used to send Auth session key response.
      * @throws IOException If a problem occurs while writing the response.
      */
+    @Override
     public void sendAsHttpResponse(HttpServletResponse response) throws IOException {
         // Declare response encoding and types
         response.setContentType("text/html; charset=utf-8");

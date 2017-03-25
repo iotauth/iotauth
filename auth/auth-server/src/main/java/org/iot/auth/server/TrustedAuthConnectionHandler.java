@@ -23,10 +23,7 @@ import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.SessionKeyPurpose;
 import org.iot.auth.db.TrustedAuth;
-import org.iot.auth.message.AuthBackupReqMessage;
-import org.iot.auth.message.AuthSessionKeyReqMessage;
-import org.iot.auth.message.AuthSessionKeyRespMessage;
-import org.iot.auth.message.TrustedAuthReqMessasge;
+import org.iot.auth.message.*;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +99,15 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
             }
         }
         else if(authReqType.equals(TrustedAuthReqMessasge.type.HEARTBEAT_REQ.name())) {
-
+            try {
+                AuthHeartbeatReqMessage heartbeatReqMessage = AuthHeartbeatReqMessage.fromHttpRequest(baseRequest);
+                AuthHeartbeatRespMessage.fromAuthHeartbeatReq(heartbeatReqMessage).sendAsHttpResponse(response);
+                baseRequest.setHandled(true);
+            } catch (InvalidKeySpecException e) {
+                e.printStackTrace();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
         }
         else {
             logger.info("Unknown request! " + authReqType);

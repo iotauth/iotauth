@@ -240,6 +240,11 @@ public class AuthServer {
         passwordOption.setRequired(false);
         options.addOption(passwordOption);
 
+        Option debugOption = new Option("d", "debug", false,
+                "enable logging debug messages");
+        passwordOption.setRequired(false);
+        options.addOption(debugOption);
+
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -264,6 +269,13 @@ public class AuthServer {
         String basePath = cmd.getOptionValue("base_path");
         C.PROPERTIES = new AuthServerProperties(propertiesFilePath, basePath);
         logger.info("Finished loading Auth Server properties.");
+
+        // enable debug logging
+        if(cmd.hasOption("debug")) {
+            ch.qos.logback.classic.Logger root =
+                    (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+            root.setLevel(ch.qos.logback.classic.Level.DEBUG);
+        }
 
         String authPassword = cmd.getOptionValue("password");
 

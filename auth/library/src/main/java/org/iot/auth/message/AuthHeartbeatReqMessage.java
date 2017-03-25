@@ -32,13 +32,17 @@ import java.util.concurrent.TimeoutException;
  * @author Hokeun Kim
  */
 public class AuthHeartbeatReqMessage extends TrustedAuthReqMessasge  {
-    private static final int HEARTBEAT_NONCE_SIZE = 8;
+    public static final int HEARTBEAT_NONCE_SIZE = 8;
     Buffer heartbeatNonce;
     public AuthHeartbeatReqMessage() {
         heartbeatNonce = AuthCrypto.getRandomBytes(HEARTBEAT_NONCE_SIZE);
     }
     public AuthHeartbeatReqMessage(Buffer heartbeatNonce) {
         this.heartbeatNonce = new Buffer(heartbeatNonce.getRawBytes());
+    }
+
+    public Buffer getHeartbeatNonce() {
+        return heartbeatNonce;
     }
 
     // Because of the class name conflict of Request (client's or server's)
@@ -61,7 +65,7 @@ public class AuthHeartbeatReqMessage extends TrustedAuthReqMessasge  {
         }
         Buffer buffer = new Buffer(bytes);
         if (buffer.length() != HEARTBEAT_NONCE_SIZE) {
-            throw new RuntimeException("Hearbeat nonce size is not as expected!");
+            throw new RuntimeException("Heartbeat nonce size is not as expected!");
 
         }
         return new AuthHeartbeatReqMessage(buffer);
