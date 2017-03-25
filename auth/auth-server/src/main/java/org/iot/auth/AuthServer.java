@@ -863,7 +863,7 @@ public class AuthServer {
 
     public void issueCertificate() {
         TrustedAuth trustedAuth = db.getTrustedAuthInfo(102);
-        X509Certificate cert = crypto.issueCertificate(trustedAuth.getCertificate());
+        X509Certificate cert = crypto.issueCertificate(trustedAuth.getEntityCertificate());
         BASE64Encoder encoder = new BASE64Encoder();
         System.out.println(X509Factory.BEGIN_CERT);
         try {

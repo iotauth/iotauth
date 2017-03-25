@@ -19,7 +19,6 @@ import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.AuthDBProtectionMethod;
-import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.*;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
@@ -254,7 +253,8 @@ public class SQLiteConnector {
         sql += TrustedAuthTable.c.Port.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.FailureThreshold.name() + " INT NOT NULL,";
-        sql += TrustedAuthTable.c.CertificateValue.name() + " BLOB NOT NULL)";
+        sql += TrustedAuthTable.c.InternetCertificateValue.name() + " BLOB NOT NULL,";
+        sql += TrustedAuthTable.c.EntityCertificateValue.name() + " BLOB NOT NULL)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", TrustedAuthTable.T_TRUSTED_AUTH);
@@ -443,8 +443,9 @@ public class SQLiteConnector {
         sql += TrustedAuthTable.c.Port.name() + ",";
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + ",";
         sql += TrustedAuthTable.c.FailureThreshold.name() + ",";
-        sql += TrustedAuthTable.c.CertificateValue.name() + ")";
-        sql += " VALUES(?,?,?,?,?,?)";
+        sql += TrustedAuthTable.c.InternetCertificateValue.name() + ",";
+        sql += TrustedAuthTable.c.EntityCertificateValue.name() + ")";
+        sql += " VALUES(?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setInt(index++,auth.getId());
@@ -452,7 +453,8 @@ public class SQLiteConnector {
         preparedStatement.setInt(index++,auth.getPort());
         preparedStatement.setInt(index++,auth.getHeartbeatPeriod());
         preparedStatement.setInt(index++,auth.getFailureThreshold());
-        preparedStatement.setBytes(index++,auth.getCertificate().getEncoded());
+        preparedStatement.setBytes(index++,auth.getInternetCertificate().getEncoded());
+        preparedStatement.setBytes(index++,auth.getEntityCertificate().getEncoded());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();

@@ -34,14 +34,17 @@ public class TrustedAuthTable {
         Port,
         HeartbeatPeriod,
         FailureThreshold,
-        CertificateValue,
-        CertificatePath
+        InternetCertificateValue,
+        EntityCertificateValue,
+        InternetCertificatePath,
+        EntityCertificatePath
     }
 
     private int id;
     private String host;
     private int port;
-    private X509Certificate certificate;
+    private X509Certificate internetCertificate;
+    private X509Certificate entityCertificate;
     private int heartbeatPeriod;
     private int failureThreshold;
     public int getId() {
@@ -84,12 +87,20 @@ public class TrustedAuthTable {
         this.failureThreshold = failureThreshold;
     }
 
-    public X509Certificate getCertificate() {
-        return certificate;
+    public X509Certificate getInternetCertificate() {
+        return internetCertificate;
     }
 
-    public void setCertificate(X509Certificate certificate) {
-        this.certificate = certificate;
+    public void setInternetCertificate(X509Certificate internetCertificate) {
+        this.internetCertificate = internetCertificate;
+    }
+
+    public X509Certificate getEntityCertificate() {
+        return entityCertificate;
+    }
+
+    public void setEntityCertificate(X509Certificate entityCertificate) {
+        this.entityCertificate = entityCertificate;
     }
 
     @SuppressWarnings("unchecked")
@@ -100,7 +111,8 @@ public class TrustedAuthTable {
         object.put(c.Port.name(), getPort());
         object.put(c.HeartbeatPeriod.name(), getHeartbeatPeriod());
         object.put(c.FailureThreshold.name(), getFailureThreshold());
-        object.put(c.CertificateValue.name(), getCertificate().getEncoded());
+        object.put(c.InternetCertificateValue.name(), getInternetCertificate().getEncoded());
+        object.put(c.EntityCertificateValue.name(), getEntityCertificate().getEncoded());
         return object;
     }
 
@@ -122,8 +134,10 @@ public class TrustedAuthTable {
         trustedAuth.setPort(resultSet.getInt(c.Port.name()));
         trustedAuth.setHeartbeatPeriod(resultSet.getInt(c.HeartbeatPeriod.name()));
         trustedAuth.setFailureThreshold(resultSet.getInt(c.FailureThreshold.name()));
-        trustedAuth.setCertificate(
-                AuthCrypto.loadCertificateFromBytes(resultSet.getBytes(c.CertificateValue.name())));
+        trustedAuth.setInternetCertificate(
+                AuthCrypto.loadCertificateFromBytes(resultSet.getBytes(c.InternetCertificateValue.name())));
+        trustedAuth.setEntityCertificate(
+                AuthCrypto.loadCertificateFromBytes(resultSet.getBytes(c.EntityCertificateValue.name())));
         return trustedAuth;
     }
 }

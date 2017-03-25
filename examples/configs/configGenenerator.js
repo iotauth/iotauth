@@ -466,7 +466,8 @@ function generateTrustedAuthTables(numberOfAuths, authDBconfig) {
                 'ID': otherAuthId,
                 'Host': otherAuthHost,
                 'Port': getAuthPortBase(otherNetId) + 1,
-                'CertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem',
+                'InternetCertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem',
+                'EntityCertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'EntityCert.pem',
                 'HeartbeatPeriod': defaultValues.heartbeatPeriod,
                 'FailureThreshold': defaultValues.failureThreshold
             });

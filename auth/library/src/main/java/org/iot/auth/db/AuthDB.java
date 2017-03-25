@@ -388,10 +388,11 @@ public class AuthDB {
                     t.getPort(),
                     t.getHeartbeatPeriod(),
                     t.getFailureThreshold(),
-                    t.getCertificate());
+                    t.getInternetCertificate(),
+                    t.getEntityCertificate());
             trustedAuthMap.put(trustedAuth.getID(), trustedAuth);
             // TODO: Add trust store for trusted auth
-            trustStoreForTrustedAuths.setCertificateEntry("" + trustedAuth.getID(), trustedAuth.getCertificate());
+            trustStoreForTrustedAuths.setCertificateEntry("" + trustedAuth.getID(), trustedAuth.getInternetCertificate());
 
             logger.debug("trustedAuth: {}", trustedAuth.toString());
         }

@@ -15,7 +15,7 @@ public class FileIOHelper {
         return bytes;
     }
     public static void writeFully(String filePath, byte[] bytes) throws IOException {
-        RandomAccessFile randomAccessFile = new RandomAccessFile(filePath, "rw");
+        RandomAccessFile randomAccessFile = new RandomAccessFile(filePath, "rws");
         randomAccessFile.write(bytes);
         randomAccessFile.close();
     }

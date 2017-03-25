@@ -270,9 +270,12 @@ public class GenerateExampleAuthDB {
                 trustedAuth.setPort(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.Port.name())));
                 trustedAuth.setHeartbeatPeriod(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.HeartbeatPeriod.name())));
                 trustedAuth.setFailureThreshold(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.FailureThreshold.name())));
-                trustedAuth.setCertificate(
+                trustedAuth.setInternetCertificate(
                         AuthCrypto.loadCertificateFromFile(
-                        authDatabaseDir + "/" + jsonObject.get(TrustedAuthTable.c.CertificatePath.name())));
+                        authDatabaseDir + "/" + jsonObject.get(TrustedAuthTable.c.InternetCertificatePath.name())));
+                trustedAuth.setEntityCertificate(
+                        AuthCrypto.loadCertificateFromFile(
+                                authDatabaseDir + "/" + jsonObject.get(TrustedAuthTable.c.EntityCertificatePath.name())));
                 sqLiteConnector.insertRecords(trustedAuth);
             }
         }

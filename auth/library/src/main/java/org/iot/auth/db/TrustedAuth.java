@@ -23,13 +23,14 @@ import java.security.cert.X509Certificate;
  */
 public class TrustedAuth {
     public TrustedAuth(int id, String host, int port, int heartbeatPeriod, int failureThreshold,
-                       X509Certificate certificate) {
+                       X509Certificate internetCertificate, X509Certificate entityCertificate) {
         this.id = id;
         this.host = host;
         this.port = port;
         this.heartbeatPeriod = heartbeatPeriod;
         this.failureThreshold = failureThreshold;
-        this.certificate = certificate;
+        this.internetCertificate = internetCertificate;
+        this.entityCertificate = entityCertificate;
     }
 
     public int getID() {
@@ -52,22 +53,28 @@ public class TrustedAuth {
         return failureThreshold;
     }
 
-    public X509Certificate getCertificate() {
-        return certificate;
+    public X509Certificate getInternetCertificate() {
+        return internetCertificate;
+    }
+
+    public X509Certificate getEntityCertificate() {
+        return entityCertificate;
     }
 
     public String toString() {
         return "ID: " + id + "\tHost: " + host + "\tPort: " + port +
                 "\tHeartbeatPeriod: " + heartbeatPeriod +
                 "\tFailureThreshold: " + failureThreshold +
-                "\tCertificate: " + certificate;
+                "\tInternetCertificate: " + internetCertificate +
+                "\tEntityCertificate: " + entityCertificate;
     }
 
     public String toBriefString() {
         return "ID: " + id + "\tHost: " + host + "\tPort: " + port +
                 "\tHeartbeatPeriod: " + heartbeatPeriod +
                 "\tFailureThreshold: " + failureThreshold +
-                "\tCertificate: " + certificate.getSubjectDN();
+                "\tInternetCertificate: " + internetCertificate.getSubjectDN() +
+                "\tEntityCertificate: " + entityCertificate.getSubjectDN();
     }
 
     private int id;
@@ -75,5 +82,6 @@ public class TrustedAuth {
     private int port;
     private int heartbeatPeriod;
     private int failureThreshold;
-    private X509Certificate certificate;
+    private X509Certificate internetCertificate;
+    private X509Certificate entityCertificate;
 }

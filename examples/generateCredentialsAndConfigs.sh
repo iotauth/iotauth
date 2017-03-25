@@ -112,6 +112,7 @@ do
 			continue
 		fi
 		cp "auth10"$my_net_id"/my_certs/Auth10"$my_net_id"InternetCert.pem" "auth10"$trusted_net_id"/trusted_auth_certs"
+		cp "auth10"$my_net_id"/my_certs/Auth10"$my_net_id"EntityCert.pem" "auth10"$trusted_net_id"/trusted_auth_certs"
 		let "trusted_net_id+=1"
 	done
 	let "my_net_id+=1"
