@@ -342,18 +342,26 @@ function convertToRegisteredEntity(entityConfig, backupTo) {
     return registeredEntity;
 }
 
-function convertToRegisteredEntityTable(netConfigList) {
+function convertToRegisteredEntityTable(netConfigList, authDBconfig) {
     var registeredEntityTableList = [];
     for (var i = 0; i < netConfigList.length; i++) {
         var netConfig = netConfigList[i];
+        var myAuthId = getAuthId(netConfig.netId);
         var registeredEntityTable = {
-            'authId': getAuthId(netConfig.netId),
+            'authId': myAuthId,
             'registeredEntityList': []
         };
         var backupToAuthID = -1;
         if (netConfigList.length > 1) {
-            var otherNetId = netConfig.netId % netConfigList.length + 1;
-            backupToAuthID = getAuthId(otherNetId);
+            if (authDBconfig.authBackupMap == null ||
+                authDBconfig.authBackupMap[myAuthId] == null)
+            {
+                var otherNetId = netConfig.netId % netConfigList.length + 1;
+                backupToAuthID = getAuthId(otherNetId);
+            }
+            else {
+                backupToAuthID = authDBconfig.authBackupMap[myAuthId];
+            }
         }
         for (var j = 0; j < netConfig.entityConfigList.length; j++) {
             registeredEntityTable.registeredEntityList.push(
@@ -430,9 +438,6 @@ function generateCommunicationPolicyTables(numberOfAuths) {
 }
 
 function generateTrustedAuthTables(numberOfAuths, authDBconfig) {
-    if (authDBconfig == null) {
-        throw "No Auth DB config!";
-    }
     var defaultValues = authDBconfig.defaultValues;
     if (defaultValues == null) {
         throw "Auth DB config is not properly specified, no default values!\n" + util.inspect(authDBconfig);
@@ -580,10 +585,13 @@ if (process.argv.length >= 6) {
 var netConfigList = getEntityConfigs(totalNumberOfNets);
 //console.log(JSON2.stringify(netConfigList[0].entityConfigList, null, '\t'));
 generateEntityConfigs(netConfigList);
-var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList);
+var authDBconfig = loadJsonWithComments(authDBConfigFile);
+if (authDBconfig == null) {
+    throw "No Auth DB config!";
+}
+var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList, authDBconfig);
 generateRegisteredEntityTables(registeredEntityTableList);
 generateCommunicationPolicyTables(totalNumberOfNets);
-var authDBconfig = loadJsonWithComments(authDBConfigFile);
 generateTrustedAuthTables(totalNumberOfNets, authDBconfig);
 generatePropertiesFiles(totalNumberOfNets, authDBProtectionMethod);
 
