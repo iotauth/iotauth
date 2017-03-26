@@ -39,6 +39,9 @@ public enum MessageType {
     SKEY_HANDSHAKE_3((byte)32),
     SECURE_COMM_MSG((byte)33),
     FIN_SECURE_COMM((byte)34),
+    /** For migrating registered entities **/
+    MIGRATION_REQ((byte)50),
+    MIGRATION_RESP((byte)51),
     SECURE_PUB((byte)40),
     AUTH_ALERT((byte)100);
 

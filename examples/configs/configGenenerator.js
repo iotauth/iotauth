@@ -35,6 +35,8 @@ var DEFAULT_CIPHER = 'AES-128-CBC';
 var DEFAULT_MAC = 'SHA256';
 // generates 384-bit (48-byte) secret, 128 bit for cipher, 256 bit for MAC
 var DEFAULT_DH = 'secp384r1';
+var AUTH_UDP_PORT_OFFSET = 2;
+var TRUSTED_AUTH_PORT_OFFSET = 1;
 
 var entityList = [
     { name: 'client' },
@@ -133,6 +135,10 @@ function getAuthId(netId) {
     return 100 + netId;
 }
 
+function getNetId(authId) {
+    return authId - 100;
+}
+
 function getAuthInfo(netId, entityName) {
     var authInfo = {};
     authInfo.id = getAuthId(netId);
@@ -144,7 +150,7 @@ function getAuthInfo(netId, entityName) {
     }
     authInfo.port = getAuthPortBase(netId);
     if (entityName.toLowerCase().includes('udp')) {
-        authInfo.port += 2;
+        authInfo.port += AUTH_UDP_PORT_OFFSET;
     }
     if (!entityName.toLowerCase().includes('rc')) {
         authInfo.publicKey = '../../auth_certs/Auth' + authInfo.id + 'EntityCert.pem';
@@ -176,6 +182,23 @@ function getCryptoInfo(entityName) {
         cryptoInfo.sessionCryptoSpec.diffieHellman = DEFAULT_DH;
     }
     return cryptoInfo;
+}
+
+function getMigrationInfo(backupToAuthID, entityName) {
+    var migrationInfo ={};
+    var backupToNetId = getNetId(backupToAuthID);
+
+    if (hostPortAssignments['Auth' + backupToAuthID]) {
+        migrationInfo.host = hostPortAssignments['Auth' + migrationInfo].wifi;
+    }
+    else {
+        migrationInfo.host = 'localhost';
+    }
+    migrationInfo.port = getAuthPortBase(backupToNetId);
+    if (entityName.toLowerCase().includes('udp')) {
+        migrationInfo.port += AUTH_UDP_PORT_OFFSET;
+    }
+    return migrationInfo;
 }
 
 function getTargetServerInfoList(netId, entityName) {
@@ -221,10 +244,18 @@ function getListeningServerInfo(netId, server) {
     return listeningServerInfo;
 }
 
-function getEntityConfig(netId, entity, numNets) {
+function getEntityConfig(netId, entity, numNets, authDBconfig) {
     var entityConfig = {};
     entityConfig.entityInfo = getEntityInfo(netId, entity.name);
     entityConfig.authInfo = getAuthInfo(netId, entity.name);
+    var backupToAuthID;
+    if (authDBconfig.authBackupMap == null || authDBconfig.authBackupMap[getAuthId(netId)] == null) {
+        backupToAuthID = getAuthId(netId % numNets + 1);
+    }
+    else {
+        backupToAuthID = authDBconfig.authBackupMap[getAuthId(netId)];
+    }
+    entityConfig.migrationInfo = getMigrationInfo(backupToAuthID, entity.name);
     entityConfig.cryptoInfo = getCryptoInfo(entity.name);
     if (entity.name.toLowerCase().includes('client')) {
         var targetServerInfoList = [];
@@ -251,7 +282,7 @@ function writeEntityConfigToFile(entityConfig) {
     );
 }
 
-function getEntityConfigs(numNets) {
+function getEntityConfigs(numNets, authDBconfig) {
     var netConfigList = [];
     for (var netId = 1; netId <= numNets; netId++) {
         var netConfig = {
@@ -259,7 +290,7 @@ function getEntityConfigs(numNets) {
             'entityConfigList': []
         };
         for (var i = 0; i < entityList.length; i++) {
-            netConfig.entityConfigList.push(getEntityConfig(netId, entityList[i], numNets));
+            netConfig.entityConfigList.push(getEntityConfig(netId, entityList[i], numNets, authDBconfig));
         }
         netConfigList.push(netConfig);
     }
@@ -465,7 +496,7 @@ function generateTrustedAuthTables(numberOfAuths, authDBconfig) {
             trustedAuthList.push({
                 'ID': otherAuthId,
                 'Host': otherAuthHost,
-                'Port': getAuthPortBase(otherNetId) + 1,
+                'Port': getAuthPortBase(otherNetId) + TRUSTED_AUTH_PORT_OFFSET,
                 'InternetCertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'InternetCert.pem',
                 'EntityCertificatePath': 'trusted_auth_certs/Auth' + otherAuthId + 'EntityCert.pem',
                 'HeartbeatPeriod': defaultValues.heartbeatPeriod,
@@ -491,9 +522,9 @@ function generatePropertiesFiles(numberOfAuths, authDBProtectionMethod) {
             'host_name': '0.0.0.0',
             'entity_tcp_port': authPortBase,
             'entity_tcp_port_timeout': 2000,
-            'entity_udp_port': authPortBase + 2, 
+            'entity_udp_port': authPortBase + AUTH_UDP_PORT_OFFSET, 
             'entity_udp_port_timeout': 5000,
-            'trusted_auth_port': authPortBase + 1,
+            'trusted_auth_port': authPortBase + TRUSTED_AUTH_PORT_OFFSET,
             'trusted_auth_port_idle_timeout': 600000,
             'entity_key_store_path': authKeystorePrefix + 'Entity.pfx',
             'internet_key_store_path': authKeystorePrefix + 'Internet.pfx',
@@ -583,13 +614,13 @@ if (process.argv.length >= 6) {
     console.log('address assignments -');
     console.log(hostPortAssignments);
 }
-var netConfigList = getEntityConfigs(totalNumberOfNets);
-//console.log(JSON2.stringify(netConfigList[0].entityConfigList, null, '\t'));
-generateEntityConfigs(netConfigList);
 var authDBconfig = loadJsonWithComments(authDBConfigFile);
 if (authDBconfig == null) {
     throw "No Auth DB config!";
 }
+var netConfigList = getEntityConfigs(totalNumberOfNets, authDBconfig);
+//console.log(JSON2.stringify(netConfigList[0].entityConfigList, null, '\t'));
+generateEntityConfigs(netConfigList);
 var registeredEntityTableList = convertToRegisteredEntityTable(netConfigList, authDBconfig);
 generateRegisteredEntityTables(registeredEntityTableList);
 generateCommunicationPolicyTables(totalNumberOfNets);
