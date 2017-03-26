@@ -684,6 +684,12 @@ public class AuthServer {
         return ret;
     }
 
+    public boolean updateBackupCertificate(int backupFromAuthID, X509Certificate backupCertificate)
+            throws SQLException, CertificateEncodingException
+    {
+        return db.updateBackupCertificate(backupFromAuthID, backupCertificate);
+    }
+
     private class EntityBluetoothListener extends Thread {
         public EntityBluetoothListener(AuthServer server) {
             this.server = server;

@@ -36,6 +36,7 @@ public class TrustedAuthTable {
         FailureThreshold,
         InternetCertificateValue,
         EntityCertificateValue,
+        BackupCertificateValue,
         InternetCertificatePath,
         EntityCertificatePath
     }
@@ -45,6 +46,7 @@ public class TrustedAuthTable {
     private int port;
     private X509Certificate internetCertificate;
     private X509Certificate entityCertificate;
+    private X509Certificate backupCertificate = null;
     private int heartbeatPeriod;
     private int failureThreshold;
     public int getId() {
@@ -103,6 +105,14 @@ public class TrustedAuthTable {
         this.entityCertificate = entityCertificate;
     }
 
+    public X509Certificate getBackupCertificate() {
+        return backupCertificate;
+    }
+
+    public void setBackupCertificate(X509Certificate backupCertificate) {
+        this.backupCertificate = backupCertificate;
+    }
+
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() throws CertificateEncodingException {
         JSONObject object = new JSONObject();
@@ -113,6 +123,7 @@ public class TrustedAuthTable {
         object.put(c.FailureThreshold.name(), getFailureThreshold());
         object.put(c.InternetCertificateValue.name(), getInternetCertificate().getEncoded());
         object.put(c.EntityCertificateValue.name(), getEntityCertificate().getEncoded());
+        object.put(c.BackupCertificateValue.name(), getEntityCertificate().getEncoded());
         return object;
     }
 
@@ -138,6 +149,10 @@ public class TrustedAuthTable {
                 AuthCrypto.loadCertificateFromBytes(resultSet.getBytes(c.InternetCertificateValue.name())));
         trustedAuth.setEntityCertificate(
                 AuthCrypto.loadCertificateFromBytes(resultSet.getBytes(c.EntityCertificateValue.name())));
+        byte[] backupCertificateBytes = resultSet.getBytes(c.BackupCertificateValue.name());
+        if (backupCertificateBytes != null) {
+            trustedAuth.setBackupCertificate(AuthCrypto.loadCertificateFromBytes(backupCertificateBytes));
+        }
         return trustedAuth;
     }
 }

@@ -32,6 +32,7 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
@@ -254,7 +255,8 @@ public class SQLiteConnector {
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.FailureThreshold.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.InternetCertificateValue.name() + " BLOB NOT NULL,";
-        sql += TrustedAuthTable.c.EntityCertificateValue.name() + " BLOB NOT NULL)";
+        sql += TrustedAuthTable.c.EntityCertificateValue.name() + " BLOB NOT NULL,";
+        sql += TrustedAuthTable.c.BackupCertificateValue.name() + " BLOB)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", TrustedAuthTable.T_TRUSTED_AUTH);
@@ -444,8 +446,9 @@ public class SQLiteConnector {
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + ",";
         sql += TrustedAuthTable.c.FailureThreshold.name() + ",";
         sql += TrustedAuthTable.c.InternetCertificateValue.name() + ",";
-        sql += TrustedAuthTable.c.EntityCertificateValue.name() + ")";
-        sql += " VALUES(?,?,?,?,?,?,?)";
+        sql += TrustedAuthTable.c.EntityCertificateValue.name() + ",";
+        sql += TrustedAuthTable.c.BackupCertificateValue.name() + ")";
+        sql += " VALUES(?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setInt(index++,auth.getId());
@@ -455,6 +458,13 @@ public class SQLiteConnector {
         preparedStatement.setInt(index++,auth.getFailureThreshold());
         preparedStatement.setBytes(index++,auth.getInternetCertificate().getEncoded());
         preparedStatement.setBytes(index++,auth.getEntityCertificate().getEncoded());
+        X509Certificate backupCertificate = auth.getBackupCertificate();
+        if (backupCertificate != null) {
+            preparedStatement.setBytes(index++,backupCertificate.getEncoded());
+        }
+        else {
+            preparedStatement.setNull(index++, Types.BLOB);
+        }
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -874,6 +884,21 @@ public class SQLiteConnector {
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
         boolean result = preparedStatement.execute();
+        return result;
+    }
+
+    public boolean updateBackupCertificate(int backupFromAuthID, X509Certificate backupCertificate)
+            throws SQLException, CertificateEncodingException
+    {
+        //setConnection();
+        String sql = "UPDATE " + TrustedAuthTable.T_TRUSTED_AUTH;
+        sql += " SET " + TrustedAuthTable.c.BackupCertificateValue.name() + " = :BackupCertificateValue";
+        sql += " WHERE " + TrustedAuthTable.c.ID.name() + " = '" + backupFromAuthID + "'";
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        preparedStatement.setBytes(1, backupCertificate.getEncoded());
+        boolean result = preparedStatement.execute();
+        preparedStatement.close();
         return result;
     }
 }

@@ -23,7 +23,8 @@ import java.security.cert.X509Certificate;
  */
 public class TrustedAuth {
     public TrustedAuth(int id, String host, int port, int heartbeatPeriod, int failureThreshold,
-                       X509Certificate internetCertificate, X509Certificate entityCertificate) {
+                       X509Certificate internetCertificate, X509Certificate entityCertificate,
+                       X509Certificate backupCertificate) {
         this.id = id;
         this.host = host;
         this.port = port;
@@ -31,6 +32,7 @@ public class TrustedAuth {
         this.failureThreshold = failureThreshold;
         this.internetCertificate = internetCertificate;
         this.entityCertificate = entityCertificate;
+        this.backupCertificate = backupCertificate;
     }
 
     public int getID() {
@@ -61,12 +63,17 @@ public class TrustedAuth {
         return entityCertificate;
     }
 
+    public X509Certificate getBackupCertificate() {
+        return backupCertificate;
+    }
+
     public String toString() {
         return "ID: " + id + "\tHost: " + host + "\tPort: " + port +
                 "\tHeartbeatPeriod: " + heartbeatPeriod +
                 "\tFailureThreshold: " + failureThreshold +
                 "\tInternetCertificate: " + internetCertificate +
-                "\tEntityCertificate: " + entityCertificate;
+                "\tEntityCertificate: " + entityCertificate +
+                "\tBackupCertificate: " + backupCertificate;
     }
 
     public String toBriefString() {
@@ -74,7 +81,9 @@ public class TrustedAuth {
                 "\tHeartbeatPeriod: " + heartbeatPeriod +
                 "\tFailureThreshold: " + failureThreshold +
                 "\tInternetCertificate: " + internetCertificate.getSubjectDN() +
-                "\tEntityCertificate: " + entityCertificate.getSubjectDN();
+                "\tEntityCertificate: " + entityCertificate.getSubjectDN() +
+                "\tBackupCertificate: " + (backupCertificate == null ?
+                    "NULL" : backupCertificate.getSubjectDN().toString());
     }
 
     private int id;
@@ -84,4 +93,5 @@ public class TrustedAuth {
     private int failureThreshold;
     private X509Certificate internetCertificate;
     private X509Certificate entityCertificate;
+    private X509Certificate backupCertificate;
 }

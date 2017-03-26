@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.SQLException;
@@ -175,7 +176,9 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
     }
 
     private void handleBackupReq(TrustedAuth requestingAuthInfo, Request baseRequest, HttpServletResponse response)
-            throws InvalidKeySpecException, NoSuchAlgorithmException, IOException, SQLException, ClassNotFoundException {
+            throws InvalidKeySpecException, NoSuchAlgorithmException, IOException, ClassNotFoundException,
+            SQLException, CertificateEncodingException
+    {
         AuthBackupReqMessage authBackupReqMessage = AuthBackupReqMessage.fromHttpRequest(baseRequest);
         List<RegisteredEntity> registeredEntities = authBackupReqMessage.getRegisteredEntityList();
         for (RegisteredEntity registeredEntity: registeredEntities) {
@@ -184,7 +187,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
             registeredEntity.setBackupFromAuthID(requestingAuthInfo.getID());
         }
         // insert!
-        logger.info(authBackupReqMessage.getBackupCertificate().toString());
+        server.updateBackupCertificate(requestingAuthInfo.getID(), authBackupReqMessage.getBackupCertificate());
         server.insertRegisteredEntities(authBackupReqMessage.getRegisteredEntityList());
         server.reloadRegEntityDB();
     }

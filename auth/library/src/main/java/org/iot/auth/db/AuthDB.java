@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
@@ -389,7 +390,8 @@ public class AuthDB {
                     t.getHeartbeatPeriod(),
                     t.getFailureThreshold(),
                     t.getInternetCertificate(),
-                    t.getEntityCertificate());
+                    t.getEntityCertificate(),
+                    t.getBackupCertificate());
             trustedAuthMap.put(trustedAuth.getID(), trustedAuth);
             // TODO: Add trust store for trusted auth
             trustStoreForTrustedAuths.setCertificateEntry("" + trustedAuth.getID(), trustedAuth.getInternetCertificate());
@@ -414,4 +416,10 @@ public class AuthDB {
     private KeyStore trustStoreForTrustedAuths;
 
     private SQLiteConnector sqLiteConnector;
+
+    public boolean updateBackupCertificate(int backupFromAuthID, X509Certificate backupCertificate)
+            throws SQLException, CertificateEncodingException
+    {
+        return sqLiteConnector.updateBackupCertificate(backupFromAuthID, backupCertificate);
+    }
 }
