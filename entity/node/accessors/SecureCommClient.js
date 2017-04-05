@@ -254,4 +254,13 @@ SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
         handleSessionKeyResp, null);
 }
 
+SecureCommClient.prototype.migrateToTrustedAuth = function() {
+    if (entityConfig.migrationInfo) {
+        iotAuth.migrateToTrustedAuth(iotAuth.getMigrationReqOptions(entityConfig));
+    }
+    else {
+        console.log('Failed to migrate! no information for migration.');
+    }
+}
+
 module.exports = SecureCommClient;

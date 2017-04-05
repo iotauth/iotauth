@@ -169,6 +169,11 @@ function commandInterpreter() {
             fs.writeFileSync(fileName, received);
             console.log('file data saved to ' + fileName);
         }
+        else if (command == 'mig') {
+            console.log('migration request command!');
+            secureCommClient.migrateToTrustedAuth();
+
+        }
         else if (command == 'exp1') {
             console.log('experiment for scenario 1 command!');
             if (message == undefined) {
