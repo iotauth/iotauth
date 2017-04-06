@@ -90,10 +90,10 @@ public abstract class EntityConnectionHandler {
         // rest of this is payload
         Buffer payload = buf.slice(IoTSPMessage.MSG_TYPE_SIZE + valLenInt.getRawBytes().length);
 
+        final int RSA_KEY_SIZE = 256; // 2048 bits
         if (type == MessageType.SESSION_KEY_REQ_IN_PUB_ENC) {
             getLogger().info("Received session key request message encrypted with public key!");
             // parse signed data
-            final int RSA_KEY_SIZE = 256; // 2048 bits
             Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
             getLogger().debug("Encrypted data ({}): {}", encPayload.length(), encPayload.toHexString());
             Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
@@ -190,6 +190,12 @@ public abstract class EntityConnectionHandler {
             sendSessionKeyResp(requestingEntity.getDistributionKey(), requestingEntity.getDistCryptoSpec(), sessionKeyReqMessage.getEntityNonce(),
                     sessionKeyList, sessionCryptoSpec, null);
             close();
+        }
+        else if (type == MessageType.MIGRATION_REQ) {
+            getLogger().info("Received migration request!");
+            Buffer decPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
+            Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
+            getLogger().info("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
         }
         else {
             getLogger().info("Received unrecognized message from the entity!");
