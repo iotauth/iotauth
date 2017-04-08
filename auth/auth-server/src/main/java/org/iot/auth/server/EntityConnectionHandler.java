@@ -200,18 +200,18 @@ public abstract class EntityConnectionHandler {
                     sessionKeyList, sessionCryptoSpec, null);
             close();
         }
-        else if (type == MessageType.MIGRATION_REQ) {
+        else if (type == MessageType.MIGRATION_REQ_WITH_SIGN) {
             getLogger().info("Received migration request!");
             Buffer decPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
             Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
             getLogger().info("Decrypted data (" + decPayload.length() + "): " + decPayload.toHexString());
 
             MigrationReqMessage migrationReqMessage =
-                    new MigrationReqMessage(MessageType.MIGRATION_REQ, decPayload);
+                    new MigrationReqMessage(MessageType.MIGRATION_REQ_WITH_SIGN, decPayload);
 
             RegisteredEntity requestingEntity = server.getRegisteredEntity(migrationReqMessage.getEntityName());
             if (requestingEntity == null) {
-                throw new UnrecognizedEntityException("Error in MIGRATION_REQ: Migration requester is not found!");
+                throw new UnrecognizedEntityException("Error in MIGRATION_REQ_WITH_SIGN: Migration requester is not found!");
             }
             getLogger().info("requestingEntity: " + requestingEntity.toString());
             // checking signature

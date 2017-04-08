@@ -36,6 +36,7 @@ import java.util.Date;
 /**
  * This class specifies symmetric keys, including encryption key and MAC key.
  * Also specifies cryptography specs to be used for symmetric keys
+ * @author Hokeun Kim
  */
 public class SymmetricKey {
     /**

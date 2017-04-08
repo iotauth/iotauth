@@ -22,7 +22,7 @@ import java.security.cert.X509Certificate;
  */
 public class MigrationRespMessage extends IoTSPMessage {
     public MigrationRespMessage(int authID, Buffer entityNonce, X509Certificate authCertificate) {
-        super(MessageType.MIGRATION_RESP);
+        super(MessageType.MIGRATION_RESP_WITH_SIGN);
         this.authID = authID;
         this.entityNonce = entityNonce;
         this.authCertificate = authCertificate;

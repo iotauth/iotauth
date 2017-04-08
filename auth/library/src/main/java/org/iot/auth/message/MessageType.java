@@ -40,8 +40,8 @@ public enum MessageType {
     SECURE_COMM_MSG((byte)33),
     FIN_SECURE_COMM((byte)34),
     /** For migrating registered entities **/
-    MIGRATION_REQ((byte)50),
-    MIGRATION_RESP((byte)51),
+    MIGRATION_REQ_WITH_SIGN((byte)50),
+    MIGRATION_RESP_WITH_SIGN((byte)51),
     SECURE_PUB((byte)40),
     AUTH_ALERT((byte)100);
 
