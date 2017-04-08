@@ -59,7 +59,10 @@ public class PublicKeyCryptoSpec extends CryptoSpec {
     }
 
     public String toSpecString() {
-        String ret = signAlgorithm;
+        String ret = "";
+        if (signAlgorithm.equals("SHA256withRSA")) {
+            ret += "RSA-SHA256";
+        }
         if (diffieHellman != null) {
             ret += ":DH-secp384r1";
         }

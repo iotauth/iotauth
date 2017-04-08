@@ -126,6 +126,10 @@ function commandInterpreter() {
         }
         else if (command == 'send') {
             console.log('send command');
+            if (message == undefined) {
+                console.log('no message!');
+                return;
+            }
             secureCommClient.provideInput('toSend', new Buffer(message));
         }
         else if (command == 'sendFile') {
