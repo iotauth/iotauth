@@ -67,6 +67,10 @@ public class TrustedAuth {
         return backupCertificate;
     }
 
+    public void setBackupCertificate(X509Certificate backupCertificate) {
+        this.backupCertificate = backupCertificate;
+    }
+
     public String toString() {
         return "ID: " + id + "\tHost: " + host + "\tPort: " + port +
                 "\tHeartbeatPeriod: " + heartbeatPeriod +

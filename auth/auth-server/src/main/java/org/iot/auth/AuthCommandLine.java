@@ -55,7 +55,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps, clean sk, reset sk, issue cert [ic], backup ): ");
+                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps, clean sk, reset re/sk, issue cert [ic], backup ): ");
                 String command = br.readLine();
                 if (command == null) {
                     break;

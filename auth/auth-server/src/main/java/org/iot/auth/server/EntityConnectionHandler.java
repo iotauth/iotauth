@@ -35,6 +35,8 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.SQLException;
 import java.util.LinkedList;
@@ -83,7 +85,8 @@ public abstract class EntityConnectionHandler {
 
     private void handleEntityReqInternal(byte[] bytes, Buffer authNonce) throws InvalidSessionKeyTargetException,
             NoAvailableDistributionKeyException, TooManySessionKeysRequestedException, IOException,
-            UseOfExpiredKeyException, SQLException, ClassNotFoundException, ParseException, UnrecognizedEntityException {
+            UseOfExpiredKeyException, SQLException, ClassNotFoundException, ParseException, UnrecognizedEntityException,
+            CertificateEncodingException {
         Buffer buf = new Buffer(bytes);
         MessageType type = MessageType.fromByte(buf.getByte(0));
 
@@ -203,10 +206,10 @@ public abstract class EntityConnectionHandler {
             Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
             getLogger().info("Decrypted data (" + decPayload.length() + "): " + decPayload.toHexString());
 
-            MigrationRequestMessage migrationRequestMessage =
-                    new MigrationRequestMessage(MessageType.MIGRATION_REQ, decPayload);
+            MigrationReqMessage migrationReqMessage =
+                    new MigrationReqMessage(MessageType.MIGRATION_REQ, decPayload);
 
-            RegisteredEntity requestingEntity = server.getRegisteredEntity(migrationRequestMessage.getEntityName());
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(migrationReqMessage.getEntityName());
             if (requestingEntity == null) {
                 throw new UnrecognizedEntityException("Error in MIGRATION_REQ: Migration requester is not found!");
             }
@@ -223,14 +226,19 @@ public abstract class EntityConnectionHandler {
             catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
                 throw new RuntimeException("Entity signature verification failed!!");
             }
-            getLogger().info("Received auth nonce: {}", migrationRequestMessage.getAuthNonce().toHexString());
-            if (!authNonce.equals(migrationRequestMessage.getAuthNonce())) {
+            getLogger().info("Received auth nonce: {}", migrationReqMessage.getAuthNonce().toHexString());
+            if (!authNonce.equals(migrationReqMessage.getAuthNonce())) {
                 throw new RuntimeException("Auth nonce does not match!");
             }
             else {
                 getLogger().info("Auth nonce is correct!");
             }
-
+            X509Certificate backupCertificate =
+                    server.getTrustedAuthInfo(requestingEntity.getBackupFromAuthID()).getBackupCertificate();
+            MigrationRespMessage migrationResp = new MigrationRespMessage(server.getAuthID(),
+                    migrationReqMessage.getEntityNonce(), backupCertificate);
+            writeToSocket(migrationResp.serializeAndSign(server.getCrypto()).getRawBytes());
+            //encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
         }
         else {
             getLogger().info("Received unrecognized message from the entity!");
@@ -250,7 +258,7 @@ public abstract class EntityConnectionHandler {
      * @throws ClassNotFoundException When class is not found.
      */
     protected void handleEntityReq(byte[] bytes, Buffer authNonce) throws RuntimeException, IOException,
-            ParseException, SQLException, ClassNotFoundException
+            ParseException, SQLException, ClassNotFoundException, CertificateEncodingException
     {
         try {
             handleEntityReqInternal(bytes, authNonce);

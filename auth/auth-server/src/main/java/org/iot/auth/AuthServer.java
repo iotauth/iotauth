@@ -47,8 +47,6 @@ import org.iot.auth.server.TrustedAuthConnectionHandler;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.BASE64Encoder;
-import sun.security.provider.X509Factory;
 
 import javax.bluetooth.DiscoveryAgent;
 import javax.microedition.io.StreamConnection;

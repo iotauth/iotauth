@@ -898,6 +898,7 @@ public class SQLiteConnector {
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
         preparedStatement.setBytes(1, backupCertificate.getEncoded());
         boolean result = preparedStatement.execute();
+        ResultSet resultSet = preparedStatement.getResultSet();
         preparedStatement.close();
         return result;
     }

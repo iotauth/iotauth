@@ -9,7 +9,8 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "mqtt": "*",
-    "sleep": "*"
+    "sleep": "*",
+    "x509": "*"
   },
   "description": "Node.js module with example Node.js entities"
 }

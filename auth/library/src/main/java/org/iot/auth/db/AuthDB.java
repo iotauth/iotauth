@@ -351,20 +351,12 @@ public class AuthDB {
 
     public void reloadRegEntityDB() throws SQLException, ClassNotFoundException {
         registeredEntityMap.clear();
-        sqLiteConnector.selectAllRegEntities(authDatabaseDir).forEach(regEntityTable -> {
-            DistributionKey distributionKey = null;
-            if (regEntityTable.getDistKeyVal() != null) {
-                distributionKey = new DistributionKey(
-                        SymmetricKeyCryptoSpec.fromSpecString(regEntityTable.getDistCryptoSpec()),
-                        regEntityTable.getDistKeyExpirationTime(),
-                        new Buffer(regEntityTable.getDistKeyVal())
-                );
-            }
-            RegisteredEntity registeredEntity = new RegisteredEntity(regEntityTable, distributionKey);
+        loadRegEntityDB();
+    }
 
-            registeredEntityMap.put(registeredEntity.getName(), registeredEntity);
-            logger.debug("registeredEntity: {}", registeredEntity.toString());
-        });
+    public void reloadTrustedAuthDB() {
+        trustedAuthMap.clear();
+
     }
 
     private void loadCommPolicyDB() throws SQLException, ClassNotFoundException {
@@ -420,6 +412,10 @@ public class AuthDB {
     public boolean updateBackupCertificate(int backupFromAuthID, X509Certificate backupCertificate)
             throws SQLException, CertificateEncodingException
     {
-        return sqLiteConnector.updateBackupCertificate(backupFromAuthID, backupCertificate);
+        boolean ret = sqLiteConnector.updateBackupCertificate(backupFromAuthID, backupCertificate);
+        TrustedAuth trustedAuth = getTrustedAuthInfo(backupFromAuthID);
+        trustedAuth.setBackupCertificate(backupCertificate);
+        trustedAuthMap.put(backupFromAuthID, trustedAuth);
+        return ret;
     }
 }

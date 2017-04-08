@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class for a migration key req message from an entity.
+ * A class for a migration request message from an entity.
  * MigrationReq Format
  * {
  *      nonce: /Buffer/, (AUTH_NONCE_SIZE)
@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
  *  }
  * @author Hokeun Kim
  */
-public class MigrationRequestMessage extends IoTSPMessage {
-    public MigrationRequestMessage(MessageType type, Buffer payload) {
+public class MigrationReqMessage extends IoTSPMessage {
+    public MigrationReqMessage(MessageType type, Buffer payload) {
         super(type);
         int curIndex = 0;
 
@@ -47,5 +47,5 @@ public class MigrationRequestMessage extends IoTSPMessage {
     private Buffer authNonce;
     private String entityName;
 
-    private static final Logger logger = LoggerFactory.getLogger(MigrationRequestMessage.class);
+    private static final Logger logger = LoggerFactory.getLogger(MigrationReqMessage.class);
 }
