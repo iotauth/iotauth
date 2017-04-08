@@ -256,7 +256,11 @@ SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
 
 SecureCommClient.prototype.migrateToTrustedAuth = function() {
     if (entityConfig.migrationInfo) {
-        iotAuth.migrateToTrustedAuth(iotAuth.getMigrationReqOptions(entityConfig));
+        var options = iotAuth.getMigrationReqOptions(entityConfig);
+        var eventHandlers = {
+            onError: onError
+        };
+        iotAuth.migrateToTrustedAuth(options, eventHandlers);
     }
     else {
         console.log('Failed to migrate! no information for migration.');

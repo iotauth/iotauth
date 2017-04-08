@@ -47,6 +47,7 @@ import java.util.concurrent.TimeoutException;
  * @author Hokeun Kim
  */
 public abstract class EntityConnectionHandler {
+    private final int RSA_KEY_SIZE = 256; // 2048 bits
 
     private class SessionKeysAndSpec {
         private List<SessionKey> sessionKeys;
@@ -80,9 +81,9 @@ public abstract class EntityConnectionHandler {
         writeToSocket(authHello.serialize().getRawBytes());
     }
 
-    protected void handleSessionKeyReqInternal(byte[] bytes, Buffer authNonce) throws InvalidSessionKeyTargetException,
+    private void handleEntityReqInternal(byte[] bytes, Buffer authNonce) throws InvalidSessionKeyTargetException,
             NoAvailableDistributionKeyException, TooManySessionKeysRequestedException, IOException,
-            UseOfExpiredKeyException, SQLException, ClassNotFoundException, ParseException {
+            UseOfExpiredKeyException, SQLException, ClassNotFoundException, ParseException, UnrecognizedEntityException {
         Buffer buf = new Buffer(bytes);
         MessageType type = MessageType.fromByte(buf.getByte(0));
 
@@ -90,7 +91,6 @@ public abstract class EntityConnectionHandler {
         // rest of this is payload
         Buffer payload = buf.slice(IoTSPMessage.MSG_TYPE_SIZE + valLenInt.getRawBytes().length);
 
-        final int RSA_KEY_SIZE = 256; // 2048 bits
         if (type == MessageType.SESSION_KEY_REQ_IN_PUB_ENC) {
             getLogger().info("Received session key request message encrypted with public key!");
             // parse signed data
@@ -103,6 +103,9 @@ public abstract class EntityConnectionHandler {
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
 
             RegisteredEntity requestingEntity = server.getRegisteredEntity(sessionKeyReqMessage.getEntityName());
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ_IN_PUB_ENC: Session key requester is not found!");
+            }
 
             // checking signature
             try {
@@ -123,7 +126,7 @@ public abstract class EntityConnectionHandler {
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
             Buffer distributionKeyInfoBuffer;   // either distribution key or DH param to derive distribution key
-            DistributionKey distributionKey;    // generated or derived distriburtion key
+            DistributionKey distributionKey;    // generated or derived distribution key
             if (requestingEntity.getPublicKeyCryptoSpec().getDiffieHellman() != null) {
                 try {
                     DistributionDiffieHellman distributionDiffieHellman = new DistributionDiffieHellman(
@@ -151,7 +154,7 @@ public abstract class EntityConnectionHandler {
                     requestingEntity.getPublicKey());
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
 
-            sendSessionKeyResp(distributionKey, requestingEntity.getDistCryptoSpec(), sessionKeyReqMessage.getEntityNonce(),
+            sendSessionKeyResp(distributionKey, sessionKeyReqMessage.getEntityNonce(),
                     sessionKeyList, sessionCryptoSpec, encryptedDistKey);
             close();
         }
@@ -161,6 +164,9 @@ public abstract class EntityConnectionHandler {
             String requestingEntityName = bufferedString.getString();
             RegisteredEntity requestingEntity = server.getRegisteredEntity(requestingEntityName);
 
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ: Session key requester is not found!");
+            }
             // TODO: check distribution key validity here and if not, refuse request
             if (requestingEntity.getDistributionKey() == null) {
                 throw new NoAvailableDistributionKeyException("No distribution key is available!");
@@ -187,7 +193,7 @@ public abstract class EntityConnectionHandler {
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
-            sendSessionKeyResp(requestingEntity.getDistributionKey(), requestingEntity.getDistCryptoSpec(), sessionKeyReqMessage.getEntityNonce(),
+            sendSessionKeyResp(requestingEntity.getDistributionKey(), sessionKeyReqMessage.getEntityNonce(),
                     sessionKeyList, sessionCryptoSpec, null);
             close();
         }
@@ -195,7 +201,36 @@ public abstract class EntityConnectionHandler {
             getLogger().info("Received migration request!");
             Buffer decPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
             Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
-            getLogger().info("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
+            getLogger().info("Decrypted data (" + decPayload.length() + "): " + decPayload.toHexString());
+
+            MigrationRequestMessage migrationRequestMessage =
+                    new MigrationRequestMessage(MessageType.MIGRATION_REQ, decPayload);
+
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(migrationRequestMessage.getEntityName());
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in MIGRATION_REQ: Migration requester is not found!");
+            }
+            getLogger().info("requestingEntity: " + requestingEntity.toString());
+            // checking signature
+            try {
+                if (!server.getCrypto().verifySignedData(decPayload, signature, requestingEntity.getPublicKey())) {
+                    throw new RuntimeException("Entity signature verification failed!!");
+                }
+                else {
+                    getLogger().info("Entity signature is correct!");
+                }
+            }
+            catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+                throw new RuntimeException("Entity signature verification failed!!");
+            }
+            getLogger().info("Received auth nonce: {}", migrationRequestMessage.getAuthNonce().toHexString());
+            if (!authNonce.equals(migrationRequestMessage.getAuthNonce())) {
+                throw new RuntimeException("Auth nonce does not match!");
+            }
+            else {
+                getLogger().info("Auth nonce is correct!");
+            }
+
         }
         else {
             getLogger().info("Received unrecognized message from the entity!");
@@ -214,11 +249,11 @@ public abstract class EntityConnectionHandler {
      * @throws SQLException When SQL DB fails.
      * @throws ClassNotFoundException When class is not found.
      */
-    protected void handleSessionKeyReq(byte[] bytes, Buffer authNonce) throws RuntimeException, IOException,
+    protected void handleEntityReq(byte[] bytes, Buffer authNonce) throws RuntimeException, IOException,
             ParseException, SQLException, ClassNotFoundException
     {
         try {
-            handleSessionKeyReqInternal(bytes, authNonce);
+            handleEntityReqInternal(bytes, authNonce);
         }
         catch (InvalidSessionKeyTargetException e) {
             getLogger().info("InvalidSessionKeyTargetException: " + e.getMessage());
@@ -243,7 +278,12 @@ public abstract class EntityConnectionHandler {
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
             close();
             return;
-
+        }
+        catch (UnrecognizedEntityException e) {
+            getLogger().info("UnrecognizedEntityException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
+            close();
+            return;
         }
     }
 
@@ -259,7 +299,6 @@ public abstract class EntityConnectionHandler {
     /**
      * Send a session key response to the requesting entity
      * @param distributionKey Distribution key used for sending session key response
-     * @param distCryptoSpec Cryptography specification for session key distribution
      * @param entityNonce Random number generated by the requesting entity, to be included in the response
      * @param sessionKeyList A list of session keys to be included in the response
      * @param sessionCryptoSpec Cryptography specification for the session keys in the response
@@ -269,7 +308,7 @@ public abstract class EntityConnectionHandler {
      * @throws IOException If TCP socket IO fails.
      * @throws UseOfExpiredKeyException When an expired key is used.
      */
-    protected void sendSessionKeyResp(DistributionKey distributionKey, SymmetricKeyCryptoSpec distCryptoSpec, Buffer entityNonce,
+    private void sendSessionKeyResp(DistributionKey distributionKey, Buffer entityNonce,
                                     List<SessionKey> sessionKeyList, SymmetricKeyCryptoSpec sessionCryptoSpec,
                                     Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException
     {
@@ -298,7 +337,7 @@ public abstract class EntityConnectionHandler {
      * @throws InvalidSessionKeyTargetException If the target of session key request is not valid.
      * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
      */
-    protected SessionKeysAndSpec processSessionKeyReq(
+    private SessionKeysAndSpec processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
             TooManySessionKeysRequestedException

@@ -63,7 +63,7 @@ public class EntityUdpConnectionHandler extends EntityConnectionHandler {
     public void run() {
         // Process session key request
         try {
-            handleSessionKeyReq(sessionKeyRequest.getRawBytes(), authNonce);
+            handleEntityReq(sessionKeyRequest.getRawBytes(), authNonce);
         }
         catch (Exception e) {
             getLogger().error("Exception occurred while handling Auth service!\n {}",

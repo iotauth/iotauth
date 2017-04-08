@@ -65,7 +65,7 @@ public class EntityTcpConnectionHandler extends EntityConnectionHandler implemen
                     getLogger().debug("Received bytes ({}): {}", length, Buffer.toHexString(buf, 0, length));
 
                     // Process session key request
-                    handleSessionKeyReq(buf, authNonce);
+                    handleEntityReq(buf, authNonce);
                     close();
                     return;
                 }

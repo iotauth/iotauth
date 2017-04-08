@@ -3,6 +3,7 @@
 .idea/tasks.xml
 .idea/gradle.xml
 .idea/uiDesigner.xml
+.idea/kotlinc.xml
 *.class
 auth-server/target/*.jar
 example-auth-db-generator/target/*.jar
