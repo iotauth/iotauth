@@ -34,10 +34,11 @@ public class MigrationRespMessage extends IoTSPMessage {
         payload.concat(entityNonce);
 
         String stringAuthCertificate = X509Factory.BEGIN_CERT + "\n"
-                + new Buffer(authCertificate.getEncoded()).toBase64() + "\n" + X509Factory.END_CERT;
+                + new Buffer(authCertificate.getEncoded()).toBase64().replaceAll("(.{64})", "$1\n")
+                + "\n" + X509Factory.END_CERT;
 
-        BufferedString bufferedStringAuthCertificiate = new BufferedString(stringAuthCertificate);
-        payload.concat(bufferedStringAuthCertificiate.serialize());
+        BufferedString bufferedStringAuthCertificate = new BufferedString(stringAuthCertificate);
+        payload.concat(bufferedStringAuthCertificate.serialize());
 
         Buffer signature = authCrypto.signWithPrivateKey(payload);
         payload.concat(signature);
