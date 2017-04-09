@@ -16,6 +16,7 @@
 package org.iot.auth.crypto;
 
 import org.iot.auth.exception.InvalidMacException;
+import org.iot.auth.exception.InvalidSymmetricKeyOperationException;
 import org.iot.auth.exception.MessageIntegrityException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
@@ -35,10 +36,19 @@ import java.util.Date;
 
 /**
  * This class specifies symmetric keys, including encryption key and MAC key.
- * Also specifies cryptography specs to be used for symmetric keys
+ * Also specifies cryptography specs to be used for symmetric keys.
+ * If cipherKeyVal is null, then it uses MAC only.
  * @author Hokeun Kim
  */
 public class SymmetricKey {
+    private Buffer cipherKeyVal = null;
+    private Buffer macKeyVal = null;
+    private Date expirationTime;
+    private SymmetricKeyCryptoSpec cryptoSpec;
+    private Cipher cipher = null;
+    private Mac mac = null;
+    private SecretKey cipherKey = null;
+    protected static final Logger logger = LoggerFactory.getLogger(SymmetricKey.class);
     /**
      * Constructor with given key value
      * @param cryptoSpec Given cryptography specification for the symmetric key.
@@ -55,16 +65,20 @@ public class SymmetricKey {
         if (cryptoSpec.getCipherKeySize() != cipherKeySize) {
             throw new RuntimeException("Wrong cipher key size!");
         }
-        this.cipherKeyVal = serializedKeyVal.slice(curIndex, curIndex + cipherKeySize);
-        curIndex += cipherKeySize;
+        if (cipherKeySize > 0) {
+            this.cipherKeyVal = serializedKeyVal.slice(curIndex, curIndex + cipherKeySize);
+            curIndex += cipherKeySize;
+        }
 
         int macKeySize = serializedKeyVal.getByte(curIndex);
         curIndex += 1;
         if (cryptoSpec.getMacKeySize() != macKeySize) {
             throw new RuntimeException("Wrong MAC key size!");
         }
-        this.macKeyVal = serializedKeyVal.slice(curIndex, curIndex + macKeySize);
-        curIndex += macKeySize;
+        if (macKeySize > 0) {
+            this.macKeyVal = serializedKeyVal.slice(curIndex, curIndex + macKeySize);
+            curIndex += macKeySize;
+        }
         if (curIndex != serializedKeyVal.length()) {
             throw new RuntimeException("Wrong key size!");
         }
@@ -80,16 +94,33 @@ public class SymmetricKey {
                 getSerializedKeyVal(generateCipherKeyValue(cryptoSpec), generateMacKeyValue(cryptoSpec)));
     }
 
+    public boolean isMacOnly() {
+        return cipherKeyVal == null;
+    }
+
     public static Buffer getSerializedKeyVal(Buffer rawCipherKeyVal, Buffer rawMacKeyVal) {
         int curIndex = 0;
-        Buffer buffer = new Buffer(2 + rawCipherKeyVal.length() + rawMacKeyVal.length());
+        int rawCipherKeyLen = 0;
+        int rawMacKeyLen = 0;
+        if (rawCipherKeyVal != null) {
+            rawCipherKeyLen = rawCipherKeyVal.length();
+        }
+        if (rawMacKeyVal != null) {
+            rawMacKeyLen = rawMacKeyVal.length();
+        }
+        Buffer buffer = new Buffer(2 + rawCipherKeyLen + rawMacKeyLen);
         buffer.putByte((byte)rawCipherKeyVal.length(), curIndex);
         curIndex += 1;
-        buffer.putBytes(rawCipherKeyVal.getRawBytes(), curIndex);
-        curIndex += rawCipherKeyVal.length();
+        if (rawCipherKeyLen > 0) {
+            buffer.putBytes(rawCipherKeyVal.getRawBytes(), curIndex);
+            curIndex += rawCipherKeyVal.length();
+        }
         buffer.putByte((byte)rawMacKeyVal.length(), curIndex);
         curIndex += 1;
-        buffer.putBytes(rawMacKeyVal.getRawBytes(), curIndex);
+        if (rawMacKeyLen > 0) {
+            buffer.putBytes(rawMacKeyVal.getRawBytes(), curIndex);
+            curIndex += rawMacKeyVal.length();
+        }
         return buffer;
     }
     public Buffer getSerializedKeyVal() {
@@ -128,15 +159,7 @@ public class SymmetricKey {
         return new Buffer(key.getEncoded());
     }
 
-    private void initializeCipherMac() {
-        try {
-            cipher = Cipher.getInstance(cryptoSpec.getCipherAlgorithm());
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException("Exception occurred while initializing cipher!");
-        }
-        String[] cipherAlgoTokens = cipher.getAlgorithm().split("/");
-        cipherKey = new SecretKeySpec(cipherKeyVal.getRawBytes(), cipherAlgoTokens[0]);
+    private void initializeMac() {
         try {
             mac = Mac.getInstance(cryptoSpec.getMacAlgorithm());
         } catch (NoSuchAlgorithmException e) {
@@ -152,7 +175,51 @@ public class SymmetricKey {
         }
     }
 
-    public Buffer encryptAuthenticate(Buffer input) throws UseOfExpiredKeyException {
+    private void initializeCipherMac() {
+        try {
+            cipher = Cipher.getInstance(cryptoSpec.getCipherAlgorithm());
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while initializing cipher!");
+        }
+        String[] cipherAlgoTokens = cipher.getAlgorithm().split("/");
+        cipherKey = new SecretKeySpec(cipherKeyVal.getRawBytes(), cipherAlgoTokens[0]);
+        initializeMac();
+    }
+
+    public Buffer authenticateAttachMac(Buffer input) throws UseOfExpiredKeyException {
+        if (isExpired()) {
+            throw new UseOfExpiredKeyException("Trying to use an expired key!");
+        }
+        if (mac == null) {
+            initializeMac();
+        }
+        Buffer buffer = new Buffer(input);
+        Buffer tag = new Buffer(mac.doFinal(input.getRawBytes()));
+        buffer.concat(tag);
+        return buffer;
+    }
+
+    public Buffer verifyMacExtractData(Buffer input) throws UseOfExpiredKeyException, InvalidMacException {
+        if (isExpired()) {
+            throw new UseOfExpiredKeyException("Trying to use an expired key!");
+        }
+        if (mac == null) {
+            initializeMac();
+        }
+        Buffer data = input.slice(0, input.length() - mac.getMacLength());
+        Buffer receivedTag = input.slice(input.length() - mac.getMacLength());
+        Buffer computedTag = new Buffer(mac.doFinal(data.getRawBytes()));
+        if (!receivedTag.equals(computedTag)) {
+            throw new InvalidMacException("MAC of session key request is NOT correct!");
+        }
+        return data;
+    }
+
+    public Buffer encryptAuthenticate(Buffer input) throws UseOfExpiredKeyException, InvalidSymmetricKeyOperationException {
+        if (isMacOnly()) {
+            throw new InvalidSymmetricKeyOperationException("Encryption is invalid for MAC only session key!");
+        }
         if (isExpired()) {
             throw new UseOfExpiredKeyException("Trying to use an expired key!");
         }
@@ -183,7 +250,10 @@ public class SymmetricKey {
     }
 
     public Buffer decryptVerify(Buffer input) throws InvalidMacException, MessageIntegrityException,
-            UseOfExpiredKeyException {
+            UseOfExpiredKeyException, InvalidSymmetricKeyOperationException {
+        if (isMacOnly()) {
+            throw new InvalidSymmetricKeyOperationException("Decryption is invalid for MAC only session key!");
+        }
         if (isExpired()) {
             throw new UseOfExpiredKeyException("Trying to use an expired key!");
         }
@@ -241,13 +311,4 @@ public class SymmetricKey {
         Date now = new Date();
         return expirationTime.before(now);
     }
-
-    private Buffer cipherKeyVal;
-    private Buffer macKeyVal;
-    private Date expirationTime;
-    private SymmetricKeyCryptoSpec cryptoSpec;
-    private Cipher cipher = null;
-    private Mac mac = null;
-    private SecretKey cipherKey = null;
-    protected static final Logger logger = LoggerFactory.getLogger(SymmetricKey.class);
 }

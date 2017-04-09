@@ -18,8 +18,13 @@ package org.iot.auth.message;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.iot.auth.crypto.AuthCrypto;
+import org.iot.auth.crypto.DistributionKey;
+import org.iot.auth.crypto.MigrationToken;
 import org.iot.auth.db.RegisteredEntity;
+import org.iot.auth.exception.InvalidSymmetricKeyOperationException;
+import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
+import sun.jvm.hotspot.asm.Register;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,12 +58,28 @@ public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
         return backupCertificate;
     }
 
+    public RegisteredEntity prepareBackup(RegisteredEntity registeredEntity) throws UseOfExpiredKeyException,
+            InvalidSymmetricKeyOperationException
+    {
+        if (!registeredEntity.getUsePermanentDistKey()) {
+            return registeredEntity;
+        }
+        // prepare migration token
+        //MigrationToken migrationToken = new MigrationToken
+        DistributionKey currentDistributionKey = registeredEntity.getDistributionKey();
+        DistributionKey newDistributionKey = new DistributionKey(registeredEntity.getDistCryptoSpec(),
+                registeredEntity.getDistKeyValidityPeriod());
+        Buffer encryptedNewDistributionKey = currentDistributionKey.encryptAuthenticate(newDistributionKey.serialize());
+        registeredEntity.setDistributionKey(newDistributionKey);
+        return registeredEntity;
+    }
+
     // Because of the class name conflict of Request (client's or server's)
     public ContentResponse sendAsHttpRequest(org.eclipse.jetty.client.api.Request postRequest)
             throws TimeoutException, ExecutionException, InterruptedException
     {
         postRequest.param(TrustedAuthReqMessasge.TYPE, type.BACKUP_REQ.name());
-        byte[] bytesBackupCertificate = new byte[0];
+        byte[] bytesBackupCertificate;
         try {
             bytesBackupCertificate = backupCertificate.getEncoded();
         } catch (CertificateEncodingException e) {

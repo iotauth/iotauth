@@ -36,6 +36,14 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
         this.macKeySize = getMacAlgoKeySize(macAlgorithm);
     }
 
+    /**
+     * Constructor for symmetric crypto spec that uses MAC only.
+     * @param macAlgorithm
+     */
+    public SymmetricKeyCryptoSpec(String macAlgorithm) {
+        this("", 0, macAlgorithm);
+    }
+
     public static SymmetricKeyCryptoSpec fromJSONObject(JSONObject jsonObject) {
         CryptoAlgoKeySize cipherAlgoKeySize = fromJSCryptoAlgo((String)jsonObject.get(key.cipher.toString()));
         CryptoAlgoKeySize hashAlgoKeySize = fromJSCryptoAlgo((String)jsonObject.get(key.mac.toString()));
@@ -88,7 +96,10 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     private int macKeySize;
 
     private static String toJavaScriptSpecString(String cryptoAlgo, int keySize) {
-        if (cryptoAlgo.equals("AES/CBC/PKCS5Padding")) {
+        if (cryptoAlgo.equals("")) {
+            return new String("");
+        }
+        else if (cryptoAlgo.equals("AES/CBC/PKCS5Padding")) {
             if (keySize == 16) {
                 return new String("AES-128-CBC");
             }
@@ -125,6 +136,10 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
             this.cipherAlgo = cipherAlgo;
             this.keySize = -1;
         }
+        public CryptoAlgoKeySize() {
+            this.cipherAlgo = "";
+            this.keySize = 0;
+        }
         public String getCryptoAlgo() {
             return cipherAlgo;
         }
@@ -136,7 +151,10 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     }
 
     private static CryptoAlgoKeySize fromJSCryptoAlgo(String jsCryptoAlgo) {
-        if (jsCryptoAlgo.equals("AES-128-CBC")) {
+        if (jsCryptoAlgo.equals("")) {
+            return new CryptoAlgoKeySize();
+        }
+        else if (jsCryptoAlgo.equals("AES-128-CBC")) {
             // 128 bits -> 16 bytes
             return new CryptoAlgoKeySize("AES/CBC/PKCS5Padding", 16);
         }

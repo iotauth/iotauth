@@ -86,7 +86,9 @@ public abstract class EntityConnectionHandler {
     private void handleEntityReqInternal(byte[] bytes, Buffer authNonce) throws InvalidSessionKeyTargetException,
             NoAvailableDistributionKeyException, TooManySessionKeysRequestedException, IOException,
             UseOfExpiredKeyException, SQLException, ClassNotFoundException, ParseException, UnrecognizedEntityException,
-            CertificateEncodingException {
+            CertificateEncodingException, InvalidSignatureException, InvalidNonceException,
+            InvalidSymmetricKeyOperationException
+    {
         Buffer buf = new Buffer(bytes);
         MessageType type = MessageType.fromByte(buf.getByte(0));
 
@@ -113,14 +115,14 @@ public abstract class EntityConnectionHandler {
             // checking signature
             try {
                 if (!server.getCrypto().verifySignedData(encPayload, signature, requestingEntity.getPublicKey())) {
-                    throw new RuntimeException("Entity signature verification failed!!");
+                    throw new InvalidSignatureException("Entity signature verification failed!!");
                 }
                 else {
                     getLogger().debug("Entity signature is correct!");
                 }
             }
             catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-                throw new RuntimeException("Entity signature verification failed!!");
+                throw new InvalidSignatureException("Entity signature verification failed!!");
             }
 
             SessionKeysAndSpec ret =
@@ -217,18 +219,18 @@ public abstract class EntityConnectionHandler {
             // checking signature
             try {
                 if (!server.getCrypto().verifySignedData(decPayload, signature, requestingEntity.getPublicKey())) {
-                    throw new RuntimeException("Entity signature verification failed!!");
+                    throw new InvalidSignatureException("Entity signature verification failed!!");
                 }
                 else {
                     getLogger().info("Entity signature is correct!");
                 }
             }
             catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-                throw new RuntimeException("Entity signature verification failed!!");
+                throw new InvalidSignatureException("Entity signature verification failed!!");
             }
             getLogger().info("Received auth nonce: {}", migrationReqMessage.getAuthNonce().toHexString());
             if (!authNonce.equals(migrationReqMessage.getAuthNonce())) {
-                throw new RuntimeException("Auth nonce does not match!");
+                throw new InvalidNonceException("Auth nonce does not match!");
             }
             else {
                 getLogger().info("Auth nonce is correct!");
@@ -258,7 +260,8 @@ public abstract class EntityConnectionHandler {
      * @throws ClassNotFoundException When class is not found.
      */
     protected void handleEntityReq(byte[] bytes, Buffer authNonce) throws RuntimeException, IOException,
-            ParseException, SQLException, ClassNotFoundException, CertificateEncodingException
+            ParseException, SQLException, ClassNotFoundException, CertificateEncodingException,
+            InvalidSignatureException, InvalidNonceException, InvalidSymmetricKeyOperationException
     {
         try {
             handleEntityReqInternal(bytes, authNonce);
@@ -318,7 +321,8 @@ public abstract class EntityConnectionHandler {
      */
     private void sendSessionKeyResp(DistributionKey distributionKey, Buffer entityNonce,
                                     List<SessionKey> sessionKeyList, SymmetricKeyCryptoSpec sessionCryptoSpec,
-                                    Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException
+                                    Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException,
+                                    InvalidSymmetricKeyOperationException
     {
         SessionKeyRespMessage sessionKeyResp;
         if (encryptedDistKey != null) {
@@ -348,13 +352,12 @@ public abstract class EntityConnectionHandler {
     private SessionKeysAndSpec processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
-            TooManySessionKeysRequestedException
-    {
+            TooManySessionKeysRequestedException, InvalidNonceException {
         getLogger().debug("Sender entity: {}", sessionKeyReqMessage.getEntityName());
 
         getLogger().debug("Received auth nonce: {}", sessionKeyReqMessage.getAuthNonce().toHexString());
         if (!authNonce.equals(sessionKeyReqMessage.getAuthNonce())) {
-            throw new RuntimeException("Auth nonce does not match!");
+            throw new InvalidNonceException("Auth nonce does not match!");
         }
         else {
             getLogger().debug("Auth nonce is correct!");
@@ -504,7 +507,7 @@ public abstract class EntityConnectionHandler {
             contentResponse = server.performPostRequestToTrustedAuth(trustedAuthID, authSessionKeyReqMessage);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             getLogger().error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException();
+            throw new RuntimeException(e.getCause());
         }
 
         getLogger().info("Received contents via https {}", contentResponse.getContentAsString());

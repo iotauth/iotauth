@@ -22,6 +22,7 @@ import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.AuthDBProtectionMethod;
 import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.*;
+import org.iot.auth.exception.InvalidSymmetricKeyOperationException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.FileIOHelper;
@@ -144,6 +145,9 @@ public class SQLiteConnector {
             return databaseKey.encryptAuthenticate(input);
         } catch (UseOfExpiredKeyException e) {
             logger.error("UseOfExpiredKeyException {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while encrypting Auth DB Data!");
+        } catch (InvalidSymmetricKeyOperationException e) {
+            logger.error("InvalidSymmetricKeyOperationException {}", ExceptionToString.convertExceptionToStackTrace(e));
             throw new RuntimeException("Exception occurred while encrypting Auth DB Data!");
         }
     }

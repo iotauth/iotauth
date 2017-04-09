@@ -18,6 +18,7 @@ package org.iot.auth.message;
 import org.iot.auth.crypto.DistributionKey;
 import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
+import org.iot.auth.exception.InvalidSymmetricKeyOperationException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.BufferedString;
@@ -76,7 +77,9 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
      * @return Buffer for serialized and encrypted message.
      * @throws UseOfExpiredKeyException If an expired key is used for encryption.
      */
-    public Buffer serializeAndEncrypt(DistributionKey distKey) throws UseOfExpiredKeyException {
+    public Buffer serializeAndEncrypt(DistributionKey distKey) throws UseOfExpiredKeyException,
+            InvalidSymmetricKeyOperationException
+    {
         Buffer payload = new Buffer(entityNonce);
         String cryptoSpecString = cryptoSpec.toJSONObject().toString();
         logger.debug("cryptoSpecString: {}", cryptoSpecString);
