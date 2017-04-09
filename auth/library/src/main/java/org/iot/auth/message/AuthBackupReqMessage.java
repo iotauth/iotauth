@@ -70,7 +70,9 @@ public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
         DistributionKey newDistributionKey = new DistributionKey(registeredEntity.getDistCryptoSpec(),
                 registeredEntity.getDistKeyValidityPeriod());
         Buffer encryptedNewDistributionKey = currentDistributionKey.encryptAuthenticate(newDistributionKey.serialize());
+        MigrationToken migrationToken = new MigrationToken(currentDistributionKey.makeMacOnly(), encryptedNewDistributionKey);
         registeredEntity.setDistributionKey(newDistributionKey);
+        registeredEntity.setMigrationToken(migrationToken);
         return registeredEntity;
     }
 
@@ -91,6 +93,11 @@ public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
         Buffer totalBuffer = new Buffer(bytesBackupCertificate);
         int totalLength = 0;
         for (RegisteredEntity registeredEntity: registeredEntityList) {
+            try {
+                registeredEntity = prepareBackup(registeredEntity);
+            } catch (UseOfExpiredKeyException | InvalidSymmetricKeyOperationException e) {
+                throw new RuntimeException("Error occurred while preparing AuthBackupReqMessage: " + e.getMessage());
+            }
             Buffer registeredEntityBuffer = registeredEntity.serialize();
             Buffer lengthBuffer = new Buffer(Buffer.INT_SIZE);
             lengthBuffer.putInt(registeredEntityBuffer.length(), 0);

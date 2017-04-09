@@ -98,6 +98,11 @@ public class SymmetricKey {
         return cipherKeyVal == null;
     }
 
+    public SymmetricKey makeMacOnly() {
+        return new SymmetricKey(cryptoSpec.makeMacOnly(), getRawExpirationTime(),
+                getSerializedKeyVal(null, macKeyVal));
+    }
+
     public static Buffer getSerializedKeyVal(Buffer rawCipherKeyVal, Buffer rawMacKeyVal) {
         int curIndex = 0;
         int rawCipherKeyLen = 0;
@@ -109,13 +114,13 @@ public class SymmetricKey {
             rawMacKeyLen = rawMacKeyVal.length();
         }
         Buffer buffer = new Buffer(2 + rawCipherKeyLen + rawMacKeyLen);
-        buffer.putByte((byte)rawCipherKeyVal.length(), curIndex);
+        buffer.putByte((byte)rawCipherKeyLen, curIndex);
         curIndex += 1;
         if (rawCipherKeyLen > 0) {
             buffer.putBytes(rawCipherKeyVal.getRawBytes(), curIndex);
             curIndex += rawCipherKeyVal.length();
         }
-        buffer.putByte((byte)rawMacKeyVal.length(), curIndex);
+        buffer.putByte((byte)rawMacKeyLen, curIndex);
         curIndex += 1;
         if (rawMacKeyLen > 0) {
             buffer.putBytes(rawMacKeyVal.getRawBytes(), curIndex);

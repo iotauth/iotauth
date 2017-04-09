@@ -44,6 +44,10 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
         this("", 0, macAlgorithm);
     }
 
+    public SymmetricKeyCryptoSpec makeMacOnly() {
+        return new SymmetricKeyCryptoSpec(macAlgorithm);
+    }
+
     public static SymmetricKeyCryptoSpec fromJSONObject(JSONObject jsonObject) {
         CryptoAlgoKeySize cipherAlgoKeySize = fromJSCryptoAlgo((String)jsonObject.get(key.cipher.toString()));
         CryptoAlgoKeySize hashAlgoKeySize = fromJSCryptoAlgo((String)jsonObject.get(key.mac.toString()));

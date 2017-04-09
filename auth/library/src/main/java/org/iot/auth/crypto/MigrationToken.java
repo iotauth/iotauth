@@ -7,13 +7,15 @@ import org.iot.auth.io.Buffer;
  * @author Hokeun Kim
  */
 public class MigrationToken {
-    public MigrationToken(SymmetricKey oldMacKey, Buffer encryptedNewDistributionKey) {
-        this.oldMacKey = oldMacKey;
+    public MigrationToken(SymmetricKey currentMacKey, Buffer encryptedNewDistributionKey) {
+        this.currentMacKey = currentMacKey;
         this.encryptedNewDistributionKey = encryptedNewDistributionKey;
     }
     public Buffer serialize() {
-        return encryptedNewDistributionKey;
+        Buffer buffer = currentMacKey.getSerializedKeyVal();
+        buffer.concat(encryptedNewDistributionKey);
+        return buffer;
     }
-    private SymmetricKey oldMacKey;
+    private SymmetricKey currentMacKey;
     private Buffer encryptedNewDistributionKey;
 }

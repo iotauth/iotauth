@@ -194,6 +194,13 @@ public class RegisteredEntity {
         this.distributionKey = distributionKey;
     }
 
+    public void setMigrationToken(MigrationToken migrationToken) {
+        this.migrationToken = migrationToken;
+    }
+    public MigrationToken getMigrationToken() {
+        return migrationToken;
+    }
+
     private int REG_ENTITY_INT_SIZE = 4;
 
     // TODO: record the buffer length when concatnating this
