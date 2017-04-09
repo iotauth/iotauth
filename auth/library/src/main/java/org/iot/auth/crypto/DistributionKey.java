@@ -39,6 +39,10 @@ public class DistributionKey extends SymmetricKey {
         super(cryptoSpec, new Date().getTime() + expirationTime);
     }
 
+    public DistributionKey makeMacOnly() {
+        return new DistributionKey(getCryptoSpec().makeMacOnly(), getRawExpirationTime(),
+                getSerializedKeyVal(null, getMacKeyVal()));
+    }
     public String toString() {
         return "Expiration Time: " + getExpirationTime() + "\tCipherKey: " + getCipherKeyVal().toHexString() +
                 "\tMacKey: " + getMacKeyVal().toHexString();

@@ -16,7 +16,7 @@
 package org.iot.auth.db.bean;
 
 import org.iot.auth.crypto.AuthCrypto;
-import org.iot.auth.crypto.MigrationToken;
+import org.iot.auth.io.Buffer;
 import org.json.simple.JSONObject;
 
 import java.security.PublicKey;
@@ -62,7 +62,7 @@ public class RegisteredEntityTable {
     private boolean active;
     private int backupToAuthID = -1;
     private int backupFromAuthID = -1;
-    private MigrationToken migrationToken = null;
+    private byte[] migrationTokenVal = null;
 
     public String getName() {
         return name;
@@ -167,11 +167,11 @@ public class RegisteredEntityTable {
         this.backupFromAuthID = backupFromAuthID;
     }
 
-    public void setMigrationToken(MigrationToken migrationToken) {
-        this.migrationToken = migrationToken;
+    public void setMigrationTokenVal(byte[] migrationTokenVal) {
+        this.migrationTokenVal = migrationTokenVal;
     }
-    public MigrationToken getMigrationToken() {
-        return migrationToken;
+    public byte[] getMigrationTokenVal() {
+        return migrationTokenVal;
     }
 
     public String toString() {
@@ -216,6 +216,7 @@ public class RegisteredEntityTable {
         entity.setActive(resultSet.getBoolean(c.Active.name()));
         entity.setBackupToAuthID(resultSet.getInt(c.BackupToAuthID.name()));
         entity.setBackupFromAuthID(resultSet.getInt(c.BackupFromAuthID.name()));
+        entity.setMigrationTokenVal(resultSet.getBytes(c.MigrationToken.name()));
         return entity;
     }
 }

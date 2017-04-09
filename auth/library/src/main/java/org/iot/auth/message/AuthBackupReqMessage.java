@@ -24,7 +24,6 @@ import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.exception.InvalidSymmetricKeyOperationException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
-import sun.jvm.hotspot.asm.Register;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,22 +57,22 @@ public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
         return backupCertificate;
     }
 
-    public RegisteredEntity prepareBackup(RegisteredEntity registeredEntity) throws UseOfExpiredKeyException,
-            InvalidSymmetricKeyOperationException
-    {
-        if (!registeredEntity.getUsePermanentDistKey()) {
-            return registeredEntity;
+    public RegisteredEntity prepareBackup(RegisteredEntity currentRegisteredEntity) throws UseOfExpiredKeyException,
+            InvalidSymmetricKeyOperationException, InvalidKeySpecException, NoSuchAlgorithmException {
+        if (!currentRegisteredEntity.getUsePermanentDistKey()) {
+            return currentRegisteredEntity;
         }
         // prepare migration token
         //MigrationToken migrationToken = new MigrationToken
-        DistributionKey currentDistributionKey = registeredEntity.getDistributionKey();
-        DistributionKey newDistributionKey = new DistributionKey(registeredEntity.getDistCryptoSpec(),
-                registeredEntity.getDistKeyValidityPeriod());
+        RegisteredEntity newRegisteredEntity = new RegisteredEntity(currentRegisteredEntity.serialize());
+        DistributionKey currentDistributionKey = newRegisteredEntity.getDistributionKey();
+        DistributionKey newDistributionKey = new DistributionKey(newRegisteredEntity.getDistCryptoSpec(),
+                newRegisteredEntity.getDistKeyValidityPeriod());
         Buffer encryptedNewDistributionKey = currentDistributionKey.encryptAuthenticate(newDistributionKey.serialize());
         MigrationToken migrationToken = new MigrationToken(currentDistributionKey.makeMacOnly(), encryptedNewDistributionKey);
-        registeredEntity.setDistributionKey(newDistributionKey);
-        registeredEntity.setMigrationToken(migrationToken);
-        return registeredEntity;
+        newRegisteredEntity.setDistributionKey(newDistributionKey);
+        newRegisteredEntity.setMigrationToken(migrationToken);
+        return newRegisteredEntity;
     }
 
     // Because of the class name conflict of Request (client's or server's)
@@ -95,7 +94,7 @@ public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
         for (RegisteredEntity registeredEntity: registeredEntityList) {
             try {
                 registeredEntity = prepareBackup(registeredEntity);
-            } catch (UseOfExpiredKeyException | InvalidSymmetricKeyOperationException e) {
+            } catch (UseOfExpiredKeyException | InvalidSymmetricKeyOperationException | InvalidKeySpecException | NoSuchAlgorithmException e) {
                 throw new RuntimeException("Error occurred while preparing AuthBackupReqMessage: " + e.getMessage());
             }
             Buffer registeredEntityBuffer = registeredEntity.serialize();

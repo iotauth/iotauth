@@ -68,7 +68,10 @@ public class RegisteredEntity {
         this.backupFromAuthID = tableElement.getBackupFromAuthID();
         this.distributionKey = distributionKey; // Decrypted from database
         this.publicKey = tableElement.getPublicKey();
-        this.migrationToken = tableElement.getMigrationToken();
+        if (tableElement.getMigrationTokenVal() != null) {
+            this.migrationToken = new MigrationToken(this.distCryptoSpec.makeMacOnly(),
+                    new Buffer(tableElement.getMigrationTokenVal()));
+        }
     }
 
     public RegisteredEntityTable toRegisteredEntityTable(Buffer serializedDistributionKeyValue,
@@ -109,7 +112,7 @@ public class RegisteredEntity {
             }*/
         }
         if (migrationToken != null) {
-            tableElement.setMigrationToken(migrationToken);
+            tableElement.setMigrationTokenVal(migrationToken.serialize().getRawBytes());
         }
         return tableElement;
     }
@@ -248,6 +251,15 @@ public class RegisteredEntity {
         }
         buffer.concat(new VariableLengthInt(keyBuffer.length()).serialize());
         buffer.concat(keyBuffer);
+
+        if (migrationToken == null) {
+            buffer.concat(new VariableLengthInt(0).serialize());
+        }
+        else {
+            Buffer migrationTokenBuffer = migrationToken.serialize();
+            buffer.concat(new VariableLengthInt(migrationTokenBuffer.length()).serialize());
+            buffer.concat(migrationTokenBuffer);
+        }
         return buffer;
     }
 
@@ -299,7 +311,7 @@ public class RegisteredEntity {
         Buffer keyBuffer = buffer.slice(curIndex, curIndex + keyBufferLength);
         curIndex += keyBufferLength;
 
-        if (usePermanentDistKey) {
+        if (this.usePermanentDistKey) {
             // parse this to distribution key
             this.distributionKey = DistributionKey.fromBuffer(this.distCryptoSpec, keyBuffer);
             //keyBuffer
@@ -308,7 +320,15 @@ public class RegisteredEntity {
             // decode public key
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(keyBuffer.getRawBytes());
-            publicKey = keyFactory.generatePublic(pubSpec);
+            this.publicKey = keyFactory.generatePublic(pubSpec);
         }
+
+        varLenInt = buffer.getVariableLengthInt(curIndex);
+        curIndex += varLenInt.getRawBytes().length;
+        if (varLenInt.getNum() > 0) {
+            this.migrationToken = new MigrationToken(this.distCryptoSpec.makeMacOnly(),
+                    buffer.slice(curIndex, curIndex + varLenInt.getNum()));
+        }
+        curIndex += varLenInt.getNum();
     }
 }

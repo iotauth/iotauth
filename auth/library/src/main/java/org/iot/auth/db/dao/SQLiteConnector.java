@@ -16,11 +16,9 @@
 package org.iot.auth.db.dao;
 
 import org.iot.auth.crypto.AuthCrypto;
-import org.iot.auth.crypto.MigrationToken;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.AuthDBProtectionMethod;
-import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.*;
 import org.iot.auth.exception.InvalidSymmetricKeyOperationException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
@@ -423,9 +421,9 @@ public class SQLiteConnector {
         preparedStatement.setBoolean(index++, regEntity.isActive());
         preparedStatement.setInt(index++, regEntity.getBackupToAuthID());
         preparedStatement.setInt(index++, regEntity.getBackupFromAuthID());
-        MigrationToken migrationToken = regEntity.getMigrationToken();
-        if (migrationToken != null) {
-            preparedStatement.setBytes(index++, regEntity.getMigrationToken().serialize().getRawBytes());
+        byte[] migrationTokenVal = regEntity.getMigrationTokenVal();
+        if (migrationTokenVal != null) {
+            preparedStatement.setBytes(index++, migrationTokenVal);
         }
         else {
             preparedStatement.setNull(index++, Types.BLOB);
