@@ -16,6 +16,7 @@
 package org.iot.auth.db.bean;
 
 import org.iot.auth.crypto.AuthCrypto;
+import org.iot.auth.crypto.MigrationToken;
 import org.json.simple.JSONObject;
 
 import java.security.PublicKey;
@@ -44,7 +45,8 @@ public class RegisteredEntityTable {
         MaxSessionKeysPerRequest,
         Active,
         BackupToAuthID,
-        BackupFromAuthID
+        BackupFromAuthID,
+        MigrationToken
     }
     private String name;
     private String group;
@@ -60,6 +62,7 @@ public class RegisteredEntityTable {
     private boolean active;
     private int backupToAuthID = -1;
     private int backupFromAuthID = -1;
+    private MigrationToken migrationToken = null;
 
     public String getName() {
         return name;
@@ -162,6 +165,13 @@ public class RegisteredEntityTable {
 
     public void setBackupFromAuthID(int backupFromAuthID) {
         this.backupFromAuthID = backupFromAuthID;
+    }
+
+    public void setMigrationToken(MigrationToken migrationToken) {
+        this.migrationToken = migrationToken;
+    }
+    public MigrationToken getMigrationToken() {
+        return migrationToken;
     }
 
     public String toString() {

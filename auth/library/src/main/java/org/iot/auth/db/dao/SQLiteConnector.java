@@ -16,9 +16,11 @@
 package org.iot.auth.db.dao;
 
 import org.iot.auth.crypto.AuthCrypto;
+import org.iot.auth.crypto.MigrationToken;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.AuthDBProtectionMethod;
+import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.*;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
@@ -239,7 +241,8 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistKeyValue.name() + " BLOB,";
         sql += RegisteredEntityTable.c.Active.name() + " BOOLEAN NOT NULL,";
         sql += RegisteredEntityTable.c.BackupToAuthID.name() + " INT,";
-        sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT)";
+        sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT,";
+        sql += RegisteredEntityTable.c.MigrationToken.name() + " BLOB)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", RegisteredEntityTable.T_REGISTERED_ENTITY);
@@ -383,8 +386,9 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistKeyValue.name() + ",";
         sql += RegisteredEntityTable.c.Active.name() + ",";
         sql += RegisteredEntityTable.c.BackupToAuthID.name() + ",";
-        sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ",";
+        sql += RegisteredEntityTable.c.MigrationToken.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setString(index++,regEntity.getName());
@@ -415,6 +419,13 @@ public class SQLiteConnector {
         preparedStatement.setBoolean(index++, regEntity.isActive());
         preparedStatement.setInt(index++, regEntity.getBackupToAuthID());
         preparedStatement.setInt(index++, regEntity.getBackupFromAuthID());
+        MigrationToken migrationToken = regEntity.getMigrationToken();
+        if (migrationToken != null) {
+            preparedStatement.setBytes(index++, regEntity.getMigrationToken().serialize().getRawBytes());
+        }
+        else {
+            preparedStatement.setNull(index++, Types.BLOB);
+        }
 
         preparedStatement.toString();
         if (DEBUG) logger.info("{}",preparedStatement);

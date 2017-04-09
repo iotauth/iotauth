@@ -16,6 +16,7 @@
 package org.iot.auth.db;
 
 import org.iot.auth.crypto.DistributionKey;
+import org.iot.auth.crypto.MigrationToken;
 import org.iot.auth.crypto.PublicKeyCryptoSpec;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.bean.RegisteredEntityTable;
@@ -48,6 +49,7 @@ public class RegisteredEntity {
     private int backupFromAuthID = -1;
     private DistributionKey distributionKey = null;
     private PublicKey publicKey;
+    private MigrationToken migrationToken = null;
 
     public RegisteredEntity(RegisteredEntityTable tableElement, DistributionKey distributionKey)
     {
@@ -66,6 +68,7 @@ public class RegisteredEntity {
         this.backupFromAuthID = tableElement.getBackupFromAuthID();
         this.distributionKey = distributionKey; // Decrypted from database
         this.publicKey = tableElement.getPublicKey();
+        this.migrationToken = tableElement.getMigrationToken();
     }
 
     public RegisteredEntityTable toRegisteredEntityTable(Buffer serializedDistributionKeyValue,
@@ -104,6 +107,9 @@ public class RegisteredEntity {
             else {
                 tableElement.setPublicKeyFile(publicKeyFilePath);
             }*/
+        }
+        if (migrationToken != null) {
+            tableElement.setMigrationToken(migrationToken);
         }
         return tableElement;
     }
