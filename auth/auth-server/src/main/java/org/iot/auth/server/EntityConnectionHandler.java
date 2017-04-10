@@ -16,14 +16,10 @@
 package org.iot.auth.server;
 
 import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.io.RuntimeIOException;
-import org.iot.auth.crypto.DistributionDiffieHellman;
-import org.iot.auth.crypto.DistributionKey;
-import org.iot.auth.crypto.SessionKey;
+import org.iot.auth.crypto.*;
 import org.iot.auth.exception.*;
 import org.slf4j.Logger;
 import org.iot.auth.AuthServer;
-import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.io.BufferedString;
@@ -188,7 +184,7 @@ public abstract class EntityConnectionHandler {
             } catch (InvalidMacException | MessageIntegrityException e) {
                 getLogger().error("InvalidMacException | MessageIntegrityException {}",
                         ExceptionToString.convertExceptionToStackTrace(e));
-                throw new RuntimeIOException("Integrity error occurred during decryptVerify!");
+                throw new RuntimeException("Integrity error occurred during decryptVerify!");
             }
 
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
@@ -203,15 +199,15 @@ public abstract class EntityConnectionHandler {
             close();
         }
         else if (type == MessageType.MIGRATION_REQ_WITH_SIGN) {
-            getLogger().info("Received migration request!");
+            getLogger().info("Received migration request with signature!");
             Buffer decPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
             Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
             getLogger().info("Decrypted data (" + decPayload.length() + "): " + decPayload.toHexString());
 
-            MigrationReqMessage migrationReqMessage =
+            MigrationReqMessage migrationReq =
                     new MigrationReqMessage(MessageType.MIGRATION_REQ_WITH_SIGN, decPayload);
 
-            RegisteredEntity requestingEntity = server.getRegisteredEntity(migrationReqMessage.getEntityName());
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(migrationReq.getEntityName());
             if (requestingEntity == null) {
                 throw new UnrecognizedEntityException("Error in MIGRATION_REQ_WITH_SIGN: Migration requester is not found!");
             }
@@ -228,8 +224,8 @@ public abstract class EntityConnectionHandler {
             catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
                 throw new InvalidSignatureException("Entity signature verification failed!!");
             }
-            getLogger().info("Received auth nonce: {}", migrationReqMessage.getAuthNonce().toHexString());
-            if (!authNonce.equals(migrationReqMessage.getAuthNonce())) {
+            getLogger().info("Received auth nonce: " + migrationReq.getAuthNonce().toHexString());
+            if (!authNonce.equals(migrationReq.getAuthNonce())) {
                 throw new InvalidNonceException("Auth nonce does not match!");
             }
             else {
@@ -238,9 +234,43 @@ public abstract class EntityConnectionHandler {
             X509Certificate backupCertificate =
                     server.getTrustedAuthInfo(requestingEntity.getBackupFromAuthID()).getBackupCertificate();
             MigrationRespMessage migrationResp = new MigrationRespMessage(server.getAuthID(),
-                    migrationReqMessage.getEntityNonce(), backupCertificate);
-            writeToSocket(migrationResp.serializeAndSign(server.getCrypto()).getRawBytes());
-            //encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
+                    migrationReq.getEntityNonce(), backupCertificate);
+            writeToSocket(migrationResp.serializeSign(server.getCrypto()).getRawBytes());
+            close();
+        }
+        else if (type == MessageType.MIGRATION_REQ_WITH_MAC) {
+            getLogger().info("Received migration request with MAC!");
+            // find out requesting entity's name first
+            MigrationReqMessage migrationReq =
+                    new MigrationReqMessage(MessageType.MIGRATION_REQ_WITH_MAC, payload);
+            getLogger().info("Requesting entity's name is :" + migrationReq.getEntityName());
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(migrationReq.getEntityName());
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in MIGRATION_REQ_WITH_MAC: Migration requester is not found!");
+            }
+            getLogger().info("requestingEntity: " + requestingEntity.toString());
+            // check MAC
+            MigrationToken migrationToken = requestingEntity.getMigrationToken();
+            DistributionKey currentDistributionMacKey = migrationToken.getCurrentDistributionMacKey();
+            try {
+                currentDistributionMacKey.verifyMacExtractData(payload);
+            } catch (InvalidMacException e) {
+                getLogger().error("InvalidMacException: " + ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException("Integrity error occurred during verifying MAC!");
+            }
+            // check nonce
+            getLogger().info("Received auth nonce: " + migrationReq.getAuthNonce().toHexString());
+            if (!authNonce.equals(migrationReq.getAuthNonce())) {
+                throw new InvalidNonceException("Auth nonce does not match!");
+            }
+            else {
+                getLogger().info("Auth nonce is correct!");
+            }
+            // send migration token
+            MigrationRespMessage migrationResp = new MigrationRespMessage(server.getAuthID(),
+                    migrationReq.getEntityNonce(), migrationToken.getEncryptedNewDistributionKey());
+            writeToSocket(migrationResp.serializeAthenticate(currentDistributionMacKey).getRawBytes());
+            close();
         }
         else {
             getLogger().info("Received unrecognized message from the entity!");

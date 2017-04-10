@@ -42,6 +42,8 @@ public enum MessageType {
     /** For migrating registered entities **/
     MIGRATION_REQ_WITH_SIGN((byte)50),
     MIGRATION_RESP_WITH_SIGN((byte)51),
+    MIGRATION_REQ_WITH_MAC((byte)52),
+    MIGRATION_RESP_WITH_MAC((byte)53),
     SECURE_PUB((byte)40),
     AUTH_ALERT((byte)100);
 

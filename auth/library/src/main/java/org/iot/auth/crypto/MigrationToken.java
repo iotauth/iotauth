@@ -28,6 +28,12 @@ public class MigrationToken {
         buffer.concat(currentDistributionMacKey.serialize());
         return buffer;
     }
+    public DistributionKey getCurrentDistributionMacKey() {
+        return currentDistributionMacKey;
+    }
+    public Buffer getEncryptedNewDistributionKey() {
+        return encryptedNewDistributionKey;
+    }
     // TODO: this must not be just symmetric key, should be distribution key?
     // TODO: it is because when serializing, experiation data and crypto spec should be included as well?
     private DistributionKey currentDistributionMacKey;
