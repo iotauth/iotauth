@@ -83,6 +83,34 @@ function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
     iotAuth.sendSessionKeyReq(options, handleSessionKeyResp, eventHandlers, callbackParams);
 }
 
+function handleMigrationResp(newAuthId, newCredential) {
+    entityConfig.authInfo.id = newAuthId;
+    if (entityConfig.entityInfo.usePermanentDistKey) {
+        currentDistributionKey =  newCredential;
+    }
+    else {
+        entityConfig.authInfo.publicKey = newCredential;
+    }
+    entityConfig.authInfo.host = entityConfig.migrationInfo.host;
+    entityConfig.authInfo.port = entityConfig.migrationInfo.port;
+    console.log('migration completed!');
+    console.log('new Auth info: !');
+    console.log(util.inspect(entityConfig.authInfo));
+}
+
+function sendMigrationRequest() {
+    if (entityConfig.migrationInfo) {
+        var options = iotAuth.getMigrationReqOptions(entityConfig);
+        var eventHandlers = {
+            onError: onError
+        };
+        iotAuth.migrateToTrustedAuth(options, handleMigrationResp, eventHandlers);
+    }
+    else {
+        console.log('Failed to migrate! no information for migration.');
+    }
+}
+
 // event handlers for listening server
 function onServerListening() {
 	outputs.listening = entityConfig.listeningServerInfo.port;
@@ -303,6 +331,10 @@ SecureCommServer.prototype.showSocket = function() {
         result += 'socket sessionKey:' + util.inspect(connectedClients[i].sessionKey) + '\n\n';
     }
     return result;
+}
+
+SecureCommServer.prototype.migrateToTrustedAuth = function() {
+    sendMigrationRequest();
 }
 
 module.exports = SecureCommServer;

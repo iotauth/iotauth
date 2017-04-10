@@ -168,6 +168,11 @@ function commandInterpreter() {
             fs.writeFileSync(fileName, received);
             console.log('file data saved to ' + fileName);
         }
+        else if (command == 'mig') {
+            console.log('migration request command!');
+            secureCommServer.migrateToTrustedAuth();
+
+        }
         else {
             console.log('unrecognized command: ' + command);
         }

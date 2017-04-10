@@ -130,9 +130,14 @@ function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbac
     iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, eventHandlers, callbackParameters);
 }
 
-function handleMigrationResp(newAuthId, newAuthPublicKey) {
+function handleMigrationResp(newAuthId, newCredential) {
     entityConfig.authInfo.id = newAuthId;
-    entityConfig.authInfo.publicKey = newAuthPublicKey;
+    if (entityConfig.entityInfo.usePermanentDistKey) {
+        currentDistributionKey =  newCredential;
+    }
+    else {
+        entityConfig.authInfo.publicKey = newCredential;
+    }
     entityConfig.authInfo.host = entityConfig.migrationInfo.host;
     entityConfig.authInfo.port = entityConfig.migrationInfo.port;
     console.log('migration completed!');
