@@ -23,12 +23,23 @@
 var fs = require('fs');
 var SecureCommServer = require('../accessors/SecureCommServer');
 
+var authFailureThreshold = 3;
+var authFailureCount = 0;
+
 function connectionHandler(info) {
     console.log('Handler: ' + info);
 }
 
 function errorHandler(info) {
     console.error('Handler: ' + info);
+    if (info.includes('Error occurred in session key request')) {
+        authFailureCount++;
+        console.log('failure in connection with Auth : failure count: ' + authFailureCount);
+        if (authFailureCount >= authFailureThreshold) {
+            console.log('failure count reached threshold, try migration...');
+            secureCommServer.migrateToTrustedAuth();
+        }
+    }
 }
 
 function listeningHandler(port) {
