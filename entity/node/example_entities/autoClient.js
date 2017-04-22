@@ -26,6 +26,8 @@ var autoSendPeriod = 2000;
 var useSameSessionKeyCount = 3;
 var currentCount = 0;
 var currentTimeout = null;
+var authFailureThreshold = 3;
+var authFailureCount = 0;
 
 function autoSend() {
     var fileName = '../data_examples/data.bin';
@@ -46,6 +48,7 @@ function autoSend() {
 function connectedHandler(connected) {
     if (connected == true) {
         console.log('Handler: communication initialization succeeded');
+        authFailureCount = 0;
         currentCount = useSameSessionKeyCount;
         autoSend();
     }
@@ -60,6 +63,14 @@ function connectedHandler(connected) {
 
 function errorHandler(message) {
     console.error('Handler: Error in secure comm - details: ' + message);
+    if (message.includes('Error occurred in session key request')) {
+        authFailureCount++;
+        console.log('failure in connection with Auth : failure count: ' + authFailureCount);
+        if (authFailureCount >= authFailureThreshold) {
+            console.log('failure count reached threshold, try migration...');
+            secureCommClient.migrateToTrustedAuth();
+        }
+    }
 }
 
 function receivedHandler(data) {
@@ -83,6 +94,10 @@ secureCommClient.setOutputHandler('connected', connectedHandler);
 secureCommClient.setOutputHandler('error', errorHandler);
 secureCommClient.setOutputHandler('received', receivedHandler);
 
+// set number of cached keys to 1
+secureCommClient.setParameter('numKeysPerRequest', 1);
+
+/*
 // For publish-subscribe experiments based individual secure connection using proposed approach
 if (process.argv.length > 5) {
     var commandArg = process.argv[3];
@@ -93,6 +108,7 @@ if (process.argv.length > 5) {
         secureCommClient.provideInput('serverHostPort', {host: 'localhost', port: serverPort});
     }
 }
+*/
 
 /*
         {
@@ -100,14 +116,19 @@ if (process.argv.length > 5) {
             "port": 21100,
             "host": "localhost"
         },
+        {
+            "name": "net2.server",
+            "port": 22100,
+            "host": "localhost"
+        },
 */
 
 function autoConnect() {
-    secureCommClient.provideInput('serverHostPort', {host: 'localhost', port: 21100});
+    secureCommClient.provideInput('serverHostPort', {host: 'localhost', port: 22100});
     setTimeout(autoConnect, autoSendPeriod * useSameSessionKeyCount);
-
 }
 autoConnect();
+
 /*
 function repeatSending() {
 
