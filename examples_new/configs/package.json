@@ -1,0 +1,14 @@
+{
+  "name": "iotauth_configs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Hokeun Kim",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "JSON2": "*"
+  },
+  "description": "Node.js module for generating config files"
+}
