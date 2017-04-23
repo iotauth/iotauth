@@ -22,6 +22,7 @@
 
 var fs = require('fs');
 var JSON2 = require('JSON2');
+var common = require('common');
 const execSync = require('child_process').execSync;
 
 const EXAMPLES_DIR = process.cwd() + '/';
@@ -108,29 +109,24 @@ function getMigrationInfo(entity) {
 	};
 }
 function getCryptoInfo(entity) {
-	const DEFAULT_SIGN = 'RSA-SHA256';
-	const DEFAULT_RSA_KEY_SIZE = 256;     // 2048 bits
-	const DEFAULT_RSA_PADDING = 'RSA_PKCS1_PADDING';
-	const DEFAULT_CIPHER = 'AES-128-CBC';
-	const DEFAULT_MAC = 'SHA256';
     var cryptoInfo = {};
     if (entity.usePermanentDistKey != true) {
         cryptoInfo.publicKeyCryptoSpec = {
-            'sign': DEFAULT_SIGN,
-            'padding': DEFAULT_RSA_PADDING,
-            'keySize': DEFAULT_RSA_KEY_SIZE
+            'sign': common.DEFAULT_SIGN,
+            'padding': common.DEFAULT_RSA_PADDING,
+            'keySize': common.DEFAULT_RSA_KEY_SIZE
         };
         if (entity.diffieHellman != null) {
             cryptoInfo.publicKeyCryptoSpec.diffieHellman = entity.diffieHellman;
         }
     }
     cryptoInfo.distributionCryptoSpec = {
-        'cipher': DEFAULT_CIPHER,
-        'mac': DEFAULT_MAC
+        'cipher': common.DEFAULT_CIPHER,
+        'mac': common.DEFAULT_MAC
     };
     cryptoInfo.sessionCryptoSpec = {
-        'cipher': DEFAULT_CIPHER,
-        'mac': DEFAULT_MAC
+        'cipher': common.DEFAULT_CIPHER,
+        'mac': common.DEFAULT_MAC
     };
     if (entity.diffieHellman != null) {
         cryptoInfo.sessionCryptoSpec.diffieHellman = entity.diffieHellman;
