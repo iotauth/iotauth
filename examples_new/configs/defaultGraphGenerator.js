@@ -23,22 +23,33 @@
 var fs = require('fs');
 var JSON2 = require('JSON2');
 
-var numNets = 2;
+var numNets = 3;
 
 var authList = [];
 var entityList = [];
+var authTrusts = [];
 var assignments = [];
 
 for (var netId = 1; netId <= numNets; netId++) {
+	var authId = 100 + netId;
 	var authInfo = {
-		"id": 100 + netId
+		"id": authId
 	};
 	authList.push(authInfo);
+	for (var otherNetId = netId + 1; otherNetId <= numNets; otherNetId++) {
+		var otherAuthId = 100 + otherNetId;
+		var authTrust = {
+			"id1": authId,
+			"id2": otherAuthId
+		};
+		authTrusts.push(authTrust)
+	}
 }
 
 var graph = {
 	authList: authList,
 	entityList: entityList,
+	authTrusts: authTrusts,
 	assignments: assignments
 };
 

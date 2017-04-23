@@ -8,7 +8,8 @@
   "author": "Hokeun Kim",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "JSON2": "*"
+    "JSON2": "*",
+    "readline-sync": "*"
   },
   "description": "Node.js module for generating config files"
 }
