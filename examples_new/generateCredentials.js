@@ -18,6 +18,8 @@
  * @author Hokeun Kim
  */
 
+"use strict";
+
 var fs = require('fs');
 var readlineSync = require('readline-sync');
 const execSync = require('child_process').execSync;
@@ -31,9 +33,14 @@ const EXAMPLES_DIR = process.cwd() + '/';
 process.chdir('..');
 const PROJ_ROOT_DIR = process.cwd() + '/';
 
-const AUTH_CREDS_DIR= PROJ_ROOT_DIR + 'auth/credentials/';
-const ENTITY_CREDS_DIR= PROJ_ROOT_DIR + 'entity/credentials/';
-const AUTH_DATABASES_DIR= PROJ_ROOT_DIR + 'auth/databases/';
+const AUTH_CREDS_DIR = PROJ_ROOT_DIR + 'auth/credentials/';
+const CA_DIR = AUTH_CREDS_DIR + 'ca/';
+const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
+const VAL_DAYS = 730;
+
+const ENTITY_CREDS_DIR = PROJ_ROOT_DIR + 'entity/credentials/';
+const ENTITY_CERTS_DIR = ENTITY_CREDS_DIR + 'certs/';
+const ENTITY_KEYS_DIR = ENTITY_CREDS_DIR + 'keys/';
 
 // generate CA credentials
 process.chdir(AUTH_CREDS_DIR);
@@ -63,19 +70,64 @@ for (var i = 0; i < authList.length; i++) {
 }
 
 // exchange credentials for trusted Auths
-var authTrusts = graph.authTrusts;
 function copyAuthCerts(fromId, toId) {
 	var prefix = 'cp ' + AUTH_DATABASES_DIR + "auth" + fromId + '/my_certs/Auth' + fromId;
 	var suffix = 'Cert.pem ' + AUTH_DATABASES_DIR + 'auth' + toId + '/trusted_auth_certs';
 	execSync(prefix + 'Internet' + suffix);
 	execSync(prefix + 'Entity' + suffix);
 }
+var authTrusts = graph.authTrusts;
 for (var i = 0; i < authTrusts.length; i++) {
 	var authTrust = authTrusts[i];
 	copyAuthCerts(authTrust.id1, authTrust.id2);
 	copyAuthCerts(authTrust.id2, authTrust.id1);
 }
 
-console.log(execSync('pwd').toString());
+// generate entity credentials
+function generateEntityCert(entity, copyTo, keyPathPrefix, certPathPrefix) {
+	execSync('openssl genrsa -out ' + keyPathPrefix + 'Key.pem 2048');
+	execSync('openssl req -new -key ' + keyPathPrefix + 'Key.pem -sha256 -out ' + keyPathPrefix
+		+ 'Req.pem -subj /C=US/ST=CA/L=Berkeley/O=EECS/OU=' + entity.netName + '/CN=' + entity.name);
+	execSync('openssl x509 -passin pass:' + CA_PASSWORD + ' -req -in ' + keyPathPrefix + 'Req.pem -sha256 -extensions usr_cert -CA '
+		+ CA_DIR + 'CACert.pem -CAkey ' + CA_DIR + 'CAKey.pem -CAcreateserial -out ' + certPathPrefix + 'Cert.pem -days ' + VAL_DAYS);
+	execSync('rm ' + keyPathPrefix + 'Req.pem');
+	if (entity.inDerFormat == true) {
+		execSync('openssl pkcs8 -topk8 -inform PEM -outform DER -in ' + keyPathPrefix + 'Key.pem -out ' + keyPathPrefix + 'Key.der -nocrypt');
+		execSync('rm ' + keyPathPrefix + 'Key.pem');
+	}
+	execSync('cp ' + certPathPrefix + 'Cert.pem ' + copyTo);
+}
+function generateEntityDistKey(entity, copyTo, keyPathPrefix) {
+	const CIPHER_KEY_SIZE = 16;
+	const MAC_KEY_SIZE = 32;
+	execSync('openssl rand ' + CIPHER_KEY_SIZE + ' > ' + keyPathPrefix + 'CipherKey.key');
+	execSync('openssl rand ' + MAC_KEY_SIZE + ' > ' + keyPathPrefix + 'MacKey.key');
 
-console.log(graph);
+	execSync('cp ' + keyPathPrefix +'CipherKey.key ' + copyTo);
+	execSync('cp ' + keyPathPrefix + 'MacKey.key ' + copyTo);
+}
+function generateEntityCredential(entity, copyTo) {
+	var KEYS_NET_DIR = ENTITY_KEYS_DIR + entity.netName + '/';
+	execSync('mkdir -p ' + KEYS_NET_DIR);
+	var keyPathPrefix = KEYS_NET_DIR + entity.credentialPrefix;
+	if (entity.usePermanentDistKey == true) {
+		generateEntityDistKey(entity, copyTo + 'entity_keys/', keyPathPrefix);
+	}
+	else {
+		var CERTS_NET_DIR = ENTITY_CERTS_DIR + entity.netName + '/';
+		execSync('mkdir -p ' + CERTS_NET_DIR);
+		var certPathPrefix = CERTS_NET_DIR + entity.credentialPrefix;
+		generateEntityCert(entity, copyTo + 'entity_certs/', keyPathPrefix, certPathPrefix);
+	}
+}
+var entityList = graph.entityList;
+var assignments = graph.assignments;
+for (var i = 0; i < entityList.length; i++) {
+	var entity = entityList[i];
+	var authId = assignments[entity.name];
+	generateEntityCredential(entity, AUTH_DATABASES_DIR + 'auth' + authId + '/');
+}
+
+//console.log(execSync('pwd').toString());
+
+//console.log(graph);

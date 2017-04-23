@@ -23,12 +23,47 @@
 var fs = require('fs');
 var JSON2 = require('JSON2');
 
+function cloneJson(a) {
+   return JSON.parse(JSON.stringify(a));
+}
+function capitalizeFirstLetter(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+var DEFAULT_ENTITY_LIST = [
+    { group: 'Clients',		name: 'client' },
+    { group: 'Clients',		name: 'rcClient' },
+    { group: 'Clients',		name: 'udpClient' },
+    { group: 'Clients',	 	name: 'rcUdpClient' },
+    { group: 'Clients',	 	name: 'safetyCriticalClient' },
+
+    { group: 'Servers',		name: 'server', port: 100 },
+    { group: 'Servers',		name: 'rcServer', port: 300 },
+    { group: 'Servers',		name: 'udpServer', port: 400 },
+    { group: 'Servers',		name: 'safetyCriticalServer', port: 500 },
+    { group: 'Servers',		name: 'rcUdpServer', port: 600 },
+
+    { group: 'PtClients',	name: 'ptClient' },
+    { group: 'PtServers',	name: 'ptServer', port: 200 },
+    { group: 'PtPublishers',name: 'ptPublisher' },
+    { group: 'PtSubscribers',name: 'ptSubscriber' }
+];
+
+for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
+	var entity = DEFAULT_ENTITY_LIST[i];
+	entity.distProtocol = entity.name.toLowerCase().includes('udp') ? 'UDP' : 'TCP';
+	entity.usePermanentDistKey = entity.name.toLowerCase().includes('rc') ? true : false;
+	if (entity.name.toLowerCase().includes('pt')) {
+		entity.inDerFormat = true;
+	}
+}
+
 var numNets = 3;
 
 var authList = [];
 var entityList = [];
 var authTrusts = [];
-var assignments = [];
+var assignments = {};
 
 for (var netId = 1; netId <= numNets; netId++) {
 	var authId = 100 + netId;
@@ -44,13 +79,22 @@ for (var netId = 1; netId <= numNets; netId++) {
 		};
 		authTrusts.push(authTrust)
 	}
+	var netEntityList = cloneJson(DEFAULT_ENTITY_LIST);
+	for (var i = 0; i < netEntityList.length; i++) {
+		entity = netEntityList[i];
+		entity.netName = 'net' + netId;
+		entity.credentialPrefix = 'Net' + netId + '.' + capitalizeFirstLetter(entity.name);
+		entity.name = 'net' + netId + '.' + entity.name;
+		assignments[entity.name] = authId;
+		entityList.push(entity);
+	}
 }
 
 var graph = {
 	authList: authList,
-	entityList: entityList,
 	authTrusts: authTrusts,
-	assignments: assignments
+	assignments: assignments,
+	entityList: entityList
 };
 
 fs.writeFileSync('default.graph', 

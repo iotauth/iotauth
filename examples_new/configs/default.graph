@@ -10,7 +10,6 @@
 			"id": 103
 		}
 	],
-	"entityList": [],
 	"authTrusts": [
 		{
 			"id1": 101,
@@ -25,5 +24,416 @@
 			"id2": 103
 		}
 	],
-	"assignments": []
+	"assignments": {
+		"net1.client": 101,
+		"net1.rcClient": 101,
+		"net1.udpClient": 101,
+		"net1.rcUdpClient": 101,
+		"net1.safetyCriticalClient": 101,
+		"net1.server": 101,
+		"net1.rcServer": 101,
+		"net1.udpServer": 101,
+		"net1.safetyCriticalServer": 101,
+		"net1.rcUdpServer": 101,
+		"net1.ptClient": 101,
+		"net1.ptServer": 101,
+		"net1.ptPublisher": 101,
+		"net1.ptSubscriber": 101,
+		"net2.client": 102,
+		"net2.rcClient": 102,
+		"net2.udpClient": 102,
+		"net2.rcUdpClient": 102,
+		"net2.safetyCriticalClient": 102,
+		"net2.server": 102,
+		"net2.rcServer": 102,
+		"net2.udpServer": 102,
+		"net2.safetyCriticalServer": 102,
+		"net2.rcUdpServer": 102,
+		"net2.ptClient": 102,
+		"net2.ptServer": 102,
+		"net2.ptPublisher": 102,
+		"net2.ptSubscriber": 102,
+		"net3.client": 103,
+		"net3.rcClient": 103,
+		"net3.udpClient": 103,
+		"net3.rcUdpClient": 103,
+		"net3.safetyCriticalClient": 103,
+		"net3.server": 103,
+		"net3.rcServer": 103,
+		"net3.udpServer": 103,
+		"net3.safetyCriticalServer": 103,
+		"net3.rcUdpServer": 103,
+		"net3.ptClient": 103,
+		"net3.ptServer": 103,
+		"net3.ptPublisher": 103,
+		"net3.ptSubscriber": 103
+	},
+	"entityList": [
+		{
+			"group": "Clients",
+			"name": "net1.client",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Client"
+		},
+		{
+			"group": "Clients",
+			"name": "net1.rcClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net1.udpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"netName": "net1",
+			"credentialPrefix": "Net1.UdpClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net1.rcUdpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcUdpClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net1.safetyCriticalClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net1",
+			"credentialPrefix": "Net1.SafetyCriticalClient"
+		},
+		{
+			"group": "Servers",
+			"name": "net1.server",
+			"port": 100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Server"
+		},
+		{
+			"group": "Servers",
+			"name": "net1.rcServer",
+			"port": 300,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net1.udpServer",
+			"port": 400,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"netName": "net1",
+			"credentialPrefix": "Net1.UdpServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net1.safetyCriticalServer",
+			"port": 500,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net1",
+			"credentialPrefix": "Net1.SafetyCriticalServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net1.rcUdpServer",
+			"port": 600,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcUdpServer"
+		},
+		{
+			"group": "PtClients",
+			"name": "net1.ptClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net1",
+			"credentialPrefix": "Net1.PtClient"
+		},
+		{
+			"group": "PtServers",
+			"name": "net1.ptServer",
+			"port": 200,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net1",
+			"credentialPrefix": "Net1.PtServer"
+		},
+		{
+			"group": "PtPublishers",
+			"name": "net1.ptPublisher",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net1",
+			"credentialPrefix": "Net1.PtPublisher"
+		},
+		{
+			"group": "PtSubscribers",
+			"name": "net1.ptSubscriber",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net1",
+			"credentialPrefix": "Net1.PtSubscriber"
+		},
+		{
+			"group": "Clients",
+			"name": "net2.client",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net2",
+			"credentialPrefix": "Net2.Client"
+		},
+		{
+			"group": "Clients",
+			"name": "net2.rcClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net2.udpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"netName": "net2",
+			"credentialPrefix": "Net2.UdpClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net2.rcUdpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcUdpClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net2.safetyCriticalClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net2",
+			"credentialPrefix": "Net2.SafetyCriticalClient"
+		},
+		{
+			"group": "Servers",
+			"name": "net2.server",
+			"port": 100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net2",
+			"credentialPrefix": "Net2.Server"
+		},
+		{
+			"group": "Servers",
+			"name": "net2.rcServer",
+			"port": 300,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net2.udpServer",
+			"port": 400,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"netName": "net2",
+			"credentialPrefix": "Net2.UdpServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net2.safetyCriticalServer",
+			"port": 500,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net2",
+			"credentialPrefix": "Net2.SafetyCriticalServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net2.rcUdpServer",
+			"port": 600,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcUdpServer"
+		},
+		{
+			"group": "PtClients",
+			"name": "net2.ptClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net2",
+			"credentialPrefix": "Net2.PtClient"
+		},
+		{
+			"group": "PtServers",
+			"name": "net2.ptServer",
+			"port": 200,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net2",
+			"credentialPrefix": "Net2.PtServer"
+		},
+		{
+			"group": "PtPublishers",
+			"name": "net2.ptPublisher",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net2",
+			"credentialPrefix": "Net2.PtPublisher"
+		},
+		{
+			"group": "PtSubscribers",
+			"name": "net2.ptSubscriber",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net2",
+			"credentialPrefix": "Net2.PtSubscriber"
+		},
+		{
+			"group": "Clients",
+			"name": "net3.client",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net3",
+			"credentialPrefix": "Net3.Client"
+		},
+		{
+			"group": "Clients",
+			"name": "net3.rcClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net3.udpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"netName": "net3",
+			"credentialPrefix": "Net3.UdpClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net3.rcUdpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcUdpClient"
+		},
+		{
+			"group": "Clients",
+			"name": "net3.safetyCriticalClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net3",
+			"credentialPrefix": "Net3.SafetyCriticalClient"
+		},
+		{
+			"group": "Servers",
+			"name": "net3.server",
+			"port": 100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net3",
+			"credentialPrefix": "Net3.Server"
+		},
+		{
+			"group": "Servers",
+			"name": "net3.rcServer",
+			"port": 300,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net3.udpServer",
+			"port": 400,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"netName": "net3",
+			"credentialPrefix": "Net3.UdpServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net3.safetyCriticalServer",
+			"port": 500,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"netName": "net3",
+			"credentialPrefix": "Net3.SafetyCriticalServer"
+		},
+		{
+			"group": "Servers",
+			"name": "net3.rcUdpServer",
+			"port": 600,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcUdpServer"
+		},
+		{
+			"group": "PtClients",
+			"name": "net3.ptClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtClient"
+		},
+		{
+			"group": "PtServers",
+			"name": "net3.ptServer",
+			"port": 200,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtServer"
+		},
+		{
+			"group": "PtPublishers",
+			"name": "net3.ptPublisher",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtPublisher"
+		},
+		{
+			"group": "PtSubscribers",
+			"name": "net3.ptSubscriber",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtSubscriber"
+		}
+	]
 }
