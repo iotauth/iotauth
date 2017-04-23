@@ -1,13 +1,25 @@
 {
 	"authList": [
 		{
-			"id": 101
+			"id": 101,
+			"host": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901
 		},
 		{
-			"id": 102
+			"id": 102,
+			"host": "localhost",
+			"tcpPort": 22900,
+			"udpPort": 22902,
+			"authPort": 22901
 		},
 		{
-			"id": 103
+			"id": 103,
+			"host": "localhost",
+			"tcpPort": 23900,
+			"udpPort": 23902,
+			"authPort": 23901
 		}
 	],
 	"authTrusts": [
@@ -75,7 +87,8 @@
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"netName": "net1",
-			"credentialPrefix": "Net1.Client"
+			"credentialPrefix": "Net1.Client",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Clients",
@@ -83,7 +96,8 @@
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"netName": "net1",
-			"credentialPrefix": "Net1.RcClient"
+			"credentialPrefix": "Net1.RcClient",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Clients",
@@ -91,7 +105,8 @@
 			"distProtocol": "UDP",
 			"usePermanentDistKey": false,
 			"netName": "net1",
-			"credentialPrefix": "Net1.UdpClient"
+			"credentialPrefix": "Net1.UdpClient",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Clients",
@@ -99,60 +114,74 @@
 			"distProtocol": "UDP",
 			"usePermanentDistKey": true,
 			"netName": "net1",
-			"credentialPrefix": "Net1.RcUdpClient"
+			"credentialPrefix": "Net1.RcUdpClient",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Clients",
 			"name": "net1.safetyCriticalClient",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
+			"diffieHellman": "secp384r1",
 			"netName": "net1",
-			"credentialPrefix": "Net1.SafetyCriticalClient"
+			"credentialPrefix": "Net1.SafetyCriticalClient",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Servers",
 			"name": "net1.server",
-			"port": 100,
+			"port": 21100,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"netName": "net1",
-			"credentialPrefix": "Net1.Server"
+			"credentialPrefix": "Net1.Server",
+			"host": "localhost",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Servers",
 			"name": "net1.rcServer",
-			"port": 300,
+			"port": 21300,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"netName": "net1",
-			"credentialPrefix": "Net1.RcServer"
+			"credentialPrefix": "Net1.RcServer",
+			"host": "localhost",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Servers",
 			"name": "net1.udpServer",
-			"port": 400,
+			"port": 21400,
 			"distProtocol": "UDP",
 			"usePermanentDistKey": false,
 			"netName": "net1",
-			"credentialPrefix": "Net1.UdpServer"
+			"credentialPrefix": "Net1.UdpServer",
+			"host": "localhost",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Servers",
 			"name": "net1.safetyCriticalServer",
-			"port": 500,
+			"port": 21500,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
+			"diffieHellman": "secp384r1",
 			"netName": "net1",
-			"credentialPrefix": "Net1.SafetyCriticalServer"
+			"credentialPrefix": "Net1.SafetyCriticalServer",
+			"host": "localhost",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Servers",
 			"name": "net1.rcUdpServer",
-			"port": 600,
+			"port": 21600,
 			"distProtocol": "UDP",
 			"usePermanentDistKey": true,
 			"netName": "net1",
-			"credentialPrefix": "Net1.RcUdpServer"
+			"credentialPrefix": "Net1.RcUdpServer",
+			"host": "localhost",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "PtClients",
@@ -161,17 +190,20 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net1",
-			"credentialPrefix": "Net1.PtClient"
+			"credentialPrefix": "Net1.PtClient",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "PtServers",
 			"name": "net1.ptServer",
-			"port": 200,
+			"port": 21200,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net1",
-			"credentialPrefix": "Net1.PtServer"
+			"credentialPrefix": "Net1.PtServer",
+			"host": "localhost",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "PtPublishers",
@@ -180,7 +212,8 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net1",
-			"credentialPrefix": "Net1.PtPublisher"
+			"credentialPrefix": "Net1.PtPublisher",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "PtSubscribers",
@@ -189,7 +222,8 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net1",
-			"credentialPrefix": "Net1.PtSubscriber"
+			"credentialPrefix": "Net1.PtSubscriber",
+			"backupToAuthId": 102
 		},
 		{
 			"group": "Clients",
@@ -197,7 +231,8 @@
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"netName": "net2",
-			"credentialPrefix": "Net2.Client"
+			"credentialPrefix": "Net2.Client",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
@@ -205,7 +240,8 @@
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"netName": "net2",
-			"credentialPrefix": "Net2.RcClient"
+			"credentialPrefix": "Net2.RcClient",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
@@ -213,7 +249,8 @@
 			"distProtocol": "UDP",
 			"usePermanentDistKey": false,
 			"netName": "net2",
-			"credentialPrefix": "Net2.UdpClient"
+			"credentialPrefix": "Net2.UdpClient",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
@@ -221,60 +258,74 @@
 			"distProtocol": "UDP",
 			"usePermanentDistKey": true,
 			"netName": "net2",
-			"credentialPrefix": "Net2.RcUdpClient"
+			"credentialPrefix": "Net2.RcUdpClient",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
 			"name": "net2.safetyCriticalClient",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
+			"diffieHellman": "secp384r1",
 			"netName": "net2",
-			"credentialPrefix": "Net2.SafetyCriticalClient"
+			"credentialPrefix": "Net2.SafetyCriticalClient",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
 			"name": "net2.server",
-			"port": 100,
+			"port": 22100,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"netName": "net2",
-			"credentialPrefix": "Net2.Server"
+			"credentialPrefix": "Net2.Server",
+			"host": "localhost",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
 			"name": "net2.rcServer",
-			"port": 300,
+			"port": 22300,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"netName": "net2",
-			"credentialPrefix": "Net2.RcServer"
+			"credentialPrefix": "Net2.RcServer",
+			"host": "localhost",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
 			"name": "net2.udpServer",
-			"port": 400,
+			"port": 22400,
 			"distProtocol": "UDP",
 			"usePermanentDistKey": false,
 			"netName": "net2",
-			"credentialPrefix": "Net2.UdpServer"
+			"credentialPrefix": "Net2.UdpServer",
+			"host": "localhost",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
 			"name": "net2.safetyCriticalServer",
-			"port": 500,
+			"port": 22500,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
+			"diffieHellman": "secp384r1",
 			"netName": "net2",
-			"credentialPrefix": "Net2.SafetyCriticalServer"
+			"credentialPrefix": "Net2.SafetyCriticalServer",
+			"host": "localhost",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
 			"name": "net2.rcUdpServer",
-			"port": 600,
+			"port": 22600,
 			"distProtocol": "UDP",
 			"usePermanentDistKey": true,
 			"netName": "net2",
-			"credentialPrefix": "Net2.RcUdpServer"
+			"credentialPrefix": "Net2.RcUdpServer",
+			"host": "localhost",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "PtClients",
@@ -283,17 +334,20 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net2",
-			"credentialPrefix": "Net2.PtClient"
+			"credentialPrefix": "Net2.PtClient",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "PtServers",
 			"name": "net2.ptServer",
-			"port": 200,
+			"port": 22200,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net2",
-			"credentialPrefix": "Net2.PtServer"
+			"credentialPrefix": "Net2.PtServer",
+			"host": "localhost",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "PtPublishers",
@@ -302,7 +356,8 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net2",
-			"credentialPrefix": "Net2.PtPublisher"
+			"credentialPrefix": "Net2.PtPublisher",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "PtSubscribers",
@@ -311,7 +366,8 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net2",
-			"credentialPrefix": "Net2.PtSubscriber"
+			"credentialPrefix": "Net2.PtSubscriber",
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
@@ -319,7 +375,8 @@
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"netName": "net3",
-			"credentialPrefix": "Net3.Client"
+			"credentialPrefix": "Net3.Client",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Clients",
@@ -327,7 +384,8 @@
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"netName": "net3",
-			"credentialPrefix": "Net3.RcClient"
+			"credentialPrefix": "Net3.RcClient",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Clients",
@@ -335,7 +393,8 @@
 			"distProtocol": "UDP",
 			"usePermanentDistKey": false,
 			"netName": "net3",
-			"credentialPrefix": "Net3.UdpClient"
+			"credentialPrefix": "Net3.UdpClient",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Clients",
@@ -343,60 +402,74 @@
 			"distProtocol": "UDP",
 			"usePermanentDistKey": true,
 			"netName": "net3",
-			"credentialPrefix": "Net3.RcUdpClient"
+			"credentialPrefix": "Net3.RcUdpClient",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Clients",
 			"name": "net3.safetyCriticalClient",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
+			"diffieHellman": "secp384r1",
 			"netName": "net3",
-			"credentialPrefix": "Net3.SafetyCriticalClient"
+			"credentialPrefix": "Net3.SafetyCriticalClient",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Servers",
 			"name": "net3.server",
-			"port": 100,
+			"port": 23100,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"netName": "net3",
-			"credentialPrefix": "Net3.Server"
+			"credentialPrefix": "Net3.Server",
+			"host": "localhost",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Servers",
 			"name": "net3.rcServer",
-			"port": 300,
+			"port": 23300,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"netName": "net3",
-			"credentialPrefix": "Net3.RcServer"
+			"credentialPrefix": "Net3.RcServer",
+			"host": "localhost",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Servers",
 			"name": "net3.udpServer",
-			"port": 400,
+			"port": 23400,
 			"distProtocol": "UDP",
 			"usePermanentDistKey": false,
 			"netName": "net3",
-			"credentialPrefix": "Net3.UdpServer"
+			"credentialPrefix": "Net3.UdpServer",
+			"host": "localhost",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Servers",
 			"name": "net3.safetyCriticalServer",
-			"port": 500,
+			"port": 23500,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
+			"diffieHellman": "secp384r1",
 			"netName": "net3",
-			"credentialPrefix": "Net3.SafetyCriticalServer"
+			"credentialPrefix": "Net3.SafetyCriticalServer",
+			"host": "localhost",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "Servers",
 			"name": "net3.rcUdpServer",
-			"port": 600,
+			"port": 23600,
 			"distProtocol": "UDP",
 			"usePermanentDistKey": true,
 			"netName": "net3",
-			"credentialPrefix": "Net3.RcUdpServer"
+			"credentialPrefix": "Net3.RcUdpServer",
+			"host": "localhost",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "PtClients",
@@ -405,17 +478,20 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net3",
-			"credentialPrefix": "Net3.PtClient"
+			"credentialPrefix": "Net3.PtClient",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "PtServers",
 			"name": "net3.ptServer",
-			"port": 200,
+			"port": 23200,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net3",
-			"credentialPrefix": "Net3.PtServer"
+			"credentialPrefix": "Net3.PtServer",
+			"host": "localhost",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "PtPublishers",
@@ -424,7 +500,8 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net3",
-			"credentialPrefix": "Net3.PtPublisher"
+			"credentialPrefix": "Net3.PtPublisher",
+			"backupToAuthId": 101
 		},
 		{
 			"group": "PtSubscribers",
@@ -433,7 +510,8 @@
 			"usePermanentDistKey": false,
 			"inDerFormat": true,
 			"netName": "net3",
-			"credentialPrefix": "Net3.PtSubscriber"
+			"credentialPrefix": "Net3.PtSubscriber",
+			"backupToAuthId": 101
 		}
 	]
 }

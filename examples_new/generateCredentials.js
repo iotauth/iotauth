@@ -23,13 +23,17 @@
 var fs = require('fs');
 var readlineSync = require('readline-sync');
 const execSync = require('child_process').execSync;
+const EXAMPLES_DIR = process.cwd() + '/';
+
+// get graph file
+var graphFile = 'configs/default.graph';
+var graph = JSON.parse(fs.readFileSync(EXAMPLES_DIR + graphFile));
 
 const MASTER_PASSWORD = readlineSync.questionNewPassword('Enter new password for Auth: ', {min: 4, mask: ''});
 const CA_PASSWORD = MASTER_PASSWORD;
 const AUTH_PASSWORD = MASTER_PASSWORD;
 
 // basic directories
-const EXAMPLES_DIR = process.cwd() + '/';
 process.chdir('..');
 const PROJ_ROOT_DIR = process.cwd() + '/';
 
@@ -38,16 +42,11 @@ const CA_DIR = AUTH_CREDS_DIR + 'ca/';
 const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
 const VAL_DAYS = 730;
 
-const ENTITY_CREDS_DIR = PROJ_ROOT_DIR + 'entity/credentials/';
-const ENTITY_CERTS_DIR = ENTITY_CREDS_DIR + 'certs/';
-const ENTITY_KEYS_DIR = ENTITY_CREDS_DIR + 'keys/';
-
 // generate CA credentials
 process.chdir(AUTH_CREDS_DIR);
 execSync('./generateCACredentials.sh ' + CA_PASSWORD);
 
 // generate Auth credentials and directories
-var graph = JSON.parse(fs.readFileSync(EXAMPLES_DIR + 'configs/default.graph'));
 var authList = graph.authList;
 for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
@@ -83,6 +82,11 @@ for (var i = 0; i < authTrusts.length; i++) {
 	copyAuthCerts(authTrust.id2, authTrust.id1);
 }
 
+// copy Auth certs to entity directory
+const AUTH_CERTS_DIR = PROJ_ROOT_DIR + 'entity/auth_certs';
+execSync('mkdir -p ' + AUTH_CERTS_DIR);
+execSync('cp ' + AUTH_DATABASES_DIR + 'auth*/my_certs/*EntityCert.pem ' + AUTH_CERTS_DIR);
+
 // generate entity credentials
 function generateEntityCert(entity, copyTo, keyPathPrefix, certPathPrefix) {
 	execSync('openssl genrsa -out ' + keyPathPrefix + 'Key.pem 2048');
@@ -107,6 +111,10 @@ function generateEntityDistKey(entity, copyTo, keyPathPrefix) {
 	execSync('cp ' + keyPathPrefix + 'MacKey.key ' + copyTo);
 }
 function generateEntityCredential(entity, copyTo) {
+	const ENTITY_CREDS_DIR = PROJ_ROOT_DIR + 'entity/credentials/';
+	const ENTITY_CERTS_DIR = ENTITY_CREDS_DIR + 'certs/';
+	const ENTITY_KEYS_DIR = ENTITY_CREDS_DIR + 'keys/';
+
 	var KEYS_NET_DIR = ENTITY_KEYS_DIR + entity.netName + '/';
 	execSync('mkdir -p ' + KEYS_NET_DIR);
 	var keyPathPrefix = KEYS_NET_DIR + entity.credentialPrefix;

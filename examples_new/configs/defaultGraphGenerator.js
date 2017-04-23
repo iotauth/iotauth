@@ -30,6 +30,19 @@ function capitalizeFirstLetter(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function getNetPortBase(netId) {
+    return 20000 + netId * 1000;
+}
+function getAuthPortBase(netId) {
+    return getNetPortBase(netId) + 900;
+}
+function getAuthId(netId) {
+    return 100 + netId;
+}
+function getNetId(authId) {
+    return authId - 100;
+}
+
 var DEFAULT_ENTITY_LIST = [
     { group: 'Clients',		name: 'client' },
     { group: 'Clients',		name: 'rcClient' },
@@ -56,6 +69,11 @@ for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
 	if (entity.name.toLowerCase().includes('pt')) {
 		entity.inDerFormat = true;
 	}
+	if (entity.name.toLowerCase().includes('safetycritical')) {
+		// generates 384-bit (48-byte) secret, 128 bit for cipher, 256 bit for MAC
+		const DEFAULT_DH = 'secp384r1';
+		entity.diffieHellman = DEFAULT_DH;
+	}
 }
 
 var numNets = 3;
@@ -65,17 +83,23 @@ var entityList = [];
 var authTrusts = [];
 var assignments = {};
 
+const AUTH_UDP_PORT_OFFSET = 2;
+const TRUSTED_AUTH_PORT_OFFSET = 1;
 for (var netId = 1; netId <= numNets; netId++) {
-	var authId = 100 + netId;
+	var authId = getAuthId(netId);
 	var authInfo = {
-		"id": authId
+		'id': authId,
+		'host': 'localhost',
+		'tcpPort': getAuthPortBase(netId),
+		'udpPort': getAuthPortBase(netId) + AUTH_UDP_PORT_OFFSET,
+		'authPort': getAuthPortBase(netId) + TRUSTED_AUTH_PORT_OFFSET
 	};
 	authList.push(authInfo);
 	for (var otherNetId = netId + 1; otherNetId <= numNets; otherNetId++) {
-		var otherAuthId = 100 + otherNetId;
+		var otherAuthId = getAuthId(otherNetId);
 		var authTrust = {
-			"id1": authId,
-			"id2": otherAuthId
+			'id1': authId,
+			'id2': otherAuthId
 		};
 		authTrusts.push(authTrust)
 	}
@@ -85,6 +109,11 @@ for (var netId = 1; netId <= numNets; netId++) {
 		entity.netName = 'net' + netId;
 		entity.credentialPrefix = 'Net' + netId + '.' + capitalizeFirstLetter(entity.name);
 		entity.name = 'net' + netId + '.' + entity.name;
+		if (entity.port != null) {
+			entity.port = getNetPortBase(netId) + entity.port;
+			entity.host = 'localhost';
+		}
+		entity.backupToAuthId = getAuthId((netId % numNets) + 1);
 		assignments[entity.name] = authId;
 		entityList.push(entity);
 	}
