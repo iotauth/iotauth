@@ -212,3 +212,4 @@ createConfigDirs();
 generateRegisteredEntityTables();
 generateCommunicationPolicyTables();
 generateTrustedAuthTables();
+generatePropertiesFiles();

@@ -1,0 +1,132 @@
+{
+	"authList": [
+		{
+			"id": 1,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21100,
+			"udpPort": 21102,
+			"authPort": 21101,
+			"dbProtectionMethod": 1
+		},
+		{
+			"id": 2,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21200,
+			"udpPort": 21202,
+			"authPort": 21201,
+			"dbProtectionMethod": 1
+		},
+		{
+			"id": 3,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21300,
+			"udpPort": 21302,
+			"authPort": 21301,
+			"dbProtectionMethod": 1
+		}
+	],
+	"authTrusts": [
+		{
+			"id1": 1,
+			"id2": 2
+		},
+		{
+			"id1": 1,
+			"id2": 3
+		},
+		{
+			"id1": 2,
+			"id2": 3
+		}
+	],
+	"assignments": {
+		"t1": 1,
+		"t2": 1,
+		"t3": 2,
+		"t4": 2,
+		"t5": 3
+	},
+	"entityList": [
+		{
+			"group": "Servers",
+			"name": "t1",
+			"host": "localhost",
+			"port": 22100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "Servers",
+			"credentialPrefix": "t1.Server",
+			"backupToAuthId": 3
+		},
+		{
+			"group": "Servers",
+			"name": "t3",
+			"host": "localhost",
+			"port": 22101,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "Servers",
+			"credentialPrefix": "t3.Server",
+			"backupToAuthId": -1
+		},
+		{
+			"group": "Clients",
+			"name": "t2",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "Clients",
+			"credentialPrefix": "t2.Client",
+			"backupToAuthId": 2,
+			"targetServerInfoList": [
+				{
+					"name": "t1",
+					"host": "localhost",
+					"port": 22100
+				}
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "t4",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "Clients",
+			"credentialPrefix": "t4.Client",
+			"targetServerInfoList": [
+				{
+					"name": "t3",
+					"host": "localhost",
+					"port": 22101
+				}
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "t5",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "Clients",
+			"credentialPrefix": "t5.Client",
+			"targetServerInfoList": [
+				{
+					"name": "t1",
+					"host": "localhost",
+					"port": 22100
+				}
+			]
+		}
+	]
+}

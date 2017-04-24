@@ -107,6 +107,9 @@ function getAuthInfo(entity) {
 }
 function getMigrationInfo(entity) {
 	var auth = auths[entity.backupToAuthId];
+	if (auth == null) {
+		return {};
+	}
 	return {
 		host: auth.entityHost,
 		port: entity.distProtocol == 'TCP' ? auth.tcpPort : auth.udpPort
@@ -138,6 +141,9 @@ function getCryptoInfo(entity) {
     return cryptoInfo;
 }
 function getTargetServerInfoList(entity) {
+	if (entity.targetServerInfoList != null) {
+		return entity.targetServerInfoList;
+	}
 	var targetServerInfoList = [];
 	if (entity.diffieHellman != null) {
 		targetServerInfoList = targetServerInfoList.concat(diffieHellmanServerInfoList);
@@ -150,11 +156,11 @@ function getTargetServerInfoList(entity) {
 	}
 	return targetServerInfoList;
 }
-function writeEntityConfigToFile(entityConfig) {
+function writeEntityConfigToFile(entity, entityConfig) {
     var entityFullName = entityConfig.entityInfo.name;
     var separatorIndex = entityFullName.indexOf('.');
 	const ENTITY_CONFIG_DIR = PROJ_ROOT_DIR + 'entity/node/example_entities/configs/'
-		+ entityFullName.substring(0, separatorIndex) + '/';
+		+ entity.netName + '/';
 	execSync('mkdir -p ' + ENTITY_CONFIG_DIR);
     var configFilePath = ENTITY_CONFIG_DIR + entityFullName.substring(separatorIndex + 1) + '.config';
     console.log('Writing entityConfig to ' + configFilePath + ' ...');
@@ -183,6 +189,6 @@ for (var i = 0; i < entityList.length; i++) {
 	else {
 		entityConfig.targetServerInfoList = getTargetServerInfoList(entity);
 	}
-	writeEntityConfigToFile(entityConfig);
+	writeEntityConfigToFile(entity, entityConfig);
 	//console.log(entityConfig);
 }
