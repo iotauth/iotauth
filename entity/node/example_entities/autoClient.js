@@ -123,8 +123,12 @@ if (process.argv.length > 5) {
         },
 */
 
+var targetServerInfoList = secureCommClient.getTargetServerInfoList();
 function autoConnect() {
-    secureCommClient.provideInput('serverHostPort', {host: 'localhost', port: 22100});
+    secureCommClient.provideInput('serverHostPort', {
+        host: targetServerInfoList[0].host,
+        port: targetServerInfoList[0].port
+    });
     setTimeout(autoConnect, autoSendPeriod * useSameSessionKeyCount);
 }
 autoConnect();
