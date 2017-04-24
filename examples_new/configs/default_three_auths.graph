@@ -17,12 +17,29 @@
 			"udpPort": 22902,
 			"authPort": 22901,
 			"dbProtectionMethod": 1
+		},
+		{
+			"id": 103,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 23900,
+			"udpPort": 23902,
+			"authPort": 23901,
+			"dbProtectionMethod": 1
 		}
 	],
 	"authTrusts": [
 		{
 			"id1": 101,
 			"id2": 102
+		},
+		{
+			"id1": 101,
+			"id2": 103
+		},
+		{
+			"id1": 102,
+			"id2": 103
 		}
 	],
 	"assignments": {
@@ -53,7 +70,21 @@
 		"net2.ptClient": 102,
 		"net2.ptServer": 102,
 		"net2.ptPublisher": 102,
-		"net2.ptSubscriber": 102
+		"net2.ptSubscriber": 102,
+		"net3.client": 103,
+		"net3.rcClient": 103,
+		"net3.udpClient": 103,
+		"net3.rcUdpClient": 103,
+		"net3.safetyCriticalClient": 103,
+		"net3.server": 103,
+		"net3.rcServer": 103,
+		"net3.udpServer": 103,
+		"net3.safetyCriticalServer": 103,
+		"net3.rcUdpServer": 103,
+		"net3.ptClient": 103,
+		"net3.ptServer": 103,
+		"net3.ptPublisher": 103,
+		"net3.ptSubscriber": 103
 	},
 	"entityList": [
 		{
@@ -237,7 +268,7 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.Client",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
@@ -248,7 +279,7 @@
 			"maxSessionKeysPerRequest": 30,
 			"netName": "net2",
 			"credentialPrefix": "Net2.RcClient",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
@@ -259,7 +290,7 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.UdpClient",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
@@ -270,7 +301,7 @@
 			"maxSessionKeysPerRequest": 30,
 			"netName": "net2",
 			"credentialPrefix": "Net2.RcUdpClient",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Clients",
@@ -282,7 +313,7 @@
 			"diffieHellman": "secp384r1",
 			"netName": "net2",
 			"credentialPrefix": "Net2.SafetyCriticalClient",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
@@ -295,7 +326,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.Server",
 			"host": "localhost",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
@@ -308,7 +339,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.RcServer",
 			"host": "localhost",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
@@ -321,7 +352,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.UdpServer",
 			"host": "localhost",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
@@ -335,7 +366,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.SafetyCriticalServer",
 			"host": "localhost",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "Servers",
@@ -348,7 +379,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.RcUdpServer",
 			"host": "localhost",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "PtClients",
@@ -360,7 +391,7 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.PtClient",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "PtServers",
@@ -374,7 +405,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.PtServer",
 			"host": "localhost",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "PtPublishers",
@@ -386,7 +417,7 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.PtPublisher",
-			"backupToAuthId": 101
+			"backupToAuthId": 103
 		},
 		{
 			"group": "PtSubscribers",
@@ -398,6 +429,178 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.PtSubscriber",
+			"backupToAuthId": 103
+		},
+		{
+			"group": "Clients",
+			"name": "net3.client",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.Client",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Clients",
+			"name": "net3.rcClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcClient",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Clients",
+			"name": "net3.udpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.UdpClient",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Clients",
+			"name": "net3.rcUdpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcUdpClient",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Clients",
+			"name": "net3.safetyCriticalClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"diffieHellman": "secp384r1",
+			"netName": "net3",
+			"credentialPrefix": "Net3.SafetyCriticalClient",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Servers",
+			"name": "net3.server",
+			"port": 23100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.Server",
+			"host": "localhost",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Servers",
+			"name": "net3.rcServer",
+			"port": 23300,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcServer",
+			"host": "localhost",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Servers",
+			"name": "net3.udpServer",
+			"port": 23400,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.UdpServer",
+			"host": "localhost",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Servers",
+			"name": "net3.safetyCriticalServer",
+			"port": 23500,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"diffieHellman": "secp384r1",
+			"netName": "net3",
+			"credentialPrefix": "Net3.SafetyCriticalServer",
+			"host": "localhost",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "Servers",
+			"name": "net3.rcUdpServer",
+			"port": 23600,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcUdpServer",
+			"host": "localhost",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "PtClients",
+			"name": "net3.ptClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"distKeyValidityPeriod": "3*sec",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtClient",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "PtServers",
+			"name": "net3.ptServer",
+			"port": 23200,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"distKeyValidityPeriod": "3*sec",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtServer",
+			"host": "localhost",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "PtPublishers",
+			"name": "net3.ptPublisher",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"distKeyValidityPeriod": "3*sec",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtPublisher",
+			"backupToAuthId": 101
+		},
+		{
+			"group": "PtSubscribers",
+			"name": "net3.ptSubscriber",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"distKeyValidityPeriod": "3*sec",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtSubscriber",
 			"backupToAuthId": 101
 		}
 	]

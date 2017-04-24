@@ -25,13 +25,16 @@ var JSON2 = require('JSON2');
 var common = require('common');
 const execSync = require('child_process').execSync;
 
-const EXAMPLES_DIR = process.cwd() + '/';
-
 // get graph file
-var graphFile = 'configs/default.graph';
-var graph = JSON.parse(fs.readFileSync(EXAMPLES_DIR + graphFile));
+if (process.argv.length <= 2) {
+    console.error('Graph file must be provided!');
+    process.exit(1);
+}
+var graphFile = process.argv[2];
+var graph = JSON.parse(fs.readFileSync(graphFile));
 
 // basic directories
+const EXAMPLES_DIR = process.cwd() + '/';
 process.chdir('..');
 const PROJ_ROOT_DIR = process.cwd() + '/';
 const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';

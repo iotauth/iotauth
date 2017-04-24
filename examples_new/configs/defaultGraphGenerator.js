@@ -92,7 +92,7 @@ for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
 	}
 }
 
-var numNets = 3;
+var numNets = 2;
 
 var authList = [];
 var entityList = [];

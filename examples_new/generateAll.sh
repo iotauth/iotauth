@@ -7,7 +7,7 @@ echo "*SCRIPT- generateAll.sh: For generating example Auths and entities"
 
 # followings are default parameters
 # file for host and port assignment of Auth and entities
-GRAPH_FILE="default.graph"
+GRAPH_FILE="configs/default.graph"
 # Whether to show help
 SHOW_HELP=false
 # Generate credentials and configs
@@ -23,7 +23,7 @@ do
 
 	case $key in
 		-g|--graph)
-			HOST_PORT_ASSIGNMENT_FILE="$2"
+			GRAPH_FILE="$2"
 			shift # past argument
 		;;
 		-gc|--gen-cred-config-only)
@@ -52,27 +52,42 @@ if [ "$SHOW_HELP" = true ] ; then
 	echo "  -gd,--gen-db-only               Generate Auth databases only."
 	echo "                                  (Skip generation of credentials and configuration files.)"
 	echo "  -h,--help                       Show this help."
-	exit
+	exit 1
 fi
 
 echo "Example generation options:"
 echo GRAPH_FILE  = $GRAPH_FILE
 
-echo "Installing required npm modules..."
-./initConfigs.sh
+# if required npm modules do not exist
+if [ ! -d "node_modules/readline-sync" ] ||  [ ! -d "node_modules/JSON2" ]; then
+	echo "Installing required npm modules..."
+	./initConfigs.sh
+fi
 
 # generate credentials and configs
 if [ "$GEN_CRED_CONFIG" = true ] ; then
 	echo "Generating credentials ..."
-	node generateCredentials.js
+	node credentialGenerator.js $GRAPH_FILE
+	if [ $? -ne 0  ] ; then
+		echo "[Error] Script finished with problems! exiting..." ; exit 1
+	fi
 	echo "Generating entity configuration files..."
-	node generateEntityConfigs.js
+	node entityConfigGenerator.js $GRAPH_FILE
+	if [ $? -ne 0  ] ; then
+		echo "[Error] Script finished with problems! exiting..." ; exit 1
+	fi
 	echo "Generating Auth configuration files..."
-	node generateAuthConfigs.js
+	node authConfigGenerator.js $GRAPH_FILE
+	if [ $? -ne 0  ] ; then
+		echo "[Error] Script finished with problems! exiting..." ; exit 1
+	fi
 fi
 
 if [ "$GEN_AUTH_DB" = true ] ; then
 	echo "Generating auth databases..."
 	# generate Auth DBs
-	node generateDB.js
+	node authDBGenerator.js $GRAPH_FILE
+	if [ $? -ne 0  ] ; then
+		echo "[Error] Script finished with problems! exiting..." ; exit 1
+	fi
 fi

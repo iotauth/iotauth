@@ -22,23 +22,20 @@
 
 var fs = require('fs');
 const execSync = require('child_process').execSync;
-const EXAMPLES_DIR = process.cwd() + '/';
 
 // get graph file
-var graphFile = 'configs/default.graph';
-var graph = JSON.parse(fs.readFileSync(EXAMPLES_DIR + graphFile));
+if (process.argv.length <= 2) {
+    console.error('Graph file must be provided!');
+    process.exit(1);
+}
+var graphFile = process.argv[2];
+var graph = JSON.parse(fs.readFileSync(graphFile));
 
 // basic directories
-//process.chdir('..');
-//const PROJ_ROOT_DIR = process.cwd() + '/';
-//const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
+const EXAMPLES_DIR = process.cwd() + '/';
 
 process.chdir('../auth/');
-console.log('aaaa');
-console.log(process.cwd());
-console.log('bbbb');
 execSync('mvn -pl example-auth-db-generator -am install -DskipTests', {stdio: 'inherit'});
-console.log('cccc');
 process.chdir('example-auth-db-generator');
 execSync('cp target/init-example-auth-db-jar-with-dependencies.jar ../');
 process.chdir('..');

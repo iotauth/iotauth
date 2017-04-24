@@ -23,13 +23,29 @@
 var fs = require('fs');
 var readlineSync = require('readline-sync');
 const execSync = require('child_process').execSync;
-const EXAMPLES_DIR = process.cwd() + '/';
 
 // get graph file
-var graphFile = 'configs/default.graph';
-var graph = JSON.parse(fs.readFileSync(EXAMPLES_DIR + graphFile));
+if (process.argv.length <= 2) {
+    console.error('Graph file must be provided!');
+    process.exit(1);
+}
+var graphFile = process.argv[2];
+var graph = JSON.parse(fs.readFileSync(graphFile));
 
-const MASTER_PASSWORD = readlineSync.questionNewPassword('Enter new password for Auth: ', {min: 4, mask: ''});
+const EXAMPLES_DIR = process.cwd() + '/';
+
+var inputPassword = readlineSync.question('Enter new password for Auth: ', {hideEchoBack: true, mask: ''});
+var repeatPassword = readlineSync.question('Enter the same password again: ', {hideEchoBack: true, mask: ''});
+if (inputPassword !== repeatPassword) {
+    console.error('Passwords do not match!');
+    process.exit(1);
+}
+if (inputPassword.length < 4) {
+    console.error('Password must be at least four characters!');
+    process.exit(1);
+}
+//const MASTER_PASSWORD = readlineSync.questionNewPassword('Enter new password for Auth: ', {min: 4, mask: ''});
+const MASTER_PASSWORD = inputPassword;
 const CA_PASSWORD = MASTER_PASSWORD;
 const AUTH_PASSWORD = MASTER_PASSWORD;
 
