@@ -29,8 +29,24 @@ var graphFile = 'configs/default.graph';
 var graph = JSON.parse(fs.readFileSync(EXAMPLES_DIR + graphFile));
 
 // basic directories
+//process.chdir('..');
+//const PROJ_ROOT_DIR = process.cwd() + '/';
+//const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
+
+process.chdir('../auth/');
+console.log('aaaa');
+console.log(process.cwd());
+console.log('bbbb');
+execSync('mvn -pl example-auth-db-generator -am install -DskipTests', {stdio: 'inherit'});
+console.log('cccc');
+process.chdir('example-auth-db-generator');
+execSync('cp target/init-example-auth-db-jar-with-dependencies.jar ../');
 process.chdir('..');
-const PROJ_ROOT_DIR = process.cwd() + '/';
-const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
 
+var authList = graph.authList;
 
+for (var i = 0; i < authList.length; i++) {
+	var auth = authList[i];
+	execSync('java -jar init-example-auth-db-jar-with-dependencies.jar -i ' + auth.id + ' -d ' + auth.dbProtectionMethod);
+}
+execSync('rm init-example-auth-db-jar-with-dependencies.jar');

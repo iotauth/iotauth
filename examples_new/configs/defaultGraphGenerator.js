@@ -71,7 +71,7 @@ for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
 		entity.distKeyValidityPeriod = '3*sec';
 	}
 	else if (entity.usePermanentDistKey == true) {
-		entity.distKeyValidityPeriod = '365*days';
+		entity.distKeyValidityPeriod = '365*day';
 	}
 	else {
 		entity.distKeyValidityPeriod = '1*hour';

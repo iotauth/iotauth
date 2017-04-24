@@ -70,7 +70,7 @@ function getRegisteredEntity(entity) {
 	else {
 		registeredEntity.PublicKeyCryptoSpec = common.DEFAULT_SIGN;
 		if (entity.diffieHellman != null) {
-			registeredEntity.PublicKeyCryptoSpec += ('-' + entity.diffieHellman);
+			registeredEntity.PublicKeyCryptoSpec += (':DH-' + entity.diffieHellman);
 		}
 		registeredEntity.PublicKeyFile = 'entity_certs/' + entity.credentialPrefix + 'Cert.pem';
 	}

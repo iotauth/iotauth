@@ -98,7 +98,8 @@ function getAuthInfo(entity) {
 	return {
 		id: auth.id,
 		host: auth.entityHost,
-		port: entity.distProtocol == 'TCP' ? auth.tcpPort : auth.udpPort
+		port: entity.distProtocol == 'TCP' ? auth.tcpPort : auth.udpPort,
+		publicKey: '../../auth_certs/Auth' + auth.id + 'EntityCert.pem'
 	};
 }
 function getMigrationInfo(entity) {
