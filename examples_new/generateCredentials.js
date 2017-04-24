@@ -50,11 +50,7 @@ execSync('./generateCACredentials.sh ' + CA_PASSWORD);
 var authList = graph.authList;
 for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
-	var authHost = 'localhost';
-	if (auth.host != null) {
-		authHost = auth.host;
-	}
-	execSync('./generateExampleAuthCredentials.sh ' + auth.id + ' ' + authHost + ' ' + CA_PASSWORD + ' ' + AUTH_PASSWORD);
+	execSync('./generateExampleAuthCredentials.sh ' + auth.id + ' ' + auth.authHost + ' ' + CA_PASSWORD + ' ' + AUTH_PASSWORD);
 	var MY_CERTS_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_certs/';
 	execSync('mkdir -p ' + MY_CERTS_DIR);
 	execSync('mv certs/Auth' + auth.id + '*Cert.pem ' + MY_CERTS_DIR);

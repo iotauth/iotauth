@@ -14,7 +14,7 @@
  */
 
  /**
- * Generator for configuration files for Auth and entity
+ * Generator configuration files for Auth and entity
  * @author Hokeun Kim
  */
 
@@ -35,6 +35,7 @@ var graph = JSON.parse(fs.readFileSync(EXAMPLES_DIR + graphFile));
 process.chdir('..');
 const PROJ_ROOT_DIR = process.cwd() + '/';
 const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
+const AUTH_PROPERTIES_DIR = PROJ_ROOT_DIR + 'auth/properties/';
 
 function getAuthConfigDir(authId) {
 	return AUTH_DATABASES_DIR + 'auth' + authId + '/configs/';
@@ -47,10 +48,55 @@ function createConfigDirs() {
     }
 }
 
-// generate registered entity table
+// generate registered entity tables
+function getRegisteredEntity(entity) {
+	var registeredEntity = {
+		Name: entity.name,
+		Group: entity.group,
+		DistProtocol: entity.distProtocol,
+		UsePermanentDistKey: entity.usePermanentDistKey,
+		MaxSessionKeysPerRequest: entity.maxSessionKeysPerRequest,
+		DistKeyValidityPeriod: entity.distKeyValidityPeriod,
+		DistCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
+		Active: true,
+		BackupToAuthID: entity.backupToAuthId,
+		BackupFromAuthID: -1
+	}
 
+	if (entity.usePermanentDistKey == true) {
+		registeredEntity.DistCipherKeyFilePath = 'entity_keys/'+ entity.credentialPrefix + 'CipherKey.key';
+		registeredEntity.DistMacKeyFilePath = 'entity_keys/' + entity.credentialPrefix + 'MacKey.key';
+	}
+	else {
+		registeredEntity.PublicKeyCryptoSpec = common.DEFAULT_SIGN;
+		if (entity.diffieHellman != null) {
+			registeredEntity.PublicKeyCryptoSpec += ('-' + entity.diffieHellman);
+		}
+		registeredEntity.PublicKeyFile = 'entity_certs/' + entity.credentialPrefix + 'Cert.pem';
+	}
+	return registeredEntity;
+}
+function generateRegisteredEntityTables() {
+	var registeredEntityTables = {};
+	for (var i = 0; i < authList.length; i++) {
+		var auth = authList[i];
+		registeredEntityTables[auth.id] = [];
+	}
+	var assignments = graph.assignments;
+	var entityList = graph.entityList;
+	for (var i = 0; i < entityList.length; i++) {
+		var entity = entityList[i];
+		registeredEntityTables[assignments[entity.name]].push(getRegisteredEntity(entity));
+	}
+	for (var i = 0; i < authList.length; i++) {
+		var auth = authList[i];
+        var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'RegisteredEntityTable.config';
+        console.log('Writing Auth config to ' + configFilePath + ' ...');
+		fs.writeFileSync(configFilePath, JSON2.stringify(registeredEntityTables[auth.id], null, '\t'), 'utf8');
+	}
+}
 
-// generate client policy table
+// generate client policy tables
 function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
     list.push({
         RequestingGroup: requestingGroup,
@@ -97,7 +143,7 @@ function generateCommunicationPolicyTables() {
 // generate trusted Auth tables
 function getTrustedAuth(auth) {
 	return {
-		ID: auth.id, Host: auth.host, Port: auth.authPort,
+		ID: auth.id, Host: auth.authHost, Port: auth.authPort,
 		InternetCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'InternetCert.pem',
 		EntityCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'EntityCert.pem',
 		HeartbeatPeriod: -1,
@@ -126,7 +172,40 @@ function generateTrustedAuthTables() {
 	}
 }
 
+// generate properties files
+function generatePropertiesFiles() {
+	for (var i = 0; i < authList.length; i++) {
+		var auth = authList[i];
+        var authDBDir = '../databases/auth' + auth.id;
+        var authKeystorePrefix = authDBDir + '/my_keystores/Auth' + auth.id;
+        var properties = {
+            'auth_id': auth.id,
+            'host_name': '0.0.0.0',
+            'entity_tcp_port': auth.tcpPort,
+            'entity_tcp_port_timeout': 2000,
+            'entity_udp_port': auth.udpPort, 
+            'entity_udp_port_timeout': 5000,
+            'trusted_auth_port': auth.authPort,
+            'trusted_auth_port_idle_timeout': 600000,
+            'entity_key_store_path': authKeystorePrefix + 'Entity.pfx',
+            'internet_key_store_path': authKeystorePrefix + 'Internet.pfx',
+            'database_key_store_path': authKeystorePrefix + 'Database.pfx',
+            'database_encryption_key_path': authKeystorePrefix + 'Database.bin',
+            'trusted_ca_cert_paths': '../credentials/ca/CACert.pem',
+            'auth_database_dir': authDBDir,
+            'auth_db_protection_method': auth.dbProtectionMethod
+        };
+        var strProperties = '';
+        for (var key in properties) {
+            strProperties += (key + '=' + properties[key] + '\n');
+        }
+        var propertiesFilePath = AUTH_PROPERTIES_DIR + 'exampleAuth' + auth.id + '.properties';
+        console.log('Writing Auth properties to ' + propertiesFilePath + ' ...');
+        fs.writeFileSync(propertiesFilePath, strProperties, 'utf8');
+    }
+}
 // generate configs
 createConfigDirs();
+generateRegisteredEntityTables();
 generateCommunicationPolicyTables();
 generateTrustedAuthTables();

@@ -97,14 +97,14 @@ function getAuthInfo(entity) {
 	var auth = auths[assignments[entity.name]];
 	return {
 		id: auth.id,
-		host: auth.host,
+		host: auth.entityHost,
 		port: entity.distProtocol == 'TCP' ? auth.tcpPort : auth.udpPort
 	};
 }
 function getMigrationInfo(entity) {
 	var auth = auths[entity.backupToAuthId];
 	return {
-		host: auth.host,
+		host: auth.entityHost,
 		port: entity.distProtocol == 'TCP' ? auth.tcpPort : auth.udpPort
 	};
 }

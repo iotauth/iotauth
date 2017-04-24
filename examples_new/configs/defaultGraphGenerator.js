@@ -68,6 +68,22 @@ for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
 	entity.usePermanentDistKey = entity.name.toLowerCase().includes('rc') ? true : false;
 	if (entity.name.toLowerCase().includes('pt')) {
 		entity.inDerFormat = true;
+		entity.distKeyValidityPeriod = '3*sec';
+	}
+	else if (entity.usePermanentDistKey == true) {
+		entity.distKeyValidityPeriod = '365*days';
+	}
+	else {
+		entity.distKeyValidityPeriod = '1*hour';
+	}
+	if (entity.group.toLowerCase().includes('servers')) {
+		entity.maxSessionKeysPerRequest = 1;
+	}
+	else if (entity.usePermanentDistKey == true) {
+		entity.maxSessionKeysPerRequest = 30;
+	}
+	else {
+		entity.maxSessionKeysPerRequest = 5;
 	}
 	if (entity.name.toLowerCase().includes('safetycritical')) {
 		// generates 384-bit (48-byte) secret, 128 bit for cipher, 256 bit for MAC
@@ -83,23 +99,31 @@ var entityList = [];
 var authTrusts = [];
 var assignments = {};
 
+/*
+	dbProtectionMethod: values
+    DEBUG(0),
+    ENCRYPT_CREDENTIALS(1),
+    ENCRYPT_ENTIRE_DB(2);
+*/
 const AUTH_UDP_PORT_OFFSET = 2;
 const TRUSTED_AUTH_PORT_OFFSET = 1;
 for (var netId = 1; netId <= numNets; netId++) {
 	var authId = getAuthId(netId);
 	var authInfo = {
-		'id': authId,
-		'host': 'localhost',
-		'tcpPort': getAuthPortBase(netId),
-		'udpPort': getAuthPortBase(netId) + AUTH_UDP_PORT_OFFSET,
-		'authPort': getAuthPortBase(netId) + TRUSTED_AUTH_PORT_OFFSET
+		id: authId,
+		entityHost: 'localhost',
+		authHost: 'localhost',
+		tcpPort: getAuthPortBase(netId),
+		udpPort: getAuthPortBase(netId) + AUTH_UDP_PORT_OFFSET,
+		authPort: getAuthPortBase(netId) + TRUSTED_AUTH_PORT_OFFSET,
+		dbProtectionMethod: 1
 	};
 	authList.push(authInfo);
 	for (var otherNetId = netId + 1; otherNetId <= numNets; otherNetId++) {
 		var otherAuthId = getAuthId(otherNetId);
 		var authTrust = {
-			'id1': authId,
-			'id2': otherAuthId
+			id1: authId,
+			id2: otherAuthId
 		};
 		authTrusts.push(authTrust)
 	}
