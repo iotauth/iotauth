@@ -85,7 +85,7 @@ function populateAuthList() {
 			currentPort += 100;
 		}
 		if (uniqueHosts) {
-			devList.push({name: 'auth'+authList[i].id, addr: authList[i].authHost, wifi: authList[i].entityHost});
+			devList.push({name: 'auth'+authList[i].id, addr: authList[i].authHost, wifi: authList[i].entityHost, type: 'auth'});
 			wiredAddress++;
 			wifiAddress++;
 		}
@@ -114,7 +114,7 @@ function populateEchoServers() {
 			currentPort++;
 		}
 		if (uniqueHosts) {
-			devList.push({name: entity.name, addr: entity.host});
+			devList.push({name: entity.name, addr: entity.host, type: 'server'});
 			wifiAddress++;
 		}
 	}
@@ -148,7 +148,7 @@ function populateAutoClients() {
 		}
 		entityList.push(entity);
 		if (uniqueHosts) {
-			devList.push({name: entity.name, addr: wifiSubnetBase + wifiAddress});
+			devList.push({name: entity.name, addr: wifiSubnetBase + wifiAddress, type: 'client'});
 			wifiAddress++;
 		}
 	}
