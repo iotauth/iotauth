@@ -58,6 +58,17 @@ var autoClientList = [
 	{name: 't4', target: 't3'},
 	{name: 't5', target: 't1'}
 ];
+// positions
+var positions = {
+	1: {x: 0, y: 35, z: 0},
+	2: {x: 20, y: 20, z: 0},
+	3: {x: 5, y: 0, z: 0},
+	't1': {x: 0, y: 20, z: 0},
+	't2': {x: 5, y: 30, z: 0},
+	't3': {x: 25, y: 25, z: 0},
+	't4': {x: 25, y: 15, z: 0},
+	't5': {x: 5, y: 30, z: 0}
+}
 var entityList = [];
 var serverHostPortMap = {};
 var devList =[];
@@ -85,7 +96,16 @@ function populateAuthList() {
 			currentPort += 100;
 		}
 		if (uniqueHosts) {
-			devList.push({name: 'auth'+authList[i].id, addr: authList[i].authHost, wifi: authList[i].entityHost, type: 'auth'});
+			var dev = {
+				name: 'auth' + authList[i].id,
+				addr: authList[i].authHost,
+				wifi: authList[i].entityHost,
+				type: 'auth'
+			};
+			if (positions[authList[i].id] != null) {
+				dev.position = positions[authList[i].id];
+			}
+			devList.push(dev);
 			wiredAddress++;
 			wifiAddress++;
 		}
@@ -114,7 +134,11 @@ function populateEchoServers() {
 			currentPort++;
 		}
 		if (uniqueHosts) {
-			devList.push({name: entity.name, addr: entity.host, type: 'server'});
+			var dev = {name: entity.name, addr: entity.host, type: 'server'};
+			if (positions[entity.name] != null) {
+				dev.position = positions[entity.name];
+			}
+			devList.push(dev);
 			wifiAddress++;
 		}
 	}
@@ -148,7 +172,11 @@ function populateAutoClients() {
 		}
 		entityList.push(entity);
 		if (uniqueHosts) {
-			devList.push({name: entity.name, addr: wifiSubnetBase + wifiAddress, type: 'client'});
+			var dev = {name: entity.name, addr: wifiSubnetBase + wifiAddress, type: 'client'};
+			if (positions[entity.name] != null) {
+				dev.position = positions[entity.name];
+			}
+			devList.push(dev);
 			wifiAddress++;
 		}
 	}
