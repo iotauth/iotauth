@@ -23,6 +23,14 @@
 var fs = require('fs');
 var JSON2 = require('JSON2');
 
+// options
+// uniquePorts: to distinguish Auths, server entities using different port numbers
+// uniqueHosts: to distinguish Auths, server entities using different network addresses
+var isNS3 = true;
+
+var uniquePorts = isNS3 ? false : true;
+var uniqueHosts = isNS3 ? true : false;
+
 var authList = [
 	{id: 1},
 	{id: 2},
@@ -52,6 +60,13 @@ var autoClientList = [
 ];
 var entityList = [];
 var serverHostPortMap = {};
+var devList =[];
+
+var wiredSubnetBase = '10.0.0.';
+var wiredAddress = 1;
+
+var wifiSubnetBase = '10.0.1.';
+var wifiAddress = 1;
 
 function populateAuthList() {
 	var currentPort = 21100;
@@ -59,14 +74,21 @@ function populateAuthList() {
 		var auth = authList[i];
 		authList[i] = {
 			id: auth.id,
-			entityHost: 'localhost',
-			authHost: 'localhost',
+			entityHost: uniqueHosts ? wifiSubnetBase + wifiAddress : 'localhost',
+			authHost: uniqueHosts ? wiredSubnetBase + wiredAddress : 'localhost',
 			tcpPort: currentPort,
 			udpPort: currentPort + 2,
 			authPort: currentPort + 1,
 			dbProtectionMethod: 1
 		}
-		currentPort += 100;
+		if (uniquePorts) {
+			currentPort += 100;
+		}
+		if (uniqueHosts) {
+			devList.push({name: 'auth'+authList[i].id, addr: authList[i].authHost, wifi: authList[i].entityHost});
+			wiredAddress++;
+			wifiAddress++;
+		}
 	}
 }
 function populateEchoServers() {
@@ -76,7 +98,7 @@ function populateEchoServers() {
 		var entity = {
 			group: 'Servers',
 			name: echoServer.name,
-			host: 'localhost',
+			host: uniqueHosts ? wifiSubnetBase + wifiAddress : 'localhost',
 			port: currentPort,
 			distProtocol: "TCP",
 			usePermanentDistKey: false,
@@ -88,7 +110,13 @@ function populateEchoServers() {
 		}
 		serverHostPortMap[entity.name] = {host: entity.host, port: entity.port};
 		entityList.push(entity);
-		currentPort++;
+		if (uniquePorts) {
+			currentPort++;
+		}
+		if (uniqueHosts) {
+			devList.push({name: entity.name, addr: entity.host});
+			wifiAddress++;
+		}
 	}
 }
 
@@ -119,6 +147,10 @@ function populateAutoClients() {
 			entity.targetServerInfoList = targetServerInfoList;
 		}
 		entityList.push(entity);
+		if (uniqueHosts) {
+			devList.push({name: entity.name, addr: wifiSubnetBase + wifiAddress});
+			wifiAddress++;
+		}
 	}
 }
 
@@ -135,10 +167,20 @@ var graph = {
 }
 
 // write to file
-fs.writeFileSync('exp.graph', 
+var expGraphFile = 'exp.graph';
+if (isNS3) {
+	expGraphFile = 'ns3Exp.graph';
+}
+fs.writeFileSync(expGraphFile, 
 	JSON2.stringify(graph, null, '\t'),
 	'utf8'
 );
+if (devList.length > 0) {
+	fs.writeFileSync('devList.txt', 
+		JSON2.stringify(devList, null, '\t'),
+		'utf8'
+	);
+}
 
 
 
