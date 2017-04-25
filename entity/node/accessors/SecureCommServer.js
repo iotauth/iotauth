@@ -90,6 +90,7 @@ function handleMigrationResp(newAuthId, newCredential) {
     }
     else {
         entityConfig.authInfo.publicKey = newCredential;
+        currentDistributionKey = null;  // previous distribution key should be invalidated
     }
     entityConfig.authInfo.host = entityConfig.migrationInfo.host;
     entityConfig.authInfo.port = entityConfig.migrationInfo.port;

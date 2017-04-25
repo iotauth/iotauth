@@ -21,6 +21,12 @@ else
 	cd example-auth-db-generator
     cp target/init-example-auth-db-jar-with-dependencies.jar ../
     cd ../
-    java -jar init-example-auth-db-jar-with-dependencies.jar -n $NUM_NETS -d $AUTH_DB_PROTECTION_METHOD
+
+	net_id=1
+	while [ "$net_id" -le $NUM_NETS ]
+	do
+    	java -jar init-example-auth-db-jar-with-dependencies.jar -i 10$net_id -d $AUTH_DB_PROTECTION_METHOD
+		let "net_id+=1"
+	done
     rm init-example-auth-db-jar-with-dependencies.jar
 fi

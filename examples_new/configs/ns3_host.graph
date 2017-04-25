@@ -1,0 +1,13 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"host": "10.0.0.1"
+		},
+		{
+			"id": 102
+		}
+	],
+	"entityList": [],
+	"assignments": []
+}

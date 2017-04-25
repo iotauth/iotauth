@@ -61,7 +61,7 @@ public class GenerateExampleAuthDB {
         // parsing command line arguments
         Options options = new Options();
 
-        Option option = new Option("n", "num_auths", true, "number of example Auths to be generated.");
+        Option option = new Option("i", "auth_id", true, "ID of Auth to be generated.");
         option.setRequired(true);
         options.addOption(option);
         option = new Option("d", "auth_db_protection_method", true, "protection method for Auth DB.");
@@ -81,22 +81,14 @@ public class GenerateExampleAuthDB {
             System.exit(1);
             return;
         }
-        int numAuths = Integer.parseInt(cmd.getOptionValue("num_auths"));
+        int authID = Integer.parseInt(cmd.getOptionValue("auth_id"));
         AuthDBProtectionMethod authDBProtectionMethod = AuthDBProtectionMethod.fromValue(
                 Integer.parseInt(cmd.getOptionValue("auth_db_protection_method")));
 
-        logger.info("Number of Auths to be generated: {}", numAuths);
+        logger.info("ID of Auths to be generated: {}", authID);
         logger.info("Specified protection method for Auth DB: {}", authDBProtectionMethod.name());
 
-        if (numAuths > 10 || numAuths < 1) {
-            logger.error("Error: Illegal number of Auths to be generated!");
-            System.exit(1);
-            return;
-        }
-
-        for (int netID = 1; netID <= numAuths; netID++) {
-            generateAuthDatabase(netID + 100, authDBProtectionMethod);
-        }
+        generateAuthDatabase(authID, authDBProtectionMethod);
     }
 
     private static void generateAuthDatabase(int authID, AuthDBProtectionMethod authDBProtectionMethod) throws Exception {
