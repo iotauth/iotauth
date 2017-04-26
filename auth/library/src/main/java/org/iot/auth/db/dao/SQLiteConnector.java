@@ -358,23 +358,11 @@ public class SQLiteConnector {
         return regEntity;
     }
 
-    /**
-     * Insert records into RegistrationEntityTable
-     *
-     * @param regEntity the records registered as entity to be distributed among the clients.
-     *
-     * @return <code>true</code> if the insertion has been successful
-     *         <code>false</code> if the insertion has failed
-     * @throws SQLException  if a database access error occurs;
-     * this method is called on a closed <code>PreparedStatement</code>
-     * or an argument is supplied to this method
-     * @throws ClassNotFoundException if the class cannot be located
-     * @see RegisteredEntityTable
-     */
-    public boolean insertRecords(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
-        regEntity = encryptRecords(regEntity);
+    private boolean insertOrReplaceRecordsHelper(String sqlCommand, RegisteredEntityTable regEntity)
+            throws SQLException, ClassNotFoundException
+    {
         //setConnection();
-        String sql = "INSERT INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
+        String sql = sqlCommand + " INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
         sql += RegisteredEntityTable.c.Name.name() + ",";
         sql += "'"+ RegisteredEntityTable.c.Group.name() + "',";
         sql += RegisteredEntityTable.c.DistProtocol.name() + ",";
@@ -392,6 +380,7 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.MigrationToken.name() + ")";
         sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        regEntity = encryptRecords(regEntity);
         int index = 1;
         preparedStatement.setString(index++,regEntity.getName());
         preparedStatement.setString(index++,regEntity.getGroup());
@@ -435,6 +424,27 @@ public class SQLiteConnector {
         preparedStatement.close();
         closeConnection();
         return result;
+    }
+
+    /**
+     * Insert records into RegistrationEntityTable
+     *
+     * @param regEntity the records registered as entity to be distributed among the clients.
+     *
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     * @see RegisteredEntityTable
+     */
+    public boolean insertRecords(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
+        return insertOrReplaceRecordsHelper("INSERT", regEntity);
+    }
+
+    public boolean insertRecordsOrUpdateIfExists(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
+        return insertOrReplaceRecordsHelper("INSERT OR REPLACE", regEntity);
     }
 
     /**

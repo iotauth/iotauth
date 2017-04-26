@@ -5,6 +5,7 @@
 
 AUTH_CREDS_DIR=auth/credentials/
 AUTH_DATABASES_DIR=auth/databases/
+AUTH_PROPERTIES_DIR=auth/properties/
 ENTITY_CREDS_DIR=entity/credentials/
 NODE_EXAMPLE_ENTITY_DIR=entity/node/example_entities/
 
@@ -16,6 +17,10 @@ cd ../../
 
 cd $AUTH_DATABASES_DIR
 rm -rf auth*
+cd ../../
+
+cd $AUTH_PROPERTIES_DIR
+rm *.properties
 cd ../../
 
 cd $ENTITY_CREDS_DIR

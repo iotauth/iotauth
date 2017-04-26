@@ -87,7 +87,7 @@ public class HeartbeatSender {
             final int currentHeartbeatPeriod = trustedAuth.getHeartbeatPeriod();
             if (currentHeartbeatPeriod <= 0) {
                 logger.info("Not scheduling heartbeat to Auth" + trustedAuth.getID() +
-                        " since the period is set.");
+                        " since the period is not set.");
                 continue;
             }
             logger.info("scheduling a task of sending heartbeat to Auth" + trustedAuth.getID() +

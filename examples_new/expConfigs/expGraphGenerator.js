@@ -156,7 +156,7 @@ function populateAutoClients() {
 			maxSessionKeysPerRequest: 5,
 			netName: 'Clients',
 			credentialPrefix: autoClient.name + '.Client',
-			backupToAuthId: autoClient.backupTo
+			backupToAuthId: autoClient.backupTo == null ? -1 : autoClient.backupTo
 		}
 		var targetServerInfoList = [];
 		if (autoClient.target != null) {

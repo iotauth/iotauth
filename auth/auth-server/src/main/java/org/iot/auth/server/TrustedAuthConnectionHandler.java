@@ -188,8 +188,12 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         }
         // insert!
         server.updateBackupCertificate(requestingAuthInfo.getID(), authBackupReqMessage.getBackupCertificate());
-        server.insertRegisteredEntities(authBackupReqMessage.getRegisteredEntityList());
+        server.insertRegisteredEntitiesOrUpdateIfExist(authBackupReqMessage.getRegisteredEntityList());
         server.reloadRegEntityDB();
+
+        AuthBackupRespMessage backupRespMessage = new AuthBackupRespMessage();
+        backupRespMessage.sendAsHttpResponse(response);
+        baseRequest.setHandled(true);
     }
 
     private AuthServer server;
