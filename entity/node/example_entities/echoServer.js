@@ -69,6 +69,10 @@ if (process.argv.length > 2) {
     configFilePath = process.argv[2];
 }
 
+if (process.argv.length > 3) {
+    process.chdir(process.argv[3]);
+}
+
 var secureCommServer = new SecureCommServer(configFilePath);
 secureCommServer.initialize();
 secureCommServer.setOutputHandler('connection', connectionHandler);

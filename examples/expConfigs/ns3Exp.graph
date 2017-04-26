@@ -103,6 +103,7 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "Clients",
 			"credentialPrefix": "t4.Client",
+			"backupToAuthId": -1,
 			"targetServerInfoList": [
 				{
 					"name": "t3",
@@ -120,6 +121,7 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "Clients",
 			"credentialPrefix": "t5.Client",
+			"backupToAuthId": -1,
 			"targetServerInfoList": [
 				{
 					"name": "t1",

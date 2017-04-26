@@ -78,7 +78,7 @@
 		"type": "client",
 		"position": {
 			"x": 5,
-			"y": 30,
+			"y": 10,
 			"z": 0
 		}
 	}

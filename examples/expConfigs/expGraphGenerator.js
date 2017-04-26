@@ -67,7 +67,7 @@ var positions = {
 	't2': {x: 5, y: 30, z: 0},
 	't3': {x: 25, y: 25, z: 0},
 	't4': {x: 25, y: 15, z: 0},
-	't5': {x: 5, y: 30, z: 0}
+	't5': {x: 5, y: 10, z: 0}
 }
 var entityList = [];
 var serverHostPortMap = {};

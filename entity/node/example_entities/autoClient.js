@@ -88,6 +88,10 @@ if (process.argv.length > 2) {
     configFilePath = process.argv[2];
 }
 
+if (process.argv.length > 3) {
+    process.chdir(process.argv[3]);
+}
+
 var secureCommClient = new SecureCommClient(configFilePath);
 secureCommClient.initialize();
 secureCommClient.setOutputHandler('connected', connectedHandler);
