@@ -15,10 +15,13 @@
 
 package org.iot.auth.crypto;
 
+import com.google.common.net.InetAddresses;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v1CertificateBuilder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -30,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 
 import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -234,12 +239,12 @@ public class AuthCrypto {
     }
 
     public X509Certificate issueCertificate(X509Certificate certificate,
-                                            int issuerAuthID, int subjectAuthID) {
+                                            int issuerAuthID, int subjectAuthID, String subjectAuthCN) throws CertIOException {
         try {
             String issuerOU = "Auth" + issuerAuthID;
             String subjectOU = "Auth" + subjectAuthID;
             X500Name issuerDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + issuerOU + ", CN=localhost");
-            X500Name subjectDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + subjectOU + ", CN=localhost");
+            X500Name subjectDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + subjectOU + ", CN=" + subjectAuthCN);
             BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
             // 100 seconds before now
             Date validityStartDate = new Date(System.currentTimeMillis() - 100 * 1000);
@@ -250,8 +255,14 @@ public class AuthCrypto {
             Date validityEndDate = new Date(calendar.getTime().getTime());
             SubjectPublicKeyInfo subPubKeyInfo = SubjectPublicKeyInfo.getInstance(certificate.getPublicKey().getEncoded());
 
-            X509v1CertificateBuilder builder = new X509v1CertificateBuilder(issuerDN, serialNumber, validityStartDate,
+            X509v3CertificateBuilder builder = new X509v3CertificateBuilder(issuerDN, serialNumber, validityStartDate,
                     validityEndDate, subjectDN, subPubKeyInfo);
+            if (InetAddresses.isInetAddress(subjectAuthCN)) {
+                builder.addExtension(Extension.subjectAlternativeName,false,
+                        new GeneralNames(new GeneralName(GeneralName.iPAddress, subjectAuthCN)));
+            }
+            //X509v1CertificateBuilder builder = new X509v1CertificateBuilder(issuerDN, serialNumber, validityStartDate,
+            //        validityEndDate, subjectDN, subPubKeyInfo);
             JcaContentSignerBuilder signerBuilder = new JcaContentSignerBuilder(authSignAlgorithm);
 
 
@@ -262,9 +273,8 @@ public class AuthCrypto {
         } catch (CertificateException e) {
             throw new IllegalArgumentException("Problem dealing with a certificate in issuing" + "\n" + e.getMessage());
         } catch (OperatorCreationException e) {
-            e.printStackTrace();
+            throw new IllegalArgumentException("Problem dealing with a certificate in issuing" + "\n" + e.getMessage());
         }
-        return null;
     }
 
 //    public static Buffer generateSymmetricKey(int size) {

@@ -22,6 +22,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.bouncycastle.cert.CertIOException;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -668,7 +669,14 @@ public class AuthServer {
             }
             logger.info("Trying to back up to Auth" + backupToAuthID);
             TrustedAuth backupToAuth = getTrustedAuthInfo(backupToAuthID);
-            X509Certificate backupCertificate = crypto.issueCertificate(backupToAuth.getEntityCertificate(), authID, backupToAuthID);
+
+            X509Certificate backupCertificate = null;
+            try {
+                backupCertificate = crypto.issueCertificate(backupToAuth.getEntityCertificate(),
+                        authID, backupToAuthID, backupToAuth.getHost());
+            } catch (CertIOException e) {
+                throw new RuntimeException("Problem with issuing a certificate" + "\n" + e.getMessage());
+            }
 
             StringBuilder builder = new StringBuilder();
             for (RegisteredEntity registeredEntity: registeredEntitiesToBeBackedUp) {
@@ -691,15 +699,15 @@ public class AuthServer {
 
     public List<ContentResponse> backup() {
         List<ContentResponse> ret = new LinkedList<>();
-        List<AuthBackupReqMessage> backupReqMessages = getBackupReqMessages();
-        for (AuthBackupReqMessage backupReqMessage: backupReqMessages) {
-            try {
-                ContentResponse contentResponse = sendBackupReqMessage(backupReqMessage);
-                ret.add(contentResponse);
-            } catch (TimeoutException | ExecutionException | InterruptedException e) {
-                logger.error("Exception occurred during backup() {}", ExceptionToString.convertExceptionToStackTrace(e));
-                throw new RuntimeException();
+        try {
+            List<AuthBackupReqMessage> backupReqMessages = getBackupReqMessages();
+            for (AuthBackupReqMessage backupReqMessage: backupReqMessages) {
+                    ContentResponse contentResponse = sendBackupReqMessage(backupReqMessage);
+                    ret.add(contentResponse);
             }
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            logger.error("Exception occurred during backup() {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException();
         }
         return ret;
     }
@@ -896,7 +904,7 @@ public class AuthServer {
     private Map<String, Buffer> nonceMapForUdpPortListener;
     private Map<String, Buffer> responseMapForUdpPortListener;
 
-    public List<X509Certificate> issueBackupCertificate() {
+    public List<X509Certificate> issueBackupCertificate() throws CertIOException {
         Set<Integer> backupAuthIDSet = new HashSet<>();
         for (RegisteredEntity registeredEntity: db.getAllRegisteredEntitiies()) {
             backupAuthIDSet.add(registeredEntity.getBackupToAuthID());
@@ -907,7 +915,7 @@ public class AuthServer {
             int backupAuthID = itr.next();
             TrustedAuth trustedAuth = db.getTrustedAuthInfo(backupAuthID);
             X509Certificate cert = crypto.issueCertificate(
-                    trustedAuth.getEntityCertificate(), getAuthID(), backupAuthID);
+                    trustedAuth.getEntityCertificate(), getAuthID(), backupAuthID, trustedAuth.getHost());
             ret.add(cert);
         }
         return ret;
