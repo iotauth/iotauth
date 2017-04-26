@@ -38,6 +38,24 @@
     </build>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>21.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.collections/google-collections -->
+        <dependency>
+            <groupId>com.google.collections</groupId>
+            <artifactId>google-collections</artifactId>
+            <version>RELEASE</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.ojalgo/ojalgo -->
+        <dependency>
+            <groupId>org.ojalgo</groupId>
+            <artifactId>ojalgo</artifactId>
+            <version>RELEASE</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
