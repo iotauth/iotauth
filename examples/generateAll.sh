@@ -14,6 +14,8 @@ SHOW_HELP=false
 GEN_CRED_CONFIG=true
 # Generate Auth databases
 GEN_AUTH_DB=true
+# Remove files after DB generation
+REMOVE_FILES_AFTER_DB_GEN=true
 
 # parsing command line arguments
 # -n for number of nets, -d for DB protection method and -a for host port assignment
@@ -31,6 +33,9 @@ do
 		;;
 		-gd|--gen-db-only)
 			GEN_CRED_CONFIG=false
+		;;
+		-lc|--leave-cred-config)
+			REMOVE_FILES_AFTER_DB_GEN=false
 		;;
 		-h|--help)
 			SHOW_HELP=true
@@ -51,6 +56,7 @@ if [ "$SHOW_HELP" = true ] ; then
 	echo "                                  (without generating Auth DBs.)"
 	echo "  -gd,--gen-db-only               Generate Auth databases only."
 	echo "                                  (Skip generation of credentials and configuration files.)"
+	echo "  -lc,--leave-cred-config         Leave credentials and config files after DB generation."
 	echo "  -h,--help                       Show this help."
 	exit 1
 fi
@@ -93,7 +99,7 @@ fi
 if [ "$GEN_AUTH_DB" = true ] ; then
 	echo "Generating auth databases..."
 	# generate Auth DBs
-	node authDBGenerator.js $GRAPH_FILE
+	node authDBGenerator.js $GRAPH_FILE $REMOVE_FILES_AFTER_DB_GEN
 	if [ $? -ne 0  ] ; then
 		echo "[Error] Script finished with problems! exiting..." ; exit 1
 	fi
