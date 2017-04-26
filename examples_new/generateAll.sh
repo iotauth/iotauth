@@ -60,9 +60,16 @@ echo GRAPH_FILE  = $GRAPH_FILE
 
 # if required npm modules do not exist
 if [ ! -d "node_modules/readline-sync" ] ||  [ ! -d "node_modules/JSON2" ]; then
-	echo "Installing required npm modules..."
+	echo "Installing required npm modules for generating configuration ..."
 	./initConfigs.sh
 fi
+
+# Initialize Node.js example entities (npm installation)
+EXAMPLES_DIR=`eval pwd`
+cd ../entity/node
+echo "Installing required npm modules for example node entities ..."
+./initNodeEntities.sh
+cd $EXAMPLES_DIR
 
 # generate credentials and configs
 if [ "$GEN_CRED_CONFIG" = true ] ; then
