@@ -22,8 +22,8 @@
 var fs = require('fs');
 var SecureCommClient = require('../accessors/SecureCommClient');
 
-var autoSendPeriod = 2000;
-var useSameSessionKeyCount = 3;
+var autoSendPeriod = 5000;
+var useSameSessionKeyCount = 2;
 var currentCount = 0;
 var currentTimeout = null;
 var authFailureThreshold = 3;
