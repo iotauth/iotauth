@@ -673,7 +673,7 @@ public class AuthServer {
             X509Certificate backupCertificate = null;
             try {
                 backupCertificate = crypto.issueCertificate(backupToAuth.getEntityCertificate(),
-                        authID, backupToAuthID, backupToAuth.getHost());
+                        authID, backupToAuthID, backupToAuth.getEntityHost());
             } catch (CertIOException e) {
                 throw new RuntimeException("Problem with issuing a certificate" + "\n" + e.getMessage());
             }
@@ -915,7 +915,7 @@ public class AuthServer {
             int backupAuthID = itr.next();
             TrustedAuth trustedAuth = db.getTrustedAuthInfo(backupAuthID);
             X509Certificate cert = crypto.issueCertificate(
-                    trustedAuth.getEntityCertificate(), getAuthID(), backupAuthID, trustedAuth.getHost());
+                    trustedAuth.getEntityCertificate(), getAuthID(), backupAuthID, trustedAuth.getEntityHost());
             ret.add(cert);
         }
         return ret;

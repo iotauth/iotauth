@@ -146,7 +146,7 @@ function generateCommunicationPolicyTables() {
 // generate trusted Auth tables
 function getTrustedAuth(auth) {
 	return {
-		ID: auth.id, Host: auth.authHost, Port: auth.authPort,
+		ID: auth.id, Host: auth.authHost, EntityHost: auth.entityHost, Port: auth.authPort,
 		InternetCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'InternetCert.pem',
 		EntityCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'EntityCert.pem',
 		HeartbeatPeriod: -1,
