@@ -69,6 +69,39 @@ var positions = {
 	't4': {x: 25, y: 15, z: 0},
 	't5': {x: 5, y: 10, z: 0}
 }
+// costMap 
+var commCostMap = {};
+function addCommCost(e1, e2, cost) {
+	if (commCostMap[e1] == null) {
+		commCostMap[e1] = {};
+	}
+	commCostMap[e1][e2] = cost;
+	if (commCostMap[e2] == null) {
+		commCostMap[e2] = {};
+	}
+	commCostMap[e2][e1] = cost;
+}
+// in paper
+addCommCost(2,	3,	3);		// c(a2,a3) = 3
+addCommCost(2,	't1',	2);		// c(a2,t1) = 2
+addCommCost(2,	't2',	1.5);	// c(a2,t2) = 1.5
+addCommCost(2,	't3',	1);		// c(a2,t3) = 1
+addCommCost(2,	't4',	1);		// c(a2,t4) = 1
+addCommCost(3,	't1',	2.5);	// c(a3,t1) = 2.5
+addCommCost(3,	't2',	3);		// c(a3,t2) = 3
+addCommCost(3,	't5',	1);		// c(a3,t5) = 1
+// not in paper yet, but necessary
+// between Auths
+addCommCost(1,	2,	1);
+addCommCost(1,	3,	1);
+// before a1 fails, for entities
+addCommCost(1,	't1',	1);
+addCommCost(1,	't2',	1);
+// between things
+addCommCost('t1',	't2',	1);
+addCommCost('t1',	't5',	1);
+addCommCost('t3',	't4',	1);
+
 var entityList = [];
 var serverHostPortMap = {};
 var devList =[];
@@ -209,6 +242,11 @@ if (devList.length > 0) {
 		'utf8'
 	);
 }
-
+if (Object.keys(commCostMap).length > 0) {
+	fs.writeFileSync('commCostMap.json', 
+		JSON2.stringify(commCostMap, null, '\t'),
+		'utf8'
+	);
+}
 
 
