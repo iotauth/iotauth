@@ -14,7 +14,9 @@
  */
 
 /**
- * Example client entity written using SecureCommClient accessor.
+ * Example auto client entity which sends a message periodically and automatically.
+ * This is written using SecureCommClient accessor.
+ *
  * @author Hokeun Kim
  */
 "use strict";
@@ -22,11 +24,15 @@
 var fs = require('fs');
 var SecureCommClient = require('../accessors/SecureCommClient');
 
+// Parameters for experiments
 var autoSendPeriod = 5000;
+var connectionTimeout = 2000;
 var useSameSessionKeyCount = 2;
+var authFailureThreshold = 3;
+////
+
 var currentCount = 0;
 var currentTimeout = null;
-var authFailureThreshold = 3;
 var authFailureCount = 0;
 
 function autoSend() {
@@ -63,7 +69,9 @@ function connectedHandler(connected) {
 
 function errorHandler(message) {
     console.error('Handler: Error in secure comm - details: ' + message);
-    if (message.includes('Error occurred in session key request')) {
+    if (message.includes('Error occurred in session key request') ||
+        message.includes('Auth hello timedout'))
+    {
         authFailureCount++;
         console.log('failure in connection with Auth : failure count: ' + authFailureCount);
         if (authFailureCount >= authFailureThreshold) {
@@ -100,6 +108,8 @@ secureCommClient.setOutputHandler('received', receivedHandler);
 
 // set number of cached keys to 1
 secureCommClient.setParameter('numKeysPerRequest', 1);
+// set connection timeout
+secureCommClient.setEntityInfo('connectionTimeout', connectionTimeout);
 
 /*
 // For publish-subscribe experiments based individual secure connection using proposed approach

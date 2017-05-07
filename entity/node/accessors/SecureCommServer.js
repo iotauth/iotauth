@@ -341,4 +341,9 @@ SecureCommServer.prototype.migrateToTrustedAuth = function() {
     sendMigrationRequest();
 }
 
+SecureCommServer.prototype.setEntityInfo = function(key, value) {
+	entityConfig.entityInfo[key] = value;
+	console.log('current entityInfo: ' + util.inspect(entityConfig.entityInfo));
+}
+
 module.exports = SecureCommServer;

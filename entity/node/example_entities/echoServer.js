@@ -14,7 +14,9 @@
  */
 
 /**
- * Example server entity.
+ * Example echo server entity which responds to the client every time it receives a message
+ * over an authorized channel.
+ *
  * @author Hokeun Kim
  */
 
@@ -32,7 +34,9 @@ function connectionHandler(info) {
 
 function errorHandler(info) {
     console.error('Handler: ' + info);
-    if (info.includes('Error occurred in session key request')) {
+    if (message.includes('Error occurred in session key request') ||
+        message.includes('Auth hello timedout'))
+    {
         authFailureCount++;
         console.log('failure in connection with Auth : failure count: ' + authFailureCount);
         if (authFailureCount >= authFailureThreshold) {
@@ -70,7 +74,9 @@ if (process.argv.length > 2) {
 }
 
 if (process.argv.length > 3) {
-    process.chdir(process.argv[3]);
+    var workingDirectory = process.argv[3];
+    console.log('changing working directory to: ' + workingDirectory);
+    process.chdir(workingDirectory);
 }
 
 var secureCommServer = new SecureCommServer(configFilePath);
