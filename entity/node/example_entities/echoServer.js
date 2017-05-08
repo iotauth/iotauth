@@ -40,8 +40,10 @@ function connectionHandler(info) {
 
 function errorHandler(info) {
     console.error('Handler: ' + info);
-    if (message.includes('Error occurred in session key request') ||
-        message.includes('Auth hello timedout'))
+    if ((message.includes('Error occurred in session key request') ||
+        message.includes('Auth hello timedout')) &&
+        !message.includes('migration request') &&
+        !message.includes('ECONNREFUSED'))
     {
         authFailureCount++;
         console.log('failure in connection with Auth : failure count: ' + authFailureCount);

@@ -37,6 +37,24 @@ var currentCount = 0;
 var currentTimeout = null;
 var authFailureCount = 0;
 
+var actualResponseCount = 0;
+var expectedResponseCount = 0;
+
+function printAvailability() {
+    console.log('Responses-actual/expected/ratio: ' + actualResponseCount + ' ' + expectedResponseCount + ' ' + actualResponseCount/expectedResponseCount);
+}
+function increaseAcutalResponseCount() {
+    actualResponseCount++;
+    printAvailability();
+}
+function increaseExpectedResponseCount(increase) {
+    if (increase == null) {
+        increase = 1;
+    }
+    expectedResponseCount += increase;
+    printAvailability();
+}
+
 function autoSend() {
     var fileName = '../data_examples/data.bin';
     var fileData = fs.readFileSync(fileName);
@@ -51,6 +69,7 @@ function autoSend() {
     else {
         currentTimeout = null;
     }
+    increaseExpectedResponseCount();
 }
 
 function connectedHandler(connected) {
@@ -66,13 +85,16 @@ function connectedHandler(connected) {
             clearTimeout(currentTimeout);
             currentTimeout = null;
         }
+        increaseExpectedResponseCount(useSameSessionKeyCount);
     }
 }
 
 function errorHandler(message) {
     console.error('Handler: Error in secure comm - details: ' + message);
-    if (message.includes('Error occurred in session key request') ||
-        message.includes('Auth hello timedout'))
+    if ((message.includes('Error occurred in session key request') ||
+        message.includes('Auth hello timedout')) &&
+        !message.includes('migration request') &&
+        !message.includes('ECONNREFUSED'))
     {
         authFailureCount++;
         console.log('failure in connection with Auth : failure count: ' + authFailureCount);
@@ -80,6 +102,7 @@ function errorHandler(message) {
             console.log('failure count reached threshold (' + authFailureThreshold + '), try migration...');
             secureCommClient.migrateToTrustedAuth();
         }
+        increaseExpectedResponseCount(useSameSessionKeyCount);
     }
 }
 
@@ -91,6 +114,7 @@ function receivedHandler(data) {
     else {
         console.log(data.toString());
     }
+    increaseAcutalResponseCount();
 }
 
 var configFilePath = 'configs/net1/client.config';
