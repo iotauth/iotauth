@@ -147,7 +147,7 @@ function handleMigrationResp(newAuthId, newCredential) {
 }
 
 function sendMigrationRequest() {
-    if (entityConfig.migrationInfo == null) {
+    if (entityConfig.migrationInfo == null || entityConfig.migrationInfo.host == null) {
         console.log('Failed to migrate! no information for migration.');
     }
     else if (entityConfig.authInfo.host == entityConfig.migrationInfo.host) {
