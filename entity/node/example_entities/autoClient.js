@@ -69,7 +69,6 @@ function autoSend() {
     else {
         currentTimeout = null;
     }
-    increaseExpectedResponseCount();
 }
 
 function connectedHandler(connected) {
@@ -85,7 +84,6 @@ function connectedHandler(connected) {
             clearTimeout(currentTimeout);
             currentTimeout = null;
         }
-        increaseExpectedResponseCount(useSameSessionKeyCount);
     }
 }
 
@@ -102,7 +100,6 @@ function errorHandler(message) {
             console.log('failure count reached threshold (' + authFailureThreshold + '), try migration...');
             secureCommClient.migrateToTrustedAuth();
         }
-        increaseExpectedResponseCount(useSameSessionKeyCount);
     }
 }
 
@@ -180,6 +177,7 @@ function autoConnect() {
         host: targetServerInfoList[0].host,
         port: targetServerInfoList[0].port
     });
+    increaseExpectedResponseCount(useSameSessionKeyCount);
     setTimeout(autoConnect, autoSendPeriod * useSameSessionKeyCount);
 }
 autoConnect();

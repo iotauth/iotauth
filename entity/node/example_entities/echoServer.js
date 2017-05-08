@@ -38,8 +38,8 @@ function connectionHandler(info) {
     console.log('Handler: ' + info);
 }
 
-function errorHandler(info) {
-    console.error('Handler: ' + info);
+function errorHandler(message) {
+    console.error('Handler: ' + message);
     if ((message.includes('Error occurred in session key request') ||
         message.includes('Auth hello timedout')) &&
         !message.includes('migration request') &&
