@@ -22,12 +22,14 @@
 "use strict";
 
 var fs = require('fs');
+var util = require('util');
+var iotAuth = require('../accessors/node_modules/iotAuth');
 var SecureCommClient = require('../accessors/SecureCommClient');
 
 // Parameters for experiments
 var autoSendPeriod = 5000;
-var connectionTimeout = 2000;
 var useSameSessionKeyCount = 2;
+var connectionTimeout = 2000;
 var authFailureThreshold = 3;
 ////
 
@@ -75,7 +77,7 @@ function errorHandler(message) {
         authFailureCount++;
         console.log('failure in connection with Auth : failure count: ' + authFailureCount);
         if (authFailureCount >= authFailureThreshold) {
-            console.log('failure count reached threshold, try migration...');
+            console.log('failure count reached threshold (' + authFailureThreshold + '), try migration...');
             secureCommClient.migrateToTrustedAuth();
         }
     }
@@ -97,7 +99,18 @@ if (process.argv.length > 2) {
 }
 
 if (process.argv.length > 3) {
-    process.chdir(process.argv[3]);
+    var workingDirectory = process.argv[3];
+    console.log('changing working directory to: ' + workingDirectory);
+    process.chdir(workingDirectory);
+}
+
+if (process.argv.length > 4) {
+    var expOptions = iotAuth.loadJSONConfig(process.argv[4]);
+    console.log('Experimental options for autoClient: ' + util.inspect(expOptions));
+    autoSendPeriod = expOptions.autoSendPeriod;
+    useSameSessionKeyCount = expOptions.useSameSessionKeyCount;
+    connectionTimeout = expOptions.connectionTimeout;
+    authFailureThreshold = expOptions.authFailureThreshold;
 }
 
 var secureCommClient = new SecureCommClient(configFilePath);

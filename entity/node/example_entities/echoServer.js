@@ -23,9 +23,15 @@
 "use strict";
 
 var fs = require('fs');
+var util = require('util');
+var iotAuth = require('../accessors/node_modules/iotAuth');
 var SecureCommServer = require('../accessors/SecureCommServer');
 
+// Parameters for experiments
+var connectionTimeout = 2000;
 var authFailureThreshold = 3;
+/////
+
 var authFailureCount = 0;
 
 function connectionHandler(info) {
@@ -40,7 +46,7 @@ function errorHandler(info) {
         authFailureCount++;
         console.log('failure in connection with Auth : failure count: ' + authFailureCount);
         if (authFailureCount >= authFailureThreshold) {
-            console.log('failure count reached threshold, try migration...');
+            console.log('failure count reached threshold (' + authFailureThreshold + '), try migration...');
             secureCommServer.migrateToTrustedAuth();
         }
     }
@@ -79,12 +85,20 @@ if (process.argv.length > 3) {
     process.chdir(workingDirectory);
 }
 
+if (process.argv.length > 4) {
+    var expOptions = iotAuth.loadJSONConfig(process.argv[4]);
+    console.log('Experimental options for echoServer: ' + util.inspect(expOptions));
+    connectionTimeout = expOptions.connectionTimeout;
+    authFailureThreshold = expOptions.authFailureThreshold;
+}
+
 var secureCommServer = new SecureCommServer(configFilePath);
 secureCommServer.initialize();
 secureCommServer.setOutputHandler('connection', connectionHandler);
 secureCommServer.setOutputHandler('error', errorHandler);
 secureCommServer.setOutputHandler('listening', listeningHandler);
 secureCommServer.setOutputHandler('received', receivedHandler);
+secureCommServer.setEntityInfo('connectionTimeout', connectionTimeout);
 
 function commandInterpreter() {
     var chunk = process.stdin.read();
