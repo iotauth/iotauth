@@ -33,7 +33,7 @@ var connectionTimeout = 2000;
 var authFailureThreshold = 3;
 ////
 
-var currentCount = 0;
+var currentRemainingRequestCount = 0;
 var currentTimeout = null;
 var authFailureCount = 0;
 
@@ -61,9 +61,9 @@ function autoSend() {
     console.log('file data length: ' + fileData.length);
     //secureCommClient.provideInput(fileData);
     console.log('sending at ' + new Date());    
-    secureCommClient.provideInput('toSend', new Buffer('data' + currentCount));
-    currentCount--;
-    if (currentCount > 0) {
+    secureCommClient.provideInput('toSend', new Buffer('data' + currentRemainingRequestCount));
+    currentRemainingRequestCount--;
+    if (currentRemainingRequestCount > 0) {
         currentTimeout = setTimeout(autoSend, autoSendPeriod);
     }
     else {
@@ -75,7 +75,7 @@ function connectedHandler(connected) {
     if (connected == true) {
         console.log('Handler: communication initialization succeeded');
         authFailureCount = 0;
-        currentCount = useSameSessionKeyCount;
+        currentRemainingRequestCount = useSameSessionKeyCount;
         autoSend();
     }
     else {
@@ -171,14 +171,24 @@ if (process.argv.length > 5) {
         },
 */
 
+var currentExpectedResponseCount = 0;
+function expectedResponseCounter() {
+    increaseExpectedResponseCount();
+    currentExpectedResponseCount --;
+    if (currentExpectedResponseCount > 0) {
+        setTimeout(expectedResponseCounter, autoSendPeriod);
+    }
+}
+
 var targetServerInfoList = secureCommClient.getTargetServerInfoList();
 function autoConnect() {
     secureCommClient.provideInput('serverHostPort', {
         host: targetServerInfoList[0].host,
         port: targetServerInfoList[0].port
     });
-    increaseExpectedResponseCount(useSameSessionKeyCount);
     setTimeout(autoConnect, autoSendPeriod * useSameSessionKeyCount);
+    currentExpectedResponseCount = useSameSessionKeyCount;
+    expectedResponseCounter();
 }
 autoConnect();
 
