@@ -157,8 +157,8 @@ public class Solver {
         // Print the result, and the model
         BasicLogger.debug();
         BasicLogger.debug(result);
-        //BasicLogger.debug();
-        //BasicLogger.debug(model);
+        BasicLogger.debug();
+        BasicLogger.debug(model);
         BasicLogger.debug();
 
         return new MigrationPlan(network,model,result);
