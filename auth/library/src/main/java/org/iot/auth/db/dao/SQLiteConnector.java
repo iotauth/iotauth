@@ -256,6 +256,7 @@ public class SQLiteConnector {
         sql = "CREATE TABLE IF NOT EXISTS " + TrustedAuthTable.T_TRUSTED_AUTH + "(";
         sql += TrustedAuthTable.c.ID.name() + " INT NOT NULL PRIMARY KEY,";
         sql += TrustedAuthTable.c.Host.name() + " TEXT NOT NULL,";
+        sql += TrustedAuthTable.c.EntityHost.name() + " TEXT NOT NULL,";
         sql += TrustedAuthTable.c.Port.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.FailureThreshold.name() + " INT NOT NULL,";
@@ -358,23 +359,11 @@ public class SQLiteConnector {
         return regEntity;
     }
 
-    /**
-     * Insert records into RegistrationEntityTable
-     *
-     * @param regEntity the records registered as entity to be distributed among the clients.
-     *
-     * @return <code>true</code> if the insertion has been successful
-     *         <code>false</code> if the insertion has failed
-     * @throws SQLException  if a database access error occurs;
-     * this method is called on a closed <code>PreparedStatement</code>
-     * or an argument is supplied to this method
-     * @throws ClassNotFoundException if the class cannot be located
-     * @see RegisteredEntityTable
-     */
-    public boolean insertRecords(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
-        regEntity = encryptRecords(regEntity);
+    private boolean insertOrReplaceRecordsHelper(String sqlCommand, RegisteredEntityTable regEntity)
+            throws SQLException, ClassNotFoundException
+    {
         //setConnection();
-        String sql = "INSERT INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
+        String sql = sqlCommand + " INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
         sql += RegisteredEntityTable.c.Name.name() + ",";
         sql += "'"+ RegisteredEntityTable.c.Group.name() + "',";
         sql += RegisteredEntityTable.c.DistProtocol.name() + ",";
@@ -392,6 +381,7 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.MigrationToken.name() + ")";
         sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        regEntity = encryptRecords(regEntity);
         int index = 1;
         preparedStatement.setString(index++,regEntity.getName());
         preparedStatement.setString(index++,regEntity.getGroup());
@@ -438,6 +428,27 @@ public class SQLiteConnector {
     }
 
     /**
+     * Insert records into RegistrationEntityTable
+     *
+     * @param regEntity the records registered as entity to be distributed among the clients.
+     *
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     * @see RegisteredEntityTable
+     */
+    public boolean insertRecords(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
+        return insertOrReplaceRecordsHelper("INSERT", regEntity);
+    }
+
+    public boolean insertRecordsOrUpdateIfExists(RegisteredEntityTable regEntity) throws SQLException, ClassNotFoundException {
+        return insertOrReplaceRecordsHelper("INSERT OR REPLACE", regEntity);
+    }
+
+    /**
      * Insert records related to the TrustedAuthTable
      *
      * @param auth the records registered as to be used as trusted authentication server
@@ -455,17 +466,19 @@ public class SQLiteConnector {
         String sql = "INSERT INTO " + TrustedAuthTable.T_TRUSTED_AUTH + "(";
         sql += TrustedAuthTable.c.ID.name() + ",";
         sql += TrustedAuthTable.c.Host.name() + ",";
+        sql += TrustedAuthTable.c.EntityHost.name() + ",";
         sql += TrustedAuthTable.c.Port.name() + ",";
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + ",";
         sql += TrustedAuthTable.c.FailureThreshold.name() + ",";
         sql += TrustedAuthTable.c.InternetCertificateValue.name() + ",";
         sql += TrustedAuthTable.c.EntityCertificateValue.name() + ",";
         sql += TrustedAuthTable.c.BackupCertificateValue.name() + ")";
-        sql += " VALUES(?,?,?,?,?,?,?,?)";
+        sql += " VALUES(?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setInt(index++,auth.getId());
         preparedStatement.setString(index++,auth.getHost());
+        preparedStatement.setString(index++,auth.getEntityHost());
         preparedStatement.setInt(index++,auth.getPort());
         preparedStatement.setInt(index++,auth.getHeartbeatPeriod());
         preparedStatement.setInt(index++,auth.getFailureThreshold());

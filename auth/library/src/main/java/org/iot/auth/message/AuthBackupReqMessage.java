@@ -44,9 +44,15 @@ import java.util.concurrent.TimeoutException;
 public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
     private List<RegisteredEntity> registeredEntityList;
     private X509Certificate backupCertificate;
-    public AuthBackupReqMessage(X509Certificate backupCertificate, List<RegisteredEntity> registeredEntityList) {
+    private int backupToAuthID;
+    public AuthBackupReqMessage(int backupToAuthID, X509Certificate backupCertificate, List<RegisteredEntity> registeredEntityList) {
+        this.backupToAuthID = backupToAuthID;
         this.backupCertificate = backupCertificate;
         this.registeredEntityList = registeredEntityList;
+    }
+
+    public int getBackupToAuthID() {
+        return backupToAuthID;
     }
 
     public List<RegisteredEntity> getRegisteredEntityList() {
@@ -132,6 +138,7 @@ public class AuthBackupReqMessage extends TrustedAuthReqMessasge {
             curIndex += length;
             registeredEntities.add(registeredEntity);
         }
-        return new AuthBackupReqMessage(backupCertificate, registeredEntities);
+        // -1 means that is it is a received back request
+        return new AuthBackupReqMessage(-1, backupCertificate, registeredEntities);
     }
 }

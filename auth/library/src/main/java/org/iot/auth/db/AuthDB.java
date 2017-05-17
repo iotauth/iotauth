@@ -104,8 +104,9 @@ public class AuthDB {
         return new ArrayList<>(registeredEntityMap.values());
     }
 
-    public void insertRegisteredEntities(List<RegisteredEntity> registeredEntities) throws IOException,
-            SQLException, ClassNotFoundException {
+    private void insertOrReplaceRegisteredEntitiesHelper(boolean updateIfExists, List<RegisteredEntity> registeredEntities)
+            throws IOException, SQLException, ClassNotFoundException
+    {
         LinkedList<RegisteredEntityTable> tableElements = new LinkedList<>();
         for (RegisteredEntity registeredEntity: registeredEntities) {
             Buffer serializedDistributionKeyValue = null;
@@ -121,10 +122,25 @@ public class AuthDB {
                     serializedDistributionKeyValue, distKeyExpirationTime);
 
             tableElements.push(tableElement);
-
-            sqLiteConnector.insertRecords(tableElement);
+            if (updateIfExists) {
+                sqLiteConnector.insertRecordsOrUpdateIfExists(tableElement);
+            }
+            else {
+                sqLiteConnector.insertRecords(tableElement);
+            }
         }
     }
+
+    public void insertRegisteredEntities(List<RegisteredEntity> registeredEntities) throws IOException,
+            SQLException, ClassNotFoundException {
+        insertOrReplaceRegisteredEntitiesHelper(false, registeredEntities);
+    }
+
+    public void insertRegisteredEntitiesOrUpdateIfExist(List<RegisteredEntity> registeredEntities) throws IOException,
+            SQLException, ClassNotFoundException {
+        insertOrReplaceRegisteredEntitiesHelper(true, registeredEntities);
+    }
+
 
     public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
         for (CommunicationPolicy communicationPolicy : communicationPolicyList) {
@@ -377,7 +393,7 @@ public class AuthDB {
         trustStoreForTrustedAuths.load(null, trustStorePassword.toCharArray());
 
         for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuth()) {
-            TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(),
+            TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(), t.getEntityHost(),
                     t.getPort(),
                     t.getHeartbeatPeriod(),
                     t.getFailureThreshold(),

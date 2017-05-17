@@ -14,20 +14,46 @@
  */
 
 /**
- * Example client entity written using SecureCommClient accessor.
+ * Example auto client entity which sends a message periodically and automatically.
+ * This is written using SecureCommClient accessor.
+ *
  * @author Hokeun Kim
  */
 "use strict";
 
 var fs = require('fs');
+var util = require('util');
+var iotAuth = require('../accessors/node_modules/iotAuth');
 var SecureCommClient = require('../accessors/SecureCommClient');
 
-var autoSendPeriod = 2000;
-var useSameSessionKeyCount = 3;
-var currentCount = 0;
-var currentTimeout = null;
+// Parameters for experiments
+var autoSendPeriod = 5000;
+var useSameSessionKeyCount = 2;
+var connectionTimeout = 2000;
 var authFailureThreshold = 3;
+////
+
+var currentRemainingRequestCount = 0;
+var currentTimeout = null;
 var authFailureCount = 0;
+
+var actualResponseCount = 0;
+var expectedResponseCount = 0;
+
+function printAvailability() {
+    console.log('Responses-actual/expected/ratio: ' + actualResponseCount + ' ' + expectedResponseCount + ' ' + actualResponseCount/expectedResponseCount);
+}
+function increaseAcutalResponseCount() {
+    actualResponseCount++;
+    printAvailability();
+}
+function increaseExpectedResponseCount(increase) {
+    if (increase == null) {
+        increase = 1;
+    }
+    expectedResponseCount += increase;
+    printAvailability();
+}
 
 function autoSend() {
     var fileName = '../data_examples/data.bin';
@@ -35,9 +61,9 @@ function autoSend() {
     console.log('file data length: ' + fileData.length);
     //secureCommClient.provideInput(fileData);
     console.log('sending at ' + new Date());    
-    secureCommClient.provideInput('toSend', new Buffer('data' + currentCount));
-    currentCount--;
-    if (currentCount > 0) {
+    secureCommClient.provideInput('toSend', new Buffer('data' + currentRemainingRequestCount));
+    currentRemainingRequestCount--;
+    if (currentRemainingRequestCount > 0) {
         currentTimeout = setTimeout(autoSend, autoSendPeriod);
     }
     else {
@@ -49,7 +75,7 @@ function connectedHandler(connected) {
     if (connected == true) {
         console.log('Handler: communication initialization succeeded');
         authFailureCount = 0;
-        currentCount = useSameSessionKeyCount;
+        currentRemainingRequestCount = useSameSessionKeyCount;
         autoSend();
     }
     else {
@@ -63,11 +89,15 @@ function connectedHandler(connected) {
 
 function errorHandler(message) {
     console.error('Handler: Error in secure comm - details: ' + message);
-    if (message.includes('Error occurred in session key request')) {
+    if ((message.includes('Error occurred in session key request') ||
+        message.includes('Auth hello timedout')) &&
+        !message.includes('migration request') &&
+        !message.includes('ECONNREFUSED'))
+    {
         authFailureCount++;
         console.log('failure in connection with Auth : failure count: ' + authFailureCount);
         if (authFailureCount >= authFailureThreshold) {
-            console.log('failure count reached threshold, try migration...');
+            console.log('failure count reached threshold (' + authFailureThreshold + '), try migration...');
             secureCommClient.migrateToTrustedAuth();
         }
     }
@@ -81,11 +111,27 @@ function receivedHandler(data) {
     else {
         console.log(data.toString());
     }
+    increaseAcutalResponseCount();
 }
 
 var configFilePath = 'configs/net1/client.config';
 if (process.argv.length > 2) {
     configFilePath = process.argv[2];
+}
+
+if (process.argv.length > 3) {
+    var workingDirectory = process.argv[3];
+    console.log('changing working directory to: ' + workingDirectory);
+    process.chdir(workingDirectory);
+}
+
+if (process.argv.length > 4) {
+    var expOptions = iotAuth.loadJSONConfig(process.argv[4]);
+    console.log('Experimental options for autoClient: ' + util.inspect(expOptions));
+    autoSendPeriod = expOptions.autoSendPeriod;
+    useSameSessionKeyCount = expOptions.useSameSessionKeyCount;
+    connectionTimeout = expOptions.connectionTimeout;
+    authFailureThreshold = expOptions.authFailureThreshold;
 }
 
 var secureCommClient = new SecureCommClient(configFilePath);
@@ -96,6 +142,8 @@ secureCommClient.setOutputHandler('received', receivedHandler);
 
 // set number of cached keys to 1
 secureCommClient.setParameter('numKeysPerRequest', 1);
+// set connection timeout
+secureCommClient.setEntityInfo('connectionTimeout', connectionTimeout);
 
 /*
 // For publish-subscribe experiments based individual secure connection using proposed approach
@@ -123,6 +171,15 @@ if (process.argv.length > 5) {
         },
 */
 
+var currentExpectedResponseCount = 0;
+function expectedResponseCounter() {
+    increaseExpectedResponseCount();
+    currentExpectedResponseCount --;
+    if (currentExpectedResponseCount > 0) {
+        setTimeout(expectedResponseCounter, autoSendPeriod);
+    }
+}
+
 var targetServerInfoList = secureCommClient.getTargetServerInfoList();
 function autoConnect() {
     secureCommClient.provideInput('serverHostPort', {
@@ -130,6 +187,8 @@ function autoConnect() {
         port: targetServerInfoList[0].port
     });
     setTimeout(autoConnect, autoSendPeriod * useSameSessionKeyCount);
+    currentExpectedResponseCount = useSameSessionKeyCount;
+    expectedResponseCounter();
 }
 autoConnect();
 

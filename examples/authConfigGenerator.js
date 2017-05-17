@@ -146,7 +146,7 @@ function generateCommunicationPolicyTables() {
 // generate trusted Auth tables
 function getTrustedAuth(auth) {
 	return {
-		ID: auth.id, Host: auth.authHost, Port: auth.authPort,
+		ID: auth.id, Host: auth.authHost, EntityHost: auth.entityHost, Port: auth.authPort,
 		InternetCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'InternetCert.pem',
 		EntityCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'EntityCert.pem',
 		HeartbeatPeriod: -1,
@@ -185,9 +185,9 @@ function generatePropertiesFiles() {
             'auth_id': auth.id,
             'host_name': '0.0.0.0',
             'entity_tcp_port': auth.tcpPort,
-            'entity_tcp_port_timeout': 2000,
+            'entity_tcp_port_timeout': 5000,
             'entity_udp_port': auth.udpPort, 
-            'entity_udp_port_timeout': 5000,
+            'entity_udp_port_timeout': 10000,
             'trusted_auth_port': auth.authPort,
             'trusted_auth_port_idle_timeout': 600000,
             'entity_key_store_path': authKeystorePrefix + 'Entity.pfx',

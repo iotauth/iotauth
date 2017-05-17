@@ -23,7 +23,10 @@ Database tables for storing authorization information should be initialized for 
 
 This script generates credentials and configuration files for example Auths and entities. This script includes two main scripts, *examples/generateCredentialsAndConfigs.sh* and *auth/example-auth-db-generator/generateExampleAuthDB.sh*. To see detailed information and options for the script, use './generateAll.sh --help'.
 
-- **examples/generateCredentialsAndConfigs.sh**: This script first generates credentials (public/private key pairs and symmetric encryption keys) for example Auths and entities and places the credentials in specified local directories for Auths and entities. And then it also creates configuration files for example Auths and entities. This script uses following helper scripts.
+- **examples/initConfigs.sh**: Initialize Node.js for generating configuration files (install required npm modules). This script uses following helper script
+- **entity/node/initNodeEntities.sh**: Initializes Node.js example entities. This process includes Node.js npm installation.
+  
+- **examples/credentialGenerator.js**: This Node.js script first generates credentials (public/private key pairs and symmetric encryption keys) for example Auths and entities and places the credentials in specified local directories for Auths and entities. This script uses following helper scripts.
 
   - **auth/credentials/generateCACredentials.sh**: Generates credentials (public key, private key) for a certificate authority (CA) which signs certificates of example Auths and entities.
 
@@ -31,11 +34,11 @@ This script generates credentials and configuration files for example Auths and 
 
   - **entity/credentials/generateExampleEntityCredentials.sh**: Generates credentials for example entities.
   
-  - **entity/node/initNodeEntities.sh**: Initializes Node.js example entities. This process includes Node.js npm installation.
-  
-  - **examples/configs/initConfigs.sh**: Generates configuration files for example Auths and entities.
+- **examples/entityConfigGenerator.js**: This Node.js script creates configuration files for example entities. This script uses following helper script.
+   
+- **examples/authConfigGenerator.js**: This Node.js script creates configuration files and properties files for example Auths and entities.
 
-- **auth/example-auth-db-generator/generateExampleAuthDB.sh**: This script compiles the DB generator program, *example-auth-db generator* and creates SQLite databases for Example Auths using the newly created credentials for Auths and entities.
+- **examples/authDBGenerator.js**: This Node.js script compiles the DB generator program, *example-auth-db generator* (which is located in $ROOT/auth/example-auth-db-generator) and creates SQLite databases for Example Auths using the newly created credentials for Auths and entities.
 
 ### cleanAll.sh
 

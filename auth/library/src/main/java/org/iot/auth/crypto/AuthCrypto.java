@@ -15,10 +15,16 @@
 
 package org.iot.auth.crypto;
 
+import com.google.common.net.InetAddresses;
+import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.*;
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v1CertificateBuilder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -30,7 +36,10 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 
 import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.security.*;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -82,6 +91,7 @@ public class AuthCrypto {
             logger.debug("Alias: {}, ", alias);
             logger.debug("Cert: {}, ", pkEntry.getCertificate());
             logger.debug("Key: {}", pkEntry.getPrivateKey());
+            this.authCertificateForEntities = convert(pkEntry.getCertificate());
             this.authPrivateKeyForEntities = pkEntry.getPrivateKey();
         }
         this.authSignAlgorithm = "SHA256withRSA";
@@ -223,7 +233,19 @@ public class AuthCrypto {
             throw new RuntimeException("Unrecognized file format for public key :" + filePath);
         }
     }
-
+    // Converts to java.security
+    public static X509Certificate convert(Certificate cert) {
+        try {
+            byte[] encoded = cert.getEncoded();
+            ByteArrayInputStream bis = new ByteArrayInputStream(encoded);
+            java.security.cert.CertificateFactory cf
+                    = java.security.cert.CertificateFactory.getInstance("X.509");
+            return (java.security.cert.X509Certificate)cf.generateCertificate(bis);
+        } catch (java.security.cert.CertificateEncodingException e) {
+        } catch (java.security.cert.CertificateException e) {
+        }
+        return null;
+    }
     public static Buffer getRandomBytes(int size) {
         SecureRandom random = new SecureRandom();
         byte seed[] = random.generateSeed(size);
@@ -234,12 +256,19 @@ public class AuthCrypto {
     }
 
     public X509Certificate issueCertificate(X509Certificate certificate,
-                                            int issuerAuthID, int subjectAuthID) {
+                                            int issuerAuthID, int subjectAuthID, String subjectAuthCN) throws CertIOException {
         try {
+            Principal issuerPrincipal = authCertificateForEntities.getSubjectDN();
+            String strIssuerDN = issuerPrincipal.getName();
             String issuerOU = "Auth" + issuerAuthID;
             String subjectOU = "Auth" + subjectAuthID;
-            X500Name issuerDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + issuerOU + ", CN=localhost");
-            X500Name subjectDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + subjectOU + ", CN=localhost");
+
+            X500Name issuerDNFromCertificate = new X500Name(strIssuerDN);
+            RDN rdnIssuerCN = issuerDNFromCertificate.getRDNs(BCStyle.CN)[0];
+            String strIssuerCN = IETFUtils.valueToString(rdnIssuerCN.getFirst().getValue());
+            //authCertificateForEntities.getSubjectDN()
+            X500Name issuerDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + issuerOU + ", CN=" + strIssuerCN);
+            X500Name subjectDN = new X500Name("C=US, ST=CA, L=Berkeley, O=EECS, OU=" + subjectOU + ", CN=" + subjectAuthCN);
             BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
             // 100 seconds before now
             Date validityStartDate = new Date(System.currentTimeMillis() - 100 * 1000);
@@ -250,8 +279,14 @@ public class AuthCrypto {
             Date validityEndDate = new Date(calendar.getTime().getTime());
             SubjectPublicKeyInfo subPubKeyInfo = SubjectPublicKeyInfo.getInstance(certificate.getPublicKey().getEncoded());
 
-            X509v1CertificateBuilder builder = new X509v1CertificateBuilder(issuerDN, serialNumber, validityStartDate,
+            X509v3CertificateBuilder builder = new X509v3CertificateBuilder(issuerDN, serialNumber, validityStartDate,
                     validityEndDate, subjectDN, subPubKeyInfo);
+            if (InetAddresses.isInetAddress(subjectAuthCN)) {
+                builder.addExtension(Extension.subjectAlternativeName,false,
+                        new GeneralNames(new GeneralName(GeneralName.iPAddress, subjectAuthCN)));
+            }
+            //X509v1CertificateBuilder builder = new X509v1CertificateBuilder(issuerDN, serialNumber, validityStartDate,
+            //        validityEndDate, subjectDN, subPubKeyInfo);
             JcaContentSignerBuilder signerBuilder = new JcaContentSignerBuilder(authSignAlgorithm);
 
 
@@ -262,9 +297,8 @@ public class AuthCrypto {
         } catch (CertificateException e) {
             throw new IllegalArgumentException("Problem dealing with a certificate in issuing" + "\n" + e.getMessage());
         } catch (OperatorCreationException e) {
-            e.printStackTrace();
+            throw new IllegalArgumentException("Problem dealing with a certificate in issuing" + "\n" + e.getMessage());
         }
-        return null;
     }
 
 //    public static Buffer generateSymmetricKey(int size) {
@@ -465,6 +499,7 @@ public class AuthCrypto {
         return cipher;
     }
 
+    private X509Certificate authCertificateForEntities;
     private PrivateKey authPrivateKeyForEntities;
     private String authSignAlgorithm;
     private String authPublicCipherAlgorithm;

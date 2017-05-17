@@ -78,7 +78,7 @@ function getEntityInfo(entity) {
 		group: entity.group,
 		distProtocol: entity.distProtocol,
 		usePermanentDistKey: entity.usePermanentDistKey,
-		connectionTimeout: entity.distProtocol == 'UDP' ? 3000 : 1500
+		connectionTimeout: entity.distProtocol == 'UDP' ? 10000 : 5000
 	};
 	if (entity.usePermanentDistKey == true) {
 		entityInfo.permanentDistKey = {

@@ -1,2 +1,2 @@
-configs/net*/*.config
-configs/Auth/*.config
+configs/*.config
+configs/*/*.config

@@ -22,6 +22,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.bouncycastle.cert.CertIOException;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -40,10 +41,7 @@ import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.message.*;
 import org.iot.auth.db.CommunicationTargetType;
-import org.iot.auth.server.EntityTcpConnectionHandler;
-import org.iot.auth.server.EntityUdpConnectionHandler;
-import org.iot.auth.server.HeartbeatSender;
-import org.iot.auth.server.TrustedAuthConnectionHandler;
+import org.iot.auth.server.*;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -311,6 +309,9 @@ public class AuthServer {
         HeartbeatSender heartbeatSender = new HeartbeatSender(this, db.getAllTrustedAuthIDs());
         heartbeatSender.start();
 
+        BackupRequester backupRequester = new BackupRequester(this);
+        backupRequester.start();
+
         clientForTrustedAuths.start();
 
         serverForTrustedAuths.start();
@@ -512,6 +513,11 @@ public class AuthServer {
     {
         db.insertRegisteredEntities(registeredEntities);
     }
+    public void insertRegisteredEntitiesOrUpdateIfExist(List<RegisteredEntity> registeredEntities)
+            throws SQLException, IOException, ClassNotFoundException
+    {
+        db.insertRegisteredEntitiesOrUpdateIfExist(registeredEntities);
+    }
 
     public void deleteBackedUpRegisteredEntities() throws SQLException {
         db.deleteBackedUpRegisteredEntities();
@@ -639,10 +645,10 @@ public class AuthServer {
         return clientForTrustedAuths;
     }
 
-    public List<ContentResponse> backup() {
+    public List<AuthBackupReqMessage> getBackupReqMessages() {
         int[] trustedAuthIDs = db.getAllTrustedAuthIDs();
         List<RegisteredEntity> allRegisteredEntities = db.getAllRegisteredEntitiies();
-        List<ContentResponse> ret = new LinkedList<>();
+        List<AuthBackupReqMessage> backupReqMessages = new LinkedList<>();
         if (allRegisteredEntities.size() == 0) {
             logger.error("No registered entities to be backed up.");
             return null;
@@ -663,21 +669,45 @@ public class AuthServer {
             }
             logger.info("Trying to back up to Auth" + backupToAuthID);
             TrustedAuth backupToAuth = getTrustedAuthInfo(backupToAuthID);
-            X509Certificate backupCertificate = crypto.issueCertificate(backupToAuth.getEntityCertificate(), authID, backupToAuthID);
+
+            X509Certificate backupCertificate = null;
+            try {
+                backupCertificate = crypto.issueCertificate(backupToAuth.getEntityCertificate(),
+                        authID, backupToAuthID, backupToAuth.getEntityHost());
+            } catch (CertIOException e) {
+                throw new RuntimeException("Problem with issuing a certificate" + "\n" + e.getMessage());
+            }
 
             StringBuilder builder = new StringBuilder();
             for (RegisteredEntity registeredEntity: registeredEntitiesToBeBackedUp) {
                 builder.append("\n" + registeredEntity.getName());
             }
             logger.info("List of entities to be backed up: " + builder.toString());
-            AuthBackupReqMessage authBackupReqMessage = new AuthBackupReqMessage(backupCertificate, registeredEntitiesToBeBackedUp);
-            try {
-                ContentResponse contentResponse = performPostRequestToTrustedAuth(backupToAuthID, authBackupReqMessage);
-                ret.add(contentResponse);
-            } catch (TimeoutException | ExecutionException | InterruptedException e) {
-                logger.error("Exception occurred during backup() {}", ExceptionToString.convertExceptionToStackTrace(e));
-                throw new RuntimeException();
+            AuthBackupReqMessage authBackupReqMessage = new AuthBackupReqMessage(backupToAuthID, backupCertificate, registeredEntitiesToBeBackedUp);
+            backupReqMessages.add(authBackupReqMessage);
+        }
+        return backupReqMessages;
+    }
+
+    public ContentResponse sendBackupReqMessage(AuthBackupReqMessage backupReqMessage) throws InterruptedException,
+            ExecutionException, TimeoutException
+    {
+        ContentResponse ret;
+        ret = performPostRequestToTrustedAuth(backupReqMessage.getBackupToAuthID(), backupReqMessage);
+        return ret;
+    }
+
+    public List<ContentResponse> backup() {
+        List<ContentResponse> ret = new LinkedList<>();
+        try {
+            List<AuthBackupReqMessage> backupReqMessages = getBackupReqMessages();
+            for (AuthBackupReqMessage backupReqMessage: backupReqMessages) {
+                    ContentResponse contentResponse = sendBackupReqMessage(backupReqMessage);
+                    ret.add(contentResponse);
             }
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            logger.error("Exception occurred during backup() {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException();
         }
         return ret;
     }
@@ -874,7 +904,7 @@ public class AuthServer {
     private Map<String, Buffer> nonceMapForUdpPortListener;
     private Map<String, Buffer> responseMapForUdpPortListener;
 
-    public List<X509Certificate> issueBackupCertificate() {
+    public List<X509Certificate> issueBackupCertificate() throws CertIOException {
         Set<Integer> backupAuthIDSet = new HashSet<>();
         for (RegisteredEntity registeredEntity: db.getAllRegisteredEntitiies()) {
             backupAuthIDSet.add(registeredEntity.getBackupToAuthID());
@@ -885,7 +915,7 @@ public class AuthServer {
             int backupAuthID = itr.next();
             TrustedAuth trustedAuth = db.getTrustedAuthInfo(backupAuthID);
             X509Certificate cert = crypto.issueCertificate(
-                    trustedAuth.getEntityCertificate(), getAuthID(), backupAuthID);
+                    trustedAuth.getEntityCertificate(), getAuthID(), backupAuthID, trustedAuth.getEntityHost());
             ret.add(cert);
         }
         return ret;

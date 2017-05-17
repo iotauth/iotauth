@@ -14,29 +14,41 @@
  */
 
 /**
- * Example server entity.
+ * Example echo server entity which responds to the client every time it receives a message
+ * over an authorized channel.
+ *
  * @author Hokeun Kim
  */
 
 "use strict";
 
 var fs = require('fs');
+var util = require('util');
+var iotAuth = require('../accessors/node_modules/iotAuth');
 var SecureCommServer = require('../accessors/SecureCommServer');
 
+// Parameters for experiments
+var connectionTimeout = 2000;
 var authFailureThreshold = 3;
+/////
+
 var authFailureCount = 0;
 
 function connectionHandler(info) {
     console.log('Handler: ' + info);
 }
 
-function errorHandler(info) {
-    console.error('Handler: ' + info);
-    if (info.includes('Error occurred in session key request')) {
+function errorHandler(message) {
+    console.error('Handler: ' + message);
+    if ((message.includes('Error occurred in session key request') ||
+        message.includes('Auth hello timedout')) &&
+        !message.includes('migration request') &&
+        !message.includes('ECONNREFUSED'))
+    {
         authFailureCount++;
         console.log('failure in connection with Auth : failure count: ' + authFailureCount);
         if (authFailureCount >= authFailureThreshold) {
-            console.log('failure count reached threshold, try migration...');
+            console.log('failure count reached threshold (' + authFailureThreshold + '), try migration...');
             secureCommServer.migrateToTrustedAuth();
         }
     }
@@ -69,12 +81,26 @@ if (process.argv.length > 2) {
     configFilePath = process.argv[2];
 }
 
+if (process.argv.length > 3) {
+    var workingDirectory = process.argv[3];
+    console.log('changing working directory to: ' + workingDirectory);
+    process.chdir(workingDirectory);
+}
+
+if (process.argv.length > 4) {
+    var expOptions = iotAuth.loadJSONConfig(process.argv[4]);
+    console.log('Experimental options for echoServer: ' + util.inspect(expOptions));
+    connectionTimeout = expOptions.connectionTimeout;
+    authFailureThreshold = expOptions.authFailureThreshold;
+}
+
 var secureCommServer = new SecureCommServer(configFilePath);
 secureCommServer.initialize();
 secureCommServer.setOutputHandler('connection', connectionHandler);
 secureCommServer.setOutputHandler('error', errorHandler);
 secureCommServer.setOutputHandler('listening', listeningHandler);
 secureCommServer.setOutputHandler('received', receivedHandler);
+secureCommServer.setEntityInfo('connectionTimeout', connectionTimeout);
 
 function commandInterpreter() {
     var chunk = process.stdin.read();

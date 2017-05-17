@@ -100,15 +100,18 @@ function handleMigrationResp(newAuthId, newCredential) {
 }
 
 function sendMigrationRequest() {
-    if (entityConfig.migrationInfo) {
+    if (entityConfig.migrationInfo == null || entityConfig.migrationInfo.host == null) {
+        console.log('Failed to migrate! no information for migration.');
+    }
+    else if (entityConfig.authInfo.host == entityConfig.migrationInfo.host) {
+        console.log('Failed to migrate! host of current Auth is the same as host of the Auth which we migrate to');
+    }
+    else {
         var options = iotAuth.getMigrationReqOptions(entityConfig);
         var eventHandlers = {
             onError: onError
         };
         iotAuth.migrateToTrustedAuth(options, handleMigrationResp, eventHandlers);
-    }
-    else {
-        console.log('Failed to migrate! no information for migration.');
     }
 }
 
@@ -336,6 +339,11 @@ SecureCommServer.prototype.showSocket = function() {
 
 SecureCommServer.prototype.migrateToTrustedAuth = function() {
     sendMigrationRequest();
+}
+
+SecureCommServer.prototype.setEntityInfo = function(key, value) {
+	entityConfig.entityInfo[key] = value;
+	console.log('current entityInfo: ' + util.inspect(entityConfig.entityInfo));
 }
 
 module.exports = SecureCommServer;

@@ -13,32 +13,26 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.util;
+package org.iot.auth.message;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
+ * A class for Auth backup response message to Auth who requested backup.
  *
- * Generic representation of directed, weighted graphs.
- *
- * Mutable.
- *
- * @author Eunsuk Kang
- *
+ * @author Hokeun Kim
  */
-abstract public class Graph<X> {
+public class AuthBackupRespMessage extends TrustedAuthRespMessage {
+    @Override
+    public void sendAsHttpResponse(HttpServletResponse response) throws IOException {
+        // Declare response encoding and types
+        response.setContentType("text/html; charset=utf-8");
+        // Declare response status code
+        response.setStatus(HttpServletResponse.SC_OK);
 
-    protected final java.util.Set<Edge> edges = new java.util.HashSet<Edge>();
-
-    public class Edge {
-        public final X from;
-        public final X to;
-        protected Edge(X from, X to){
-            this.from = from;
-            this.to = to;
-        }
-    }
-
-    public void addEdge(X from, X to){
-        edges.add(new Edge(from,to));
+        // Write back response
+        //response.getOutputStream().
+        response.getWriter().println("");
     }
 }
-

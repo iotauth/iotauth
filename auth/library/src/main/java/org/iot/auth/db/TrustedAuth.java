@@ -22,11 +22,12 @@ import java.security.cert.X509Certificate;
  * @author Hokeun Kim
  */
 public class TrustedAuth {
-    public TrustedAuth(int id, String host, int port, int heartbeatPeriod, int failureThreshold,
+    public TrustedAuth(int id, String host, String entityHost, int port, int heartbeatPeriod, int failureThreshold,
                        X509Certificate internetCertificate, X509Certificate entityCertificate,
                        X509Certificate backupCertificate) {
         this.id = id;
         this.host = host;
+        this.entityHost = entityHost;
         this.port = port;
         this.heartbeatPeriod = heartbeatPeriod;
         this.failureThreshold = failureThreshold;
@@ -41,6 +42,10 @@ public class TrustedAuth {
 
     public String getHost() {
         return host;
+    }
+
+    public String getEntityHost() {
+        return entityHost;
     }
 
     public int getPort() {
@@ -72,7 +77,7 @@ public class TrustedAuth {
     }
 
     public String toString() {
-        return "ID: " + id + "\tHost: " + host + "\tPort: " + port +
+        return "ID: " + id + "\tHost: " + host + "\tEntityHost" + entityHost + "\tPort: " + port +
                 "\tHeartbeatPeriod: " + heartbeatPeriod +
                 "\tFailureThreshold: " + failureThreshold +
                 "\tInternetCertificate: " + internetCertificate +
@@ -81,7 +86,7 @@ public class TrustedAuth {
     }
 
     public String toBriefString() {
-        return "ID: " + id + "\tHost: " + host + "\tPort: " + port +
+        return "ID: " + id + "\tHost: " + host + "\tEntityHost" + entityHost + "\tPort: " + port +
                 "\tHeartbeatPeriod: " + heartbeatPeriod +
                 "\tFailureThreshold: " + failureThreshold +
                 "\tInternetCertificate: " + internetCertificate.getSubjectDN() +
@@ -92,6 +97,7 @@ public class TrustedAuth {
 
     private int id;
     private String host;
+    private String entityHost;
     private int port;
     private int heartbeatPeriod;
     private int failureThreshold;

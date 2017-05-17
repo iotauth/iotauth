@@ -31,10 +31,23 @@ if (process.argv.length <= 2) {
 var graphFile = process.argv[2];
 var graph = JSON.parse(fs.readFileSync(graphFile));
 
+// determine whether to remove credential and config files after generating DB
+var removeFilesAfterDBGen = true;
+if (process.argv.length > 3) {
+	removeFilesAfterDBGen = eval(process.argv[3]);
+}
+
 // basic directories
 const EXAMPLES_DIR = process.cwd() + '/';
+process.chdir('..');
+const PROJ_ROOT_DIR = process.cwd() + '/';
+const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
 
-process.chdir('../auth/');
+function getIndividualAuthDBDir(authId) {
+	return AUTH_DATABASES_DIR + 'auth' + authId + '/';
+}
+
+process.chdir('auth/');
 execSync('mvn -pl example-auth-db-generator -am install -DskipTests', {stdio: 'inherit'});
 process.chdir('example-auth-db-generator');
 execSync('cp target/init-example-auth-db-jar-with-dependencies.jar ../');
@@ -47,3 +60,16 @@ for (var i = 0; i < authList.length; i++) {
 	execSync('java -jar init-example-auth-db-jar-with-dependencies.jar -i ' + auth.id + ' -d ' + auth.dbProtectionMethod);
 }
 execSync('rm init-example-auth-db-jar-with-dependencies.jar');
+
+if (removeFilesAfterDBGen) {
+	console.log('deleting credentials and config files after DB generation...');
+	for (var i = 0; i < authList.length; i++) {
+		var auth = authList[i];
+		var individualAuthDBDir = getIndividualAuthDBDir(auth.id);
+		execSync('rm -rf ' + individualAuthDBDir + 'my_certs/');
+		execSync('rm -rf ' + individualAuthDBDir + 'entity_certs/');
+		execSync('rm -rf ' + individualAuthDBDir + 'entity_keys/');
+		execSync('rm -rf ' + individualAuthDBDir + 'trusted_auth_certs/');
+		execSync('rm -rf ' + individualAuthDBDir + 'configs/');
+	}
+}
