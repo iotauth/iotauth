@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.iot.auth.util.SSTGraph;
+import org.iot.auth.util.SSTVar;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
@@ -34,18 +35,15 @@ public class MigrationPlan {
     private final Map<String,String> move;
     private final double totalCost;
 
-    public MigrationPlan(SSTGraph network, ExpressionsBasedModel model, Optimisation.Result result){
+    public MigrationPlan(SSTGraph network, Set<SSTVar> varConns, double totalCost) {
         move = new HashMap<String,String>();
-        for (Variable v : model.getFreeVariables()){
-            if (v.getName().startsWith(SSTGraph.CONNECTED) &&
-                    result.get(model.indexOf(v)).intValue() == 1){
-                String[] tokens = v.getName().split(Solver.DELIM);
-                String auth = tokens[1];
-                String thing = tokens[2];
-                move.put(thing, auth);
-            }
+        for (SSTVar v : varConns){
+            String[] tokens = v.name().split(MigrationEngine.DELIM);
+            String auth = tokens[1];
+            String thing = tokens[2];
+            move.put(thing, auth);
         }
-        totalCost = result.getValue();
+        this.totalCost = totalCost;
     }
 
     public Set<String> thingsToMove() {

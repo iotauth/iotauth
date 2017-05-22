@@ -54,7 +54,7 @@
         <dependency>
             <groupId>org.ojalgo</groupId>
             <artifactId>ojalgo</artifactId>
-            <version>RELEASE</version>
+            <version>43.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
