@@ -3,7 +3,10 @@ package org.iot.auth.util;
 import org.ojalgo.optimisation.Variable;
 
 /**
- * Created by eskang on 5/17/17.
+ *
+ * Wrapper for OjAlgo variables
+ *
+ * @author Eunsuk Kang
  */
 public class OjAlgoVar extends SSTVar {
 

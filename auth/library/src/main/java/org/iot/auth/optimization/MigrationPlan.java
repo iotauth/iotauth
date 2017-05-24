@@ -21,9 +21,6 @@ import java.util.Set;
 
 import org.iot.auth.util.SSTGraph;
 import org.iot.auth.util.SSTVar;
-import org.ojalgo.optimisation.ExpressionsBasedModel;
-import org.ojalgo.optimisation.Optimisation;
-import org.ojalgo.optimisation.Variable;
 
 /**
  *
@@ -32,6 +29,7 @@ import org.ojalgo.optimisation.Variable;
  * @author Eunsuk Kang
  */
 public class MigrationPlan {
+    // (t, a) is an entry in move iff thing "t" is to be moved to "a"
     private final Map<String,String> move;
     private final double totalCost;
 

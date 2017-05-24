@@ -4,11 +4,6 @@ import org.iot.auth.util.SSTGraph;
 import org.iot.auth.util.SSTVar;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.ojalgo.netio.BasicLogger;
-import org.ojalgo.optimisation.Expression;
-import org.ojalgo.optimisation.ExpressionsBasedModel;
-import org.ojalgo.optimisation.Optimisation;
-import org.ojalgo.optimisation.Variable;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.*;
@@ -24,6 +19,14 @@ public class MigrationEngine {
     public final static String DELIM = "_";
     public final static int SOLVER_GRUBI = 0;
     public final static int SOLVER_OJALGO = 1;
+    public final static int DEFAULT_SOLVER = SOLVER_GRUBI;
+
+    /**
+     * Find an otpimal migration plan for the given network, with
+     */
+    public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth) throws IllegalAccessException {
+       return findMigratePlan(network, weightThings, weightAuth, DEFAULT_SOLVER);
+    }
 
     /**
      * Find an optimal migration plan for the given network.
@@ -31,21 +34,21 @@ public class MigrationEngine {
      * @param network The SST network, with possibly one or more things disconnected from an Auth.
      * @param weightThings The contribution of the things to the overall migration cost.
      * @param weightAuth The contribution of the auth to the overall cost.
+     * @solverType The ILP solver used.
      * @return An optimal migration plan.
      */
-
-
-    public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth){
-       return findMigratePlan(network, weightThings, weightAuth, SOLVER_GRUBI);
-    }
-
-    public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth, int solverType){
+    public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth, int solverType) throws IllegalAccessException {
 
         Solver solver = null;
-        if (solverType == SOLVER_GRUBI){
-            solver = new SolverGurobi();
-        } else if (solverType == SOLVER_OJALGO) {
-            solver = new SolverOjAlgo();
+        switch (solverType) {
+            case SOLVER_GRUBI:
+                solver = new SolverGurobi();
+                break;
+            case SOLVER_OJALGO:
+                solver = new SolverOjAlgo();
+                break;
+            default:
+                throw new IllegalAccessException("Invalid solver type specified: " + solverType);
         }
 
         final Map<SSTGraph.SSTEdge, SSTVar> varmap = new HashMap<SSTGraph.SSTEdge, SSTVar>();
@@ -177,7 +180,7 @@ public class MigrationEngine {
      * @param weightAuth Weight for the cost of the auths.
      * @return JSON object.
      */
-    public static JSONObject mkJSON(SSTGraph n, double weightThings, double weightAuth){
+    public static JSONObject mkJSON(SSTGraph n, double weightThings, double weightAuth) throws IllegalAccessException{
 
         JSONObject overall = new JSONObject();
 
@@ -249,13 +252,15 @@ public class MigrationEngine {
         return overall;
     }
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws IllegalAccessException {
 
         double weightThings = 0.8;
         double weightAuth = 0.2;
         // generate the graph from the CCS paper
         //SSTGraph n = NetworkFactory.sampleNetworkFull();
-        SSTGraph n = NetworkFactory.mkRandomGraph(4, 10, 5, 1.0, 0.5, 0.5, 5, 5);
+        SSTGraph n = NetworkFactory.mkRandomGraph(4, 10, 5,
+                1.0, 0.5, 0.5,
+                5, 5);
         MigrationPlan p1 = findMigratePlan(n, weightThings, weightAuth);
         MigrationPlan p2 = findMigratePlan(n, weightThings, weightAuth, SOLVER_OJALGO);
 

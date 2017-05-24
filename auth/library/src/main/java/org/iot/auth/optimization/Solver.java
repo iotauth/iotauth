@@ -21,23 +21,61 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Solver interface
+ * Generic solver interface
  *
  * @author Eunsuk Kang
  */
 public interface Solver {
 
+    /**
+     * Add a new binary variable with given lower & upper boudns and its weight
+     * @return Variable added
+     */
     public SSTVar addBinaryVar(String name, double lower, double upper, double weight);
+
+    /**
+     * Given vars = v_0, v_1, ..., v_n, add an expression
+     * v_0 + v_1 + ... + v_n <= upper
+     */
     public void addLTE(String name, Map<SSTVar, Double> vars, double upper);
+
+    /**
+     * Given vars = v_0, v_1, ..., v_n, add an expression
+     * v_0 + v_1 + ... + v_n >= lower
+     */
     public void addGTE(String name, Map<SSTVar, Double> vars, double lower);
+
+    /**
+     * Given vars = v_0, v_1, ..., v_n, add an expression
+     * v_0 + v_1 + ... + v_n = val
+     */
     public void addEQ(String name, Map<SSTVar, Double> vars, double val);
+
+    /**
+     * Given vars = v_0, v_1, ..., v_n, add an expression
+     * lower <= v_0 + v_1 + ... + v_n <= upper
+     */
     public void addBetween(String name, Map<SSTVar, Double> vars, double lower, double upper);
 
+    /**
+     * Find a maximum solution to the ILP problem.
+     */
     public void minimize();
+
+    /**
+     * Find a minimum solution to the ILP problem.
+     */
     public void maximize();
 
-    // methods that should be called only after min/max
+    // Methods that should be invoked only after maximize/minimize finds a solution
+    /**
+     * @return A set of variables that have the value "val" in the current solution
+     */
     public Set<SSTVar> varsWithVal(Set<SSTVar> vars, int val);
+
+    /**
+     * @return The overall cost of the solution to the current solution.
+     */
     public Double cost();
 
 }

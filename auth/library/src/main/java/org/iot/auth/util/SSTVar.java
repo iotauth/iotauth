@@ -1,7 +1,10 @@
 package org.iot.auth.util;
 
 /**
- * Created by eskang on 5/17/17.
+ *
+ * Generic variable defined in an ILP problem
+ *
+ * @author Eunsuk Kang
  */
 public abstract class SSTVar {
     public abstract String name();

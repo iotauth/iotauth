@@ -5,7 +5,10 @@ import gurobi.GRBException;
 import gurobi.GRBVar;
 
 /**
- * Created by eskang on 5/17/17.
+ *
+ * Wrapper for Gurobi variable.
+ *
+ * @author Eunsuk Kang
  */
 public class GurobiVar extends SSTVar {
     private final GRBVar v;

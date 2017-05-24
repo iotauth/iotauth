@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  *
- * Solver that uses the OjAlgo package as the underlying ILP engine.
+ * OjAlgo implementation of the Solver interface.
  *
  * @author Eunsuk Kang
  */
@@ -24,6 +24,10 @@ public class SolverOjAlgo implements Solver {
     private final ExpressionsBasedModel model = new ExpressionsBasedModel();
     private Optimisation.Result result = null;
 
+    /**
+     * Add a new binary variable with given lower & upper bounds and its weight
+     * @return Variable added
+     */
     public SSTVar addBinaryVar(String name, double lower, double upper, double weight){
         Variable v = Variable.make(name).lower(lower).upper(upper).weight(weight);
         v.integer(true);
@@ -31,7 +35,12 @@ public class SolverOjAlgo implements Solver {
         return new OjAlgoVar(v);
     }
 
-    private Expression setExpr(String name, Map<SSTVar, Double> vars){
+    /**
+     * Given a set of vars {v_0, v_1, ..., v_n}, build an expression of form
+     * v_0 + v_1 + ... + v_n
+     * @return OjAlgo expression created.
+     */
+    private Expression buildExpr(String name, Map<SSTVar, Double> vars){
         Expression expr = model.addExpression(name);
         vars.forEach((k, v) -> {
             expr.set(((OjAlgoVar)k).v(), v.doubleValue());
@@ -39,20 +48,36 @@ public class SolverOjAlgo implements Solver {
         return expr;
     }
 
+    /**
+     * Given vars = v_0, v_1, ..., v_n, add an expression
+     * v_0 + v_1 + ... + v_n <= upper
+     */
     public void addLTE(String name, Map<SSTVar, Double> vars, double upper){
-        setExpr(name, vars).upper(upper);
+        buildExpr(name, vars).upper(upper);
     }
 
+    /**
+     * Given vars = v_0, v_1, ..., v_n, add an expression
+     * v_0 + v_1 + ... + v_n >= lower
+     */
     public void addGTE(String name, Map<SSTVar, Double> vars, double lower){
-        setExpr(name, vars).lower(lower);
+        buildExpr(name, vars).lower(lower);
     }
 
+    /**
+     * Given vars = v_0, v_1, ..., v_n, add an expression
+     * v_0 + v_1 + ... + v_n = eq
+     */
     public void addEQ(String name, Map<SSTVar, Double> vars, double val){
-        setExpr(name, vars).lower(val).upper(val);
+        buildExpr(name, vars).lower(val).upper(val);
     }
 
+    /**
+     * Given vars = v_0, v_1, ..., v_n, add an expression
+     * lower <= v_0 + v_1 + ... + v_n <= upper
+     */
     public void addBetween(String name, Map<SSTVar, Double> vars, double lower, double upper){
-        setExpr(name, vars).lower(lower).upper(upper);
+        buildExpr(name, vars).lower(lower).upper(upper);
     }
 
     public void minimize(){
@@ -75,6 +100,9 @@ public class SolverOjAlgo implements Solver {
         BasicLogger.debug();
     }
 
+    /**
+     * @return A set of variables that have the value "val" in the current solution
+     */
     public Set<SSTVar> varsWithVal(Set<SSTVar> vars, int val){
         Set<SSTVar> s = new HashSet<SSTVar>();
         if (result == null) return null;
@@ -88,8 +116,12 @@ public class SolverOjAlgo implements Solver {
         return s;
     }
 
+    /**
+     * @return The overall cost of the solution to the current solution.
+     */
     public Double cost(){
         if (result == null) return null;
         return result.getValue();
     }
+
 }
