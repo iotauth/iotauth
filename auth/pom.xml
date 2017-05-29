@@ -15,7 +15,6 @@
         <module>library</module>
         <module>auth-server</module>
         <module>example-auth-db-generator</module>
-        <module>migration-solver</module>
     </modules>
 
     <properties>
