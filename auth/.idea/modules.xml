@@ -6,6 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/auth-server/auth-server.iml" filepath="$PROJECT_DIR$/auth-server/auth-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/example-auth-db-generator/example-auth-db-generator.iml" filepath="$PROJECT_DIR$/example-auth-db-generator/example-auth-db-generator.iml" />
       <module fileurl="file://$PROJECT_DIR$/library/library.iml" filepath="$PROJECT_DIR$/library/library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/migration-solver/migration-solver.iml" filepath="$PROJECT_DIR$/migration-solver/migration-solver.iml" />
     </modules>
   </component>
 </project>

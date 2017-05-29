@@ -9,6 +9,7 @@
         <module name="auth-server" />
         <module name="example-auth-db-generator" />
         <module name="library" />
+        <module name="migration-solver" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -17,6 +18,7 @@
       <module name="auth-server" target="1.8" />
       <module name="example-auth-db-generator" target="1.8" />
       <module name="library" target="1.8" />
+      <module name="migration-solver" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
