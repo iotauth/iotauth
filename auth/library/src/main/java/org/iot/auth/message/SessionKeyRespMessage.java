@@ -76,6 +76,7 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
      * @param distKey A distribution key for encrypting the session key request message.
      * @return Buffer for serialized and encrypted message.
      * @throws UseOfExpiredKeyException If an expired key is used for encryption.
+     * @throws InvalidSymmetricKeyOperationException If the symmetric key operation is invalid.
      */
     public Buffer serializeAndEncrypt(DistributionKey distKey) throws UseOfExpiredKeyException,
             InvalidSymmetricKeyOperationException

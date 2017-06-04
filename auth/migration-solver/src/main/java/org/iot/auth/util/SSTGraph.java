@@ -83,6 +83,8 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
 
     /**
      * Add a new Auth with the given ID and capacity (i.e., # things it can handle)
+     * @param id The ID of Auth
+     * @param capacity Capacity of the given Auth
      * @return the new auth added.
      */
     public SSTNode addAuth(String id, Double capacity){
@@ -93,6 +95,7 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
 
     /**
      * Add a new thing with the given ID.
+     * @param id The ID of Auth
      * @return the new thing added.
      */
     public SSTNode addThing(String id){
@@ -172,7 +175,8 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
     }
 
     /**
-     * Return true iff every thing in this network is connected to some Auth.
+     * Return true if every thing in this network is connected to some Auth.
+     * @return Whether all Things are connected to some Auth
      */
     public boolean allThingsConnected() {
         for (SSTNode t : things){
@@ -184,6 +188,7 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
 
     /**
      * Return the Auth that the thing "t" is connected to.
+     * @return The node (Auth) that t is connected to.
      */
     public SSTNode connectedTo(SSTNode t) {
         for (Edge e : lookupEdgesTo(t, EdgeType.AT_CONNECTED)){
@@ -194,6 +199,8 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
 
     /**
      * Return the max. capacity of Auths.
+     * @param auth Given Auth.
+     * @return Capacity in double.
      */
     public double authCap(SSTNode auth){
         return ((Double)auth.attr.get("cost")).doubleValue();
@@ -201,6 +208,7 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
 
     /**
      * Return the thing with the given id.
+     * @param thingID The ID of the thing.
      */
     public SSTNode getThing(String thingID) {
         for (SSTNode t : things) {
@@ -211,6 +219,7 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
 
     /**
      * Return the auth with the given id.
+     * @param authID The ID of Auth
      */
     public SSTNode getAuth(String authID) {
         for (SSTNode a : auths){

@@ -38,7 +38,7 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
 
     /**
      * Constructor for symmetric crypto spec that uses MAC only.
-     * @param macAlgorithm
+     * @param macAlgorithm The name of MAC algorithm
      */
     public SymmetricKeyCryptoSpec(String macAlgorithm) {
         this("", 0, macAlgorithm);

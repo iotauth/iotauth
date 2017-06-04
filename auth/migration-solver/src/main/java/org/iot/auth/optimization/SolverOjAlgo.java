@@ -25,7 +25,7 @@ public class SolverOjAlgo implements Solver {
     private Optimisation.Result result = null;
 
     /**
-     * Add a new binary variable with given lower & upper bounds and its weight
+     * Add a new binary variable with given lower and upper bounds and its weight
      * @return Variable added
      */
     public SSTVar addBinaryVar(String name, double lower, double upper, double weight){
@@ -50,7 +50,7 @@ public class SolverOjAlgo implements Solver {
 
     /**
      * Given vars = v_0, v_1, ..., v_n, add an expression
-     * v_0 + v_1 + ... + v_n <= upper
+     * {@literal v_0 + v_1 + ... + v_n <= upper }
      */
     public void addLTE(String name, Map<SSTVar, Double> vars, double upper){
         buildExpr(name, vars).upper(upper);
@@ -58,7 +58,7 @@ public class SolverOjAlgo implements Solver {
 
     /**
      * Given vars = v_0, v_1, ..., v_n, add an expression
-     * v_0 + v_1 + ... + v_n >= lower
+     * {@literal v_0 + v_1 + ... + v_n >= lower }
      */
     public void addGTE(String name, Map<SSTVar, Double> vars, double lower){
         buildExpr(name, vars).lower(lower);
@@ -74,7 +74,7 @@ public class SolverOjAlgo implements Solver {
 
     /**
      * Given vars = v_0, v_1, ..., v_n, add an expression
-     * lower <= v_0 + v_1 + ... + v_n <= upper
+     * {@literal lower <= v_0 + v_1 + ... + v_n <= upper }
      */
     public void addBetween(String name, Map<SSTVar, Double> vars, double lower, double upper){
         buildExpr(name, vars).lower(lower).upper(upper);

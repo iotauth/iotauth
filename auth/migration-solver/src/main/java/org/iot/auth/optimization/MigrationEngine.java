@@ -34,7 +34,7 @@ public class MigrationEngine {
      * @param network The SST network, with possibly one or more things disconnected from an Auth.
      * @param weightThings The contribution of the things to the overall migration cost.
      * @param weightAuth The contribution of the auth to the overall cost.
-     * @solverType The ILP solver used.
+     * @param solverType The ILP solver used.
      * @return An optimal migration plan.
      */
     public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth, int solverType) throws IllegalAccessException {
