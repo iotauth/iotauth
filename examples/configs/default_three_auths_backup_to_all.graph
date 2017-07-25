@@ -17,12 +17,29 @@
 			"udpPort": 22902,
 			"authPort": 22901,
 			"dbProtectionMethod": 1
+		},
+		{
+			"id": 103,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 23900,
+			"udpPort": 23902,
+			"authPort": 23901,
+			"dbProtectionMethod": 1
 		}
 	],
 	"authTrusts": [
 		{
 			"id1": 101,
 			"id2": 102
+		},
+		{
+			"id1": 101,
+			"id2": 103
+		},
+		{
+			"id1": 102,
+			"id2": 103
 		}
 	],
 	"assignments": {
@@ -53,7 +70,21 @@
 		"net2.ptClient": 102,
 		"net2.ptServer": 102,
 		"net2.ptPublisher": 102,
-		"net2.ptSubscriber": 102
+		"net2.ptSubscriber": 102,
+		"net3.client": 103,
+		"net3.rcClient": 103,
+		"net3.udpClient": 103,
+		"net3.rcUdpClient": 103,
+		"net3.safetyCriticalClient": 103,
+		"net3.server": 103,
+		"net3.rcServer": 103,
+		"net3.udpServer": 103,
+		"net3.safetyCriticalServer": 103,
+		"net3.rcUdpServer": 103,
+		"net3.ptClient": 103,
+		"net3.ptServer": 103,
+		"net3.ptPublisher": 103,
+		"net3.ptSubscriber": 103
 	},
 	"entityList": [
 		{
@@ -66,7 +97,8 @@
 			"netName": "net1",
 			"credentialPrefix": "Net1.Client",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -79,7 +111,8 @@
 			"netName": "net1",
 			"credentialPrefix": "Net1.RcClient",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -92,7 +125,8 @@
 			"netName": "net1",
 			"credentialPrefix": "Net1.UdpClient",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -105,7 +139,8 @@
 			"netName": "net1",
 			"credentialPrefix": "Net1.RcUdpClient",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -119,7 +154,8 @@
 			"netName": "net1",
 			"credentialPrefix": "Net1.SafetyCriticalClient",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -134,7 +170,8 @@
 			"credentialPrefix": "Net1.Server",
 			"host": "localhost",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -149,7 +186,8 @@
 			"credentialPrefix": "Net1.RcServer",
 			"host": "localhost",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -164,7 +202,8 @@
 			"credentialPrefix": "Net1.UdpServer",
 			"host": "localhost",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -180,7 +219,8 @@
 			"credentialPrefix": "Net1.SafetyCriticalServer",
 			"host": "localhost",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -195,7 +235,8 @@
 			"credentialPrefix": "Net1.RcUdpServer",
 			"host": "localhost",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -209,7 +250,8 @@
 			"netName": "net1",
 			"credentialPrefix": "Net1.PtClient",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -225,7 +267,8 @@
 			"credentialPrefix": "Net1.PtServer",
 			"host": "localhost",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -239,7 +282,8 @@
 			"netName": "net1",
 			"credentialPrefix": "Net1.PtPublisher",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -253,7 +297,8 @@
 			"netName": "net1",
 			"credentialPrefix": "Net1.PtSubscriber",
 			"backupToAuthIds": [
-				102
+				102,
+				103
 			]
 		},
 		{
@@ -266,6 +311,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.Client",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -279,6 +325,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.RcClient",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -292,6 +339,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.UdpClient",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -305,6 +353,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.RcUdpClient",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -319,6 +368,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.SafetyCriticalClient",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -334,6 +384,7 @@
 			"credentialPrefix": "Net2.Server",
 			"host": "localhost",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -349,6 +400,7 @@
 			"credentialPrefix": "Net2.RcServer",
 			"host": "localhost",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -364,6 +416,7 @@
 			"credentialPrefix": "Net2.UdpServer",
 			"host": "localhost",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -380,6 +433,7 @@
 			"credentialPrefix": "Net2.SafetyCriticalServer",
 			"host": "localhost",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -395,6 +449,7 @@
 			"credentialPrefix": "Net2.RcUdpServer",
 			"host": "localhost",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -409,6 +464,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.PtClient",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -425,6 +481,7 @@
 			"credentialPrefix": "Net2.PtServer",
 			"host": "localhost",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -439,6 +496,7 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.PtPublisher",
 			"backupToAuthIds": [
+				103,
 				101
 			]
 		},
@@ -453,7 +511,222 @@
 			"netName": "net2",
 			"credentialPrefix": "Net2.PtSubscriber",
 			"backupToAuthIds": [
+				103,
 				101
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net3.client",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.Client",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net3.rcClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcClient",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net3.udpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.UdpClient",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net3.rcUdpClient",
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcUdpClient",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net3.safetyCriticalClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"diffieHellman": "secp384r1",
+			"netName": "net3",
+			"credentialPrefix": "Net3.SafetyCriticalClient",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Servers",
+			"name": "net3.server",
+			"port": 23100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.Server",
+			"host": "localhost",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Servers",
+			"name": "net3.rcServer",
+			"port": 23300,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcServer",
+			"host": "localhost",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Servers",
+			"name": "net3.udpServer",
+			"port": 23400,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.UdpServer",
+			"host": "localhost",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Servers",
+			"name": "net3.safetyCriticalServer",
+			"port": 23500,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"diffieHellman": "secp384r1",
+			"netName": "net3",
+			"credentialPrefix": "Net3.SafetyCriticalServer",
+			"host": "localhost",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "Servers",
+			"name": "net3.rcUdpServer",
+			"port": 23600,
+			"distProtocol": "UDP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.RcUdpServer",
+			"host": "localhost",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "PtClients",
+			"name": "net3.ptClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"distKeyValidityPeriod": "3*sec",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtClient",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "PtServers",
+			"name": "net3.ptServer",
+			"port": 23200,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"distKeyValidityPeriod": "3*sec",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtServer",
+			"host": "localhost",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "PtPublishers",
+			"name": "net3.ptPublisher",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"distKeyValidityPeriod": "3*sec",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtPublisher",
+			"backupToAuthIds": [
+				101,
+				102
+			]
+		},
+		{
+			"group": "PtSubscribers",
+			"name": "net3.ptSubscriber",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"inDerFormat": true,
+			"distKeyValidityPeriod": "3*sec",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net3",
+			"credentialPrefix": "Net3.PtSubscriber",
+			"backupToAuthIds": [
+				101,
+				102
 			]
 		}
 	]

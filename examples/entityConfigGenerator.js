@@ -106,14 +106,18 @@ function getAuthInfo(entity) {
 	};
 }
 function getMigrationInfo(entity) {
-	var auth = auths[entity.backupToAuthId];
-	if (auth == null) {
-		return {};
+	var getMigrationInfoList = [];
+	for (var i = 0; i < entity.backupToAuthIds.length; i++) {
+		var auth = auths[entity.backupToAuthIds[i]];
+		if (auth != null) {
+			var migrationInfo = {
+				host: auth.entityHost,
+				port: entity.distProtocol == 'TCP' ? auth.tcpPort : auth.udpPort
+			};
+			getMigrationInfoList.push(migrationInfo);
+		}
 	}
-	return {
-		host: auth.entityHost,
-		port: entity.distProtocol == 'TCP' ? auth.tcpPort : auth.udpPort
-	};
+	return getMigrationInfoList;
 }
 function getCryptoInfo(entity) {
     var cryptoInfo = {};

@@ -62,7 +62,7 @@ function getRegisteredEntity(entity) {
 		DistKeyValidityPeriod: entity.distKeyValidityPeriod,
 		DistCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
 		Active: true,
-		BackupToAuthID: entity.backupToAuthId,
+		BackupToAuthIDs: entity.backupToAuthIds,
 		BackupFromAuthID: -1
 	}
 
