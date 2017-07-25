@@ -37,9 +37,15 @@ var currentSessionKey;
 
 var currentSecureClient;
 
+// parameters for SecureCommClient
 var parameters =  {
-	numKeysPerRequest: 3
+	numKeysPerRequest: 3,
+    migrationEnabled: false,
+    authFailureThreshold: 3
 };
+
+var authFailureCount = 0;
+
 var outputs = {};
 var outputHandlers = {};
 
@@ -57,6 +63,20 @@ function onClose() {
 
 // event handlers
 function onError(message) {
+    if (parameters.migrationEnabled) {
+        if ((message.includes('Error occurred in session key request') ||
+            message.includes('Auth hello timedout')) &&
+            !message.includes('migration request') &&
+            !message.includes('ECONNREFUSED'))
+        {
+            authFailureCount++;
+            console.log('failure in connection with Auth : failure count: ' + authFailureCount);
+            if (authFailureCount >= parameters.authFailureThreshold) {
+                console.log('failure count reached threshold (' + parameters.authFailureThreshold + '), try migration...');
+                sendMigrationRequest();
+            }
+        }
+    }
 	outputs.error = message;
 	if (outputHandlers.error) {
 		outputHandlers.error(message);
@@ -105,6 +125,10 @@ function initSecureCommWithSessionKey(sessionKey, serverHost, serverPort) {
 }
 
 function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameters) {
+    if (parameters.migrationEnabled) {
+        authFailureCount = 0;
+        console.log('handleSessionKeyResp: session key request succeeded! authFailureCount: ' + authFailureCount);
+    }
     if (receivedDistKey != null) {
         console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         currentDistributionKey = receivedDistKey;

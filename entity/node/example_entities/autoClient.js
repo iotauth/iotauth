@@ -35,7 +35,6 @@ var authFailureThreshold = 3;
 
 var currentRemainingRequestCount = 0;
 var currentTimeout = null;
-var authFailureCount = 0;
 
 var actualResponseCount = 0;
 var expectedResponseCount = 0;
@@ -74,7 +73,6 @@ function autoSend() {
 function connectedHandler(connected) {
     if (connected == true) {
         console.log('Handler: communication initialization succeeded');
-        authFailureCount = 0;
         currentRemainingRequestCount = useSameSessionKeyCount;
         autoSend();
     }
@@ -89,18 +87,6 @@ function connectedHandler(connected) {
 
 function errorHandler(message) {
     console.error('Handler: Error in secure comm - details: ' + message);
-    if ((message.includes('Error occurred in session key request') ||
-        message.includes('Auth hello timedout')) &&
-        !message.includes('migration request') &&
-        !message.includes('ECONNREFUSED'))
-    {
-        authFailureCount++;
-        console.log('failure in connection with Auth : failure count: ' + authFailureCount);
-        if (authFailureCount >= authFailureThreshold) {
-            console.log('failure count reached threshold (' + authFailureThreshold + '), try migration...');
-            secureCommClient.migrateToTrustedAuth();
-        }
-    }
 }
 
 function receivedHandler(data) {
@@ -142,9 +128,10 @@ secureCommClient.setOutputHandler('received', receivedHandler);
 
 // set number of cached keys to 1
 secureCommClient.setParameter('numKeysPerRequest', 1);
+secureCommClient.setParameter('migrationEnabled', true);
+secureCommClient.setParameter('authFailureThreshold', authFailureThreshold);
 // set connection timeout
 secureCommClient.setEntityInfo('connectionTimeout', connectionTimeout);
-
 /*
 // For publish-subscribe experiments based individual secure connection using proposed approach
 if (process.argv.length > 5) {

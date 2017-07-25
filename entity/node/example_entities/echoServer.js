@@ -32,26 +32,12 @@ var connectionTimeout = 2000;
 var authFailureThreshold = 3;
 /////
 
-var authFailureCount = 0;
-
 function connectionHandler(info) {
     console.log('Handler: ' + info);
 }
 
 function errorHandler(message) {
     console.error('Handler: ' + message);
-    if ((message.includes('Error occurred in session key request') ||
-        message.includes('Auth hello timedout')) &&
-        !message.includes('migration request') &&
-        !message.includes('ECONNREFUSED'))
-    {
-        authFailureCount++;
-        console.log('failure in connection with Auth : failure count: ' + authFailureCount);
-        if (authFailureCount >= authFailureThreshold) {
-            console.log('failure count reached threshold (' + authFailureThreshold + '), try migration...');
-            secureCommServer.migrateToTrustedAuth();
-        }
-    }
 }
 
 function listeningHandler(port) {
@@ -101,6 +87,10 @@ secureCommServer.setOutputHandler('error', errorHandler);
 secureCommServer.setOutputHandler('listening', listeningHandler);
 secureCommServer.setOutputHandler('received', receivedHandler);
 secureCommServer.setEntityInfo('connectionTimeout', connectionTimeout);
+
+// set parameters for migration
+secureCommServer.setParameter('migrationEnabled', true);
+secureCommServer.setParameter('authFailureThreshold', authFailureThreshold);
 
 function commandInterpreter() {
     var chunk = process.stdin.read();

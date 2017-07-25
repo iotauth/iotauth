@@ -33,6 +33,14 @@ var currentDistributionKey;
 // for managing connected clients, can be accessed using socketID
 var connectedClients = [];
 
+// parameters for SecureCommServer
+var parameters =  {
+    migrationEnabled: false,
+    authFailureThreshold: 3
+};
+
+var authFailureCount = 0;
+
 // session keys for publish-subscribe experiments based individual secure connection using proposed approach
 var sessionKeyCacheForClients = [];
 var publishSeqNum = 0;
@@ -46,6 +54,10 @@ function SecureCommServer(configFilePath) {
 }
 
 function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
+    if (parameters.migrationEnabled) {
+        authFailureCount = 0;
+        console.log('handleSessionKeyResp: session key request succeeded! authFailureCount: ' + authFailureCount);
+    }
     if (receivedDistKey != null) {
         console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         currentDistributionKey = receivedDistKey;
@@ -68,6 +80,20 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
 }
 
 function onServerError(message) {
+    if (parameters.migrationEnabled) {
+        if ((message.includes('Error occurred in session key request') ||
+            message.includes('Auth hello timedout')) &&
+            !message.includes('migration request') &&
+            !message.includes('ECONNREFUSED'))
+        {
+            authFailureCount++;
+            console.log('failure in connection with Auth : failure count: ' + authFailureCount);
+            if (authFailureCount >= parameters.authFailureThreshold) {
+                console.log('failure count reached threshold (' + parameters.authFailureThreshold + '), try migration...');
+                sendMigrationRequest();
+            }
+        }
+    }
     var info = 'Error in server - details: ' + message;
     outputs.error = info;
     if (outputHandlers.error) {
@@ -294,6 +320,11 @@ SecureCommServer.prototype.provideInput = function(port, input) {
 	if (port == 'toSend') {
 		toSendInputHandler(input);
 	}
+}
+
+SecureCommServer.prototype.setParameter = function(key, value) {
+    parameters[key] = value;
+    console.log('current parameters: ' + util.inspect(parameters));
 }
 
 SecureCommServer.prototype.latestOutput = function(key) {
