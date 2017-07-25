@@ -9,7 +9,8 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "JSON2": "*",
-    "readline-sync": "*"
+    "readline-sync": "*",
+    "commander": "*"
   },
   "description": "Node.js module for generating config files"
 }
