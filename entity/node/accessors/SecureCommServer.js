@@ -39,7 +39,10 @@ var parameters =  {
     authFailureThreshold: 3
 };
 
+// migration related variables
 var authFailureCount = 0;
+var currentMigrationInfoIndex = 0;
+var migrationFailureCount = 0;
 
 // session keys for publish-subscribe experiments based individual secure connection using proposed approach
 var sessionKeyCacheForClients = [];
@@ -81,13 +84,13 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
 
 function onServerError(message) {
     if (parameters.migrationEnabled) {
-        if ((message.includes('Error occurred in session key request') ||
-            message.includes('Auth hello timedout')) &&
-            !message.includes('migration request') &&
-            !message.includes('ECONNREFUSED'))
-        {
+        if (message.includes('Error occurred in migration request')) {
+            migrationFailureCount++;
+            console.log('failure in migration to another Auth : migrationFailureCount: ' + migrationFailureCount);
+        }
+        else if (message.includes('Error occurred in session key request')) {
             authFailureCount++;
-            console.log('failure in connection with Auth : failure count: ' + authFailureCount);
+            console.log('failure in connection with Auth : authFailureCount: ' + authFailureCount);
             if (authFailureCount >= parameters.authFailureThreshold) {
                 console.log('failure count reached threshold (' + parameters.authFailureThreshold + '), try migration...');
                 sendMigrationRequest();
@@ -110,6 +113,8 @@ function sendSessionKeyRequest(purpose, numKeys, callbackParams) {
 }
 
 function handleMigrationResp(newAuthId, newCredential) {
+    authFailureCount = 0;
+    migrationFailureCount = 0;
     entityConfig.authInfo.id = newAuthId;
     if (entityConfig.entityInfo.usePermanentDistKey) {
         currentDistributionKey =  newCredential;
@@ -118,22 +123,27 @@ function handleMigrationResp(newAuthId, newCredential) {
         entityConfig.authInfo.publicKey = newCredential;
         currentDistributionKey = null;  // previous distribution key should be invalidated
     }
-    entityConfig.authInfo.host = entityConfig.migrationInfo.host;
-    entityConfig.authInfo.port = entityConfig.migrationInfo.port;
+    var currentMigrationInfo = entityConfig.migrationInfo[currentMigrationInfoIndex];
+    entityConfig.authInfo.host = currentMigrationInfo.host;
+    entityConfig.authInfo.port = currentMigrationInfo.port;
     console.log('migration completed!');
     console.log('new Auth info: !');
     console.log(util.inspect(entityConfig.authInfo));
 }
 
 function sendMigrationRequest() {
-    if (entityConfig.migrationInfo == null || entityConfig.migrationInfo.host == null) {
+    if (entityConfig.migrationInfo == null || entityConfig.migrationInfo.length == 0) {
         console.log('Failed to migrate! no information for migration.');
+        return;
     }
-    else if (entityConfig.authInfo.host == entityConfig.migrationInfo.host) {
-        console.log('Failed to migrate! host of current Auth is the same as host of the Auth which we migrate to');
+    var currentMigrationInfo = entityConfig.migrationInfo[currentMigrationInfoIndex];
+    if ((entityConfig.authInfo.host == currentMigrationInfo.host)
+        && (entityConfig.authInfo.port == currentMigrationInfo.port))
+    {
+        console.log('Failed to migrate! host/port of current Auth is the same as host of the Auth which we migrate to');
     }
     else {
-        var options = iotAuth.getMigrationReqOptions(entityConfig);
+        var options = iotAuth.getMigrationReqOptions(entityConfig, currentMigrationInfo);
         var eventHandlers = {
             onError: onError
         };
