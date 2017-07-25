@@ -242,7 +242,7 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + " INT,";
         sql += RegisteredEntityTable.c.DistKeyValue.name() + " BLOB,";
         sql += RegisteredEntityTable.c.Active.name() + " BOOLEAN NOT NULL,";
-        sql += RegisteredEntityTable.c.BackupToAuthID.name() + " INT,";
+        sql += RegisteredEntityTable.c.BackupToAuthIDs.name() + " TEXT,";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT,";
         sql += RegisteredEntityTable.c.MigrationToken.name() + " BLOB)";
         if (DEBUG) logger.info(sql);
@@ -376,7 +376,7 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.DistKeyExpirationTime.name() + ",";
         sql += RegisteredEntityTable.c.DistKeyValue.name() + ",";
         sql += RegisteredEntityTable.c.Active.name() + ",";
-        sql += RegisteredEntityTable.c.BackupToAuthID.name() + ",";
+        sql += RegisteredEntityTable.c.BackupToAuthIDs.name() + ",";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ",";
         sql += RegisteredEntityTable.c.MigrationToken.name() + ")";
         sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -409,7 +409,7 @@ public class SQLiteConnector {
         }
 
         preparedStatement.setBoolean(index++, regEntity.isActive());
-        preparedStatement.setInt(index++, regEntity.getBackupToAuthID());
+        preparedStatement.setString(index++, regEntity.getBackupToAuthIDs());
         preparedStatement.setInt(index++, regEntity.getBackupFromAuthID());
         byte[] migrationTokenVal = regEntity.getMigrationTokenVal();
         if (migrationTokenVal != null) {

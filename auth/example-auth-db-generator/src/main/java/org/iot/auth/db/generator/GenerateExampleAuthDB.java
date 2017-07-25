@@ -159,6 +159,26 @@ public class GenerateExampleAuthDB {
         }
     }
 
+    private static String convertJSONArrayToString(JSONArray jsonArray) throws InvalidDBDataTypeException {
+        String ret = "";
+        for (int i = 0; i < jsonArray.size(); i++) {
+            if (i != 0) {
+                ret += ",";
+            }
+            Object obj = jsonArray.get(i);
+            if (obj.getClass() == Integer.class) {
+                ret += (Integer)obj;
+            }
+            else if (obj.getClass() == Long.class) {
+                ret += (Long)obj;
+            }
+            else {
+                throw new InvalidDBDataTypeException("Wrong class type object for Integer!");
+            }
+        }
+        return ret;
+    }
+
     private static void initRegisteredEntityTable(SQLiteConnector sqLiteConnector, int authID,
                                                   String tableConfigFilePath)
             throws ClassNotFoundException, SQLException, IOException, UseOfExpiredKeyException
@@ -196,9 +216,9 @@ public class GenerateExampleAuthDB {
                             authDatabaseDir + "/" + jsonObject.get(RegisteredEntityTable.c.PublicKeyFile.name())));
                 }
                 registeredEntity.setActive((Boolean)jsonObject.get(RegisteredEntityTable.c.Active.name()));
-                if (jsonObject.containsKey(RegisteredEntityTable.c.BackupToAuthID.name())) {
-                    registeredEntity.setBackupToAuthID(
-                            convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.BackupToAuthID.name())));
+                if (jsonObject.containsKey(RegisteredEntityTable.c.BackupToAuthIDs.name())) {
+                    registeredEntity.setBackupToAuthIDs(
+                            convertJSONArrayToString((JSONArray)jsonObject.get(RegisteredEntityTable.c.BackupToAuthIDs.name())));
                 }
                 if (jsonObject.containsKey(RegisteredEntityTable.c.BackupFromAuthID.name())) {
                     registeredEntity.setBackupFromAuthID(

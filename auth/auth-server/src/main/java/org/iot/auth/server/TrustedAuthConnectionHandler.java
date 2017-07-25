@@ -183,7 +183,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         List<RegisteredEntity> registeredEntities = authBackupReqMessage.getRegisteredEntityList();
         for (RegisteredEntity registeredEntity: registeredEntities) {
             registeredEntity.setActive(false);
-            registeredEntity.setBackupToAuthID(-1);
+            registeredEntity.setBackupToAuthIDs(new int[0]);
             registeredEntity.setBackupFromAuthID(requestingAuthInfo.getID());
         }
         // insert!

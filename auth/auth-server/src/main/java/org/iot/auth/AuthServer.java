@@ -658,8 +658,10 @@ public class AuthServer {
             int backupToAuthID = trustedAuthIDs[i];
             List<RegisteredEntity> registeredEntitiesToBeBackedUp = new LinkedList<>();
             for (RegisteredEntity registeredEntity: allRegisteredEntities) {
-                if (registeredEntity.getBackupToAuthID() == backupToAuthID) {
-                    registeredEntitiesToBeBackedUp.add(registeredEntity);
+                for (int currentBackupToAuthID : registeredEntity.getBackupToAuthIDs()) {
+                    if (currentBackupToAuthID == backupToAuthID) {
+                        registeredEntitiesToBeBackedUp.add(registeredEntity);
+                    }
                 }
             }
 
@@ -907,7 +909,9 @@ public class AuthServer {
     public List<X509Certificate> issueBackupCertificate() throws CertIOException {
         Set<Integer> backupAuthIDSet = new HashSet<>();
         for (RegisteredEntity registeredEntity: db.getAllRegisteredEntitiies()) {
-            backupAuthIDSet.add(registeredEntity.getBackupToAuthID());
+            for (int backupToAuthID: registeredEntity.getBackupToAuthIDs()) {
+                backupAuthIDSet.add(backupToAuthID);
+            }
         }
         Iterator<Integer> itr = backupAuthIDSet.iterator();
         List<X509Certificate> ret = new LinkedList<>();

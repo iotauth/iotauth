@@ -138,7 +138,7 @@ public class AppTest {
                 AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.ClientCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
-        regEntity.setBackupToAuthID(102);
+        regEntity.setBackupToAuthIDs("102,103");
         regEntity.setBackupFromAuthID(-1);
         sqLiteConnector.insertRecords(regEntity);
 
@@ -153,7 +153,7 @@ public class AppTest {
                 AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.PtClientCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
-        regEntity.setBackupToAuthID(102);
+        regEntity.setBackupToAuthIDs("102");
         regEntity.setBackupFromAuthID(-1);
         sqLiteConnector.insertRecords(regEntity);
 
@@ -168,7 +168,7 @@ public class AppTest {
                 AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.ServerCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
-        regEntity.setBackupToAuthID(102);
+        regEntity.setBackupToAuthIDs("102,103");
         regEntity.setBackupFromAuthID(-1);
         sqLiteConnector.insertRecords(regEntity);
 
@@ -183,7 +183,7 @@ public class AppTest {
                 AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.PtServerCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
-        regEntity.setBackupToAuthID(102);
+        regEntity.setBackupToAuthIDs("102");
         regEntity.setBackupFromAuthID(-1);
         sqLiteConnector.insertRecords(regEntity);
 

@@ -30,6 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 
 /**
  * A class for a registered entity instance.
@@ -45,11 +46,35 @@ public class RegisteredEntity {
     private int maxSessionKeysPerRequest;
     private SymmetricKeyCryptoSpec distCryptoSpec;
     private boolean active;
-    private int backupToAuthID = -1;
+    private int[] backupToAuthIDs = new int[0];
     private int backupFromAuthID = -1;
     private DistributionKey distributionKey = null;
     private PublicKey publicKey;
     private MigrationToken migrationToken = null;
+
+    private static int[] convertStringBackupToAuthIDsToArray(String strBackupToAuthIDs) {
+        if (strBackupToAuthIDs == null || strBackupToAuthIDs.length() == 0) {
+            return new int[0];
+        }
+        String[] backupToAuthStrIDs = strBackupToAuthIDs.split(",");
+        int[] ret = new int[backupToAuthStrIDs.length];
+        for (int i = 0; i < backupToAuthStrIDs.length; i++) {
+            ret[i] = Integer.parseInt(backupToAuthStrIDs[i]);
+        }
+        return ret;
+    }
+
+    private static String convertBackuptoAuthIDsToString(int[] backupToAuthIDs) {
+        String ret = "";
+
+        for (int i = 0; i < backupToAuthIDs.length; i++) {
+            if (i != 0) {
+                ret += ",";
+            }
+            ret += backupToAuthIDs[i];
+        }
+        return ret;
+    }
 
     public RegisteredEntity(RegisteredEntityTable tableElement, DistributionKey distributionKey)
     {
@@ -64,7 +89,7 @@ public class RegisteredEntity {
         this.maxSessionKeysPerRequest = tableElement.getMaxSessionKeysPerRequest();
         this.distCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(tableElement.getDistCryptoSpec());
         this.active = tableElement.isActive();
-        this.backupToAuthID = tableElement.getBackupToAuthID();
+        this.backupToAuthIDs = convertStringBackupToAuthIDsToArray(tableElement.getBackupToAuthIDs());
         this.backupFromAuthID = tableElement.getBackupFromAuthID();
         this.distributionKey = distributionKey; // Decrypted from database
         this.publicKey = tableElement.getPublicKey();
@@ -88,7 +113,14 @@ public class RegisteredEntity {
         tableElement.setMaxSessionKeysPerRequest(maxSessionKeysPerRequest);
         tableElement.setDistCryptoSpec(distCryptoSpec.toSpecString());
         tableElement.setActive(active);
-        tableElement.setBackupToAuthID(backupToAuthID);
+        String strBackupToAuthIDs = "";
+        for (int i = 0; i < backupToAuthIDs.length; i++) {
+            if (i != 0) {
+                strBackupToAuthIDs += ",";
+            }
+            strBackupToAuthIDs += backupToAuthIDs[i];
+        }
+        tableElement.setBackupToAuthIDs(strBackupToAuthIDs);
         tableElement.setBackupFromAuthID(backupFromAuthID);
         if (usePermanentDistKey) {
             if (serializedDistributionKeyValue == null || distKeyExpirationTime < 0) {
@@ -153,11 +185,11 @@ public class RegisteredEntity {
         return active;
     }
 
-    public void setBackupToAuthID(int backupToAuthID) {
-        this.backupToAuthID = backupToAuthID;
+    public void setBackupToAuthIDs(int[] backupToAuthIDs) {
+        this.backupToAuthIDs = backupToAuthIDs;
     }
-    public int getBackupToAuthID() {
-        return backupToAuthID;
+    public int[] getBackupToAuthIDs() {
+        return backupToAuthIDs;
     }
 
     public void setBackupFromAuthID(int backupFromAuthID) {
@@ -174,7 +206,7 @@ public class RegisteredEntity {
                 "\tDistKeyValidityPeriod: " + distKeyValidityPeriod +
                 "\tDistCryptoSpec: " + distCryptoSpec.toString() +
                 "\tActive: " + active +
-                "\tBackupToAuthID: " + backupToAuthID +
+                "\tBackupToAuthIDs: " + Arrays.toString(backupToAuthIDs) +
                 "\tBackupFromAuthID: " + backupFromAuthID;
 
         if (!usePermanentDistKey) {
@@ -210,10 +242,9 @@ public class RegisteredEntity {
     public Buffer serialize() {
         // UsePermanentDistKey | Active -> Byte
         // MaxSessionKeysPerRequest -> INT
-        // BackupToAuthID -> INT
         // BackupFromAuthID -> INT
         // DistKeyValidityPeriod -> LONG
-        Buffer buffer = new Buffer(Buffer.BYTE_SIZE + 3 * Buffer.INT_SIZE + Buffer.LONG_SIZE);
+        Buffer buffer = new Buffer(Buffer.BYTE_SIZE + 2 * Buffer.INT_SIZE + Buffer.LONG_SIZE);
         byte usePermanentDistKeyActive = 0;
         usePermanentDistKeyActive += (usePermanentDistKey ? 2 : 0);
         usePermanentDistKeyActive += (active ? 1 : 0);
@@ -223,12 +254,13 @@ public class RegisteredEntity {
         curIndex += Buffer.BYTE_SIZE;
         buffer.putInt(maxSessionKeysPerRequest, curIndex);
         curIndex += Buffer.INT_SIZE;
-        buffer.putInt(backupToAuthID, curIndex);
-        curIndex += Buffer.INT_SIZE;
         buffer.putInt(backupFromAuthID, curIndex);
         curIndex += Buffer.INT_SIZE;
         buffer.putLong(distKeyValidityPeriod, curIndex);
         curIndex += Buffer.LONG_SIZE;
+
+        // BackupToAuthIDs -> String
+        buffer.concat(new BufferedString(convertBackuptoAuthIDsToString(backupToAuthIDs)).serialize());
 
         // String data
         buffer.concat(new BufferedString(name).serialize());
@@ -274,8 +306,6 @@ public class RegisteredEntity {
 
         this.maxSessionKeysPerRequest = buffer.getInt(curIndex);
         curIndex += Buffer.INT_SIZE;
-        this.backupToAuthID  = buffer.getInt(curIndex);
-        curIndex += Buffer.INT_SIZE;
         this.backupFromAuthID  = buffer.getInt(curIndex);
         curIndex += Buffer.INT_SIZE;
         this.distKeyValidityPeriod  = buffer.getLong(curIndex);
@@ -284,7 +314,12 @@ public class RegisteredEntity {
         BufferedString bufString;
         bufString = buffer.getBufferedString(curIndex);
         curIndex += bufString.length();
+        this.backupToAuthIDs = convertStringBackupToAuthIDsToArray(bufString.getString());
+
+        bufString = buffer.getBufferedString(curIndex);
+        curIndex += bufString.length();
         this.name = bufString.getString();
+
         bufString = buffer.getBufferedString(curIndex);
         curIndex += bufString.length();
         this.group = bufString.getString();

@@ -16,7 +16,6 @@
 package org.iot.auth.db.bean;
 
 import org.iot.auth.crypto.AuthCrypto;
-import org.iot.auth.io.Buffer;
 import org.json.simple.JSONObject;
 
 import java.security.PublicKey;
@@ -44,7 +43,7 @@ public class RegisteredEntityTable {
         DistKeyValue,
         MaxSessionKeysPerRequest,
         Active,
-        BackupToAuthID,
+        BackupToAuthIDs,
         BackupFromAuthID,
         MigrationToken
     }
@@ -60,7 +59,7 @@ public class RegisteredEntityTable {
     private byte[] distKeyVal = null;
     private int maxSessionKeysPerRequest;
     private boolean active;
-    private int backupToAuthID = -1;
+    private String backupToAuthIDs = "";
     private int backupFromAuthID = -1;
     private byte[] migrationTokenVal = null;
 
@@ -151,12 +150,12 @@ public class RegisteredEntityTable {
         this.active = active;
     }
 
-    public int getBackupToAuthID() {
-        return backupToAuthID;
+    public String getBackupToAuthIDs() {
+        return backupToAuthIDs;
     }
 
-    public void setBackupToAuthID(int backupToAuthID) {
-        this.backupToAuthID = backupToAuthID;
+    public void setBackupToAuthIDs(String backupToAuthIDs) {
+        this.backupToAuthIDs = backupToAuthIDs;
     }
 
     public int getBackupFromAuthID() {
@@ -190,7 +189,7 @@ public class RegisteredEntityTable {
         object.put(c.PublicKeyValue.name(), getPublicKey().getEncoded());
         object.put(c.MaxSessionKeysPerRequest.name(), getMaxSessionKeysPerRequest());
         object.put(c.Active.name(), isActive());
-        object.put(c.BackupToAuthID.name(), getBackupToAuthID());
+        object.put(c.BackupToAuthIDs.name(), getBackupToAuthIDs());
         object.put(c.BackupFromAuthID.name(), getBackupFromAuthID());
         return object;
     }
@@ -214,7 +213,7 @@ public class RegisteredEntityTable {
         }
         entity.setMaxSessionKeysPerRequest(resultSet.getInt(c.MaxSessionKeysPerRequest.name()));
         entity.setActive(resultSet.getBoolean(c.Active.name()));
-        entity.setBackupToAuthID(resultSet.getInt(c.BackupToAuthID.name()));
+        entity.setBackupToAuthIDs(resultSet.getString(c.BackupToAuthIDs.name()));
         entity.setBackupFromAuthID(resultSet.getInt(c.BackupFromAuthID.name()));
         entity.setMigrationTokenVal(resultSet.getBytes(c.MigrationToken.name()));
         return entity;
