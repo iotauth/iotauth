@@ -41,7 +41,7 @@ var actualResponseCount = 0;
 var expectedResponseCount = 0;
 
 function printAvailability() {
-    console.log('Responses-actual/expected/ratio: ' + actualResponseCount + ' ' + expectedResponseCount + ' ' + actualResponseCount/expectedResponseCount);
+    console.log('Resp-actual/expected/ratio/ts: ' + actualResponseCount + ' ' + expectedResponseCount + ' ' + actualResponseCount/expectedResponseCount + ' ' + new Date().getTime());
 }
 function increaseAcutalResponseCount() {
     actualResponseCount++;
