@@ -36,13 +36,15 @@ var connectedClients = [];
 // parameters for SecureCommServer
 var parameters =  {
     migrationEnabled: false,
-    authFailureThreshold: 3
+    authFailureThreshold: 3,
+    migrationFailureThreshold: 3
 };
 
 // migration related variables
 var authFailureCount = 0;
 var currentMigrationInfoIndex = 0;
 var migrationFailureCount = 0;
+var trustedAuthPublicKeyList = [];
 
 // session keys for publish-subscribe experiments based individual secure connection using proposed approach
 var sessionKeyCacheForClients = [];
@@ -54,6 +56,9 @@ var outputHandlers = {};
 // constructor
 function SecureCommServer(configFilePath) {
 	entityConfig = iotAuth.loadEntityConfig(configFilePath);
+    if (entityConfig.authInfo.publicKey != null) {
+        trustedAuthPublicKeyList.push(entityConfig.authInfo.publicKey);
+    }
 }
 
 function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
@@ -121,6 +126,7 @@ function handleMigrationResp(newAuthId, newCredential) {
     }
     else {
         entityConfig.authInfo.publicKey = newCredential;
+        trustedAuthPublicKeyList.push(newCredential);
         currentDistributionKey = null;  // previous distribution key should be invalidated
     }
     var currentMigrationInfo = entityConfig.migrationInfo[currentMigrationInfoIndex];
@@ -129,12 +135,24 @@ function handleMigrationResp(newAuthId, newCredential) {
     console.log('migration completed!');
     console.log('new Auth info: !');
     console.log(util.inspect(entityConfig.authInfo));
+    rotateMigrationInfoIndex('received migration response, for next round of migration, ');
+}
+
+function rotateMigrationInfoIndex(message) {
+        console.log(message + 'rotate migration info index from: ' + currentMigrationInfoIndex);
+        currentMigrationInfoIndex = ((currentMigrationInfoIndex + 1) % entityConfig.migrationInfo.length);
+        console.log('to: ' + currentMigrationInfoIndex);
+        migrationFailureCount = 0;
 }
 
 function sendMigrationRequest() {
     if (entityConfig.migrationInfo == null || entityConfig.migrationInfo.length == 0) {
         console.log('Failed to migrate! no information for migration.');
         return;
+    }
+    if (migrationFailureCount >= parameters.migrationFailureThreshold) {
+        rotateMigrationInfoIndex('reached migration failure threshold, ');
+        migrationFailureCount = 0;
     }
     var currentMigrationInfo = entityConfig.migrationInfo[currentMigrationInfoIndex];
     if ((entityConfig.authInfo.host == currentMigrationInfo.host)
@@ -143,9 +161,9 @@ function sendMigrationRequest() {
         console.log('Failed to migrate! host/port of current Auth is the same as host of the Auth which we migrate to');
     }
     else {
-        var options = iotAuth.getMigrationReqOptions(entityConfig, currentMigrationInfo);
+        var options = iotAuth.getMigrationReqOptions(entityConfig, currentMigrationInfo, trustedAuthPublicKeyList);
         var eventHandlers = {
-            onError: onError
+            onError: onServerError
         };
         iotAuth.migrateToTrustedAuth(options, handleMigrationResp, eventHandlers);
     }

@@ -29,8 +29,6 @@ var SecureCommClient = require('../accessors/SecureCommClient');
 // Parameters for experiments
 var autoSendPeriod = 5000;
 var useSameSessionKeyCount = 2;
-var connectionTimeout = 2000;
-var authFailureThreshold = 3;
 ////
 
 var currentRemainingRequestCount = 0;
@@ -111,6 +109,12 @@ if (process.argv.length > 3) {
     process.chdir(workingDirectory);
 }
 
+// Parameters for experiments
+var connectionTimeout = 2000;
+var authFailureThreshold = 3;
+var migrationFailureThreshold = 3;
+////
+
 if (process.argv.length > 4) {
     var expOptions = iotAuth.loadJSONConfig(process.argv[4]);
     console.log('Experimental options for autoClient: ' + util.inspect(expOptions));
@@ -118,6 +122,7 @@ if (process.argv.length > 4) {
     useSameSessionKeyCount = expOptions.useSameSessionKeyCount;
     connectionTimeout = expOptions.connectionTimeout;
     authFailureThreshold = expOptions.authFailureThreshold;
+    migrationFailureThreshold =expOptions.migrationFailureThreshold;
 }
 
 var secureCommClient = new SecureCommClient(configFilePath);
@@ -130,6 +135,7 @@ secureCommClient.setOutputHandler('received', receivedHandler);
 secureCommClient.setParameter('numKeysPerRequest', 1);
 secureCommClient.setParameter('migrationEnabled', true);
 secureCommClient.setParameter('authFailureThreshold', authFailureThreshold);
+secureCommClient.setParameter('migrationFailureThreshold', migrationFailureThreshold);
 // set connection timeout
 secureCommClient.setEntityInfo('connectionTimeout', connectionTimeout);
 /*

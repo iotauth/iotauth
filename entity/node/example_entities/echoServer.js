@@ -27,11 +27,6 @@ var util = require('util');
 var iotAuth = require('../accessors/node_modules/iotAuth');
 var SecureCommServer = require('../accessors/SecureCommServer');
 
-// Parameters for experiments
-var connectionTimeout = 2000;
-var authFailureThreshold = 3;
-/////
-
 function connectionHandler(info) {
     console.log('Handler: ' + info);
 }
@@ -56,12 +51,6 @@ function receivedHandler(received) {
     secureCommServer.provideInput('toSend', {data: received.data, id: received.id});
 }
 
-// to be loaded from config file
-var entityInfo;
-var authInfo;
-var listeningServerInfo;
-var cryptoInfo;
-
 var configFilePath = 'configs/net1/server.config';
 if (process.argv.length > 2) {
     configFilePath = process.argv[2];
@@ -73,11 +62,18 @@ if (process.argv.length > 3) {
     process.chdir(workingDirectory);
 }
 
+// Parameters for experiments
+var connectionTimeout = 2000;
+var authFailureThreshold = 3;
+var migrationFailureThreshold = 3;
+/////
+
 if (process.argv.length > 4) {
     var expOptions = iotAuth.loadJSONConfig(process.argv[4]);
     console.log('Experimental options for echoServer: ' + util.inspect(expOptions));
     connectionTimeout = expOptions.connectionTimeout;
     authFailureThreshold = expOptions.authFailureThreshold;
+    migrationFailureThreshold =expOptions.migrationFailureThreshold;
 }
 
 var secureCommServer = new SecureCommServer(configFilePath);
@@ -86,11 +82,13 @@ secureCommServer.setOutputHandler('connection', connectionHandler);
 secureCommServer.setOutputHandler('error', errorHandler);
 secureCommServer.setOutputHandler('listening', listeningHandler);
 secureCommServer.setOutputHandler('received', receivedHandler);
-secureCommServer.setEntityInfo('connectionTimeout', connectionTimeout);
 
 // set parameters for migration
 secureCommServer.setParameter('migrationEnabled', true);
 secureCommServer.setParameter('authFailureThreshold', authFailureThreshold);
+secureCommServer.setParameter('migrationFailureThreshold', migrationFailureThreshold);
+// set connection timeout
+secureCommServer.setEntityInfo('connectionTimeout', connectionTimeout);
 
 function commandInterpreter() {
     var chunk = process.stdin.read();
