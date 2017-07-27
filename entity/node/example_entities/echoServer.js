@@ -64,6 +64,7 @@ if (process.argv.length > 3) {
 
 // Parameters for experiments
 var connectionTimeout = 2000;
+var migrationEnabled = true;
 var authFailureThreshold = 3;
 var migrationFailureThreshold = 3;
 /////
@@ -72,6 +73,7 @@ if (process.argv.length > 4) {
     var expOptions = iotAuth.loadJSONConfig(process.argv[4]);
     console.log('Experimental options for echoServer: ' + util.inspect(expOptions));
     connectionTimeout = expOptions.connectionTimeout;
+    migrationEnabled = expOptions.migrationEnabled;
     authFailureThreshold = expOptions.authFailureThreshold;
     migrationFailureThreshold =expOptions.migrationFailureThreshold;
 }
@@ -84,7 +86,7 @@ secureCommServer.setOutputHandler('listening', listeningHandler);
 secureCommServer.setOutputHandler('received', receivedHandler);
 
 // set parameters for migration
-secureCommServer.setParameter('migrationEnabled', true);
+secureCommServer.setParameter('migrationEnabled', migrationEnabled);
 secureCommServer.setParameter('authFailureThreshold', authFailureThreshold);
 secureCommServer.setParameter('migrationFailureThreshold', migrationFailureThreshold);
 // set connection timeout

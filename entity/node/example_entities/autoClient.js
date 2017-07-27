@@ -111,6 +111,7 @@ if (process.argv.length > 3) {
 
 // Parameters for experiments
 var connectionTimeout = 2000;
+var migrationEnabled = true;
 var authFailureThreshold = 3;
 var migrationFailureThreshold = 3;
 ////
@@ -121,6 +122,7 @@ if (process.argv.length > 4) {
     autoSendPeriod = expOptions.autoSendPeriod;
     useSameSessionKeyCount = expOptions.useSameSessionKeyCount;
     connectionTimeout = expOptions.connectionTimeout;
+    migrationEnabled = expOptions.migrationEnabled;
     authFailureThreshold = expOptions.authFailureThreshold;
     migrationFailureThreshold =expOptions.migrationFailureThreshold;
 }
@@ -133,7 +135,7 @@ secureCommClient.setOutputHandler('received', receivedHandler);
 
 // set number of cached keys to 1
 secureCommClient.setParameter('numKeysPerRequest', 1);
-secureCommClient.setParameter('migrationEnabled', true);
+secureCommClient.setParameter('migrationEnabled', migrationEnabled);
 secureCommClient.setParameter('authFailureThreshold', authFailureThreshold);
 secureCommClient.setParameter('migrationFailureThreshold', migrationFailureThreshold);
 // set connection timeout
