@@ -138,6 +138,7 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
     public SSTEdge lookupEdge(SSTNode from, SSTNode to, EdgeType type) {
         for (Edge edge : edges){
             SSTEdge e = (SSTEdge)edge;
+
             if (e.from.equals(from) && e.to.equals(to) && e.type.equals(type))
                 return e;
         }

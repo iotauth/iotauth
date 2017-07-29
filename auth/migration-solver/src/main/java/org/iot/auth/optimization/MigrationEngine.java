@@ -128,6 +128,13 @@ public class MigrationEngine {
                         //model.addExpression(name+"_C").lower(-1).set(var,1).set(vx,-1).set(vy,-1);
                         solver.addGTE(name+"_C",
                                 ImmutableMap.of(var, Double.valueOf(1), vx, Double.valueOf(-1), vy, Double.valueOf(-1)), -1);
+
+                        // add constraints about trust relationships between Auths
+                        SSTGraph.SSTEdge aaTrust = network.lookupEdge(ax, ay, SSTGraph.EdgeType.AA_TRUST);
+                        if (aaTrust == null || aaTrust.weight != 1.0) {
+                            solver.addEQ(name + "_Trust",
+                                    ImmutableMap.of(var, Double.valueOf(1)), 0);
+                        }
                     }
                 }
                 if (!x2yVars.isEmpty()){
@@ -252,22 +259,84 @@ public class MigrationEngine {
         return overall;
     }
 
+    /**
+     * Construct migration plans for the Cory 5th floor scenario
+     *
+     * @param weightThings & weightAuth: Distribution of costs over thing vs auths
+     * @return JSON object for autoClientList and echoServerList
+     * @throws IllegalAccessException
+     */
+    public static JSONObject mkCoryFloorMigration(double weightThings, double weightAuth) throws IllegalAccessException{
+        JSONObject overall = new JSONObject();
+
+        // Construct the initial Cory 5th floor plan
+        SSTGraph n = NetworkFactory.coryFloorPlan();
+        List<SSTGraph.SSTNode> auths = new ArrayList<SSTGraph.SSTNode>(n.auths());
+
+        // successively destroy auth 1, 3, and 4
+        SSTGraph n2 = n.destroyAuth(n.getAuth("1"));
+        SSTGraph n3 = n2.destroyAuth(n.getAuth("3"));
+        SSTGraph n4 = n3.destroyAuth(n.getAuth("4"));
+
+        // create migration plans for respective partial graphs
+        List<MigrationPlan> plans = new ArrayList<MigrationPlan>();
+        plans.add(findMigratePlan(n2, weightThings, weightAuth));
+        plans.add(findMigratePlan(n3, weightThings, weightAuth));
+        plans.add(findMigratePlan(n4, weightThings, weightAuth));
+
+        Map<String,List<String>> moveTo = new HashMap<String,List<String>>();
+
+        JSONArray echoServerList = new JSONArray();
+        JSONArray autoClientList = new JSONArray();
+
+        // extract backup info from each plan
+        plans.forEach((p) -> {
+            for (String t : p.thingsToMove()){
+                if (!moveTo.containsKey(t)){
+                    moveTo.put(t, new ArrayList<String>());
+                }
+                moveTo.get(t).add(p.moveTo(t));
+            }
+        });
+
+        // create "echoServerList" and "authClientList"
+        for (SSTGraph.SSTNode t : n.things()) {
+            List<String> backups = new ArrayList<String>();
+            if (moveTo.containsKey(t.id))
+                backups = moveTo.get(t.id);
+            JSONObject o = new JSONObject();
+            if (!n.isClient(t.id)) {
+                o.put("name", t);
+                o.put("backupTo", backups);
+                echoServerList.add(o);
+            } else {
+                o.put("name", t);
+                o.put("target", n.getServer(t.id));
+                o.put("backupTo", backups);
+                autoClientList.add(o);
+            }
+        }
+
+        overall.put("echoServerList", echoServerList);
+        overall.put("autoClientList", autoClientList);
+
+        return overall;
+    }
+
     public static void main(final String[] args) throws IllegalAccessException {
 
         double weightThings = 0.8;
         double weightAuth = 0.2;
         // generate the graph from the CCS paper
-        //SSTGraph n = NetworkFactory.sampleNetworkFull();
-        SSTGraph n = NetworkFactory.mkRandomGraph(4, 10, 5,
-                1.0, 0.5, 0.5,
-                5, 5);
-        MigrationPlan p1 = findMigratePlan(n, weightThings, weightAuth);
-        MigrationPlan p2 = findMigratePlan(n, weightThings, weightAuth, SOLVER_OJALGO);
+        // SSTGraph n = NetworkFactory.sampleNetworkFull();
+        // SSTGraph n = NetworkFactory.mkRandomGraph(4, 10, 5,
+        //                1.0, 0.5, 0.5,
+        //                5, 5);
+        // MigrationPlan p1 = findMigratePlan(n, weightThings, weightAuth);
+        // MigrationPlan p2 = findMigratePlan(n, weightThings, weightAuth, SOLVER_OJALGO);
 
-        // construct the JSOn object for it
-        //JSONObject obj = mkJSON(n, 0.8, 0.2);
-
-        //System.out.println(obj);
+        JSONObject obj = mkCoryFloorMigration(0.8, 0.2);
+        System.out.println(obj);
     }
 
 }
