@@ -7,7 +7,8 @@
 			"tcpPort": 21900,
 			"udpPort": 21902,
 			"authPort": 21901,
-			"dbProtectionMethod": 1
+			"dbProtectionMethod": 1,
+			"backupEnabled": false
 		},
 		{
 			"id": 102,
@@ -16,7 +17,8 @@
 			"tcpPort": 22900,
 			"udpPort": 22902,
 			"authPort": 22901,
-			"dbProtectionMethod": 1
+			"dbProtectionMethod": 1,
+			"backupEnabled": false
 		}
 	],
 	"authTrusts": [

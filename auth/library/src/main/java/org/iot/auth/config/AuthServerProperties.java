@@ -53,6 +53,7 @@ public class AuthServerProperties {
 
         auth_database_dir,
         auth_db_protection_method,
+        backup_enabled
     }
 
     private Properties prop;
@@ -79,6 +80,7 @@ public class AuthServerProperties {
 
     private String authDatabaseDir;
     private int authDBProtectionMethod;
+    private boolean backupEnabled;
 
     public AuthServerProperties(String propertyFilePath, String basePath) throws IOException {
         _propertyFilePath = propertyFilePath;
@@ -147,6 +149,9 @@ public class AuthServerProperties {
 
             authDBProtectionMethod = Integer.parseInt(prop.getProperty(key.auth_db_protection_method.toString()));
             logger.info("key:value = {}:{}", key.auth_db_protection_method.toString(), authDBProtectionMethod);
+
+            backupEnabled = Boolean.parseBoolean(prop.getProperty(key.backup_enabled.toString()));
+            logger.info("key:value = {}:{}", key.backup_enabled.toString(), backupEnabled);
         }
         else {
             throw new FileNotFoundException("property file (" + _propertyFilePath + ") not found in the classpath");
@@ -200,4 +205,7 @@ public class AuthServerProperties {
         return authDatabaseDir;
     }
     public int getAuthDBProtectionMethod() { return authDBProtectionMethod; }
+    public boolean getBackupEnabled() {
+        return backupEnabled;
+    }
 }

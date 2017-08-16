@@ -126,6 +126,8 @@ public class AuthServer {
         serverForTrustedAuths = initServerForTrustedAuths(properties, authKeyStorePassword);
         clientForTrustedAuths = initClientForTrustedAuths(properties, authKeyStorePassword);
 
+        backupEnabled = properties.getBackupEnabled();
+
         logger.info("Auth server information. Auth ID: " + properties.getAuthID() +
                 ", Entity Ports TCP: " + entityTcpPortServerSocket.getLocalPort() +
                 " UDP: " + entityUdpPortServerSocket.getLocalPort() +
@@ -275,15 +277,7 @@ public class AuthServer {
 
         String authPassword = cmd.getOptionValue("password");
 
-        AuthServer authServer;
-        /*
-        if (authPassword != null) {
-            authServer = new AuthServer(C.PROPERTIES, authPassword);
-        }
-        else {
-        */
-            authServer = new AuthServer(C.PROPERTIES, authPassword);
-        //}
+        AuthServer authServer = new AuthServer(C.PROPERTIES, authPassword);
 
         authServer.begin();
     }
@@ -309,8 +303,10 @@ public class AuthServer {
         HeartbeatSender heartbeatSender = new HeartbeatSender(this, db.getAllTrustedAuthIDs());
         heartbeatSender.start();
 
-        BackupRequester backupRequester = new BackupRequester(this);
-        backupRequester.start();
+        if (backupEnabled) {
+            BackupRequester backupRequester = new BackupRequester(this);
+            backupRequester.start();
+        }
 
         clientForTrustedAuths.start();
 
@@ -974,4 +970,5 @@ public class AuthServer {
 
     private Server serverForTrustedAuths;
     private HttpClient clientForTrustedAuths;
+    private boolean backupEnabled;
 }
