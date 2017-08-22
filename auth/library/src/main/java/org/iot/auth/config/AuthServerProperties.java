@@ -44,6 +44,10 @@ public class AuthServerProperties {
         trusted_auth_port,
         trusted_auth_port_idle_timeout,
 
+        contextual_callback_port,
+        contextual_callback_port_idle_timeout,
+        contextual_callback_enabled,
+
         entity_key_store_path,
         internet_key_store_path,
         database_key_store_path,
@@ -70,6 +74,10 @@ public class AuthServerProperties {
 
     private int trustedAuthPort;
     private long trustedAuthPortIdleTimeout;
+
+    private int contextualCallbackPort;
+    private long contextualCallbackIdleTimeout;
+    private boolean contextualCallbackEnabled;
 
     private String entityKeyStorePath;
     private String internetKeyStorePath;
@@ -122,6 +130,16 @@ public class AuthServerProperties {
 
             trustedAuthPortIdleTimeout = Long.parseLong(prop.getProperty(key.trusted_auth_port_idle_timeout.toString()));
             logger.info("key:value = {}:{}", key.trusted_auth_port_idle_timeout.toString(), trustedAuthPortIdleTimeout);
+
+
+            contextualCallbackPort = Integer.parseInt(prop.getProperty(key.contextual_callback_port.toString()));
+            logger.info("key:value = {}:{}", key.contextual_callback_port.toString(), contextualCallbackPort);
+
+            contextualCallbackIdleTimeout = Long.parseLong(prop.getProperty(key.contextual_callback_port_idle_timeout.toString()));
+            logger.info("key:value = {}:{}", key.contextual_callback_port_idle_timeout.toString(), contextualCallbackIdleTimeout);
+
+            contextualCallbackEnabled = Boolean.parseBoolean(prop.getProperty(key.contextual_callback_enabled.toString()));
+            logger.info("key:value = {}:{}", key.contextual_callback_enabled.toString(), contextualCallbackEnabled);
 
 
             entityKeyStorePath = basePath + prop.getProperty(key.entity_key_store_path.toString());
@@ -185,6 +203,16 @@ public class AuthServerProperties {
     }
     public long getTrustedAuthPortIdleTimeout() {
         return trustedAuthPortIdleTimeout;
+    }
+
+    public int getContextualCallbackPort() {
+        return contextualCallbackPort;
+    }
+    public long getContextualCallbackIdleTimeout() {
+        return contextualCallbackIdleTimeout;
+    }
+    public boolean isContextualCallbackEnabled() {
+        return contextualCallbackEnabled;
     }
 
     public String getEntityKeyStorePath() {

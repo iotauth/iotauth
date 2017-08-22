@@ -94,7 +94,7 @@ function populateDefaultEntityList() {
 	return DEFAULT_ENTITY_LIST;
 }
 
-function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupToAll) {
+function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled) {
 	var authList = [];
 	var entityList = [];
 	var authTrusts = [];
@@ -108,6 +108,7 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupTo
 	*/
 	const AUTH_UDP_PORT_OFFSET = 2;
 	const TRUSTED_AUTH_PORT_OFFSET = 1;
+	const CONTEXTUAL_CALLBACK_PORT_OFFSET = 3;
 	for (var netId = 1; netId <= numAuths; netId++) {
 		var authId = getAuthId(netId);
 		var authInfo = {
@@ -117,7 +118,10 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupTo
 			tcpPort: getAuthPortBase(netId),
 			udpPort: getAuthPortBase(netId) + AUTH_UDP_PORT_OFFSET,
 			authPort: getAuthPortBase(netId) + TRUSTED_AUTH_PORT_OFFSET,
-			dbProtectionMethod: dbProtectionMethod
+			callbackPort: getAuthPortBase(netId) + CONTEXTUAL_CALLBACK_PORT_OFFSET,
+			dbProtectionMethod: dbProtectionMethod,
+			backupEnabled: backupEnabled,
+			contextualCallbackEnabled: contextualCallbackEnabled
 		};
 		authList.push(authInfo);
 		for (var otherNetId = netId + 1; otherNetId <= numAuths; otherNetId++) {
@@ -171,7 +175,9 @@ program
   .version('0.1.0')
   .option('-n, --num-auths <n>', 'Nmber of Auths', parseInt)
   .option('-o, --out-file [value]', 'Output file name')
-  .option('-b, --backup-to-all', 'Backup to all Auths (boolean)')
+  .option('-b, --enable-backup', 'Enable backup (boolean), defaults to false')
+  .option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
+  .option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
   .parse(process.argv);
 
 /*
@@ -183,23 +189,33 @@ program
 var numAuths = 2;
 var dbProtectionMethod = 1;
 var outputFile = 'default.graph';
+var backupEnabled = false;
 var backupToAll = false;
+var contextualCallbackEnabled = false;
 if (program.numAuths != null) {
 	numAuths = program.numAuths;
 }
 if (program.outFile != null) {
 	outputFile = program.outFile;
 }
+if (program.enableBackup != null) {
+	backupEnabled = program.enableBackup;
+}
 if (program.backupToAll != null) {
 	backupToAll = program.backupToAll;
+}
+if (program.enableContextualCallback != null) {
+	contextualCallbackEnabled = program.enableContextualCallback;
 }
 
 console.log('Number of Auths: ' + numAuths);
 console.log('Output file name: ' + outputFile);
+console.log('Backup enabled?: ' + backupEnabled);
 console.log('Backup to all Auths?: ' + backupToAll);
+console.log('Contextual callback enabled?: ' + contextualCallbackEnabled);
 
 var defaultEntityList = populateDefaultEntityList();
-var graph = generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupToAll);
+var graph = generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled);
 
 fs.writeFileSync(outputFile, 
 	JSON2.stringify(graph, null, '\t'),

@@ -125,6 +125,7 @@ public class AuthServer {
 
         serverForTrustedAuths = initServerForTrustedAuths(properties, authKeyStorePassword);
         clientForTrustedAuths = initClientForTrustedAuths(properties, authKeyStorePassword);
+        serverForContextualCallbacks = initServerForContextualCallbacks(properties);
 
         backupEnabled = properties.getBackupEnabled();
 
@@ -641,6 +642,34 @@ public class AuthServer {
         return clientForTrustedAuths;
     }
 
+    private Server initServerForContextualCallbacks(AuthServerProperties properties)
+            throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException
+    {
+        ContextualCallbackHandler contextualCallbackHandler = new ContextualCallbackHandler(this);
+
+        Server serverForContextualCallbacks = new Server();
+        serverForContextualCallbacks.setHandler(contextualCallbackHandler);
+
+        HttpConfiguration httpConfig = new HttpConfiguration();
+        httpConfig.setPersistentConnectionsEnabled(true);
+        httpConfig.setSecureScheme("https");
+        // time out with out keep alive messages?
+        //httpConfig.setBlockingTimeout();
+
+        httpConfig.addCustomizer(new SecureRequestCustomizer());
+        //new SSL
+        ServerConnector connector = new ServerConnector(serverForContextualCallbacks, new HttpConnectionFactory(httpConfig));
+
+        connector.setPort(properties.getTrustedAuthPort());
+
+        // Idle time out for keep alive connections
+        // time out with out requests?
+        connector.setIdleTimeout(properties.getTrustedAuthPortIdleTimeout());
+
+        serverForContextualCallbacks.setConnectors(new org.eclipse.jetty.server.Connector[]{connector});
+
+        return serverForContextualCallbacks;
+    }
     public List<AuthBackupReqMessage> getBackupReqMessages() {
         int[] trustedAuthIDs = db.getAllTrustedAuthIDs();
         List<RegisteredEntity> allRegisteredEntities = db.getAllRegisteredEntitiies();
@@ -969,6 +998,7 @@ public class AuthServer {
     private AuthCrypto crypto;
 
     private Server serverForTrustedAuths;
+    private Server serverForContextualCallbacks;
     private HttpClient clientForTrustedAuths;
     private boolean backupEnabled;
 }
