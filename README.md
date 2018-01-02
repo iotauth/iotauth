@@ -41,4 +41,8 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 ---
 This project is still in its infancy and currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source codes with caution at their own risk, when the tools provided in this project are used for commercial or safety-critical purposes.
 
-*Last updated on March 16, 2017*
+# Acknowledgement
+---
+This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP) a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
+
+*Last updated on January 2, 2018*
