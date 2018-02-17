@@ -129,6 +129,10 @@ public class AuthServer {
 
         backupEnabled = properties.getBackupEnabled();
 
+        if (properties.getQpsLimiterEnabled()) {
+            qpsCalculator = new QPSCalculator(properties.getQpsLimit());
+        }
+
         logger.info("Auth server information. Auth ID: " + properties.getAuthID() +
                 ", Entity Ports TCP: " + entityTcpPortServerSocket.getLocalPort() +
                 " UDP: " + entityUdpPortServerSocket.getLocalPort() +
@@ -821,7 +825,10 @@ public class AuthServer {
                     while (isRunning) {
                         Socket entitySocket = entityTcpPortServerSocket.accept();
                         logger.info("An entity connected from: {} ", entitySocket.getRemoteSocketAddress());
-
+                        if (qpsCalculator != null && qpsCalculator.checkQpsLimitExceededOtherwiseIncreaseRequestCounter()) {
+                            logger.info("QPS limit is exceeded in TCP, discarding the request.");
+                            continue;
+                        }
                         new Thread(new EntityTcpConnectionHandler(server, entitySocket, entityTcpPortTimeout)).start();
                     }
                 } catch (IOException e) {
@@ -851,6 +858,11 @@ public class AuthServer {
                     logger.info("Entity Address: " + receivedPacket.getAddress().toString() +
                             ", Port: " + receivedPacket.getPort() +
                             ", Length: " + receivedPacket.getLength());
+
+                    if (qpsCalculator != null && qpsCalculator.checkQpsLimitExceededOtherwiseIncreaseRequestCounter()) {
+                        logger.info("QPS limit is exceeded in UDP, discarding the request.");
+                        continue;
+                    }
 
                     String addressKey = receivedPacket.getAddress() + ":" + receivedPacket.getPort();
                     byte[] receivedBytes = receivedPacket.getData();
@@ -1001,4 +1013,5 @@ public class AuthServer {
     private Server serverForContextualCallbacks;
     private HttpClient clientForTrustedAuths;
     private boolean backupEnabled;
+    private QPSCalculator qpsCalculator = null;
 }

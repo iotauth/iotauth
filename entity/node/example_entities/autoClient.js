@@ -27,7 +27,7 @@ var iotAuth = require('../accessors/node_modules/iotAuth');
 var SecureCommClient = require('../accessors/SecureCommClient');
 
 // Parameters for experiments
-var autoSendPeriod = 5000;
+var autoSendPeriod = 500;
 var useSameSessionKeyCount = 2;
 ////
 
