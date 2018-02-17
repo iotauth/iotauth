@@ -129,8 +129,8 @@ public class AuthServer {
 
         backupEnabled = properties.getBackupEnabled();
 
-        if (properties.getQpsLimiterEnabled()) {
-            qpsCalculator = new QPSCalculator(properties.getQpsLimit());
+        if (properties.getQpsThrottlingEnabled()) {
+            qpsCalculator = new QPSCalculator(properties.getQpsLimit(), properties.getQpsCalculationBucketSizeInSec());
         }
 
         logger.info("Auth server information. Auth ID: " + properties.getAuthID() +

@@ -201,7 +201,11 @@ function generatePropertiesFiles() {
             'auth_database_dir': authDBDir,
             'auth_db_protection_method': auth.dbProtectionMethod,
             // currently default is true, set false only when this is given by the graph file
-            'backup_enabled': (auth.backupEnabled != null && !auth.backupEnabled) ? false : true
+            'backup_enabled': (auth.backupEnabled != null && !auth.backupEnabled) ? false : true,
+            // currently default is false
+            'qps_throttling_enabled': false,
+            'qps_limit': 10,
+            'qps_calculation_bucket_size_in_sec': 10
         };
         var strProperties = '';
         for (var key in properties) {

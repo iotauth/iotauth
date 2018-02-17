@@ -6,8 +6,11 @@ import org.slf4j.LoggerFactory;
 import java.util.Calendar;
 
 public class QPSCalculator {
-    public QPSCalculator(float qpsLimit) {
+    public QPSCalculator(float qpsLimit, int qpsBucketSizeInSec) {
         this.qpsLimit = qpsLimit;
+        this.qpsBucketSizeInSec = qpsBucketSizeInSec;
+        numTotalRequestsWithinSec = new int[qpsBucketSizeInSec];
+        numAcceptedRequestsWithinSec = new int[qpsBucketSizeInSec];
     }
 
     /**
@@ -17,13 +20,13 @@ public class QPSCalculator {
      */
     public synchronized boolean checkQpsLimitExceededOtherwiseIncreaseRequestCounter() {
         long currentTimeInSec = Calendar.getInstance().getTimeInMillis() / 1000;
-        int secondIndex = (int) (currentTimeInSec % 60);
+        int secondIndex = (int) (currentTimeInSec % qpsBucketSizeInSec);
         logger.info("current second index:  " + secondIndex + " time in sec: " + currentTimeInSec);
         resetPastTimeRequests(numTotalRequestsWithinSec, secondIndex, currentTimeInSec - lastTimeInSec);
         resetPastTimeRequests(numAcceptedRequestsWithinSec, secondIndex, currentTimeInSec - lastTimeInSec);
         numTotalRequestsWithinSec[secondIndex]++;
         boolean isQpsExceeded = false;
-        if (((float) getRequestsWithinMin(numAcceptedRequestsWithinSec) / 60) < qpsLimit) {
+        if (((float) getRequestsWithinBucket(numAcceptedRequestsWithinSec) / qpsBucketSizeInSec) < qpsLimit) {
             numAcceptedRequestsWithinSec[secondIndex]++;
         }
         else {
@@ -32,20 +35,21 @@ public class QPSCalculator {
         }
         logger.info("current total req/sec:  " + numTotalRequestsWithinSec[secondIndex]);
         logger.info("current accepted req/sec:  " + numAcceptedRequestsWithinSec[secondIndex]);
-        logger.info("Total: " + printIntArray(numTotalRequestsWithinSec));
+        logger.info("Total:    " + printIntArray(numTotalRequestsWithinSec));
         logger.info("Accepted: " + printIntArray(numAcceptedRequestsWithinSec));
-        int totalRequestsPerMin = getRequestsWithinMin(numTotalRequestsWithinSec);
-        int acceptedRequestsPerMin = getRequestsWithinMin(numAcceptedRequestsWithinSec);
-        logger.info("current total req/min:  " + totalRequestsPerMin + " QPS: " + (float)totalRequestsPerMin / 60);
-        logger.info("current accepted req/min:  " + acceptedRequestsPerMin + " QPS: " + (float)acceptedRequestsPerMin / 60);
+        int totalRequestsPerBucket = getRequestsWithinBucket(numTotalRequestsWithinSec);
+        int acceptedRequestsPerBucket = getRequestsWithinBucket(numAcceptedRequestsWithinSec);
+        logger.info("current total req/" + qpsBucketSizeInSec + "sec: " + totalRequestsPerBucket + " QPS: " + (float)totalRequestsPerBucket / qpsBucketSizeInSec);
+        logger.info("current accepted req/" + qpsBucketSizeInSec + "sec: " + acceptedRequestsPerBucket + " QPS: " + (float)acceptedRequestsPerBucket / qpsBucketSizeInSec);
         lastTimeInSec = currentTimeInSec;
         return isQpsExceeded;
     }
     private final float qpsLimit;
-    private int[] numTotalRequestsWithinSec = new int[60];
-    private int[] numAcceptedRequestsWithinSec = new int[60];
+    private final int qpsBucketSizeInSec;
+    private int[] numTotalRequestsWithinSec;
+    private int[] numAcceptedRequestsWithinSec;
     private long lastTimeInSec = 0;
-    private static int getRequestsWithinMin (int[] requestsWithinSec) {
+    private static int getRequestsWithinBucket(int[] requestsWithinSec) {
         int sum = 0;
         for (int i = 0; i < requestsWithinSec.length; i++) {
             sum += requestsWithinSec[i];
@@ -60,14 +64,14 @@ public class QPSCalculator {
         return result;
     }
     private static void resetPastTimeRequests(int[] requestsWithinSec, int currentSecondIndex, long pastAmountWithoutRequests) {
-        int numEntriesToBeReset = pastAmountWithoutRequests >= 60L ? 60 : (int) pastAmountWithoutRequests;
+        int numEntriesToBeReset = pastAmountWithoutRequests >= requestsWithinSec.length ? requestsWithinSec.length : (int) pastAmountWithoutRequests;
         int numResets = 0;
         for (int i = currentSecondIndex;; i--, numResets++) {
             if (numResets >= numEntriesToBeReset) {
                 break;
             }
             if (i < 0) {
-                i = 59;
+                i = requestsWithinSec.length - 1;
             }
             requestsWithinSec[i] = 0;
         }
