@@ -57,7 +57,10 @@ public class AuthServerProperties {
 
         auth_database_dir,
         auth_db_protection_method,
-        backup_enabled
+        backup_enabled,
+
+        qps_limiter_enabled,
+        qps_limit
     }
 
     private Properties prop;
@@ -89,6 +92,9 @@ public class AuthServerProperties {
     private String authDatabaseDir;
     private int authDBProtectionMethod;
     private boolean backupEnabled;
+
+    private boolean qpsLimiterEnabled;
+    private float qpsLimit;
 
     public AuthServerProperties(String propertyFilePath, String basePath) throws IOException {
         _propertyFilePath = propertyFilePath;
@@ -170,6 +176,12 @@ public class AuthServerProperties {
 
             backupEnabled = Boolean.parseBoolean(prop.getProperty(key.backup_enabled.toString()));
             logger.info("key:value = {}:{}", key.backup_enabled.toString(), backupEnabled);
+
+            qpsLimiterEnabled = Boolean.parseBoolean(prop.getProperty(key.qps_limiter_enabled.toString()));
+            logger.info("key:value = {}:{}", key.qps_limiter_enabled.toString(), qpsLimiterEnabled);
+
+            qpsLimit = Float.parseFloat(prop.getProperty(key.qps_limit.toString()));
+            logger.info("key:value = {}:{}", key.qps_limit.toString(), qpsLimit);
         }
         else {
             throw new FileNotFoundException("property file (" + _propertyFilePath + ") not found in the classpath");
@@ -235,5 +247,12 @@ public class AuthServerProperties {
     public int getAuthDBProtectionMethod() { return authDBProtectionMethod; }
     public boolean getBackupEnabled() {
         return backupEnabled;
+    }
+
+    public boolean getQpsLimiterEnabled() {
+        return qpsLimiterEnabled;
+    }
+    public float getQpsLimit() {
+        return qpsLimit;
     }
 }

@@ -1,0 +1,76 @@
+package org.iot.auth.server;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Calendar;
+
+public class QPSCalculator {
+    public QPSCalculator(float qpsLimit) {
+        this.qpsLimit = qpsLimit;
+    }
+
+    /**
+     * Check whether the QPS limit is exceeded and increase the counter for the number of accepted requests only when
+     * the QPS limit is exceeded. QPS is calculated over a minute.
+     * @return Boolean value to indicate if the QPS limit is exceeded.
+     */
+    public synchronized boolean checkQpsLimitExceededOtherwiseIncreaseRequestCounter() {
+        long currentTimeInSec = Calendar.getInstance().getTimeInMillis() / 1000;
+        int secondIndex = (int) (currentTimeInSec % 60);
+        logger.info("current second index:  " + secondIndex + " time in sec: " + currentTimeInSec);
+        resetPastTimeRequests(numTotalRequestsWithinSec, secondIndex, currentTimeInSec - lastTimeInSec);
+        resetPastTimeRequests(numAcceptedRequestsWithinSec, secondIndex, currentTimeInSec - lastTimeInSec);
+        numTotalRequestsWithinSec[secondIndex]++;
+        boolean isQpsExceeded = false;
+        if (((float) getRequestsWithinMin(numAcceptedRequestsWithinSec) / 60) < qpsLimit) {
+            numAcceptedRequestsWithinSec[secondIndex]++;
+        }
+        else {
+            isQpsExceeded = true;
+            logger.info("qps limit reached! " + qpsLimit);
+        }
+        logger.info("current total req/sec:  " + numTotalRequestsWithinSec[secondIndex]);
+        logger.info("current accepted req/sec:  " + numAcceptedRequestsWithinSec[secondIndex]);
+        logger.info("Total: " + printIntArray(numTotalRequestsWithinSec));
+        logger.info("Accepted: " + printIntArray(numAcceptedRequestsWithinSec));
+        int totalRequestsPerMin = getRequestsWithinMin(numTotalRequestsWithinSec);
+        int acceptedRequestsPerMin = getRequestsWithinMin(numAcceptedRequestsWithinSec);
+        logger.info("current total req/min:  " + totalRequestsPerMin + " QPS: " + (float)totalRequestsPerMin / 60);
+        logger.info("current accepted req/min:  " + acceptedRequestsPerMin + " QPS: " + (float)acceptedRequestsPerMin / 60);
+        lastTimeInSec = currentTimeInSec;
+        return isQpsExceeded;
+    }
+    private final float qpsLimit;
+    private int[] numTotalRequestsWithinSec = new int[60];
+    private int[] numAcceptedRequestsWithinSec = new int[60];
+    private long lastTimeInSec = 0;
+    private static int getRequestsWithinMin (int[] requestsWithinSec) {
+        int sum = 0;
+        for (int i = 0; i < requestsWithinSec.length; i++) {
+            sum += requestsWithinSec[i];
+        }
+        return sum;
+    }
+    private String printIntArray (int[] array) {
+        String result = "";
+        for (int i = 0; i < array.length; i++) {
+            result += array[i] + " ";
+        }
+        return result;
+    }
+    private static void resetPastTimeRequests(int[] requestsWithinSec, int currentSecondIndex, long pastAmountWithoutRequests) {
+        int numEntriesToBeReset = pastAmountWithoutRequests >= 60L ? 60 : (int) pastAmountWithoutRequests;
+        int numResets = 0;
+        for (int i = currentSecondIndex;; i--, numResets++) {
+            if (numResets >= numEntriesToBeReset) {
+                break;
+            }
+            if (i < 0) {
+                i = 59;
+            }
+            requestsWithinSec[i] = 0;
+        }
+    }
+    private static final Logger logger = LoggerFactory.getLogger(QPSCalculator.class);
+}
