@@ -59,8 +59,9 @@ public class AuthServerProperties {
         auth_db_protection_method,
         backup_enabled,
 
-        qps_limiter_enabled,
-        qps_limit
+        qps_throttling_enabled,
+        qps_limit,
+        qps_calculation_bucket_size_in_sec
     }
 
     private Properties prop;
@@ -93,8 +94,9 @@ public class AuthServerProperties {
     private int authDBProtectionMethod;
     private boolean backupEnabled;
 
-    private boolean qpsLimiterEnabled;
+    private boolean qpsThrottlingEnabled;
     private float qpsLimit;
+    private int qpsCalculationBucketSizeInSec;
 
     public AuthServerProperties(String propertyFilePath, String basePath) throws IOException {
         _propertyFilePath = propertyFilePath;
@@ -177,11 +179,14 @@ public class AuthServerProperties {
             backupEnabled = Boolean.parseBoolean(prop.getProperty(key.backup_enabled.toString()));
             logger.info("key:value = {}:{}", key.backup_enabled.toString(), backupEnabled);
 
-            qpsLimiterEnabled = Boolean.parseBoolean(prop.getProperty(key.qps_limiter_enabled.toString()));
-            logger.info("key:value = {}:{}", key.qps_limiter_enabled.toString(), qpsLimiterEnabled);
+            qpsThrottlingEnabled = Boolean.parseBoolean(prop.getProperty(key.qps_throttling_enabled.toString()));
+            logger.info("key:value = {}:{}", key.qps_throttling_enabled.toString(), qpsThrottlingEnabled);
 
             qpsLimit = Float.parseFloat(prop.getProperty(key.qps_limit.toString()));
             logger.info("key:value = {}:{}", key.qps_limit.toString(), qpsLimit);
+
+            qpsCalculationBucketSizeInSec = Integer.parseInt(prop.getProperty(key.qps_calculation_bucket_size_in_sec.toString()));
+            logger.info("key:value = {}:{}", key.qps_calculation_bucket_size_in_sec.toString(), qpsCalculationBucketSizeInSec);
         }
         else {
             throw new FileNotFoundException("property file (" + _propertyFilePath + ") not found in the classpath");
@@ -249,10 +254,13 @@ public class AuthServerProperties {
         return backupEnabled;
     }
 
-    public boolean getQpsLimiterEnabled() {
-        return qpsLimiterEnabled;
+    public boolean getQpsThrottlingEnabled() {
+        return qpsThrottlingEnabled;
     }
     public float getQpsLimit() {
         return qpsLimit;
+    }
+    public int getQpsCalculationBucketSizeInSec() {
+        return qpsCalculationBucketSizeInSec;
     }
 }
