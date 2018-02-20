@@ -38,6 +38,7 @@ import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.DistributionKey;
 import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.*;
+import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.message.*;
 import org.iot.auth.db.CommunicationTargetType;
@@ -388,6 +389,17 @@ public class AuthServer {
         return db.addSessionKeyOwner(keyID, newOwner);
     }
 
+    public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {
+        try {
+            db.insertCommunicationPolicy(newCommunicationPolicyTable);
+            db.reloadCommunicationPolicyDB();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Method for exposing an AuthDB operation, getCommunicationPolicy
      * @param reqGroup The requesting group's name in communication policy.
@@ -509,19 +521,16 @@ public class AuthServer {
         db.deleteAllSessionKeys();
     }
 
-    public void insertRegisteredEntities(List<RegisteredEntity> registeredEntities)
-            throws SQLException, IOException, ClassNotFoundException
-    {
-        db.insertRegisteredEntities(registeredEntities);
-    }
     public void insertRegisteredEntitiesOrUpdateIfExist(List<RegisteredEntity> registeredEntities)
             throws SQLException, IOException, ClassNotFoundException
     {
         db.insertRegisteredEntitiesOrUpdateIfExist(registeredEntities);
+        db.reloadRegEntityDB();
     }
 
-    public void deleteBackedUpRegisteredEntities() throws SQLException {
+    public void deleteBackedUpRegisteredEntities() throws SQLException, ClassNotFoundException {
         db.deleteBackedUpRegisteredEntities();
+        db.reloadRegEntityDB();
     }
 
     public void reloadRegEntityDB()
@@ -983,6 +992,7 @@ public class AuthServer {
         newRegisteredEntityList.add(newRegisteredEntity);
         try {
             db.insertRegisteredEntities(newRegisteredEntityList);
+            db.reloadRegEntityDB();
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -996,8 +1006,9 @@ public class AuthServer {
         registeredEntityNameList.add("net1.udpClient");
         try {
             db.deleteRegisteredEntities(registeredEntityNameList);
+            db.reloadRegEntityDB();
             return true;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
