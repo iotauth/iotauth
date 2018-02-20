@@ -66,8 +66,9 @@ public class CommunicationPolicyTable {
      * Sets the value for requesting group
      * @param reqGroup the requesting group
      */
-    public void setReqGroup(String reqGroup) {
+    public CommunicationPolicyTable setReqGroup(String reqGroup) {
         this.reqGroup = reqGroup;
+        return this;
     }
 
     /**
@@ -84,8 +85,9 @@ public class CommunicationPolicyTable {
      * For more information {@link CommunicationTargetType}
      * @param targetType Given type of communication target
      */
-    public void setTargetType(CommunicationTargetType targetType) {
+    public CommunicationPolicyTable setTargetType(CommunicationTargetType targetType) {
         this.targetType = targetType;
+        return this;
     }
 
     /**
@@ -100,8 +102,9 @@ public class CommunicationPolicyTable {
      * Sets the target to communicate
      * @param target Given communication target
      */
-    public void setTarget(String target) {
+    public CommunicationPolicyTable setTarget(String target) {
         this.target = target;
+        return this;
     }
 
 
@@ -109,15 +112,16 @@ public class CommunicationPolicyTable {
         return maxNumSessionKeyOwners;
     }
 
-    public void setMaxNumSessionKeyOwners(int maxNumSessionKeyOwners) {
+    public CommunicationPolicyTable setMaxNumSessionKeyOwners(int maxNumSessionKeyOwners) {
         this.maxNumSessionKeyOwners = maxNumSessionKeyOwners;
+        return this;
     }
 
     public long getAbsValidity() {
         return absValidity;
     }
 
-    public void setAbsValidity(long absValidity) {
+    private void setAbsValidity(long absValidity) {
         this.absValidity = absValidity;
     }
 
@@ -125,7 +129,7 @@ public class CommunicationPolicyTable {
         return relValidity;
     }
 
-    public void setRelValidity(long relValidity) {
+    private void setRelValidity(long relValidity) {
         this.relValidity = relValidity;
     }
 
@@ -133,16 +137,18 @@ public class CommunicationPolicyTable {
         return sessionCryptoSpec;
     }
 
-    public void setSessionCryptoSpec(String sessionCryptoSpec) {
+    public CommunicationPolicyTable setSessionCryptoSpec(String sessionCryptoSpec) {
         this.sessionCryptoSpec = sessionCryptoSpec;
+        return this;
     }
 
     public String getTargetTypeVal() {
         return targetTypeVal;
     }
 
-    public void setTargetTypeVal(String targetTypeVal) {
+    public CommunicationPolicyTable setTargetTypeVal(String targetTypeVal) {
         this.targetTypeVal = targetTypeVal;
+        return this;
     }
 
     public String toString() {
@@ -153,16 +159,18 @@ public class CommunicationPolicyTable {
         return absValidityStr;
     }
 
-    public void setAbsValidityStr(String absValidityStr) {
+    public CommunicationPolicyTable setAbsValidityStr(String absValidityStr) {
         this.absValidityStr = absValidityStr;
+        return this;
     }
 
     public String getRelValidityStr() {
         return relValidityStr;
     }
 
-    public void setRelValidityStr(String relValidityStr) {
+    public CommunicationPolicyTable setRelValidityStr(String relValidityStr) {
         this.relValidityStr = relValidityStr;
+        return this;
     }
 
     @SuppressWarnings("unchecked")
@@ -172,6 +180,8 @@ public class CommunicationPolicyTable {
         object.put(c.TargetType.name(),getTargetTypeVal());
         object.put(c.Target.name(),getTarget());
         object.put(c.MaxNumSessionKeyOwners.name(), getMaxNumSessionKeyOwners());
+        object.put(c.AbsoluteValidity.name()+"Str", getAbsValidityStr());
+        object.put(c.RelativeValidity.name()+"Str", getRelValidityStr());
         object.put(c.AbsoluteValidity.name(), getAbsValidity());
         object.put(c.RelativeValidity.name(), getRelValidity());
         return object;
@@ -189,5 +199,4 @@ public class CommunicationPolicyTable {
         policy.setRelValidity(DateHelper.parseTimePeriod(r.getString(c.RelativeValidity.name())));
         return policy;
     }
-
 }

@@ -15,7 +15,10 @@
 
 package org.iot.auth;
 import org.iot.auth.crypto.AuthCrypto;
+import org.iot.auth.db.CommunicationPolicy;
+import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
+import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
@@ -165,6 +168,22 @@ public class AuthCommandLine extends Thread  {
                         logger.error("Existing registered entity has NOT been removed due to errors.");
                     }
                 }
+                else if (command.equals("add cp")) {
+                    logger.info("\n Add new communication policy command");
+                    CommunicationPolicyTable newCommunicationPolicy = getCommunicationPolicyInformation(br);
+                    if (newCommunicationPolicy == null) {
+                        logger.info("\n Information of new communication policy was not entered correctly.");
+                        continue;
+                    }
+                    logger.info("Entered new entity information");
+                    logger.info(newCommunicationPolicy.toString());
+                    if (server.addCommunicationPolicy(newCommunicationPolicy)) {
+                        logger.info("New communication policy has been added successfully.");
+                    }
+                    else {
+                        logger.error("New communication policy has NOT been added due to errors.");
+                    }
+                }
                 else {
                     logger.info("Unrecognized command: {}", command);
                 }
@@ -186,7 +205,10 @@ public class AuthCommandLine extends Thread  {
                 "reset re           : Reset registered entities (delete all entities backed up from other Auths)\n" +
                 "issue cert [or ic] : Issue certificate\n" +
                 "backup             : Backup registered entities to a trusted Auth\n" +
-                "add re             : Add new registered entity";
+                "add re             : Add new registered entity\n" +
+                "remove re          : Remove registered entity\n" +
+                "add cp             : Add new communication policy\n" +
+                "remove cp          : Remove communication policy\n";
     }
 
     private RegisteredEntity getRegisteredEntityInformation(BufferedReader br) throws IOException {
@@ -249,8 +271,7 @@ public class AuthCommandLine extends Thread  {
             distributionKeyValidityPeriod = "1*day";
         }
 
-        RegisteredEntityTable registeredEntityTable = new RegisteredEntityTable();
-        registeredEntityTable.setName(entityName)
+        RegisteredEntityTable registeredEntityTable = new RegisteredEntityTable().setName(entityName)
                 .setGroup(group)
                 .setDistProtocol(distributionProtocol)
                 .setUsePermanentDistKey(usePermanentDistributionKey)
@@ -262,6 +283,61 @@ public class AuthCommandLine extends Thread  {
                 .setActive(true);
 
         return new RegisteredEntity(registeredEntityTable, null);
+    }
+
+    private CommunicationPolicyTable getCommunicationPolicyInformation(BufferedReader br) throws IOException {
+        logger.info("\nEnter requesting group:");
+        String requestingGroup = br.readLine();
+        if (requestingGroup.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter target (target group or target topic):");
+        String target = br.readLine();
+        if (target.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter target type [Default: Group] (other options: PubTopic, SubTopic):");
+        String targetType = br.readLine();
+        if (targetType.isEmpty()) {
+            targetType = "Group";
+        }
+
+        logger.info("\nEnter max number of session key owners [Default: 2] (Must be >= 2:");
+        String maxNumSessionKeyOwnersString = br.readLine();
+        if (maxNumSessionKeyOwnersString.isEmpty()) {
+            maxNumSessionKeyOwnersString = "2";
+        }
+        int maxNumSessionKeyOwners = Integer.parseInt(maxNumSessionKeyOwnersString);
+
+        logger.info("\nEnter session crypto spec [Default: AES-128-CBC:SHA256]:");
+        String sessionCryptoSpec = br.readLine();
+        if (sessionCryptoSpec.isEmpty()) {
+            sessionCryptoSpec = "AES-128-CBC:SHA256";
+        }
+
+        logger.info("\nEnter absolute validity period of session keys [Default: 1*day] (use day, hour, min, sec):");
+        String absoluteValidityString = br.readLine();
+        if (absoluteValidityString.isEmpty()) {
+            absoluteValidityString = "1*day";
+        }
+
+
+        logger.info("\nEnter absolute validity period of session keys [Default: 1*hour] (use day, hour, min, sec):");
+        String relativeValidityString = br.readLine();
+        if (relativeValidityString.isEmpty()) {
+            relativeValidityString = "1*hour";
+        }
+
+        return new CommunicationPolicyTable().setReqGroup(requestingGroup)
+                .setTarget(target)
+                .setTargetTypeVal(targetType)
+                .setTargetType(CommunicationTargetType.fromStringValue(targetType))
+                .setMaxNumSessionKeyOwners(maxNumSessionKeyOwners)
+                .setSessionCryptoSpec(sessionCryptoSpec)
+                .setAbsValidityStr(absoluteValidityString)
+                .setRelValidityStr(relativeValidityString);
     }
 
     private AuthServer server;

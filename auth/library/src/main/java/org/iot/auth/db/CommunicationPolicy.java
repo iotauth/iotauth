@@ -16,26 +16,24 @@
 package org.iot.auth.db;
 
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
+import org.iot.auth.db.bean.CommunicationPolicyTable;
 
 /**
  * A class for describing the communication policy between entities.
  * @author Hokeun Kim
  */
 public class CommunicationPolicy {
-    public CommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target,
-                               int maxNumSessionKeyOwners,
-                               String sessionCryptoSpecString,
-                               long absValidity, long relValidity)
+    public CommunicationPolicy(CommunicationPolicyTable communicationPolicyTable)
     {
-        this.reqGroup = reqGroup;
-        this.targetType = targetType;
-        this.target = target;
-        this.maxNumSessionKeyOwners = maxNumSessionKeyOwners;
+        this.reqGroup = communicationPolicyTable.getReqGroup();
+        this.targetType = communicationPolicyTable.getTargetType();
+        this.target = communicationPolicyTable.getTarget();
+        this.maxNumSessionKeyOwners = communicationPolicyTable.getMaxNumSessionKeyOwners();
 
-        this.sessionCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(sessionCryptoSpecString);
+        this.sessionCryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(communicationPolicyTable.getSessionCryptoSpec());
 
-        this.absValidity = absValidity;
-        this.relValidity = relValidity;
+        this.absValidity = communicationPolicyTable.getAbsValidity();
+        this.relValidity = communicationPolicyTable.getRelValidity();
     }
 
     public String getReqGroup() {

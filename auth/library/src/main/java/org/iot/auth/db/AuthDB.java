@@ -18,10 +18,7 @@ package org.iot.auth.db;
 import org.iot.auth.crypto.*;
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
-import org.iot.auth.db.bean.CachedSessionKeyTable;
-import org.iot.auth.db.bean.MetaDataTable;
-import org.iot.auth.db.bean.RegisteredEntityTable;
-import org.iot.auth.db.bean.TrustedAuthTable;
+import org.iot.auth.db.bean.*;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.util.ExceptionToString;
@@ -374,16 +371,14 @@ public class AuthDB {
         loadRegEntityDB();
     }
 
-    public void reloadTrustedAuthDB() {
-        trustedAuthMap.clear();
-
+    public void reloadCommunicationPolicyDB() throws SQLException, ClassNotFoundException {
+        communicationPolicyList.clear();
+        loadCommPolicyDB();
     }
 
     private void loadCommPolicyDB() throws SQLException, ClassNotFoundException {
-        sqLiteConnector.selectAllPolicies().forEach(c -> {
-            CommunicationPolicy communicationPolicy = new CommunicationPolicy(c.getReqGroup(), c.getTargetType(), c.getTarget(),
-                    c.getMaxNumSessionKeyOwners(), c.getSessionCryptoSpec(),
-                    c.getAbsValidity(), c.getRelValidity());
+        sqLiteConnector.selectAllPolicies().forEach(communicationPolicyTable -> {
+            CommunicationPolicy communicationPolicy = new CommunicationPolicy(communicationPolicyTable);
             communicationPolicyList.add(communicationPolicy);
             logger.debug("communicationPolicy: {}", communicationPolicy.toString());
         });
@@ -437,5 +432,9 @@ public class AuthDB {
         trustedAuth.setBackupCertificate(backupCertificate);
         trustedAuthMap.put(backupFromAuthID, trustedAuth);
         return ret;
+    }
+
+    public void insertCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) throws SQLException, ClassNotFoundException {
+        sqLiteConnector.insertRecords(newCommunicationPolicyTable);
     }
 }
