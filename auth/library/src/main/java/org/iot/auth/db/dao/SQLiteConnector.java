@@ -913,6 +913,21 @@ public class SQLiteConnector {
         return result;
     }
 
+    public boolean deleteRegisteredEntities(List<String> registeredEntityNameList) throws SQLException {
+        if (registeredEntityNameList.isEmpty()) {
+            throw new RuntimeException("The list of names of registered entities to be removed is empty!");
+        }
+        String sql = "DELETE FROM " + RegisteredEntityTable.T_REGISTERED_ENTITY;
+        sql += " WHERE " + RegisteredEntityTable.c.Name.name() + " = '" + registeredEntityNameList.get(0) + "'";
+        for (int i = 1; i < registeredEntityNameList.size(); i++) {
+            sql += " OR " + RegisteredEntityTable.c.Name.name() + " = '" + registeredEntityNameList.get(i) + "'";
+        }
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        boolean result = preparedStatement.execute();
+        return result;
+    }
+
     public boolean updateBackupCertificate(int backupFromAuthID, X509Certificate backupCertificate)
             throws SQLException, CertificateEncodingException
     {

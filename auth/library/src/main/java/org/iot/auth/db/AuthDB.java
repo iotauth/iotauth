@@ -361,6 +361,10 @@ public class AuthDB {
         });
     }
 
+    public boolean deleteRegisteredEntities(List<String> registeredEntityNameList) throws SQLException {
+        return sqLiteConnector.deleteRegisteredEntities(registeredEntityNameList);
+    }
+
     public void deleteBackedUpRegisteredEntities() throws SQLException {
         sqLiteConnector.deleteBackedUpRegisteredEntities();
     }

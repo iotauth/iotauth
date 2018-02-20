@@ -14,10 +14,14 @@
  */
 
 package org.iot.auth;
+import org.iot.auth.crypto.AuthCrypto;
+import org.iot.auth.db.RegisteredEntity;
+import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -131,6 +135,36 @@ public class AuthCommandLine extends Thread  {
                     logger.info("\nBackup command\n");
                     server.backup();
                 }
+                else if (command.equals("add re")) {
+                    logger.info("\n Add new registered entity command");
+                    RegisteredEntity newRegisteredEntity = getRegisteredEntityInformation(br);
+                    if (newRegisteredEntity == null) {
+                        logger.info("\n Information of new registered entity was not entered correctly.");
+                        continue;
+                    }
+                    logger.info("Entered new entity information");
+                    logger.info(newRegisteredEntity.toString());
+                    if (server.addRegisteredEntity(newRegisteredEntity)) {
+                        logger.info("New registered entity has been added successfully.");
+                    }
+                    else {
+                        logger.error("New registered entity has NOT been added due to errors.");
+                    }
+                }
+                else if (command.equals("remove re")) {
+                    logger.info("\n Remove existing registered entity command");
+                    logger.info("\nEnter registered entity name:");
+                    String entityName = br.readLine();
+                    if (entityName.isEmpty()) {
+                        logger.info("\n Name of the registered entity to be removed was not entered correctly.");
+                    }
+                    if (server.removeRegisteredEntity(entityName)) {
+                        logger.info("Existing registered entity has been removed successfully.");
+                    }
+                    else {
+                        logger.error("Existing registered entity has NOT been removed due to errors.");
+                    }
+                }
                 else {
                     logger.info("Unrecognized command: {}", command);
                 }
@@ -151,8 +185,85 @@ public class AuthCommandLine extends Thread  {
                 "reset sk           : Reset cached session key table (Delete all session keys)\n" +
                 "reset re           : Reset registered entities (delete all entities backed up from other Auths)\n" +
                 "issue cert [or ic] : Issue certificate\n" +
-                "backup             : Backup registered entities to a trusted Auth";
+                "backup             : Backup registered entities to a trusted Auth\n" +
+                "add re             : Add new registered entity";
     }
+
+    private RegisteredEntity getRegisteredEntityInformation(BufferedReader br) throws IOException {
+        logger.info("\nEnter registered entity name:");
+            String entityName = br.readLine();
+            if (entityName.isEmpty()) {
+                return null;
+        }
+        logger.info("\nEnter registered entity group:");
+        String group = br.readLine();
+        if (group.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter registered entity distribution protocol [Default: TCP]:");
+        String distributionProtocol = br.readLine();
+        if (distributionProtocol.isEmpty()) {
+            distributionProtocol = "TCP";
+        }
+
+        logger.info("\nWill new entity use permanent distribution key (y/n)?: [Default: n]");
+        String usePermanentDistributionKeyString = br.readLine();
+        boolean usePermanentDistributionKey = false;
+        if (!usePermanentDistributionKeyString.isEmpty()) {
+            if (usePermanentDistributionKeyString.equalsIgnoreCase("y")) {
+                usePermanentDistributionKey = true;
+            }
+        }
+
+        logger.info("\nEnter registered entity max session keys per request [Default: 1]:");
+        String maxSessionKeysPerRequestString = br.readLine();
+        if (maxSessionKeysPerRequestString.isEmpty()) {
+            maxSessionKeysPerRequestString = "1";
+        }
+        int maxSessionKeysPerRequest = Integer.parseInt(maxSessionKeysPerRequestString);
+
+        PublicKey publicKey = null;
+        String publicKeyCryptoSpec = null;
+        if (!usePermanentDistributionKey) {
+            logger.info("\nEnter registered entity's public key path:");
+            String publicKeyPath = br.readLine();
+            publicKey = AuthCrypto.loadPublicKeyFromFile(publicKeyPath);
+
+            logger.info("\nEnter registered entity's public key crypto spec [Default: RSA-SHA256]:");
+            publicKeyCryptoSpec = br.readLine();
+            if (publicKeyCryptoSpec.isEmpty()) {
+                publicKeyCryptoSpec = "RSA-SHA256";
+            }
+        }
+
+        logger.info("\nEnter registered entity distribution key crypto spec [Default: AES-128-CBC:SHA256]:");
+        String distributionCryptoSpec = br.readLine();
+        if (distributionCryptoSpec.isEmpty()) {
+            distributionCryptoSpec = "AES-128-CBC:SHA256";
+        }
+
+        logger.info("\nEnter registered entity distribution key validity period [Default: 1*day] (use day, hour, min, sec):");
+        String distributionKeyValidityPeriod = br.readLine();
+        if (distributionKeyValidityPeriod.isEmpty()) {
+            distributionKeyValidityPeriod = "1*day";
+        }
+
+        RegisteredEntityTable registeredEntityTable = new RegisteredEntityTable();
+        registeredEntityTable.setName(entityName)
+                .setGroup(group)
+                .setDistProtocol(distributionProtocol)
+                .setUsePermanentDistKey(usePermanentDistributionKey)
+                .setMaxSessionKeysPerRequest(maxSessionKeysPerRequest)
+                .setPublicKey(publicKey)
+                .setPublicKeyCryptoSpec(publicKeyCryptoSpec)
+                .setDistCryptoSpec(distributionCryptoSpec)
+                .setDistKeyValidityPeriod(distributionKeyValidityPeriod)
+                .setActive(true);
+
+        return new RegisteredEntity(registeredEntityTable, null);
+    }
+
     private AuthServer server;
     private static final Logger logger = LoggerFactory.getLogger(AuthCommandLine.class);
 }
