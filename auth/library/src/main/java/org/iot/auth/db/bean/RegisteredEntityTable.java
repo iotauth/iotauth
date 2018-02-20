@@ -66,111 +66,127 @@ public class RegisteredEntityTable {
     public String getName() {
         return name;
     }
-    public void setName(String name) {
+    public RegisteredEntityTable setName(String name) {
         this.name = name;
+        return this;
     }
 
     public String getGroup() {
         return group;
     }
-    public void setGroup(String group) {
+    public RegisteredEntityTable setGroup(String group) {
         this.group = group;
+        return this;
     }
 
     public String getDistProtocol() {
         return distProtocol;
     }
-    public void setDistProtocol(String distProtocol) {
+    public RegisteredEntityTable setDistProtocol(String distProtocol) {
         this.distProtocol = distProtocol;
+        return this;
     }
 
 
     public boolean getUsePermanentDistKey() {
         return usePermanentDistKey;
     }
-    public void setUsePermanentDistKey(boolean usePermanentDistKey) {
+    public RegisteredEntityTable setUsePermanentDistKey(boolean usePermanentDistKey) {
         this.usePermanentDistKey = usePermanentDistKey;
+        return this;
     }
 
     public PublicKey getPublicKey() {
         return publicKey;
     }
-    public void setPublicKey(PublicKey publicKey) {
+    public RegisteredEntityTable setPublicKey(PublicKey publicKey) {
         this.publicKey = publicKey;
+        return this;
     }
 
     public String getDistKeyValidityPeriod() {
         return distKeyValidityPeriod;
     }
-    public void setDistKeyValidityPeriod(String distKeyValidityPeriod) {
+    public RegisteredEntityTable setDistKeyValidityPeriod(String distKeyValidityPeriod) {
         this.distKeyValidityPeriod = distKeyValidityPeriod;
+        return this;
     }
 
     public String getPublicKeyCryptoSpec() {
         return publicKeyCryptoSpec;
     }
 
-    public void setPublicKeyCryptoSpec(String publicKeyCryptoSpec) {
+    public RegisteredEntityTable setPublicKeyCryptoSpec(String publicKeyCryptoSpec) {
         this.publicKeyCryptoSpec = publicKeyCryptoSpec;
+        return this;
     }
 
     public String getDistCryptoSpec() {
         return distCryptoSpec;
     }
-    public void setDistCryptoSpec(String distCipherAlgo) {
+    public RegisteredEntityTable setDistCryptoSpec(String distCipherAlgo) {
         this.distCryptoSpec = distCipherAlgo;
+        return this;
     }
 
     public long getDistKeyExpirationTime() {
         return distKeyExpirationTime;
     }
-    public void setDistKeyExpirationTime(long distKeyExpirationTime) {
+    public RegisteredEntityTable setDistKeyExpirationTime(long distKeyExpirationTime) {
         this.distKeyExpirationTime = distKeyExpirationTime;
+        return this;
     }
 
     public byte[] getDistKeyVal() {
         return distKeyVal;
     }
-    public void setDistKeyVal(byte[] distKeyVal) {
+    public RegisteredEntityTable setDistKeyVal(byte[] distKeyVal) {
         this.distKeyVal = Arrays.copyOf(distKeyVal, distKeyVal.length);
+        return this;
     }
 
     public int getMaxSessionKeysPerRequest() {
         return maxSessionKeysPerRequest;
     }
-    public void setMaxSessionKeysPerRequest(int maxSessionKeysPerRequest) {
+    public RegisteredEntityTable setMaxSessionKeysPerRequest(int maxSessionKeysPerRequest) {
         this.maxSessionKeysPerRequest = maxSessionKeysPerRequest;
+        return this;
     }
 
     public boolean isActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public RegisteredEntityTable setActive(boolean active) {
         this.active = active;
+        return this;
     }
 
     public String getBackupToAuthIDs() {
         return backupToAuthIDs;
     }
 
-    public void setBackupToAuthIDs(String backupToAuthIDs) {
+    public RegisteredEntityTable setBackupToAuthIDs(String backupToAuthIDs) {
         this.backupToAuthIDs = backupToAuthIDs;
+        return this;
     }
 
     public int getBackupFromAuthID() {
         return backupFromAuthID;
     }
 
-    public void setBackupFromAuthID(int backupFromAuthID) {
+    public RegisteredEntityTable setBackupFromAuthID(int backupFromAuthID) {
         this.backupFromAuthID = backupFromAuthID;
+        return this;
     }
 
-    public void setMigrationTokenVal(byte[] migrationTokenVal) {
-        this.migrationTokenVal = migrationTokenVal;
-    }
     public byte[] getMigrationTokenVal() {
         return migrationTokenVal;
+    }
+
+    public RegisteredEntityTable setMigrationTokenVal(byte[] migrationTokenVal) {
+        this.migrationTokenVal = migrationTokenVal;
+        return this;
     }
 
     public String toString() {

@@ -926,8 +926,6 @@ public class AuthServer {
         private AuthServer server;
     }
 
-
-
     public String showAllUdpPortListenerMaps() {
         StringBuilder sb = new StringBuilder();
         sb.append("Nonce Map\n");
@@ -973,6 +971,36 @@ public class AuthServer {
         }
         System.out.println(X509Factory.END_CERT);
         */
+    }
+
+    /**
+     * Add new registered entity to the Auth DB.
+     * @param newRegisteredEntity The new entity to be registered with the Auth
+     * @return Whether the registration succeeded.
+     */
+    public boolean addRegisteredEntity(RegisteredEntity newRegisteredEntity) {
+        List<RegisteredEntity> newRegisteredEntityList = new ArrayList<>();
+        newRegisteredEntityList.add(newRegisteredEntity);
+        try {
+            db.insertRegisteredEntities(newRegisteredEntityList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public boolean removeRegisteredEntity(String registeredEntityName) {
+        List<String> registeredEntityNameList = new ArrayList<>();
+        registeredEntityNameList.add(registeredEntityName);
+        registeredEntityNameList.add("net1.udpClient");
+        try {
+            db.deleteRegisteredEntities(registeredEntityNameList);
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**
