@@ -246,7 +246,7 @@ public class AuthServer {
 
         Option debugOption = new Option("d", "debug", false,
                 "enable logging debug messages");
-        passwordOption.setRequired(false);
+        debugOption.setRequired(false);
         options.addOption(debugOption);
 
         CommandLineParser parser = new DefaultParser();
