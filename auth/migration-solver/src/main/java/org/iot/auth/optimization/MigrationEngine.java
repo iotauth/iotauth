@@ -1,10 +1,13 @@
 package org.iot.auth.optimization;
 
+import org.apache.commons.cli.*;
 import org.iot.auth.util.SSTGraph;
 import org.iot.auth.util.SSTVar;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -22,7 +25,7 @@ public class MigrationEngine {
     public final static int DEFAULT_SOLVER = SOLVER_GRUBI;
 
     /**
-     * Find an otpimal migration plan for the given network, with
+     * Find an optimal migration plan for the given network, with
      */
     public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth) throws IllegalAccessException {
        return findMigratePlan(network, weightThings, weightAuth, DEFAULT_SOLVER);
@@ -266,11 +269,11 @@ public class MigrationEngine {
      * @return JSON object for autoClientList and echoServerList
      * @throws IllegalAccessException
      */
-    public static JSONObject mkCoryFloorMigration(double weightThings, double weightAuth) throws IllegalAccessException{
+    public static JSONObject makeCoryFloorMigration(double weightThings, double weightAuth, String filePath) throws IllegalAccessException{
         JSONObject overall = new JSONObject();
 
         // Construct the initial Cory 5th floor plan
-        SSTGraph n = NetworkFactory.coryFloorPlan();
+        SSTGraph n = NetworkFactory.coryFloorPlan(filePath);
         List<SSTGraph.SSTNode> auths = new ArrayList<SSTGraph.SSTNode>(n.auths());
 
         // successively destroy auth 1, 3, and 4
@@ -324,9 +327,39 @@ public class MigrationEngine {
     }
 
     public static void main(final String[] args) throws IllegalAccessException {
+        // parsing command line arguments
+        Options options = new Options();
+
+        Option propertiesOption = new Option("i", "input", true, "input json file path");
+        propertiesOption.setRequired(false);
+        options.addOption(propertiesOption);
+
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd;
+
+        try {
+            cmd = parser.parse(options, args);
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("utility-name", options);
+
+            System.exit(1);
+            return;
+        }
+
+        String inputJsonFile = cmd.getOptionValue("input");
+        if (inputJsonFile == null) {
+            inputJsonFile = "migration-solver/data/cory5th.json";
+            logger.info("Input JSON file is not specified. Using default vale: {}", inputJsonFile);
+        }
+        else {
+            logger.info("Given input JSON file: {}", inputJsonFile);
+        }
 
         double weightThings = 0.8;
         double weightAuth = 0.2;
+
         // generate the graph from the CCS paper
         // SSTGraph n = NetworkFactory.sampleNetworkFull();
         // SSTGraph n = NetworkFactory.mkRandomGraph(4, 10, 5,
@@ -335,8 +368,9 @@ public class MigrationEngine {
         // MigrationPlan p1 = findMigratePlan(n, weightThings, weightAuth);
         // MigrationPlan p2 = findMigratePlan(n, weightThings, weightAuth, SOLVER_OJALGO);
 
-        JSONObject obj = mkCoryFloorMigration(0.8, 0.2);
+        JSONObject obj = makeCoryFloorMigration(0.8, 0.2, inputJsonFile);
         System.out.println(obj);
     }
 
+    private static final Logger logger = LoggerFactory.getLogger(MigrationEngine.class);
 }

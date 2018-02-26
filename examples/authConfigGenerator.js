@@ -203,8 +203,8 @@ function generatePropertiesFiles() {
             // currently default is true, set false only when this is given by the graph file
             'backup_enabled': (auth.backupEnabled != null && !auth.backupEnabled) ? false : true,
             // currently default is false
-            'qps_throttling_enabled': false,
-            'qps_limit': 10,
+            'qps_throttling_enabled': auth.capacityQpsLimit == null ? false : true,
+            'qps_limit': auth.capacityQpsLimit == null ? 10 : auth.capacityQpsLimit,
             'qps_calculation_bucket_size_in_sec': 10
         };
         var strProperties = '';

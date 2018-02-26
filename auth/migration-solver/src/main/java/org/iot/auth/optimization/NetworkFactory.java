@@ -294,7 +294,7 @@ public class NetworkFactory {
      * Construct a graph that represents the Cory 5th floor
      * @return the graph
      */
-    public static SSTGraph coryFloorPlan() {
+    public static SSTGraph coryFloorPlan(String filePath) {
         SSTGraph network = new SSTGraph();
         JSONParser parser = new JSONParser();
 
@@ -321,7 +321,7 @@ public class NetworkFactory {
         }
 
         try {
-            Object obj = parser.parse(new FileReader("migration-solver/data/cory5th.json"));
+            Object obj = parser.parse(new FileReader(filePath));
             JSONObject jsonObject = (JSONObject) obj;
             JSONObject assignments = (JSONObject)jsonObject.get("assignments");
 
