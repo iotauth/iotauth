@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.iot.auth.util.SSTGraph;
-import org.iot.auth.util.SSTVar;
+import org.iot.auth.optimization.util.SSTGraph;
+import org.iot.auth.optimization.util.SSTVar;
 
 /**
  *

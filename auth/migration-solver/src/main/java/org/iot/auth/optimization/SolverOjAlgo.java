@@ -1,12 +1,12 @@
 package org.iot.auth.optimization;
 
-import org.iot.auth.util.OjAlgoVar;
+import org.iot.auth.optimization.util.OjAlgoVar;
 import org.ojalgo.netio.BasicLogger;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
-import org.iot.auth.util.SSTVar;
+import org.iot.auth.optimization.util.SSTVar;
 
 import java.util.HashSet;
 import java.util.Map;
