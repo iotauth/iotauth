@@ -16,7 +16,7 @@
 package org.iot.auth.optimization;
 
 import com.google.common.primitives.Ints;
-import org.iot.auth.util.SSTGraph;
+import org.iot.auth.optimization.util.SSTGraph;
 
 import java.util.*;
 
@@ -298,82 +298,93 @@ public class NetworkFactory {
         SSTGraph network = new SSTGraph();
         JSONParser parser = new JSONParser();
 
-        final int numAuths = 4;
-        final int authCapacity = 50;
-        Map<Integer, SSTGraph.SSTNode> auths = new HashMap<Integer, SSTGraph.SSTNode>();
-        Map<String, SSTGraph.SSTNode> things = new HashMap<String, SSTGraph.SSTNode>();
-        Map<SSTGraph.SSTNode, Integer> boundTo = new HashMap<SSTGraph.SSTNode, Integer>();
-        List<SSTGraph.SSTNode> lostThings = new ArrayList<SSTGraph.SSTNode>();
-
-        for (int i=1; i <= numAuths; i++){
-            Integer id = Integer.valueOf(i);
-            auths.put(id, network.addAuth(id.toString(), Double.valueOf(authCapacity)));
+        Object obj = null;
+        try {
+            obj = parser.parse(new FileReader(filePath));
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Parsing JSON file failed!: " + filePath);
         }
 
-        for (int i=1; i <= numAuths; i++) {
-            for (int j=i+1; j <= numAuths; j++) {
-                SSTGraph.SSTNode a1 = auths.get(i);
-                SSTGraph.SSTNode a2 = auths.get(j);
+        JSONObject jsonObject = (JSONObject) obj;
+
+        JSONArray authList = (JSONArray)jsonObject.get("authList");
+
+        ArrayList<Integer> authIdList = new ArrayList<Integer>();
+        JSONObject authCapacity = (JSONObject)jsonObject.get("authCapacity");
+
+        Map<Integer, SSTGraph.SSTNode> auths = new HashMap<Integer, SSTGraph.SSTNode>();
+        authList.forEach((authIdItem) -> {
+            Integer authId = (int) (long) ((JSONObject)authIdItem).get("id");
+            authIdList.add(authId);
+            Object authCapacityObject = authCapacity.get(authId.toString());
+            double currentAuthCapacity;
+            if (authCapacityObject.getClass() == Long.class) {
+                currentAuthCapacity = (double) (long) authCapacityObject;
+            }
+            else {
+                currentAuthCapacity = (double) authCapacityObject;
+            }
+            auths.put((int)authId, network.addAuth(authId.toString(), currentAuthCapacity));
+        });
+
+        for (int i=1; i < authIdList.size(); i++) {
+            for (int j=i+1; j < authIdList.size(); j++) {
+                SSTGraph.SSTNode a1 = auths.get(authIdList.get(i));
+                SSTGraph.SSTNode a2 = auths.get(authIdList.get(j));
                 // again, assuming that costs are symmetric
                 network.addEdge(a1, a2, SSTGraph.EdgeType.AA_COST, 0);
                 network.addEdge(a2, a1, SSTGraph.EdgeType.AA_COST, 0);
             }
         }
 
-        try {
-            Object obj = parser.parse(new FileReader(filePath));
-            JSONObject jsonObject = (JSONObject) obj;
-            JSONObject assignments = (JSONObject)jsonObject.get("assignments");
+        Map<String, SSTGraph.SSTNode> things = new HashMap<String, SSTGraph.SSTNode>();
+        Map<SSTGraph.SSTNode, Integer> boundTo = new HashMap<SSTGraph.SSTNode, Integer>();
+        List<SSTGraph.SSTNode> lostThings = new ArrayList<SSTGraph.SSTNode>();
 
-            assignments.forEach((thing, auth) -> {
-                        SSTGraph.SSTNode tnode = network.addThing((String)thing);
-                        things.put((String)thing, tnode);
-                        Integer authID = Integer.valueOf(Ints.checkedCast((Long)auth));
-                        boundTo.put(tnode, authID);
-                            SSTGraph.SSTNode anode = auths.get(authID);
-                            network.addEdge(anode, tnode, SSTGraph.EdgeType.AT_CONNECTED, 1);
+        JSONObject assignments = (JSONObject)jsonObject.get("assignments");
 
-                    }
-            );
+        assignments.forEach((thing, auth) -> {
+                    SSTGraph.SSTNode tnode = network.addThing((String)thing);
+                    things.put((String)thing, tnode);
+                    Integer authID = Integer.valueOf(Ints.checkedCast((Long)auth));
+                    boundTo.put(tnode, authID);
+                    SSTGraph.SSTNode anode = auths.get(authID);
+                    network.addEdge(anode, tnode, SSTGraph.EdgeType.AT_CONNECTED, 1);
 
-            JSONArray clients = (JSONArray)jsonObject.get("autoClientList");
-
-            // randomly generate costs between things & Auths
-            for (SSTGraph.SSTNode t : things.values()) {
-                for (SSTGraph.SSTNode a : auths.values()) {
-                    // for now, assume the costs are symmetric
-                    network.addEdge(a, t, SSTGraph.EdgeType.AT_COST, 0);
-                    network.addEdge(t, a, SSTGraph.EdgeType.TA_COST, 0);
                 }
+        );
+
+        JSONArray clients = (JSONArray)jsonObject.get("autoClientList");
+
+        // randomly generate costs between things & Auths
+        for (SSTGraph.SSTNode t : things.values()) {
+            for (SSTGraph.SSTNode a : auths.values()) {
+                // for now, assume the costs are symmetric
+                network.addEdge(a, t, SSTGraph.EdgeType.AT_COST, 0);
+                network.addEdge(t, a, SSTGraph.EdgeType.TA_COST, 0);
             }
-
-            clients.forEach((t) -> {
-                JSONObject o = (JSONObject)t;
-                SSTGraph.SSTNode client = things.get(o.get("name"));
-                SSTGraph.SSTNode server = things.get(o.get("target"));
-                network.addEdge(client, server, SSTGraph.EdgeType.TT_CLIENT_SERVER, 1);
-                network.addEdge(client, server, SSTGraph.EdgeType.TT_REQ, 1);
-                network.addEdge(server, client, SSTGraph.EdgeType.TT_REQ, 1);
-            });
-
-            JSONArray trusts = (JSONArray)jsonObject.get("authTrusts");
-            trusts.forEach((t) -> {
-                JSONObject o = (JSONObject)t;
-                SSTGraph.SSTNode a1 = auths.get(Integer.valueOf(Ints.checkedCast((Long)o.get("id1"))));
-                SSTGraph.SSTNode a2 = auths.get(Integer.valueOf(Ints.checkedCast((Long)o.get("id2"))));
-                if (a1 != null && a2 != null){
-                    network.addEdge(a1, a2, SSTGraph.EdgeType.AA_TRUST, 1);
-                    network.addEdge(a2, a1, SSTGraph.EdgeType.AA_TRUST, 1);
-                }
-            });
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
         }
+
+        clients.forEach((t) -> {
+            JSONObject o = (JSONObject)t;
+            SSTGraph.SSTNode client = things.get(o.get("name"));
+            SSTGraph.SSTNode server = things.get(o.get("target"));
+            network.addEdge(client, server, SSTGraph.EdgeType.TT_CLIENT_SERVER, 1);
+            network.addEdge(client, server, SSTGraph.EdgeType.TT_REQ, 1);
+            network.addEdge(server, client, SSTGraph.EdgeType.TT_REQ, 1);
+        });
+
+        JSONArray trusts = (JSONArray)jsonObject.get("authTrusts");
+        trusts.forEach((t) -> {
+            JSONObject o = (JSONObject)t;
+            SSTGraph.SSTNode a1 = auths.get(Integer.valueOf(Ints.checkedCast((Long)o.get("id1"))));
+            SSTGraph.SSTNode a2 = auths.get(Integer.valueOf(Ints.checkedCast((Long)o.get("id2"))));
+            if (a1 != null && a2 != null){
+                network.addEdge(a1, a2, SSTGraph.EdgeType.AA_TRUST, 1);
+                network.addEdge(a2, a1, SSTGraph.EdgeType.AA_TRUST, 1);
+            }
+        });
 
         return network;
     }

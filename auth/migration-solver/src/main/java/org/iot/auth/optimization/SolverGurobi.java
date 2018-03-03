@@ -2,8 +2,8 @@ package org.iot.auth.optimization;
 
 import gurobi.*;
 
-import org.iot.auth.util.SSTVar;
-import org.iot.auth.util.GurobiVar;
+import org.iot.auth.optimization.util.SSTVar;
+import org.iot.auth.optimization.util.GurobiVar;
 
 import java.util.*;
 

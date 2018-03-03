@@ -1,4 +1,4 @@
-package org.iot.auth.util;
+package org.iot.auth.optimization.util;
 
 /**
  *

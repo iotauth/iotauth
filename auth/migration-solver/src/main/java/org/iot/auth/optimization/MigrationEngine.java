@@ -1,8 +1,8 @@
 package org.iot.auth.optimization;
 
 import org.apache.commons.cli.*;
-import org.iot.auth.util.SSTGraph;
-import org.iot.auth.util.SSTVar;
+import org.iot.auth.optimization.util.SSTGraph;
+import org.iot.auth.optimization.util.SSTVar;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import com.google.common.collect.ImmutableMap;
@@ -23,6 +23,9 @@ public class MigrationEngine {
     public final static int SOLVER_GRUBI = 0;
     public final static int SOLVER_OJALGO = 1;
     public final static int DEFAULT_SOLVER = SOLVER_GRUBI;
+
+    private final static String DEFAULT_INPUT_FILE_PATH = "migration-solver/data/cory5th.json";
+    private final static String[] DEFAULT_DESTROYED_AUTH_IDS = {"1", "3", "4"};
 
     /**
      * Find an optimal migration plan for the given network, with
@@ -269,23 +272,20 @@ public class MigrationEngine {
      * @return JSON object for autoClientList and echoServerList
      * @throws IllegalAccessException
      */
-    public static JSONObject makeCoryFloorMigration(double weightThings, double weightAuth, String filePath) throws IllegalAccessException{
+    public static JSONObject makeCoryFloorMigration(double weightThings, double weightAuth, String filePath, String[] destroyedAuthIDs) throws IllegalAccessException{
         JSONObject overall = new JSONObject();
 
         // Construct the initial Cory 5th floor plan
         SSTGraph n = NetworkFactory.coryFloorPlan(filePath);
         List<SSTGraph.SSTNode> auths = new ArrayList<SSTGraph.SSTNode>(n.auths());
 
-        // successively destroy auth 1, 3, and 4
-        SSTGraph n2 = n.destroyAuth(n.getAuth("1"));
-        SSTGraph n3 = n2.destroyAuth(n.getAuth("3"));
-        SSTGraph n4 = n3.destroyAuth(n.getAuth("4"));
-
         // create migration plans for respective partial graphs
         List<MigrationPlan> plans = new ArrayList<MigrationPlan>();
-        plans.add(findMigratePlan(n2, weightThings, weightAuth));
-        plans.add(findMigratePlan(n3, weightThings, weightAuth));
-        plans.add(findMigratePlan(n4, weightThings, weightAuth));
+        for (String destroyedAuthID: destroyedAuthIDs) {
+            logger.info("ID of Auth to be distroyed: " + destroyedAuthID);
+            SSTGraph destroyedAuth = n.destroyAuth(n.getAuth(destroyedAuthID));
+            plans.add(findMigratePlan(destroyedAuth, weightThings, weightAuth));
+        }
 
         Map<String,List<String>> moveTo = new HashMap<String,List<String>>();
 
@@ -330,9 +330,12 @@ public class MigrationEngine {
         // parsing command line arguments
         Options options = new Options();
 
-        Option propertiesOption = new Option("i", "input", true, "input json file path");
-        propertiesOption.setRequired(false);
-        options.addOption(propertiesOption);
+        Option inputFileOption = new Option("i", "input", true, "input json file path");
+        inputFileOption.setRequired(false);
+        options.addOption(inputFileOption);
+        Option destroyedAuthsOption = new Option("d", "destroyed_auths", true, "IDs of Auths to be destroyed, comma (,) delimited");
+        destroyedAuthsOption.setRequired(false);
+        options.addOption(destroyedAuthsOption);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -350,12 +353,19 @@ public class MigrationEngine {
 
         String inputJsonFile = cmd.getOptionValue("input");
         if (inputJsonFile == null) {
-            inputJsonFile = "migration-solver/data/cory5th.json";
+            inputJsonFile = DEFAULT_INPUT_FILE_PATH;
             logger.info("Input JSON file is not specified. Using default vale: {}", inputJsonFile);
         }
         else {
             logger.info("Given input JSON file: {}", inputJsonFile);
         }
+
+        String[] destroyedAuthIDs = DEFAULT_DESTROYED_AUTH_IDS;
+        String destroyedAuthIDsStr = cmd.getOptionValue("destroyed_auths");
+        if (destroyedAuthIDsStr != null) {
+            destroyedAuthIDs = destroyedAuthIDsStr.split(",");
+        }
+        logger.info("IDs of Auths to be destroyed: " + Arrays.toString(destroyedAuthIDs));
 
         double weightThings = 0.8;
         double weightAuth = 0.2;
@@ -368,7 +378,7 @@ public class MigrationEngine {
         // MigrationPlan p1 = findMigratePlan(n, weightThings, weightAuth);
         // MigrationPlan p2 = findMigratePlan(n, weightThings, weightAuth, SOLVER_OJALGO);
 
-        JSONObject obj = makeCoryFloorMigration(0.8, 0.2, inputJsonFile);
+        JSONObject obj = makeCoryFloorMigration(0.8, 0.2, inputJsonFile, destroyedAuthIDs);
         System.out.println(obj);
     }
 

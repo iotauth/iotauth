@@ -13,7 +13,7 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.util;
+package org.iot.auth.optimization.util;
 
 import java.util.Collections;
 import java.util.Set;

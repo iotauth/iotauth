@@ -15,7 +15,7 @@
 
 package org.iot.auth.optimization;
 
-import org.iot.auth.util.SSTVar;
+import org.iot.auth.optimization.util.SSTVar;
 
 import java.util.Map;
 import java.util.Set;
