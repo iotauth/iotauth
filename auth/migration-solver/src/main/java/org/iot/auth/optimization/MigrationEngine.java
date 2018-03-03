@@ -281,9 +281,10 @@ public class MigrationEngine {
 
         // create migration plans for respective partial graphs
         List<MigrationPlan> plans = new ArrayList<MigrationPlan>();
+        SSTGraph destroyedAuth = n;
         for (String destroyedAuthID: destroyedAuthIDs) {
             logger.info("ID of Auth to be distroyed: " + destroyedAuthID);
-            SSTGraph destroyedAuth = n.destroyAuth(n.getAuth(destroyedAuthID));
+            destroyedAuth = destroyedAuth.destroyAuth(n.getAuth(destroyedAuthID));
             plans.add(findMigratePlan(destroyedAuth, weightThings, weightAuth));
         }
 
@@ -307,6 +308,20 @@ public class MigrationEngine {
             List<String> backups = new ArrayList<String>();
             if (moveTo.containsKey(t.id))
                 backups = moveTo.get(t.id);
+
+            // clean up duplicates
+            ListIterator<String> iter = backups.listIterator();
+            HashSet<String> prevBackups = new HashSet<>();
+            while(iter.hasNext()){
+                String currentBackup = iter.next();
+                if (prevBackups.contains(currentBackup)) {
+                    iter.remove();
+                }
+                else {
+                    prevBackups.add(currentBackup);
+                }
+            }
+
             JSONObject o = new JSONObject();
             if (!n.isClient(t.id)) {
                 o.put("name", t);
