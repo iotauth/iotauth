@@ -39,11 +39,21 @@ public class QPSCalculator {
         logger.info("Accepted: " + printIntArray(numAcceptedRequestsWithinSec));
         int totalRequestsPerBucket = getRequestsWithinBucket(numTotalRequestsWithinSec);
         int acceptedRequestsPerBucket = getRequestsWithinBucket(numAcceptedRequestsWithinSec);
-        logger.info("current total req/" + qpsBucketSizeInSec + "sec: " + totalRequestsPerBucket + " QPS: " + (float)totalRequestsPerBucket / qpsBucketSizeInSec);
-        logger.info("current accepted req/" + qpsBucketSizeInSec + "sec: " + acceptedRequestsPerBucket + " QPS: " + (float)acceptedRequestsPerBucket / qpsBucketSizeInSec);
+        float currentTotalQps = (float)totalRequestsPerBucket / qpsBucketSizeInSec;
+        if (currentTotalQps > maxTotalQps) {
+            maxTotalQps = currentTotalQps;
+        }
+        float currentAcceptedQps = (float)acceptedRequestsPerBucket / qpsBucketSizeInSec;
+        if (currentAcceptedQps > maxAcceptedQps) {
+            maxAcceptedQps = currentAcceptedQps;
+        }
+        logger.info("current total req/" + qpsBucketSizeInSec + "sec: " + totalRequestsPerBucket + " QPS: " + currentTotalQps + " Max QPS: " + maxTotalQps);
+        logger.info("current accepted req/" + qpsBucketSizeInSec + "sec: " + acceptedRequestsPerBucket + " QPS: " + currentAcceptedQps + " Max QPS: " + maxAcceptedQps);
         lastTimeInSec = currentTimeInSec;
         return isQpsExceeded;
     }
+    private float maxTotalQps = 0f;
+    private float maxAcceptedQps = 0f;
     private final float qpsLimit;
     private final int qpsBucketSizeInSec;
     private int[] numTotalRequestsWithinSec;
@@ -78,3 +88,4 @@ public class QPSCalculator {
     }
     private static final Logger logger = LoggerFactory.getLogger(QPSCalculator.class);
 }
+
