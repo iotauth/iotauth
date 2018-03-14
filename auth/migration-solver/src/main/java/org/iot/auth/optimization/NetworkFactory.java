@@ -24,7 +24,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import java.io.FileNotFoundException;
+
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -338,16 +338,15 @@ public class NetworkFactory {
             }
         }
 
-        Map<String, SSTGraph.SSTNode> things = new HashMap<String, SSTGraph.SSTNode>();
-        Map<SSTGraph.SSTNode, Integer> boundTo = new HashMap<SSTGraph.SSTNode, Integer>();
-        List<SSTGraph.SSTNode> lostThings = new ArrayList<SSTGraph.SSTNode>();
+        Map<String, SSTGraph.SSTNode> things = new HashMap<>();
+        Map<SSTGraph.SSTNode, Integer> boundTo = new HashMap<>();
 
         JSONObject assignments = (JSONObject)jsonObject.get("assignments");
 
         assignments.forEach((thing, auth) -> {
                     SSTGraph.SSTNode tnode = network.addThing((String)thing);
                     things.put((String)thing, tnode);
-                    Integer authID = Integer.valueOf(Ints.checkedCast((Long)auth));
+                    int authID = Ints.checkedCast((Long)auth);
                     boundTo.put(tnode, authID);
                     SSTGraph.SSTNode anode = auths.get(authID);
                     network.addEdge(anode, tnode, SSTGraph.EdgeType.AT_CONNECTED, 1);
@@ -376,17 +375,53 @@ public class NetworkFactory {
         });
 
         JSONArray trusts = (JSONArray)jsonObject.get("authTrusts");
+        Map<Integer, List<Integer>> authTrustMap = new HashMap<>();
         trusts.forEach((t) -> {
             JSONObject o = (JSONObject)t;
-            SSTGraph.SSTNode a1 = auths.get(Integer.valueOf(Ints.checkedCast((Long)o.get("id1"))));
-            SSTGraph.SSTNode a2 = auths.get(Integer.valueOf(Ints.checkedCast((Long)o.get("id2"))));
-            if (a1 != null && a2 != null){
-                network.addEdge(a1, a2, SSTGraph.EdgeType.AA_TRUST, 1);
-                network.addEdge(a2, a1, SSTGraph.EdgeType.AA_TRUST, 1);
+            int authId1 = Ints.checkedCast((Long)o.get("id1"));
+            int authId2 = Ints.checkedCast((Long)o.get("id2"));
+
+            addAuthIdsToAuthTrustMap(authTrustMap, authId1, authId2);
+            addAuthIdsToAuthTrustMap(authTrustMap, authId2, authId1);
+
+
+        });
+
+        authTrustMap.entrySet().stream().forEach(entry -> {
+            SSTGraph.SSTNode a1 = auths.get(entry.getKey());
+            entry.getValue().forEach(authId2 -> {
+                SSTGraph.SSTNode a2 = auths.get(authId2);
+                if (a1 != null && a2 != null){
+                    network.addEdge(a1, a2, SSTGraph.EdgeType.AA_TRUST, 1);
+                    network.addEdge(a2, a1, SSTGraph.EdgeType.AA_TRUST, 1);
+                }
+            });
+        });
+
+        // Add migration trusts
+        assignments.forEach((thing, auth) -> {
+            int authID = Ints.checkedCast((Long)auth);
+            String thingName = (String)thing;
+            if (authTrustMap.containsKey(authID)) {
+                SSTGraph.SSTNode tnode = network.getThing((String)thing);
+                authTrustMap.get(authID).forEach(trustedAuthID -> {
+                    SSTGraph.SSTNode anode = auths.get(trustedAuthID);
+                    network.addEdge(anode, tnode, SSTGraph.EdgeType.AT_MIGRATION_TRUST, 1);
+                });
             }
         });
 
         return network;
     }
 
+    private static void addAuthIdsToAuthTrustMap(Map<Integer, List<Integer>> authTrustMap, int authId1, int authId2) {
+        if (authTrustMap.containsKey(authId1)) {
+            authTrustMap.get(authId1).add(authId2);
+        }
+        else {
+            List<Integer> authIdArrayList = new ArrayList<>();
+            authIdArrayList.add(authId2);
+            authTrustMap.put(authId1, authIdArrayList);
+        }
+    }
 }
