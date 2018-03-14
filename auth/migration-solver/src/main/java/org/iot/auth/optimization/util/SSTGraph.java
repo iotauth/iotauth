@@ -50,6 +50,7 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
         AA_COST,    // comm. cost from an auth to an auth
         AA_TRUST,   // trust relationship between auths, binary
         TT_REQ, // comm requirement between things, binary,
+        AT_MIGRATION_TRUST, // whether a thing migrate to Auth, from initial trust
         TT_CLIENT_SERVER,
         NONE
     }

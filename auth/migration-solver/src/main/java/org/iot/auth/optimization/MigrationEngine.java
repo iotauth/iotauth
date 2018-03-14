@@ -88,13 +88,24 @@ public class MigrationEngine {
 
                 double totalCost = weightAuth*authCost + weightThings*thingCost;
 
+                /**
+                 * Computing Auth to Thing connection
+                 */
                 if (connected != null) {
                     // thing "t" is already connected to "a" and must remain so
                     var = solver.addBinaryVar(SSTGraph.CONNECTED + "_"+ a + "_" + t, 1, 1, totalCost);
                 } else {
-                    // thing "t" may become connected to "a" in the new network
-                    var = solver.addBinaryVar(SSTGraph.CONNECTED + "_" + a + "_" + t, 0, 1, totalCost);
+                    // upper range will be 1 only when migration trust exists
+                    if (network.lookupEdge(a, t, SSTGraph.EdgeType.AT_MIGRATION_TRUST) != null) {
+                        // thing "t" may become connected to "a" in the new network
+                        var = solver.addBinaryVar(SSTGraph.CONNECTED + "_" + a + "_" + t, 0, 1, totalCost);
+                    }
+                    // it is always 0 when there is no migration trust
+                    else {
+                        var = solver.addBinaryVar(SSTGraph.CONNECTED + "_" + a + "_" + t, 0, 0, totalCost);
+                    }
                 }
+
                 varmap.put(costAT, var);
             }
         }
@@ -104,7 +115,7 @@ public class MigrationEngine {
             for (SSTGraph.SSTEdge e : network.lookupEdgesFrom(tx, SSTGraph.EdgeType.TT_REQ)){
                 SSTGraph.SSTNode ty = e.to;
                 // there exists a communication requirement from tx to ty
-                Set<SSTVar> x2yVars = new HashSet<SSTVar>();
+                Set<SSTVar> x2yVars = new HashSet<>();
                 for (SSTGraph.SSTEdge ex : network.lookupEdgesTo(tx, SSTGraph.EdgeType.AT_COST)) {
                     for (SSTGraph.SSTEdge ey : network.lookupEdgesTo(ty, SSTGraph.EdgeType.AT_COST)) {
                         SSTGraph.SSTNode ax = ex.from;
@@ -159,7 +170,8 @@ public class MigrationEngine {
             if (edges.isEmpty()) continue;
             Map<SSTVar, Double> m = new HashMap<SSTVar, Double>();
             for (SSTGraph.SSTEdge e : edges){
-                m.put(varmap.get(e), Double.valueOf(1));
+                SSTVar sstVar = varmap.get(e);
+                m.put(sstVar, Double.valueOf(1));
             }
             solver.addEQ("disj_" + t, m, 1);
         }
@@ -283,7 +295,7 @@ public class MigrationEngine {
         List<MigrationPlan> plans = new ArrayList<MigrationPlan>();
         SSTGraph destroyedAuth = n;
         for (String destroyedAuthID: destroyedAuthIDs) {
-            logger.info("ID of Auth to be distroyed: " + destroyedAuthID);
+            logger.info("ID of Auth to be destroyed: " + destroyedAuthID);
             destroyedAuth = destroyedAuth.destroyAuth(n.getAuth(destroyedAuthID));
             plans.add(findMigratePlan(destroyedAuth, weightThings, weightAuth));
         }
