@@ -350,7 +350,6 @@ public class NetworkFactory {
                     boundTo.put(tnode, authID);
                     SSTGraph.SSTNode anode = auths.get(authID);
                     network.addEdge(anode, tnode, SSTGraph.EdgeType.AT_CONNECTED, 1);
-
                 }
         );
 
@@ -365,13 +364,22 @@ public class NetworkFactory {
             }
         }
 
+        Map<String, Set<String>> communicationRequirements = new HashMap<>();
         clients.forEach((t) -> {
             JSONObject o = (JSONObject)t;
-            SSTGraph.SSTNode client = things.get(o.get("name"));
-            SSTGraph.SSTNode server = things.get(o.get("target"));
+            String clientName = (String)o.get("name");
+            String serverName = (String)o.get("target");
+            addThingToThingCommunicationRequirement(communicationRequirements, clientName, serverName);
+            addThingToThingCommunicationRequirement(communicationRequirements, serverName, clientName);
+            SSTGraph.SSTNode client = things.get(clientName);
+            SSTGraph.SSTNode server = things.get(serverName);
             network.addEdge(client, server, SSTGraph.EdgeType.TT_CLIENT_SERVER, 1);
             network.addEdge(client, server, SSTGraph.EdgeType.TT_REQ, 1);
             network.addEdge(server, client, SSTGraph.EdgeType.TT_REQ, 1);
+        });
+
+        things.entrySet().forEach(e -> {
+            network.setThingRequirement(e.getValue(), communicationRequirements.get(e.getKey()).size());
         });
 
         JSONArray trusts = (JSONArray)jsonObject.get("authTrusts");
@@ -383,8 +391,6 @@ public class NetworkFactory {
 
             addAuthIdsToAuthTrustMap(authTrustMap, authId1, authId2);
             addAuthIdsToAuthTrustMap(authTrustMap, authId2, authId1);
-
-
         });
 
         authTrustMap.entrySet().stream().forEach(entry -> {
@@ -422,6 +428,17 @@ public class NetworkFactory {
             List<Integer> authIdArrayList = new ArrayList<>();
             authIdArrayList.add(authId2);
             authTrustMap.put(authId1, authIdArrayList);
+        }
+    }
+
+    private static void addThingToThingCommunicationRequirement(Map<String, Set<String>> communicationRequirements, String thing1Name, String thing2Name) {
+        if (communicationRequirements.containsKey(thing1Name)) {
+            communicationRequirements.get(thing1Name).add(thing2Name);
+        }
+        else {
+            Set<String> thingNameSet = new HashSet<>();
+            thingNameSet.add(thing2Name);
+            communicationRequirements.put(thing1Name, thingNameSet);
         }
     }
 }
