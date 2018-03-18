@@ -27,11 +27,14 @@ public class MigrationEngine {
     private final static String DEFAULT_INPUT_FILE_PATH = "migration-solver/data/cory5th.json";
     private final static String[] DEFAULT_DESTROYED_AUTH_IDS = {"1", "3", "4"};
 
+    private final static double DEFAULT_THING_REQUIREMENT_WHEN_NO_AUTH_CAPACITY_CONSIDERED = 1.0;
+    private final static double DEFAULT_AUTH_CAPACITY_WHEN_NO_AUTH_CAPACITY_CONSIDERED = 200.0;
     /**
      * Find an optimal migration plan for the given network, with
      */
-    public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth) throws IllegalAccessException {
-       return findMigratePlan(network, weightThings, weightAuth, DEFAULT_SOLVER);
+    public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth,
+                                                MigrationConsiderations migrationConsiderations) throws IllegalAccessException {
+       return findMigratePlan(network, weightThings, weightAuth, migrationConsiderations, DEFAULT_SOLVER);
     }
 
     /**
@@ -43,8 +46,8 @@ public class MigrationEngine {
      * @param solverType The ILP solver used.
      * @return An optimal migration plan.
      */
-    public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth, int solverType) throws IllegalAccessException {
-
+    public static MigrationPlan findMigratePlan(SSTGraph network, final double weightThings, final double weightAuth,
+                                                MigrationConsiderations migrationConsiderations, int solverType) throws IllegalAccessException {
         Solver solver = null;
         switch (solverType) {
             case SOLVER_GRUBI:
@@ -95,14 +98,20 @@ public class MigrationEngine {
                     // thing "t" is already connected to "a" and must remain so
                     var = solver.addBinaryVar(SSTGraph.CONNECTED + "_"+ a + "_" + t, 1, 1, totalCost);
                 } else {
-                    // upper range will be 1 only when migration trust exists
-                    if (network.lookupEdge(a, t, SSTGraph.EdgeType.AT_MIGRATION_TRUST) != null) {
+                    if(migrationConsiderations.isMigrationTrustConsidered()) {
+                        // upper range will be 1 only when migration trust exists
+                        if (network.lookupEdge(a, t, SSTGraph.EdgeType.AT_MIGRATION_TRUST) != null) {
+                            // thing "t" may become connected to "a" in the new network
+                            var = solver.addBinaryVar(SSTGraph.CONNECTED + "_" + a + "_" + t, 0, 1, totalCost);
+                        }
+                        // it is always 0 when there is no migration trust
+                        else {
+                            var = solver.addBinaryVar(SSTGraph.CONNECTED + "_" + a + "_" + t, 0, 0, totalCost);
+                        }
+                    }
+                    else {
                         // thing "t" may become connected to "a" in the new network
                         var = solver.addBinaryVar(SSTGraph.CONNECTED + "_" + a + "_" + t, 0, 1, totalCost);
-                    }
-                    // it is always 0 when there is no migration trust
-                    else {
-                        var = solver.addBinaryVar(SSTGraph.CONNECTED + "_" + a + "_" + t, 0, 0, totalCost);
                     }
                 }
 
@@ -182,10 +191,16 @@ public class MigrationEngine {
             if (edges.isEmpty()) continue;
             Map<SSTVar, Double> m = new HashMap<SSTVar, Double>();
             for (SSTGraph.SSTEdge e : edges){
-                double thingRequirement = network.getThingRequirement(e.to);
+                double thingRequirement = DEFAULT_THING_REQUIREMENT_WHEN_NO_AUTH_CAPACITY_CONSIDERED;
+                if (migrationConsiderations.isAuthCapacityConsidered()) {
+                    thingRequirement = network.getThingRequirement(e.to);
+                }
                 m.put(varmap.get(e), thingRequirement);
             }
-            double authCapacity = network.authCap(a);
+            double authCapacity = DEFAULT_AUTH_CAPACITY_WHEN_NO_AUTH_CAPACITY_CONSIDERED;
+            if (migrationConsiderations.isAuthCapacityConsidered()) {
+                authCapacity = network.authCap(a);
+            }
             solver.addBetween("authCap_" + a, m, 0, authCapacity);
         }
         //solver.write("model.lp");
@@ -227,7 +242,7 @@ public class MigrationEngine {
             // remove the auth "a" from the original network
             // and generate the migration plan
             SSTGraph n2 = n.destroyAuth(a);
-            MigrationPlan p = findMigratePlan(n2, weightThings, weightAuth);
+            MigrationPlan p = findMigratePlan(n2, weightThings, weightAuth, new MigrationConsiderations(false, false));
             for (String t : p.thingsToMove()){
                 moveTo.put(t, p.moveTo(t));
             }
@@ -286,7 +301,9 @@ public class MigrationEngine {
      * @return JSON object for autoClientList and echoServerList
      * @throws IllegalAccessException
      */
-    public static JSONObject makeCoryFloorMigration(double weightThings, double weightAuth, String filePath, String[] destroyedAuthIDs) throws IllegalAccessException{
+    public static JSONObject makeCoryFloorMigration(double weightThings, double weightAuth, String filePath,String[] destroyedAuthIDs,
+                                                    MigrationConsiderations migrationConsiderations) throws IllegalAccessException{
+        logger.info("Creating Cory Hall floor migration plans...");
         JSONObject overall = new JSONObject();
 
         // Construct the initial Cory 5th floor plan
@@ -299,7 +316,7 @@ public class MigrationEngine {
         for (String destroyedAuthID: destroyedAuthIDs) {
             logger.info("ID of Auth to be destroyed: " + destroyedAuthID);
             destroyedAuth = destroyedAuth.destroyAuth(n.getAuth(destroyedAuthID));
-            plans.add(findMigratePlan(destroyedAuth, weightThings, weightAuth));
+            plans.add(findMigratePlan(destroyedAuth, weightThings, weightAuth, migrationConsiderations));
         }
 
         Map<String,List<String>> moveTo = new HashMap<String,List<String>>();
@@ -359,12 +376,21 @@ public class MigrationEngine {
         // parsing command line arguments
         Options options = new Options();
 
-        Option inputFileOption = new Option("i", "input", true, "input json file path");
+        Option inputFileOption = new Option("i", "input", true, "Input json file path");
         inputFileOption.setRequired(false);
         options.addOption(inputFileOption);
+
         Option destroyedAuthsOption = new Option("d", "destroyed_auths", true, "IDs of Auths to be destroyed, comma (,) delimited");
         destroyedAuthsOption.setRequired(false);
         options.addOption(destroyedAuthsOption);
+
+        Option migrationTrustOption = new Option("m", "migration_trust", false, "Consider migration trust (trusts between from-Auth and to-Auth).");
+        migrationTrustOption.setRequired(false);
+        options.addOption(migrationTrustOption);
+
+        Option authCapacityOption = new Option("a", "auth_capacity", false, "Consider Auth capacity and authorization requirements of Things.");
+        authCapacityOption.setRequired(false);
+        options.addOption(authCapacityOption);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -394,7 +420,20 @@ public class MigrationEngine {
         if (destroyedAuthIDsStr != null) {
             destroyedAuthIDs = destroyedAuthIDsStr.split(",");
         }
+
+        boolean considerMigrationTrust = false;
+        if (cmd.hasOption("migration_trust")) {
+            considerMigrationTrust = true;
+        }
+
+        boolean considerAuthCapacity = false;
+        if (cmd.hasOption("auth_capacity")) {
+            considerAuthCapacity = true;
+        }
+
         logger.info("IDs of Auths to be destroyed: " + Arrays.toString(destroyedAuthIDs));
+        logger.info("Consider migration trust between from-Auth and to-Auth: " + considerMigrationTrust);
+        logger.info("Consider Auth capacity and authorization requirements of Things: " + considerAuthCapacity);
 
         double weightThings = 0.8;
         double weightAuth = 0.2;
@@ -407,7 +446,11 @@ public class MigrationEngine {
         // MigrationPlan p1 = findMigratePlan(n, weightThings, weightAuth);
         // MigrationPlan p2 = findMigratePlan(n, weightThings, weightAuth, SOLVER_OJALGO);
 
-        JSONObject obj = makeCoryFloorMigration(0.8, 0.2, inputJsonFile, destroyedAuthIDs);
+        JSONObject obj = makeCoryFloorMigration(0.8, 0.2, inputJsonFile, destroyedAuthIDs,
+                new MigrationConsiderations(considerMigrationTrust, considerAuthCapacity));
+        logger.info("IDs of Auths to be destroyed: " + Arrays.toString(destroyedAuthIDs));
+        logger.info("Consider migration trust between from-Auth and to-Auth: " + considerMigrationTrust);
+        logger.info("Consider Auth capacity and authorization requirements of Things: " + considerAuthCapacity);
         System.out.println(obj);
     }
 
