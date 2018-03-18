@@ -15,10 +15,7 @@
 
 package org.iot.auth.optimization.util;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -31,6 +28,9 @@ import com.google.common.collect.ImmutableMap;
 public class SSTGraph extends Graph<SSTGraph.SSTNode> {
 
     public final static String CONNECTED = "connected";
+    private final static String AUTH_CAPACITY = "capacity";
+    private final static String THING_REQUIREMENT = "requirement";
+    private final static double DEFAULT_THING_REQUIREMENT = 1.0;
 
     private final Set<SSTNode> auths = new HashSet<SSTNode>();
     private final Set<SSTNode> things = new HashSet<SSTNode>();
@@ -89,7 +89,7 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
      * @return the new auth added.
      */
     public SSTNode addAuth(String id, Double capacity){
-        SSTNode n = new SSTNode(id, NodeType.AUTH, ImmutableMap.of("cost", capacity));
+        SSTNode n = new SSTNode(id, NodeType.AUTH, ImmutableMap.of(AUTH_CAPACITY, capacity));
         auths.add(n);
         return n;
     }
@@ -100,7 +100,7 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
      * @return the new thing added.
      */
     public SSTNode addThing(String id){
-        SSTNode n = new SSTNode(id, NodeType.THING, ImmutableMap.of());
+        SSTNode n = new SSTNode(id, NodeType.THING, new HashMap<>());
         things.add(n);
         return n;
     }
@@ -205,7 +205,25 @@ public class SSTGraph extends Graph<SSTGraph.SSTNode> {
      * @return Capacity in double.
      */
     public double authCap(SSTNode auth){
-        return ((Double)auth.attr.get("cost")).doubleValue();
+        return ((Double)auth.attr.get(AUTH_CAPACITY)).doubleValue();
+    }
+
+    /**
+     * Set authorization requirement of Thing
+     * @param thing
+     * @param requirement
+     */
+    public void setThingRequirement(SSTNode thing, double requirement) {
+        thing.attr.put(THING_REQUIREMENT, requirement);
+    }
+
+    public double getThingRequirement(SSTNode thing) {
+        if (thing.attr.containsKey(THING_REQUIREMENT)) {
+            return (double)thing.attr.get(THING_REQUIREMENT);
+        }
+        else {
+            return DEFAULT_THING_REQUIREMENT;
+        }
     }
 
     /**

@@ -173,7 +173,7 @@ public class MigrationEngine {
                 SSTVar sstVar = varmap.get(e);
                 m.put(sstVar, Double.valueOf(1));
             }
-            solver.addEQ("disj_" + t, m, 1);
+            solver.addEQ("disj_" + t, m, Double.valueOf(1));
         }
 
         // Constraint that each Auth is connected to no more than the number of things that it has capacity for
@@ -182,9 +182,11 @@ public class MigrationEngine {
             if (edges.isEmpty()) continue;
             Map<SSTVar, Double> m = new HashMap<SSTVar, Double>();
             for (SSTGraph.SSTEdge e : edges){
-                m.put(varmap.get(e), Double.valueOf(1));
+                double thingRequirement = network.getThingRequirement(e.to);
+                m.put(varmap.get(e), thingRequirement);
             }
-            solver.addBetween("authCap_" + a, m, 0, network.authCap(a));
+            double authCapacity = network.authCap(a);
+            solver.addBetween("authCap_" + a, m, 0, authCapacity);
         }
         //solver.write("model.lp");
         solver.minimize();
