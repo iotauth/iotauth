@@ -9,6 +9,8 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -321,9 +323,6 @@ public class MigrationEngine {
 
         Map<String,List<String>> moveTo = new HashMap<String,List<String>>();
 
-        JSONArray echoServerList = new JSONArray();
-        JSONArray autoClientList = new JSONArray();
-
         // extract backup info from each plan
         plans.forEach((p) -> {
             for (String t : p.thingsToMove()){
@@ -334,6 +333,8 @@ public class MigrationEngine {
             }
         });
 
+        JSONArray echoServerList = new JSONArray();
+        JSONArray autoClientList = new JSONArray();
 
         Set<SSTGraph.SSTEdge> connectedEdges = coryNetwork.edgesOfType(SSTGraph.EdgeType.AT_CONNECTED);
         Map<String, String> originalThingToAuthAssignments = new HashMap<>();
@@ -372,13 +373,13 @@ public class MigrationEngine {
             backups.add(originalAuthID);
 
             JSONObject o = new JSONObject();
-            if (!coryNetwork.isClient(t.id)) {
-                o.put("name", t);
+            if (!coryNetwork.isClient(thingName)) {
+                o.put("name", thingName);
                 o.put("backupTo", backups);
                 echoServerList.add(o);
             } else {
-                o.put("name", t);
-                o.put("target", coryNetwork.getServer(t.id));
+                o.put("name", thingName);
+                o.put("target", coryNetwork.getServer(thingName));
                 o.put("backupTo", backups);
                 autoClientList.add(o);
             }
@@ -394,11 +395,11 @@ public class MigrationEngine {
         // parsing command line arguments
         Options options = new Options();
 
-        Option inputFileOption = new Option("i", "input", true, "Input json file path");
+        Option inputFileOption = new Option("i", "input", true, "Input json file path.");
         inputFileOption.setRequired(false);
         options.addOption(inputFileOption);
 
-        Option destroyedAuthsOption = new Option("d", "destroyed_auths", true, "IDs of Auths to be destroyed, comma (,) delimited");
+        Option destroyedAuthsOption = new Option("d", "destroyed_auths", true, "IDs of Auths to be destroyed, comma (,) delimited.");
         destroyedAuthsOption.setRequired(false);
         options.addOption(destroyedAuthsOption);
 
@@ -409,6 +410,10 @@ public class MigrationEngine {
         Option authCapacityOption = new Option("a", "auth_capacity", false, "Consider Auth capacity and authorization requirements of Things.");
         authCapacityOption.setRequired(false);
         options.addOption(authCapacityOption);
+
+        Option outputFileOption = new Option("o", "output", true, "Path of the output file for migration plan results.");
+        outputFileOption.setRequired(false);
+        options.addOption(outputFileOption);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -464,12 +469,24 @@ public class MigrationEngine {
         // MigrationPlan p1 = findMigratePlan(n, weightThings, weightAuth);
         // MigrationPlan p2 = findMigratePlan(n, weightThings, weightAuth, SOLVER_OJALGO);
 
-        JSONObject obj = makeCoryFloorMigration(0.8, 0.2, inputJsonFile, destroyedAuthIDs,
+        JSONObject migrationPlanJsonObj = makeCoryFloorMigration(0.8, 0.2, inputJsonFile, destroyedAuthIDs,
                 new MigrationConsiderations(considerMigrationTrust, considerAuthCapacity));
         logger.info("IDs of Auths to be destroyed: " + Arrays.toString(destroyedAuthIDs));
         logger.info("Consider migration trust between from-Auth and to-Auth: " + considerMigrationTrust);
         logger.info("Consider Auth capacity and authorization requirements of Things: " + considerAuthCapacity);
-        System.out.println(obj);
+        System.out.println(migrationPlanJsonObj);
+
+        String outputFilePath = cmd.getOptionValue("output");
+        if (outputFilePath != null) {
+            logger.info("Writing output file as: " + outputFilePath);
+            try {
+                FileOutputStream fileOutputStream = new FileOutputStream(outputFilePath);
+                fileOutputStream.write(migrationPlanJsonObj.toJSONString().getBytes());
+                fileOutputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private static final Logger logger = LoggerFactory.getLogger(MigrationEngine.class);
