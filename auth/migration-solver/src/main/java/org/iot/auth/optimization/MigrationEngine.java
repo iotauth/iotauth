@@ -307,15 +307,15 @@ public class MigrationEngine {
         JSONObject overall = new JSONObject();
 
         // Construct the initial Cory 5th floor plan
-        SSTGraph n = NetworkFactory.coryFloorPlan(filePath);
-        List<SSTGraph.SSTNode> auths = new ArrayList<SSTGraph.SSTNode>(n.auths());
+        SSTGraph coryNetwork = NetworkFactory.coryFloorPlan(filePath);
+        List<SSTGraph.SSTNode> auths = new ArrayList<SSTGraph.SSTNode>(coryNetwork.auths());
 
         // create migration plans for respective partial graphs
         List<MigrationPlan> plans = new ArrayList<MigrationPlan>();
-        SSTGraph destroyedAuth = n;
+        SSTGraph destroyedAuth = coryNetwork;
         for (String destroyedAuthID: destroyedAuthIDs) {
             logger.info("ID of Auth to be destroyed: " + destroyedAuthID);
-            destroyedAuth = destroyedAuth.destroyAuth(n.getAuth(destroyedAuthID));
+            destroyedAuth = destroyedAuth.destroyAuth(coryNetwork.getAuth(destroyedAuthID));
             plans.add(findMigratePlan(destroyedAuth, weightThings, weightAuth, migrationConsiderations));
         }
 
@@ -334,15 +334,30 @@ public class MigrationEngine {
             }
         });
 
+
+        Set<SSTGraph.SSTEdge> connectedEdges = coryNetwork.edgesOfType(SSTGraph.EdgeType.AT_CONNECTED);
+        Map<String, String> originalThingToAuthAssignments = new HashMap<>();
+        connectedEdges.stream().forEach(connectedEdge -> {
+            if (connectedEdge.weight == 1.0) {
+                originalThingToAuthAssignments.put(connectedEdge.to.id, connectedEdge.from.id);
+            }
+        });
+
         // create "echoServerList" and "authClientList"
-        for (SSTGraph.SSTNode t : n.things()) {
+        for (SSTGraph.SSTNode t : coryNetwork.things()) {
             List<String> backups = new ArrayList<String>();
-            if (moveTo.containsKey(t.id))
-                backups = moveTo.get(t.id);
+            String thingName = t.id;
+            String originalAuthID = originalThingToAuthAssignments.get(thingName);
+            if (moveTo.containsKey(thingName))
+                backups = moveTo.get(thingName);
 
             // clean up duplicates
             ListIterator<String> iter = backups.listIterator();
             HashSet<String> prevBackups = new HashSet<>();
+
+            // clean up beginning if it is the original Auth
+            prevBackups.add(originalAuthID);
+
             while(iter.hasNext()){
                 String currentBackup = iter.next();
                 if (prevBackups.contains(currentBackup)) {
@@ -353,14 +368,17 @@ public class MigrationEngine {
                 }
             }
 
+            // add original Auth at the end
+            backups.add(originalAuthID);
+
             JSONObject o = new JSONObject();
-            if (!n.isClient(t.id)) {
+            if (!coryNetwork.isClient(t.id)) {
                 o.put("name", t);
                 o.put("backupTo", backups);
                 echoServerList.add(o);
             } else {
                 o.put("name", t);
-                o.put("target", n.getServer(t.id));
+                o.put("target", coryNetwork.getServer(t.id));
                 o.put("backupTo", backups);
                 autoClientList.add(o);
             }
