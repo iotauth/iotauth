@@ -204,7 +204,7 @@ function generatePropertiesFiles() {
             'backup_enabled': (auth.backupEnabled != null && !auth.backupEnabled) ? false : true,
             // currently default is false
             'qps_throttling_enabled': auth.capacityQpsLimit == null ? false : true,
-            'qps_limit': auth.capacityQpsLimit == null ? 10 : auth.capacityQpsLimit,
+            'qps_limit': auth.capacityQpsLimit == null ? 10 : auth.capacityQpsLimit/60.0,
             'qps_calculation_bucket_size_in_sec': 60
         };
         var strProperties = '';
