@@ -34,15 +34,30 @@ var graph = JSON.parse(fs.readFileSync(graphFile));
 
 const EXAMPLES_DIR = process.cwd() + '/';
 
-var inputPassword = readlineSync.question('Enter new password for Auth: ', {hideEchoBack: true, mask: ''});
-var repeatPassword = readlineSync.question('Enter the same password again: ', {hideEchoBack: true, mask: ''});
-if (inputPassword !== repeatPassword) {
-    console.error('Passwords do not match!');
-    process.exit(1);
+// Check if password is given as a command line argument.
+var cmdLineGivenPassword = ''
+if (process.argv.length > 3) {
+    cmdLineGivenPassword = process.argv[3];
 }
-if (inputPassword.length < 4) {
-    console.error('Password must be at least four characters!');
-    process.exit(1);
+if (cmdLineGivenPassword.length > 0) {
+    // If password is given as a command line argument.
+    console.log('Password is given as a command line argument!');
+    console.warn('Passing password as a command line argument is NOT secure!');
+    console.warn('This should be only for automated experiments, NOT for deployment!');
+    inputPassword = cmdLineGivenPassword;
+}
+else {
+    // Otherwise, receive password through interactive dialogue.
+    var inputPassword = readlineSync.question('Enter new password for Auth: ', {hideEchoBack: true, mask: ''});
+    var repeatPassword = readlineSync.question('Enter the same password again: ', {hideEchoBack: true, mask: ''});
+    if (inputPassword !== repeatPassword) {
+        console.error('Passwords do not match!');
+        process.exit(1);
+    }
+    if (inputPassword.length < 4) {
+        console.error('Password must be at least four characters!');
+        process.exit(1);
+    }
 }
 //const MASTER_PASSWORD = readlineSync.questionNewPassword('Enter new password for Auth: ', {min: 4, mask: ''});
 const MASTER_PASSWORD = inputPassword;

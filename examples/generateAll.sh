@@ -37,6 +37,10 @@ do
 		-lc|--leave-cred-config)
 			REMOVE_FILES_AFTER_DB_GEN=false
 		;;
+		-p|--password)
+			PASSWORD_FOR_CRED_GENERATION="$2"
+			shift # past argument
+		;;
 		-h|--help)
 			SHOW_HELP=true
 		;;
@@ -57,6 +61,8 @@ if [ "$SHOW_HELP" = true ] ; then
 	echo "  -gd,--gen-db-only               Generate Auth databases only."
 	echo "                                  (Skip generation of credentials and configuration files.)"
 	echo "  -lc,--leave-cred-config         Leave credentials and config files after DB generation."
+	echo "  -p|--password                   Password passed for credential generation."
+	echo "                                  (Must not be used for actual deployment.)"
 	echo "  -h,--help                       Show this help."
 	exit 1
 fi
@@ -80,7 +86,7 @@ cd $EXAMPLES_DIR
 # generate credentials and configs
 if [ "$GEN_CRED_CONFIG" = true ] ; then
 	echo "Generating credentials ..."
-	node credentialGenerator.js $GRAPH_FILE
+	node credentialGenerator.js $GRAPH_FILE $PASSWORD_FOR_CRED_GENERATION
 	if [ $? -ne 0  ] ; then
 		echo "[Error] Script finished with problems! exiting..." ; exit 1
 	fi
