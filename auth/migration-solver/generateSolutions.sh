@@ -4,8 +4,8 @@
 # Author: Hokeun Kim
 
 EXEC_CMD="java -jar target/migration-solver-jar-with-dependencies.jar"
-TRUST_ID="trust2"
-INPUT="data/cory45_trust2.json"
+TRUST_ID="trust3"
+INPUT="data/cory45_trust3.json"
 
 ############################################################
 
