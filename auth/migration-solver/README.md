@@ -12,6 +12,13 @@ Copy gurobi.jar to iotauth/auth/jars/gurobi/gurobi, to include
 
 **NOTE** *Do not commit gurobi.jar to the repository*, because Gurobi is a proprietary software. 
 
+# How to build
+---
+* In command line
+
+      cd $AUTH/../migration-solver
+      mvn clean install
+
 # How to run
 ---
 * In command line
