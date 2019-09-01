@@ -392,6 +392,7 @@ public class MigrationEngine {
     }
 
     public static void main(final String[] args) throws IllegalAccessException {
+        long startTime = System.currentTimeMillis();
         // parsing command line arguments
         Options options = new Options();
 
@@ -437,7 +438,6 @@ public class MigrationEngine {
         else {
             logger.info("Given input JSON file: {}", inputJsonFile);
         }
-
         String[] destroyedAuthIDs = DEFAULT_DESTROYED_AUTH_IDS;
         String destroyedAuthIDsStr = cmd.getOptionValue("destroyed_auths");
         if (destroyedAuthIDsStr != null) {
@@ -469,8 +469,10 @@ public class MigrationEngine {
         // MigrationPlan p1 = findMigratePlan(n, weightThings, weightAuth);
         // MigrationPlan p2 = findMigratePlan(n, weightThings, weightAuth, SOLVER_OJALGO);
 
+        long ilpStartTime = System.currentTimeMillis();
         JSONObject migrationPlanJsonObj = makeCoryFloorMigration(0.8, 0.2, inputJsonFile, destroyedAuthIDs,
                 new MigrationConsiderations(considerMigrationTrust, considerAuthCapacity));
+        long ilpEndTime = System.currentTimeMillis();
         logger.info("IDs of Auths to be destroyed: " + Arrays.toString(destroyedAuthIDs));
         logger.info("Consider migration trust between from-Auth and to-Auth: " + considerMigrationTrust);
         logger.info("Consider Auth capacity and authorization requirements of Things: " + considerAuthCapacity);
@@ -487,6 +489,9 @@ public class MigrationEngine {
                 e.printStackTrace();
             }
         }
+        long endTime = System.currentTimeMillis();
+        logger.info("ILP execution time (ms): " + (ilpEndTime - ilpStartTime));
+        logger.info("Total execution time (ms): " + (endTime - startTime));
     }
 
     private static final Logger logger = LoggerFactory.getLogger(MigrationEngine.class);
