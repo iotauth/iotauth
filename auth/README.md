@@ -8,7 +8,7 @@ We strongly recommend looking into [*examples*](https://github.com/iotauth/iotau
 - **auth-server**: Directory for auth-server module
 - **credentials**: Directory for certificates and keystores of Auth
 - **databases**: Directory for SQLite database and entity/trusted Auth certificates
-- **example-auth-db-generator**: Directory for example-auth-db-generato module
+- **example-auth-db-generator**: Directory for example-auth-db-generator module
 - **jars**: Directory for storing external jar files
 - **library**: Directory for library module (on which *auth-server* and *example-auth-db-generator* depend)
 - **properties**: Properties files for auth server
