@@ -24,7 +24,7 @@
         <!-- Adapt this to a version found on
              http://central.maven.org/maven2/org/eclipse/jetty/jetty-maven-plugin/
           -->
-        <jettyVersion>9.3.11.v20160721</jettyVersion>
+        <jettyVersion>9.4.24.v20191120</jettyVersion>
     </properties>
 
     <dependencyManagement>
