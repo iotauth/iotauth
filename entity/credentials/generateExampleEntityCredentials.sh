@@ -14,7 +14,7 @@ VAL_DAYS=730
 if [ $# != 2 ]
 then
 	echo "Please provide required arguments (1. number of networks, 2. CA's password)"
-	echo 'Usage: ./generateCACredentials.sh num_nets ca_password'
+	echo 'Usage: ./generateExampleAuthCredentials.sh num_nets ca_password'
 	exit
 fi
 
