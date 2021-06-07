@@ -28,7 +28,7 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 
 # Contributors
 ---
-- [Hokeun Kim](http://eecs.berkeley.edu/~hokeunkim) (Project manager & initiator)
+- [Hokeun Kim](https://hokeun.github.io/) (Project manager & initiator)
 - [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (Software Architect @ AlcaCruz Inc.)
 - [Eunsuk Kang](https://eskang.github.io/)
 - [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/)
