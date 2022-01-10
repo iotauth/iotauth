@@ -10,7 +10,6 @@
   "dependencies": {
     "mqtt": "*",
     "sleep": "*",
-    "x509": "*",
     "pem": "*"
   },
   "description": "Node.js module with example Node.js entities"
