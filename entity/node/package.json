@@ -10,7 +10,8 @@
   "dependencies": {
     "mqtt": "*",
     "sleep": "*",
-    "pem": "*"
+    "pem": "*",
+    "int64-buffer": "*"
   },
   "description": "Node.js module with example Node.js entities"
 }

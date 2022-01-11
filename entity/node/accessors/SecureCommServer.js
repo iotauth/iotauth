@@ -178,7 +178,7 @@ function onServerListening() {
 }
 
 function onClientRequest(handshake1Payload, serverSocket, sendHandshake2Callback) {
-    var keyId = handshake1Payload.readUIntBE(0, common.SESSION_KEY_ID_SIZE);
+    var keyId = common.readVariableUIntBE(handshake1Payload, 0, common.SESSION_KEY_ID_SIZE);
     console.log('session key id: ' + keyId);
     var sessionKeyFound = false;
     for (var i = 0; i < sessionKeyCacheForClients.length; i++) {

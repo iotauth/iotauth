@@ -87,7 +87,7 @@ function onData(topic, message) {
     var obj = common.parseIoTSP(message);
     if (obj.msgType == msgType.SECURE_PUB) {
         console.log('received secure pub!');
-    	var keyId = obj.payload.readUIntBE(0, common.SESSION_KEY_ID_SIZE);
+    	var keyId = common.readVariableUIntBE(obj.payload, 0, common.SESSION_KEY_ID_SIZE);
 
     	for (var i = 0; i < currentSessionKeyList.length; i++) {
         	if (currentSessionKeyList[i].id == keyId) {
