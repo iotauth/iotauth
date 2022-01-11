@@ -22,7 +22,7 @@
 
 var fs = require('fs');
 var JSON2 = require('JSON2');
-var common = require('common');
+var common = require('./common');
 const execSync = require('child_process').execSync;
 
 // get graph file
