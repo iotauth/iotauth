@@ -64,8 +64,11 @@ secureCommServer.setOutputHandler('listening', listeningHandler);
 secureCommServer.setOutputHandler('received', receivedHandler);
 
 function commandInterpreter() {
-    var chunk = process.stdin.read();
-    if (chunk != null) {
+    let chunk;
+    const entityInfo = secureCommServer.getEntityInfo();
+    console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
+    // Use a loop to make sure we read all available data.
+    while ((chunk = process.stdin.read()) !== null) {
         var input = chunk.toString().trim();
         var idx = input.indexOf(' ');
         var command;
@@ -176,9 +179,8 @@ function commandInterpreter() {
         else {
             console.log('unrecognized command: ' + command);
         }
+        console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
     }
-    var entityInfo = secureCommServer.getEntityInfo();
-    console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
 };
 
 process.stdin.on('readable', commandInterpreter);

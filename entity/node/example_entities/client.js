@@ -68,8 +68,11 @@ if (process.argv.length > 5) {
 }
 
 function commandInterpreter() {
-    var chunk = process.stdin.read();
-    if (chunk != null) {
+    let chunk;
+    const entityInfo = secureCommClient.getEntityInfo();
+    console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
+    // Use a loop to make sure we read all available data.
+    while ((chunk = process.stdin.read()) !== null) {
         var input = chunk.toString().trim();
         var idx = input.indexOf(' ');
         var command;
@@ -213,9 +216,8 @@ function commandInterpreter() {
         else {
             console.log('unrecognized command: ' + command);
         }
+        console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
     }
-    var entityInfo = secureCommClient.getEntityInfo();
-    console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
 };
 
 process.stdin.on('readable', commandInterpreter);
