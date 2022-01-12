@@ -103,6 +103,8 @@ public class AppTest {
         logger.info("PayLoadLength, {}", authHello.getPayLoadLength());
     }
 
+    @Test
+    @Category(org.iot.auth.db.dao.SQLiteConnector.class)
     public void testDBCreateion() throws SQLException, ClassNotFoundException, IOException {
         File file = new File(dbPath);
         file.delete();
@@ -119,6 +121,8 @@ public class AppTest {
         dbCreated = true;
     }
 
+    @Test
+    @Category(org.iot.auth.db.RegisteredEntity.class)
     public void testRegEntityInsertion() throws SQLException, ClassNotFoundException, IOException {
         if (!dbCreated) {
             testDBCreateion();
@@ -191,6 +195,8 @@ public class AppTest {
         regEntityInserted = true;
     }
 
+    @Test
+    @Category(org.iot.auth.db.CommunicationPolicy.class)
     public void testCommPolicyInsertion() throws SQLException, ClassNotFoundException, IOException {
         if (!dbCreated) {
             testDBCreateion();
@@ -275,6 +281,8 @@ public class AppTest {
         commPolicyInserted = true;
     }
 
+    @Test
+    @Category(org.iot.auth.db.TrustedAuth.class)
     public void testTrustedAuthInsertion() throws SQLException, ClassNotFoundException, CertificateEncodingException,
             IOException
     {
