@@ -562,7 +562,7 @@ public class AuthServer {
         Server serverForTrustedAuths = new Server();
         serverForTrustedAuths.setHandler(trustedAuthConnectionHandler);
 
-        SslContextFactory sslContextFactory = new SslContextFactory();
+        SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
         sslContextFactory.setTrustAll(false);
         sslContextFactory.setKeyStore(AuthCrypto.loadKeyStore(properties.getInternetKeyStorePath(), authKeyStorePassword));
         sslContextFactory.setKeyStorePassword(authKeyStorePassword);
@@ -579,7 +579,7 @@ public class AuthServer {
         HttpConfiguration httpConfig = new HttpConfiguration();
         httpConfig.setPersistentConnectionsEnabled(true);
         httpConfig.setSecureScheme("https");
-        // time out with out keep alive messages?
+        // time out without keep alive messages?
         //httpConfig.setBlockingTimeout();
 
         httpConfig.addCustomizer(new SecureRequestCustomizer());
@@ -590,7 +590,7 @@ public class AuthServer {
         connector.setPort(properties.getTrustedAuthPort());
 
         // Idle time out for keep alive connections
-        // time out with out requests?
+        // time out without requests?
         connector.setIdleTimeout(properties.getTrustedAuthPortIdleTimeout());
 
         serverForTrustedAuths.setConnectors(new org.eclipse.jetty.server.Connector[]{connector});
@@ -611,10 +611,9 @@ public class AuthServer {
     private HttpClient initClientForTrustedAuths(AuthServerProperties properties, String authKeyStorePassword)
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException
     {
-        SslContextFactory sslContextFactory = new SslContextFactory();
+        SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
 
         sslContextFactory.setTrustAll(false);
-        sslContextFactory.setNeedClientAuth(true);
         sslContextFactory.setKeyStore(AuthCrypto.loadKeyStore(properties.getInternetKeyStorePath(), authKeyStorePassword));
         sslContextFactory.setKeyStorePassword(authKeyStorePassword);
 
