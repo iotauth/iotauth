@@ -23,7 +23,7 @@
 var fs = require('fs');
 var JSON2 = require('JSON2');
 var common = require('./common');
-const execSync = require('child_process').execSync;
+const execFileSync = require('child_process').execFileSync;
 
 // get graph file
 if (process.argv.length <= 2) {
@@ -47,7 +47,7 @@ var authList = graph.authList;
 function createConfigDirs() {
     for (var i = 0; i < authList.length; i++) {
     	var auth = authList[i];
-        execSync('mkdir -p ' + getAuthConfigDir(auth.id));
+        execFileSync('mkdir', ['-p', getAuthConfigDir(auth.id)]);
     }
 }
 
