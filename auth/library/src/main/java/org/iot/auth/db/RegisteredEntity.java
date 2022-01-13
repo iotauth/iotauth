@@ -238,16 +238,24 @@ public class RegisteredEntity {
 
     private int REG_ENTITY_INT_SIZE = 4;
 
-    // TODO: record the buffer length when concatnating this
+    // TODO: record the buffer length when concatenating this
     public Buffer serialize() {
         // UsePermanentDistKey | Active -> Byte
         // MaxSessionKeysPerRequest -> INT
         // BackupFromAuthID -> INT
         // DistKeyValidityPeriod -> LONG
         Buffer buffer = new Buffer(Buffer.BYTE_SIZE + 2 * Buffer.INT_SIZE + Buffer.LONG_SIZE);
+
+        // This byte indicates whether the entity uses permanent distribution key and
+        // whether the entity is active in bits.
+        // That is, 0000 00PA, where P is for use of Permanent distribution key and A is for Active.
         byte usePermanentDistKeyActive = 0;
-        usePermanentDistKeyActive += (usePermanentDistKey ? 2 : 0);
-        usePermanentDistKeyActive += (active ? 1 : 0);
+        if (usePermanentDistKey) {
+            usePermanentDistKeyActive += (byte)2;
+        }
+        if (active) {
+            usePermanentDistKeyActive += (byte)1;
+        }
         int curIndex = 0;
 
         buffer.putByte(usePermanentDistKeyActive, curIndex);
