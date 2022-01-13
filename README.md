@@ -2,7 +2,7 @@
 ---
 This is a repository for an open-source project of the local authentication and authorization entity, Auth, for security of the Internet of Things (IoT). Auth is a local point of authorization, whose main roles are 1) providing authentication/authorization for its locally registered entities or devices, and 2) working as a bridge of authorization between its local entities and the Internet. 
 
-Our conference papers [[IoTDI '17](https://dl.acm.org/citation.cfm?id=3054980)], [[FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)] describe a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity). The architecture provides security guarantees while addressing IoT-related issues including resource constraints and intermittent connectivity. The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our journal article [[IT Professional '17'](https://ieeexplore.ieee.org/document/8057722/)]. Our recent workshop paper [[SafeThings '17](https://dl.acm.org/citation.cfm?id=3137010)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
+Our conference papers [[IoTDI '17](https://dl.acm.org/citation.cfm?id=3054980)], [[FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)] describe a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity). The architecture provides security guarantees while addressing IoT-related issues including resource constraints and intermittent connectivity. The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our journal article [[IT Professional '17'](https://ieeexplore.ieee.org/document/8057722/)]. Our recent journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/3375837)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
 
 This repository includes 1) an open-source Java implementation of Auth and 2) sample codes for local entities to use Auth (authentication/authorization) services provided by Auth in various programming languages for different platforms.
 
@@ -24,7 +24,7 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 
 # Quick start with example Auths and entities
 ---
-See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/master/examples/README.md).
+See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/master/examples/README.md) for a fully working example.
 
 # Contributors
 ---
@@ -45,4 +45,4 @@ This project is still in its infancy and currently intended for academic and res
 ---
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP) a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 
-*Last updated on July 21, 2018*
+*Last updated on January 12, 2022*
