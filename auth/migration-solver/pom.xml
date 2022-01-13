@@ -74,7 +74,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>21.0</version>
+            <version>30.1-jre</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.google.collections/google-collections -->
         <dependency>
@@ -97,7 +97,7 @@
             <groupId>gurobi</groupId>
             <artifactId>gurobi</artifactId>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../jars/gurobi/gurobi/gurobi.jar</systemPath>
+            <systemPath>${pom.basedir}/../jars/gurobi/gurobi/gurobi.jar</systemPath>
             <version>RELEASE</version>
         </dependency>
         <dependency>
