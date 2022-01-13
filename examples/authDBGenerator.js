@@ -21,7 +21,8 @@
 "use strict";
 
 var fs = require('fs');
-const execSync = require('child_process').execSync;
+var path = require("path");
+const execFileSync = require('child_process').execFileSync;
 
 // get graph file
 if (process.argv.length <= 2) {
@@ -48,28 +49,28 @@ function getIndividualAuthDBDir(authId) {
 }
 
 process.chdir('auth/');
-execSync('mvn -pl example-auth-db-generator -am install -DskipTests', {stdio: 'inherit'});
+execFileSync('mvn', ['-pl', 'example-auth-db-generator', '-am', 'install', '-DskipTests'], {stdio: 'inherit'});
 process.chdir('example-auth-db-generator');
-execSync('cp target/init-example-auth-db-jar-with-dependencies.jar ../');
+execFileSync('cp', ['target/init-example-auth-db-jar-with-dependencies.jar', '../']);
 process.chdir('..');
 
 var authList = graph.authList;
 
 for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
-	execSync('java -jar init-example-auth-db-jar-with-dependencies.jar -i ' + auth.id + ' -d ' + auth.dbProtectionMethod);
+	execFileSync('java', ['-jar', 'init-example-auth-db-jar-with-dependencies.jar', '-i', auth.id, '-d', auth.dbProtectionMethod]);
 }
-execSync('rm init-example-auth-db-jar-with-dependencies.jar');
+execFileSync('rm', ['init-example-auth-db-jar-with-dependencies.jar']);
 
 if (removeFilesAfterDBGen) {
 	console.log('deleting credentials and config files after DB generation...');
 	for (var i = 0; i < authList.length; i++) {
 		var auth = authList[i];
 		var individualAuthDBDir = getIndividualAuthDBDir(auth.id);
-		execSync('rm -rf ' + individualAuthDBDir + 'my_certs/');
-		execSync('rm -rf ' + individualAuthDBDir + 'entity_certs/');
-		execSync('rm -rf ' + individualAuthDBDir + 'entity_keys/');
-		execSync('rm -rf ' + individualAuthDBDir + 'trusted_auth_certs/');
-		execSync('rm -rf ' + individualAuthDBDir + 'configs/');
+		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'my_certs/')]);
+		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'entity_certs/')]);
+		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'entity_keys/')]);
+		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'trusted_auth_certs/')]);
+		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'configs/')]);
 	}
 }
