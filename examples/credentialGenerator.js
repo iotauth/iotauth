@@ -23,6 +23,7 @@
 var fs = require('fs');
 var readlineSync = require('readline-sync');
 const execSync = require('child_process').execSync;
+const execFileSync = require('child_process').execFileSync;
 
 // get graph file
 if (process.argv.length <= 2) {
@@ -83,16 +84,16 @@ for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
 	execSync('./generateExampleAuthCredentials.sh ' + auth.id + ' ' + auth.authHost + ' ' + CA_PASSWORD + ' ' + AUTH_PASSWORD);
 	var MY_CERTS_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_certs/';
-	execSync('mkdir -p ' + MY_CERTS_DIR);
+	execFileSync('mkdir', ['-p', MY_CERTS_DIR]);
 	execSync('mv certs/Auth' + auth.id + '*Cert.pem ' + MY_CERTS_DIR);
 	
 	var MY_KEYSTORES_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_keystores/';
-	execSync('mkdir -p ' + MY_KEYSTORES_DIR);
+	execFileSync('mkdir', ['-p', MY_KEYSTORES_DIR]);
 	execSync('mv keystores/Auth' + auth.id + '*.pfx ' + MY_KEYSTORES_DIR);
 	var CURRENT_AUTH_DB_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id;
-	execSync('mkdir -p ' + CURRENT_AUTH_DB_DIR + '/entity_certs/');
-	execSync('mkdir -p ' + CURRENT_AUTH_DB_DIR + '/entity_keys/');
-	execSync('mkdir -p ' + CURRENT_AUTH_DB_DIR + '/trusted_auth_certs/');
+	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/entity_certs/']);
+	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/entity_keys/']);
+	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/trusted_auth_certs/']);
 }
 
 // exchange credentials for trusted Auths
@@ -111,7 +112,7 @@ for (var i = 0; i < authTrusts.length; i++) {
 
 // copy Auth certs to entity directory
 const AUTH_CERTS_DIR = PROJ_ROOT_DIR + 'entity/auth_certs';
-execSync('mkdir -p ' + AUTH_CERTS_DIR);
+execFileSync('mkdir', ['-p', AUTH_CERTS_DIR]);
 execSync('cp ' + AUTH_DATABASES_DIR + 'auth*/my_certs/*EntityCert.pem ' + AUTH_CERTS_DIR);
 
 // generate entity credentials
@@ -121,12 +122,12 @@ function generateEntityCert(entity, copyTo, keyPathPrefix, certPathPrefix) {
 		+ 'Req.pem -subj /C=US/ST=CA/L=Berkeley/O=EECS/OU=' + entity.netName + '/CN=' + entity.name);
 	execSync('openssl x509 -passin pass:' + CA_PASSWORD + ' -req -in ' + keyPathPrefix + 'Req.pem -sha256 -extensions usr_cert -CA '
 		+ CA_DIR + 'CACert.pem -CAkey ' + CA_DIR + 'CAKey.pem -CAcreateserial -out ' + certPathPrefix + 'Cert.pem -days ' + VAL_DAYS);
-	execSync('rm ' + keyPathPrefix + 'Req.pem');
+	execFileSync('rm', [keyPathPrefix + 'Req.pem']);
 	if (entity.inDerFormat == true) {
 		execSync('openssl pkcs8 -topk8 -inform PEM -outform DER -in ' + keyPathPrefix + 'Key.pem -out ' + keyPathPrefix + 'Key.der -nocrypt');
-		execSync('rm ' + keyPathPrefix + 'Key.pem');
+		execFileSync('rm', [keyPathPrefix + 'Key.pem']);
 	}
-	execSync('cp ' + certPathPrefix + 'Cert.pem ' + copyTo);
+	execFileSync('cp', [certPathPrefix + 'Cert.pem', copyTo]);
 }
 function generateEntityDistKey(entity, copyTo, keyPathPrefix) {
 	const CIPHER_KEY_SIZE = 16;
@@ -134,8 +135,8 @@ function generateEntityDistKey(entity, copyTo, keyPathPrefix) {
 	execSync('openssl rand ' + CIPHER_KEY_SIZE + ' > ' + keyPathPrefix + 'CipherKey.key');
 	execSync('openssl rand ' + MAC_KEY_SIZE + ' > ' + keyPathPrefix + 'MacKey.key');
 
-	execSync('cp ' + keyPathPrefix +'CipherKey.key ' + copyTo);
-	execSync('cp ' + keyPathPrefix + 'MacKey.key ' + copyTo);
+	execFileSync('cp', [keyPathPrefix +'CipherKey.key', copyTo]);
+	execFileSync('cp', [keyPathPrefix + 'MacKey.key', copyTo]);
 }
 function generateEntityCredential(entity, copyTo) {
 	const ENTITY_CREDS_DIR = PROJ_ROOT_DIR + 'entity/credentials/';
@@ -143,14 +144,14 @@ function generateEntityCredential(entity, copyTo) {
 	const ENTITY_KEYS_DIR = ENTITY_CREDS_DIR + 'keys/';
 
 	var KEYS_NET_DIR = ENTITY_KEYS_DIR + entity.netName + '/';
-	execSync('mkdir -p ' + KEYS_NET_DIR);
+	execFileSync('mkdir', ['-p', KEYS_NET_DIR]);
 	var keyPathPrefix = KEYS_NET_DIR + entity.credentialPrefix;
 	if (entity.usePermanentDistKey == true) {
 		generateEntityDistKey(entity, copyTo + 'entity_keys/', keyPathPrefix);
 	}
 	else {
 		var CERTS_NET_DIR = ENTITY_CERTS_DIR + entity.netName + '/';
-		execSync('mkdir -p ' + CERTS_NET_DIR);
+		execFileSync('mkdir', ['-p', CERTS_NET_DIR]);
 		var certPathPrefix = CERTS_NET_DIR + entity.credentialPrefix;
 		generateEntityCert(entity, copyTo + 'entity_certs/', keyPathPrefix, certPathPrefix);
 	}
