@@ -22,8 +22,6 @@ package org.iot.auth.crypto;
  */
 public class PublicKeyCryptoSpec extends CryptoSpec {
     private String signAlgorithm;
-    //private String publicCipherAlgorithm = "RSA/ECB/PKCS1PADDING";
-    //private int keySize = 256; // 2048 bits
     private String diffieHellman;
 
     public String getSignAlgorithm() {

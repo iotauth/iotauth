@@ -56,7 +56,7 @@ public class SQLiteConnector {
     public static final String AUTH_DB_KEY_ABSOLUTE_VALIDITY = "3650*day";
     public static final SymmetricKeyCryptoSpec AUTH_DB_CRYPTO_SPEC =
             new SymmetricKeyCryptoSpec("AES/CBC/PKCS5Padding", 16, "HmacSHA256");
-    public static final String AUTH_DB_PUBLIC_CIPHER = "RSA/ECB/PKCS1PADDING";
+    public static final String AUTH_DB_PUBLIC_CIPHER = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
     private AuthDBProtectionMethod authDBProtectionMethod;
 
     /**
