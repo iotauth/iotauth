@@ -95,7 +95,7 @@ public class AuthCrypto {
             this.authPrivateKeyForEntities = pkEntry.getPrivateKey();
         }
         this.authSignAlgorithm = "SHA256withRSA";
-        this.authPublicCipherAlgorithm = "RSA/ECB/PKCS1PADDING";
+        this.authPublicCipherAlgorithm = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
     }
 
     /**
