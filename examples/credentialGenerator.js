@@ -26,7 +26,8 @@ var readlineSync = require('readline-sync');
 const execSync = require('child_process').execSync;
 const execFileSync = require('child_process').execFileSync;
 // Use spawnSync instead of execSync or execFileSync for the commands
-// involving asterisks (*) to be expanded in shell.
+// involving asterisks (*) to be expanded in shell. openssl commands
+// seem to require spawnSync and some of them also require {shell: true}.
 var spawnSync = require('child_process').spawnSync; 
 
 // get graph file
@@ -89,11 +90,11 @@ for (var i = 0; i < authList.length; i++) {
 	execFileSync('./generateExampleAuthCredentials.sh', [auth.id, auth.authHost, CA_PASSWORD, AUTH_PASSWORD]);
 	var MY_CERTS_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_certs/';
 	execFileSync('mkdir', ['-p', MY_CERTS_DIR]);
-	spawnSync('mv', ['certs/Auth' + auth.id + '*Cert.pem', MY_CERTS_DIR], { shell: true });
+	spawnSync('mv', ['certs/Auth' + auth.id + '*Cert.pem', MY_CERTS_DIR], {shell: true});
 	
 	var MY_KEYSTORES_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_keystores/';
 	execFileSync('mkdir', ['-p', MY_KEYSTORES_DIR]);
-	spawnSync('mv', ['keystores/Auth' + auth.id + '*.pfx', MY_KEYSTORES_DIR], { shell: true });
+	spawnSync('mv', ['keystores/Auth' + auth.id + '*.pfx', MY_KEYSTORES_DIR], {shell: true});
 	var CURRENT_AUTH_DB_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id;
 	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/entity_certs/']);
 	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/entity_keys/']);
@@ -118,18 +119,18 @@ for (var i = 0; i < authTrusts.length; i++) {
 // copy Auth certs to entity directory
 const AUTH_CERTS_DIR = PROJ_ROOT_DIR + 'entity/auth_certs';
 execFileSync('mkdir', ['-p', AUTH_CERTS_DIR]);
-spawnSync('cp', [AUTH_DATABASES_DIR + 'auth*/my_certs/*EntityCert.pem', AUTH_CERTS_DIR], { shell: true });
+spawnSync('cp', [AUTH_DATABASES_DIR + 'auth*/my_certs/*EntityCert.pem', AUTH_CERTS_DIR], {shell: true});
 
 // generate entity credentials
 function generateEntityCert(entity, copyTo, keyPathPrefix, certPathPrefix) {
-	execSync('openssl genrsa -out ' + keyPathPrefix + 'Key.pem 2048');
-	execSync('openssl req -new -key ' + keyPathPrefix + 'Key.pem -sha256 -out ' + keyPathPrefix
-		+ 'Req.pem -subj /C=US/ST=CA/L=Berkeley/O=EECS/OU=' + entity.netName + '/CN=' + entity.name);
-	execSync('openssl x509 -passin pass:' + CA_PASSWORD + ' -req -in ' + keyPathPrefix + 'Req.pem -sha256 -extensions usr_cert -CA '
-		+ CA_DIR + 'CACert.pem -CAkey ' + CA_DIR + 'CAKey.pem -CAcreateserial -out ' + certPathPrefix + 'Cert.pem -days ' + VAL_DAYS);
+	spawnSync('openssl', ['genrsa', '-out', keyPathPrefix + 'Key.pem 2048'], {shell: true});
+	spawnSync('openssl', ['req', '-new', '-key', keyPathPrefix + 'Key.pem', '-sha256', '-out', keyPathPrefix + 'Req.pem',
+		'-subj', '/C=US/ST=CA/L=Berkeley/O=EECS/OU=' + entity.netName + '/CN=' + entity.name]);
+	spawnSync('openssl', ['x509', '-passin', 'pass:' + CA_PASSWORD, '-req', '-in', keyPathPrefix + 'Req.pem', '-sha256', '-extensions', 'usr_cert', '-CA',
+		CA_DIR + 'CACert.pem', '-CAkey', CA_DIR + 'CAKey.pem', '-CAcreateserial', '-out', certPathPrefix + 'Cert.pem', '-days', VAL_DAYS]);
 	execFileSync('rm', [keyPathPrefix + 'Req.pem']);
 	if (entity.inDerFormat == true) {
-		execSync('openssl pkcs8 -topk8 -inform PEM -outform DER -in ' + keyPathPrefix + 'Key.pem -out ' + keyPathPrefix + 'Key.der -nocrypt');
+		spawnSync('openssl', ['pkcs8', '-topk8', '-inform', 'PEM', '-outform', 'DER', '-in', keyPathPrefix + 'Key.pem', '-out', keyPathPrefix + 'Key.der', '-nocrypt']);
 		execFileSync('rm', [keyPathPrefix + 'Key.pem']);
 	}
 	execFileSync('cp', [certPathPrefix + 'Cert.pem', copyTo]);
