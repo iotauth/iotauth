@@ -133,7 +133,7 @@ function commandInterpreter() {
                 console.log('no message!');
                 return;
             }
-            secureCommClient.provideInput('toSend', new Buffer(message));
+            secureCommClient.provideInput('toSend', Buffer.from(message));
         }
         else if (command == 'sendFile') {
             console.log('sendFile command');

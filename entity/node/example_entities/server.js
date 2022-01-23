@@ -111,7 +111,7 @@ function commandInterpreter() {
                 console.log('no message!');
                 return;
             }
-            secureCommServer.provideInput('toSend', {data: new Buffer(message), id: socketID});
+            secureCommServer.provideInput('toSend', {data: Buffer.from(message), id: socketID});
         }
         else if (command == 'sendTo') {
             console.log('sendTo command (sending to a specific client- usage: sendTo [socketID] [message]');
@@ -127,7 +127,7 @@ function commandInterpreter() {
             }
             var socketID = parseInt(message.slice(0, idx));
             message = message.slice(idx + 1);
-            secureCommServer.provideInput('toSend', {data: new Buffer(message), id: socketID});
+            secureCommServer.provideInput('toSend', {data: Buffer.from(message), id: socketID});
         }
         else if (command == 'sendFile') {
             console.log('sendFile command');

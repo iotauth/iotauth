@@ -75,7 +75,7 @@ function commandInterpreter() {
                 console.log('no message!');
                 return;
             }
-            securePublisher.provideInput('toPublish', new Buffer(message));
+            securePublisher.provideInput('toPublish', Buffer.from(message));
         }
         else if (command == 'spubFile') {
             console.log('spubFile command, secure publish of file');
