@@ -21,9 +21,13 @@
 "use strict";
 
 var fs = require('fs');
+// Ending with Sync will not return until the child process terminates.
 var readlineSync = require('readline-sync');
 const execSync = require('child_process').execSync;
 const execFileSync = require('child_process').execFileSync;
+// Use spawnSync instead of execSync or execFileSync for the commands
+// involving asterisks (*) to be expanded in shell.
+var spawnSync = require('child_process').spawnSync; 
 
 // get graph file
 if (process.argv.length <= 2) {
@@ -85,11 +89,11 @@ for (var i = 0; i < authList.length; i++) {
 	execFileSync('./generateExampleAuthCredentials.sh', [auth.id, auth.authHost, CA_PASSWORD, AUTH_PASSWORD]);
 	var MY_CERTS_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_certs/';
 	execFileSync('mkdir', ['-p', MY_CERTS_DIR]);
-	execSync('mv certs/Auth' + auth.id + '*Cert.pem ' + MY_CERTS_DIR);
+	spawnSync('mv', ['certs/Auth' + auth.id + '*Cert.pem', MY_CERTS_DIR], { shell: true });
 	
 	var MY_KEYSTORES_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_keystores/';
 	execFileSync('mkdir', ['-p', MY_KEYSTORES_DIR]);
-	execSync('mv keystores/Auth' + auth.id + '*.pfx ' + MY_KEYSTORES_DIR);
+	spawnSync('mv', ['keystores/Auth' + auth.id + '*.pfx', MY_KEYSTORES_DIR], { shell: true });
 	var CURRENT_AUTH_DB_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id;
 	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/entity_certs/']);
 	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/entity_keys/']);
@@ -114,7 +118,7 @@ for (var i = 0; i < authTrusts.length; i++) {
 // copy Auth certs to entity directory
 const AUTH_CERTS_DIR = PROJ_ROOT_DIR + 'entity/auth_certs';
 execFileSync('mkdir', ['-p', AUTH_CERTS_DIR]);
-execSync('cp ' + AUTH_DATABASES_DIR + 'auth*/my_certs/*EntityCert.pem ' + AUTH_CERTS_DIR);
+spawnSync('cp', [AUTH_DATABASES_DIR + 'auth*/my_certs/*EntityCert.pem', AUTH_CERTS_DIR], { shell: true });
 
 // generate entity credentials
 function generateEntityCert(entity, copyTo, keyPathPrefix, certPathPrefix) {
