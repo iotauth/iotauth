@@ -76,13 +76,13 @@ const VAL_DAYS = 730;
 
 // generate CA credentials
 process.chdir(AUTH_CREDS_DIR);
-execSync('./generateCACredentials.sh ' + CA_PASSWORD);
+execFileSync('./generateCACredentials.sh', [CA_PASSWORD]);
 
 // generate Auth credentials and directories
 var authList = graph.authList;
 for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
-	execSync('./generateExampleAuthCredentials.sh ' + auth.id + ' ' + auth.authHost + ' ' + CA_PASSWORD + ' ' + AUTH_PASSWORD);
+	execFileSync('./generateExampleAuthCredentials.sh', [auth.id, auth.authHost, CA_PASSWORD, AUTH_PASSWORD]);
 	var MY_CERTS_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_certs/';
 	execFileSync('mkdir', ['-p', MY_CERTS_DIR]);
 	execSync('mv certs/Auth' + auth.id + '*Cert.pem ' + MY_CERTS_DIR);
@@ -98,10 +98,11 @@ for (var i = 0; i < authList.length; i++) {
 
 // exchange credentials for trusted Auths
 function copyAuthCerts(fromId, toId) {
-	var prefix = 'cp ' + AUTH_DATABASES_DIR + "auth" + fromId + '/my_certs/Auth' + fromId;
-	var suffix = 'Cert.pem ' + AUTH_DATABASES_DIR + 'auth' + toId + '/trusted_auth_certs';
-	execSync(prefix + 'Internet' + suffix);
-	execSync(prefix + 'Entity' + suffix);
+	var srcFilePrefix = AUTH_DATABASES_DIR + "auth" + fromId + '/my_certs/Auth' + fromId;
+	var srcFileSuffix = 'Cert.pem';
+	var dstDir = AUTH_DATABASES_DIR + 'auth' + toId + '/trusted_auth_certs';
+	execFileSync('cp', [srcFilePrefix + 'Internet' + srcFileSuffix, dstDir]);
+	execFileSync('cp', [srcFilePrefix + 'Entity' + srcFileSuffix, dstDir]);
 }
 var authTrusts = graph.authTrusts;
 for (var i = 0; i < authTrusts.length; i++) {
