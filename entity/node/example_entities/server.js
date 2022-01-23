@@ -111,7 +111,8 @@ function commandInterpreter() {
                 console.log('no message!');
                 return;
             }
-            secureCommServer.provideInput('toSend', {data: Buffer.from(message), id: socketID});
+            // id is set to null to indicate sending to all connected clients.
+            secureCommServer.provideInput('toSend', {data: Buffer.from(message), id: null});
         }
         else if (command == 'sendTo') {
             console.log('sendTo command (sending to a specific client- usage: sendTo [socketID] [message]');
