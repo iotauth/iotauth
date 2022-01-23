@@ -58,7 +58,7 @@ function autoSend() {
     console.log('file data length: ' + fileData.length);
     //secureCommClient.provideInput(fileData);
     console.log('sending at ' + new Date());    
-    secureCommClient.provideInput('toSend', new Buffer('data' + currentRemainingRequestCount));
+    secureCommClient.provideInput('toSend', Buffer.from('data' + currentRemainingRequestCount));
     currentRemainingRequestCount--;
     if (currentRemainingRequestCount > 0) {
         currentTimeout = setTimeout(autoSend, autoSendPeriod);
@@ -267,7 +267,7 @@ function commandInterpreter() {
                 console.log('no message!');
                 return;
             }
-            secureCommClient.provideInput('toSend', new Buffer(message));
+            secureCommClient.provideInput('toSend', Buffer.from(message));
         }
         else if (command == 'sendFile') {
             console.log('sendFile command');
