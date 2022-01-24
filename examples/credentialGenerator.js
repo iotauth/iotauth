@@ -138,8 +138,8 @@ function generateEntityCert(entity, copyTo, keyPathPrefix, certPathPrefix) {
 function generateEntityDistKey(entity, copyTo, keyPathPrefix) {
 	const CIPHER_KEY_SIZE = 16;
 	const MAC_KEY_SIZE = 32;
-	execSync('openssl rand ' + CIPHER_KEY_SIZE + ' > ' + keyPathPrefix + 'CipherKey.key');
-	execSync('openssl rand ' + MAC_KEY_SIZE + ' > ' + keyPathPrefix + 'MacKey.key');
+	spawnSync('openssl', ['rand', CIPHER_KEY_SIZE, '>', keyPathPrefix + 'CipherKey.key'], {shell: true});
+	spawnSync('openssl', ['rand', MAC_KEY_SIZE, '>', keyPathPrefix + 'MacKey.key'], {shell: true});
 
 	execFileSync('cp', [keyPathPrefix +'CipherKey.key', copyTo]);
 	execFileSync('cp', [keyPathPrefix + 'MacKey.key', copyTo]);
