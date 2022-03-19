@@ -10,7 +10,7 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 ---
 
 1. OpenSSL command line tools for creating certificates and keystores of Auths and example entities
-2. Java 1.8 or above
+2. Java 11 or above
 3. [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing Java project of Auth
 4. [Maven CLI (command line interface)](http://maven.apache.org/ref/3.1.0/maven-embedder/cli.html) for building Auth from command line
 5. Node.js for running example server and client entities
