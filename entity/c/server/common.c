@@ -533,7 +533,9 @@ void parse_handshake( parsed_handshake *ret, UCHAR *buf, UINT buf_length){
 }
 
 void serialize_handshake(UCHAR * ret, UINT * ret_length, UCHAR * nonce, UCHAR * reply_nonce ){
-    // if(){} //TODO: common.js serializeHandshake
+    if(nonce == NULL && reply_nonce == NULL){
+        error_handling("Error: handshake should include at least on nonce.");
+    }
     *ret_length = 1 + HS_NONCE_SIZE *2;
     UCHAR indicator = 0;
     if(nonce != NULL){
@@ -542,19 +544,37 @@ void serialize_handshake(UCHAR * ret, UINT * ret_length, UCHAR * nonce, UCHAR * 
     }
     if(reply_nonce != NULL){
         indicator += 2;
-        memcpy(ret+1 +HS_NONCE_SIZE, reply_nonce, HS_NONCE_SIZE);
+        memcpy(ret+1+HS_NONCE_SIZE, reply_nonce, HS_NONCE_SIZE);
     }
-    // if(nonce != NULL){
-    //     indicator += 4;
-    //     memcpy(ret, 1, HS_NONCE_SIZE);
-    // }//TODO: common.js
+    //TODO: add dhParam options.
     ret[0] = indicator;
 }
+
+void serialize_handshake_t(unsigned char * nonce, unsigned char * reply_nonce, unsigned char * ret)
+{
+    if(nonce == NULL && reply_nonce == NULL){
+        error_handling("Error: handshake should include at least on nonce.");
+    }
+    unsigned char indicator = 0;
+    if(nonce != NULL){
+        indicator += 1;
+        memcpy(ret+1, nonce, HS_NONCE_SIZE);
+    }
+    if(reply_nonce != NULL){
+        indicator += 2;
+        memcpy(ret+1+HS_NONCE_SIZE, reply_nonce, HS_NONCE_SIZE);
+    }
+    //TODO: add dhParam options.
+    ret[0] = indicator;
+}
+
 
 //secure communication
 
 
 void receive_message (UCHAR * ret, UINT * ret_length, UINT * seq_num, UCHAR * payload, UINT payload_length, parsed_session_key *parsed_session_key){
+    //TODO: check validity
+    
     UCHAR into[512];
     UINT into_length;
     memcpy(into, payload, payload_length);
@@ -564,7 +584,6 @@ void receive_message (UCHAR * ret, UINT * ret_length, UINT * seq_num, UCHAR * pa
     symmetric_decrypt_authenticate(data, &data_length, into, into_length, &parsed_session_key->keys);
     parse_session_message(ret, ret_length, seq_num, data, data_length);
     printf("Received seq_num: %d\n", *seq_num);
-    
 }
 
 

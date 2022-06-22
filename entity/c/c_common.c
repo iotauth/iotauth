@@ -1,5 +1,11 @@
 #include "c_common.h"
 
+void error_handling(char *message){
+    fputs(message, stderr);
+    fputc('\n', stderr);
+    exit(1);
+}
+
 void print_buf(unsigned char * buf, int n)
 {
     for(int i=0 ; i<n; i++)
@@ -27,8 +33,15 @@ void write_in_n_bytes(int num, int n, unsigned char * buf)
         }
 }
 
-//read variable int buffer 'buf' with length of 'byte_length' into unsigned int num
-unsigned int read_variable_unsigned_int(unsigned char * buf, int byte_length)
+//read variable int buffer 'buf' in Big Endian with length of 'byte_length' into unsigned int num
+/*TODO: 영빈이형 체크
+형 코드 read_variable_unsigned int 부분과 print_seq_num 부분과 겹침. 
+
+확인시 TODO 지울것.
+*/
+
+
+unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
 {
     int num =0;
     for(int i =0; i<byte_length;i++)
@@ -107,7 +120,7 @@ unsigned char * parse_received_message(unsigned char * received_buf, unsigned in
 }
 
 
-/*
+/*parse_session_message
 
 only need to know make_sender_buf()
 
@@ -187,3 +200,68 @@ void connect_as_client(const char * ip_addr, const char * port_num, int * sock)
     printf("\n\n------------Connected-------------\n");
 }
 
+/*
+function:   serializes handshake nonces and reply nonces.
+            ret:indicator_1byte + nonce_8byte + reply_nonce_8byte
+            The size of this buf is constant to HS_INDICATOR_SIZE
+
+input:  nonce(my_nonce) & reply_nonce(received_nonce)
+usage: 
+        unsigned int buf_length = HS_INDICATOR_SIZE;
+        unsigned char buf[HS_INDICATOR_SIZE];
+        serialize_handshake(my_nonce, received_nonce, buf);
+        ~~use buf~~
+        free(buf);
+*/
+void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, unsigned char * ret)
+{
+    if(nonce == NULL && reply_nonce == NULL){
+        error_handling("Error: handshake should include at least on nonce.");
+    }
+    unsigned char indicator = 0;
+    if(nonce != NULL){
+        indicator += 1;
+        memcpy(ret+1, nonce, HS_NONCE_SIZE);
+    }
+    if(reply_nonce != NULL){
+        indicator += 2;
+        memcpy(ret+1+HS_NONCE_SIZE, reply_nonce, HS_NONCE_SIZE);
+    }
+    //TODO: add dhParam options.
+    ret[0] = indicator;
+}
+
+//TODO: check.왜 1,2,4 지??
+void parse_handshake(unsigned char *buf,  HS_nonce * ret)
+{
+    if((buf[0] & 1) != 0){
+        memcpy(ret->nonce, buf +1, HS_NONCE_SIZE);
+    }
+    if((buf[0] & 2) != 0){
+        memcpy(ret->reply_nonce. buf +1 +HS_NONCE_SIZE, HS_NONCE_SIZE);
+    }
+    if((buf[0] & 4) != 0){
+        memcpy(ret->dhParam, buf +1 + HS_NONCE_SIZE*2, HS_NONCE_SIZE);
+    }
+}
+
+void receive_message (unsigned char * ret, unsigned int * ret_length, unsigned int * seq_num, unsigned char * payload, unsigned int payload_length, parsed_session_key *parsed_session_key){
+    //TODO: check validity
+    
+    unsigned char into[512];
+    unsigned int into_length;
+    memcpy(into, payload, payload_length);
+    into_length = payload_length;
+    unsigned char data[512];
+    unsigned int data_length;
+    symmetric_decrypt_authenticate(data, &data_length, into, into_length, &parsed_session_key->keys);
+    parse_session_message(ret, ret_length, seq_num, data, data_length);
+    printf("Received seq_num: %d\n", *seq_num);
+}
+
+
+void parse_session_message(unsigned char * ret, unsigned int * ret_length, unsigned int *seq_num, unsigned char * buf, unsigned int buf_length){
+    *seq_num = read_unsigned int_BE(buf, 0, SEQ_NUM_SIZE);
+    memcpy(ret, buf+SEQ_NUM_SIZE, buf_length - SEQ_NUM_SIZE );
+    *ret_length = buf_length - SEQ_NUM_SIZE;
+}

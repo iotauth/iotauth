@@ -55,6 +55,9 @@ int handshake1(unsigned char * msg, size_t size)
     unsigned char nonce_buf[NONCE_SIZE*2 +1];
     memset(nonce_buf,0,sizeof(nonce_buf));
     nonce_generator(entity_nonce[1].nonce,NONCE_SIZE);
+
+    //TODO: 아마 여기쯤 serializeHandshake 추가해야함. common.js 377줄, iotSecureClient.js 76 참고.
+    // function은 내가 c_common.c 에 serialize_handshake()로 구현해 놓음.
     memcpy(nonce_buf+1,entity_nonce[1].nonce,8);
     nonce_buf[0] = ENTITY_HELLO; //1
     print_buf(nonce_buf,17);

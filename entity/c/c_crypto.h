@@ -8,9 +8,11 @@
 
 #define DIST_KEY_EXPIRATION_TIME_SIZE 6
 #define KEY_EXPIRATION_TIME_SIZE 6
+#define SESSION_KEY_ID_SIZE 8
+
 #define MAC_KEY_SIZE 32
 #define CIPHER_KEY_SIZE 16
-#define SESSION_KEY_ID_SIZE 8
+
 
 // //TODO: #define으로 고정값으로 만들기.s
 // typedef struct signed_data{zz

@@ -145,10 +145,10 @@ void generate_reply_message_server(UCHAR * session_key_request_buf, UINT * sessi
 void encrypt_and_sign_and_concat(UCHAR *ret, UINT * ret_length, UCHAR *message_to_encrypt, UINT message_to_encrypt_length){
     UCHAR encrypted[1000];
     UINT encrypted_length;
-    encrypted_length= (UINT) public_encrypt(message_to_encrypt, (int) message_to_encrypt_length, encrypted, RSA_PKCS1_PADDING, "../../entity/auth_certs/Auth101EntityCert.pem");
+    encrypted_length= (UINT) public_encrypt(message_to_encrypt, (int) message_to_encrypt_length, encrypted, RSA_PKCS1_PADDING, "../../auth_certs/Auth101EntityCert.pem");
     UCHAR sigret[512];
     UINT sigret_length;
-    sign(sigret, &sigret_length, encrypted,encrypted_length, "../../entity/credentials/keys/net1/Net1.ServerKey.pem");
+    sign(sigret, &sigret_length, encrypted,encrypted_length, "../../credentials/keys/net1/Net1.ServerKey.pem");
     *ret_length = encrypted_length + sigret_length;
     memcpy(ret, encrypted, encrypted_length);
     memcpy(ret + encrypted_length, sigret, sigret_length);
@@ -161,11 +161,11 @@ void parse_session_key_response_with_dist_key(session_key_response *session_key_
     UCHAR session_key_buf[256];
     UINT session_key_buf_length;
     parse_data_SESSION_KEY_RESP_WITH_DIST_KEY(response_received, &distribution_key_buf, session_key_buf, &session_key_buf_length, KEY_SIZE);
-    verify(&distribution_key_buf, "./../../entity/auth_certs/Auth101EntityCert.pem");
+    verify(&distribution_key_buf, "./../../auth_certs/Auth101EntityCert.pem");
     printf("auth signature verified\n");
     UCHAR decrypted[256];
     UINT decrypted_length;
-    decrypted_length = private_decrypt(distribution_key_buf.data, distribution_key_buf.data_length, decrypted, RSA_PKCS1_PADDING, "../../entity/credentials/keys/net1/Net1.ServerKey.pem");
+    decrypted_length = private_decrypt(distribution_key_buf.data, distribution_key_buf.data_length, decrypted, RSA_PKCS1_PADDING, "../../credentials/keys/net1/Net1.ServerKey.pem");
     printf("\n");
     parse_distribution_key(&session_key_response->parsed_distribution_key, decrypted, decrypted_length);
     UCHAR dec_buf[256];

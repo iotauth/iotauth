@@ -45,6 +45,7 @@
 
 #define HS_NONCE_SIZE 8
 #define SEQ_NUM_SIZE 8
+#define HS_INDICATOR_SIZE 1+HS_NONCE_SIZE*2
 
 #define MAX_CLIENT_NUM 10
 #define MAX_MSG_LENGTH 1000
@@ -175,6 +176,9 @@ void send_message(char * msg, connected_client_info * client);
 
 unsigned char * symmetric_decrypt_authenticate_t(unsigned char * buf, unsigned int buf_length, unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length);
 unsigned char * symmetric_encrypt_authenticate_t(unsigned char * buf, unsigned int buf_length, unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length);
+void serialize_handshake_t(unsigned char * nonce, unsigned char * reply_nonce, unsigned char * ret);
+
+
 
 extern pthread_t p_thread[12]; //scanf() + accept() + clients 10 = 12
 extern client_list_t client_list;

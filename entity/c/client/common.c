@@ -87,6 +87,7 @@ int print_seq_num(unsigned char *buf)
 }
 
 // payload를 버퍼로 옮길 때!!
+//c_common.c 에서는 write_in_n_bytes.
 void num_key_to_buffer(unsigned char * buffer, int index, int n)
 {
         for(int i=0 ; i < NUMKEY_SIZE; i++)

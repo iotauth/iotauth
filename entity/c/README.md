@@ -1,5 +1,5 @@
 # Code Hiearchy
-common -> crypto -> secure_server, secure_client -> main
+common -> crypto -> secure_comm -> secure_server, secure_client -> main
 
 # writing function rules
 
@@ -29,7 +29,7 @@ void function(unsigned char * input_buf, unsigned int input_buf_length, unsigned
 - input으로는 port, IP address, session key가 있음
 - return secure socket
 
-**void send_secure_message() **
+**void send_secure_message()**
 - send secure message by encrypting with session key
 - input으로는 session key, secure socket, message가 있음
 

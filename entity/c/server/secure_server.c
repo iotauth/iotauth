@@ -189,9 +189,13 @@ void send_handshake2(UCHAR * return_buf, UINT * return_buf_length, UCHAR * hands
     generate_nonce(helper_options->my_nonce, HS_NONCE_SIZE);
     printf("chosen nonce: ");
     print_in_hex(helper_options->my_nonce, HS_NONCE_SIZE);
-    UCHAR buffer[512];
-    UINT buffer_length;
-    serialize_handshake(buffer, &buffer_length, helper_options->my_nonce, received_nonce);
+    // UCHAR buffer[512];
+    // UINT buffer_length;
+    // serialize_handshake(buffer, &buffer_length, helper_options->my_nonce, received_nonce);
+    unsigned int buffer_length = HS_INDICATOR_SIZE;
+    unsigned char buffer[HS_INDICATOR_SIZE];
+    serialize_handshake_t(helper_options->my_nonce, received_nonce, buffer);
+
     // UCHAR encrypted_tagged[512];
     UINT encrypted_tagged_length;
     // symmetric_encrypt_authenticate(encrypted_tagged, &encrypted_tagged_length, buffer, buffer_length ,&session_key.keys);
