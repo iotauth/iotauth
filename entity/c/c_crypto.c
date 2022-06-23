@@ -25,7 +25,7 @@ void print_last_error(char *msg)
     input: 'ret': encrypted buf, 'data': data to encrypt
     output: length of encrypted data
 */
-int public_encrypt(unsigned char * data, int data_len,  int padding, char * path, unsigned char *ret) 
+int public_encrypt(unsigned char * data, int data_len,  int padding, const char * path, unsigned char *ret) 
 {
     FILE *pemFile = fopen(path, "rb");
     X509 *cert = PEM_read_X509(pemFile, NULL, NULL, NULL );
@@ -52,14 +52,14 @@ int public_encrypt(unsigned char * data, int data_len,  int padding, char * path
     return result; // RSA_public_encrypt() returns the size of the encrypted data 
 }
 
-//TODO: �������� ���⵵ ���� �ٲ����
+//TODO: �������� ���⵵ ���� �ٲ����?
 
 /*
     function: read PEM key from 'path'. RSA_Private_decrypt 'encrypted' and save in 'ret' with 'padding'
     input: 'ret': decrypted result buf, 'enc_data': data to decrypt
     output: return decrypted length
 */
-int private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, char * path, unsigned char *ret)
+int private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned char *ret)
 {
     FILE *keyfile = fopen(path, "rb"); 
     RSA *rsa = PEM_read_RSAPrivateKey(keyfile, NULL, NULL, NULL);
@@ -81,12 +81,12 @@ int private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, cha
     input:'sigret': return signed buf, 'encrypted': data to sign
     output: 
 */
-void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, char * path, unsigned char *sigret, unsigned int * sigret_length)
+void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned char *sigret, unsigned int * sigret_length)
 {
     FILE *keyfile = fopen(path, "rb"); 
     RSA *rsa = PEM_read_RSAPrivateKey(keyfile, NULL, NULL, NULL);
     unsigned char dig_enc[SHA256_DIGEST_LENGTH];
-    SHA256_make_digest_msg(dig_enc, encrypted, encrypted_length);
+    SHA256_make_digest_msg(encrypted, encrypted_length, dig_enc);
 
     int sign_result = RSA_sign(NID_sha256, dig_enc,SHA256_DIGEST_LENGTH,
             sigret, sigret_length, rsa);
@@ -102,7 +102,7 @@ void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, char *
     output: error when verify fails
 */
 
-void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char * sign, unsigned int sign_length, char * path)
+void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char * sign, unsigned int sign_length, const char * path)
 {
     FILE *pemFile = fopen(path, "rb");
     X509 *cert = PEM_read_X509( pemFile, NULL, NULL, NULL );
@@ -153,7 +153,7 @@ void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_lengt
     if(AES_set_encrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
         error_handling("AES key setting failed!") ;
     }; 
-    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv �� �ٲ��.
+    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv �� �ٲ��?.
     *ret_length = ((plaintext_length) +iv_length)/iv_length *iv_length;
 }
 
@@ -163,7 +163,7 @@ void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_lengt
     if(AES_set_decrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
         error_handling("AES key setting failed!") ;
     }; 
-    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //iv�� �ٲ��??po
+    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //iv�� �ٲ��???po
     *ret_length = ((encrypted_length) +iv_length)/iv_length *iv_length;
 }
 
