@@ -18,7 +18,7 @@ void print_last_error(char *msg)
     free(err);
 }
 
-//TODO: ¿µºóÀÌÇü ¿©±â check input ¼ø¼­ ¸ÂÃß·Á°í input ¼ø¼­ ¹Ù²Þ. È®ÀÎ½Ã Áö¿ö¢a.
+//TODO: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ check input ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ß·ï¿½ï¿½ï¿½ input ï¿½ï¿½ï¿½ï¿½ ï¿½Ù²ï¿½. È®ï¿½Î½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½a.
 
 /*
     function: read X509cert.pem file & get pubkey from 'path'. RSA_public_encrypt 'data' to 'ret' with 'padding'
@@ -52,7 +52,7 @@ int public_encrypt(unsigned char * data, int data_len,  int padding, char * path
     return result; // RSA_public_encrypt() returns the size of the encrypted data 
 }
 
-//TODO: ¿µºóÀÌÇü ¿©±âµµ ¼ø¼­ ¹Ù²î¾ú¾û
+//TODO: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½âµµ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù²ï¿½ï¿½ï¿½ï¿½
 
 /*
     function: read PEM key from 'path'. RSA_Private_decrypt 'encrypted' and save in 'ret' with 'padding'
@@ -86,10 +86,10 @@ void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, char *
     FILE *keyfile = fopen(path, "rb"); 
     RSA *rsa = PEM_read_RSAPrivateKey(keyfile, NULL, NULL, NULL);
     unsigned char dig_enc[SHA256_DIGEST_LENGTH];
-    make_digest_msg(dig_enc, encrypted, encrypted_length);
+    SHA256_make_digest_msg(dig_enc, encrypted, encrypted_length);
 
     int sign_result = RSA_sign(NID_sha256, dig_enc,SHA256_DIGEST_LENGTH,
-          sigret, sigret_length, rsa);
+            sigret, sigret_length, rsa);
     if(sign_result == 1)
         printf("Sign successed! \n");
     else
@@ -153,7 +153,7 @@ void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_lengt
     if(AES_set_encrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
         error_handling("AES key setting failed!") ;
     }; 
-    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv °¡ ¹Ù²ï´Ù.
+    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv ï¿½ï¿½ ï¿½Ù²ï¿½ï¿½.
     *ret_length = ((plaintext_length) +iv_length)/iv_length *iv_length;
 }
 
@@ -163,7 +163,7 @@ void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_lengt
     if(AES_set_decrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
         error_handling("AES key setting failed!") ;
     }; 
-    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //iv°¡ ¹Ù²ï´Ù??po
+    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //ivï¿½ï¿½ ï¿½Ù²ï¿½ï¿½??po
     *ret_length = ((encrypted_length) +iv_length)/iv_length *iv_length;
 }
 

@@ -36,7 +36,7 @@
 #define SESSION_KEY_RESP_WITH_DIST_KEY 21  // Includes distribution message (session keys)
 #define SESSION_KEY_REQ 22        // Distribution message
 #define SESSION_KEY_RESP 23        // Distribution message
-#define SKEY_HANDSHAKE_1 30   //client °¡ auth¿¡°Ô º¸³¾¶§
+#define SKEY_HANDSHAKE_1 30   //client ï¿½ï¿½ authï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #define SKEY_HANDSHAKE_2 31
 #define SKEY_HANDSHAKE_3 32
 #define SECURE_COMM_MSG 33
@@ -95,4 +95,6 @@ void connect_as_client(const char * ip_addr, const char * port_num, int * sock);
 //Handshake
 void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, unsigned char * ret);
 void parse_handshake(unsigned char *buf,  HS_nonce * ret);
+
+
 #endif

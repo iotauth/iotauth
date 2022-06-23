@@ -1,45 +1,38 @@
 # Code Hiearchy
-common -> crypto -> secure_comm -> secure_server, secure_client -> main
+common -> crypto -> secure_server, secure_client -> main
 
 # writing function rules
 
-void function(input ..., return_pointer, return_length)
+void function(return_pointer, input ...)
 
-input buf, return_buf, return_buf_length: pointer
-input length: unsigned int
+every return and input buffers and lengths input with pointers
 
-void function(unsigned char * input_buf, unsigned int input_buf_length, unsigned char * ret, unsigned int * ret_length)
+void function(unsigned char * ret, unsigned int * ret_length, unsigned char * input_buf, unsigned int * input_buf_length)
 
 # C API
 
 **void load_config()**
 
-- ´Ù¸¥ ÇÔ¼öÀÇ inputÀ¸·Î µé¾î°¥ ³»¿ëÀÎ sender, purpose, number of keys, crypto spec, pubkey path, privkey path µîÀÇ ³»¿ëÀ» config ÆÄÀÏ·Î ºÒ·¯¿À´Â ÀÛ¾÷
-- config ¾ç½ÄÀº user°¡ »ç¿ëÇÒ ¼ö ÀÖ°Ô Á¦°øÇÒ ¿¹Á¤
-- ´Ù¸¥ ÇÔ¼ö¿¡¼­ load ÇÏ°ÔµÇ¸é high computation, long running timeÀÌ ¹ß»ýÇÏ¹Ç·Î µû·Î ÇÔ¼ö¸¦ ¸¸µê
+- ë‹¤ë¥¸ í•¨ìˆ˜ì˜ inputìœ¼ë¡œ ë“¤ì–´ê°ˆ ë‚´ìš©ì¸ sender, purpose, number of keys, crypto spec, pubkey path, privkey path ë“±ì˜ ë‚´ìš©ì„ config íŒŒì¼ë¡œ ë¶ˆëŸ¬ì˜¤ëŠ” ìž‘ì—…
+- config ì–‘ì‹ì€ userê°€ ì‚¬ìš©í•  ìˆ˜ ìžˆê²Œ ì œê³µí•  ì˜ˆì •
+- ë‹¤ë¥¸ í•¨ìˆ˜ì—ì„œ load í•˜ê²Œë˜ë©´ high computation, long running timeì´ ë°œìƒí•˜ë¯€ë¡œ ë”°ë¡œ í•¨ìˆ˜ë¥¼ ë§Œë“¦
 - return struct config
 
 **void get_session_key()**
-- entity client°¡ session key¸¦ ¾ò´Â °úÁ¤
-- inputÀ¸·Î´Â struct config
+- entity clientê°€ session keyë¥¼ ì–»ëŠ” ê³¼ì •
+- inputìœ¼ë¡œëŠ” struct config
 - return struct session_key
 
 **void secure_connection()**
-- entity server¿¡°Ô secure connectionÀ» ÇÏ±âÀ§ÇÑ °úÁ¤
-- inputÀ¸·Î´Â port, IP address, session key°¡ ÀÖÀ½
+- entity serverì—ê²Œ secure connectionì„ í•˜ê¸°ìœ„í•œ ê³¼ì •
+- inputìœ¼ë¡œëŠ” port, IP address, session keyê°€ ìžˆìŒ
 - return secure socket
 
-**void send_secure_message()**
+**void send_secure_message() **
 - send secure message by encrypting with session key
-- inputÀ¸·Î´Â session key, secure socket, message°¡ ÀÖÀ½
+- inputìœ¼ë¡œëŠ” session key, secure socket, messageê°€ ìžˆìŒ
 
 **void wait_connection_message()**
-- entity server°¡ clientÀÇ ÀÔ·ÂÀ» ±â´Ù¸®´Â °úÁ¤
-- inputÀ¸·Î´Â struct config
+- entity serverê°€ clientì˜ ìž…ë ¥ì„ ê¸°ë‹¤ë¦¬ëŠ” ê³¼ì •
+- inputìœ¼ë¡œëŠ” struct config
 - return struct session_key
-
-
-# git management
-git pull (check if upstream commit exists) -> git add . , git commit -m "" (commit my work in local) -> git pull (auto merge. ctrl+x nano) -> code!
-
-always commit at last.

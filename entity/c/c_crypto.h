@@ -13,8 +13,9 @@
 #define MAC_KEY_SIZE 32
 #define CIPHER_KEY_SIZE 16
 
+#define SHA256_DIGEST_LENGTH 32
 
-// //TODO: #defineÀ¸·Î °íÁ¤°ªÀ¸·Î ¸¸µé±â.s
+// //TODO: #defineï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½.s
 // typedef struct signed_data{zz
 //     unsigned char data[500];
 //     unsigned int data_length;
