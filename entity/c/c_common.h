@@ -27,6 +27,28 @@
 #include <openssl/hmac.h>
 #include <pthread.h>
 
+// message type //
+#define AUTH_HELLO 0
+#define ENTITY_HELLO 1
+#define AUTH_SESSION_KEY_REQ 10
+#define AUTH_SESSION_KEY_RESP 11
+#define SESSION_KEY_REQ_IN_PUB_ENC 20
+#define SESSION_KEY_RESP_WITH_DIST_KEY 21  // Includes distribution message (session keys)
+#define SESSION_KEY_REQ 22        // Distribution message
+#define SESSION_KEY_RESP 23        // Distribution message
+#define SKEY_HANDSHAKE_1 30   //client 가 auth에게 보낼때
+#define SKEY_HANDSHAKE_2 31
+#define SKEY_HANDSHAKE_3 32
+#define SECURE_COMM_MSG 33
+#define FIN_SECURE_COMM 34
+#define SECURE_PUB 40
+#define MIGRATION_REQ_WITH_SIGN 50
+#define MIGRATION_RESP_WITH_SIGN 51
+#define MIGRATION_REQ_WITH_MAC 52
+#define MIGRATION_RESP_WITH_MAC 53
+#define AUTH_ALERT 100
+
+
 #define MESSAGE_TYPE_SIZE 1
 #define MAX_PAYLOAD_BUF_SIZE 5
 #define HS_NONCE_SIZE 8
@@ -34,6 +56,14 @@
 
 #define SEQ_NUM_SIZE 8
 
+// Auth Hello //
+#define AUTH_ID_LEN 4
+#define NUMKEY_SIZE 4
+#define NONCE_SIZE 8
+
+// Session key Resp //
+#define MAC_SIZE 32
+#define KEY_ID_SIZE 8
 typedef struct
 {
     unsigned char nonce[HS_NONCE_SIZE];

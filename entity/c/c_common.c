@@ -35,7 +35,7 @@ void write_in_n_bytes(int num, int n, unsigned char * buf)
 
 //read variable int buffer 'buf' in Big Endian with length of 'byte_length' into unsigned int num
 /*TODO: 영빈이형 체크
-형 코드 read_variable_unsigned int 부분과 print_seq_num 부분과 겹침. 
+형 코드 read_variable_unsigned_int 부분과 print_seq_num 부분과 겹침. 
 
 확인시 TODO 지울것.
 */
@@ -107,7 +107,7 @@ function: parses received message into 'message_type', and data after msg_type+p
 USAGE:
 unsigned char received_buf[1000];
 unsigned int received_buf_length = read(socket, received_buf, sizeof(received_buf));
-unsigned char mesage_type;
+unsigned char message_type;
 unsigned int data_buf_length;
 unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length)
 */

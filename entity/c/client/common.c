@@ -121,7 +121,6 @@ int save_senpup(unsigned char *buffer, int index,
 int read_variable_UInt(unsigned char * read_buf,int offset, int byteLength)
 {
     int num =0;
-    unsigned long int sum =1LU;
     for(int i =0; i<byteLength;i++)
     {
         num |= read_buf[offset+i]<< 8*(byteLength-1-i);
