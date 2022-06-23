@@ -238,30 +238,9 @@ void parse_handshake(unsigned char *buf,  HS_nonce * ret)
         memcpy(ret->nonce, buf +1, HS_NONCE_SIZE);
     }
     if((buf[0] & 2) != 0){
-        memcpy(ret->reply_nonce. buf +1 +HS_NONCE_SIZE, HS_NONCE_SIZE);
+        memcpy(ret->reply_nonce, buf +1 +HS_NONCE_SIZE, HS_NONCE_SIZE);
     }
     if((buf[0] & 4) != 0){
         memcpy(ret->dhParam, buf +1 + HS_NONCE_SIZE*2, HS_NONCE_SIZE);
     }
-}
-
-void receive_message (unsigned char * ret, unsigned int * ret_length, unsigned int * seq_num, unsigned char * payload, unsigned int payload_length, parsed_session_key *parsed_session_key){
-    //TODO: check validity
-    
-    unsigned char into[512];
-    unsigned int into_length;
-    memcpy(into, payload, payload_length);
-    into_length = payload_length;
-    unsigned char data[512];
-    unsigned int data_length;
-    symmetric_decrypt_authenticate(data, &data_length, into, into_length, &parsed_session_key->keys);
-    parse_session_message(ret, ret_length, seq_num, data, data_length);
-    printf("Received seq_num: %d\n", *seq_num);
-}
-
-
-void parse_session_message(unsigned char * ret, unsigned int * ret_length, unsigned int *seq_num, unsigned char * buf, unsigned int buf_length){
-    *seq_num = read_unsigned int_BE(buf, 0, SEQ_NUM_SIZE);
-    memcpy(ret, buf+SEQ_NUM_SIZE, buf_length - SEQ_NUM_SIZE );
-    *ret_length = buf_length - SEQ_NUM_SIZE;
 }

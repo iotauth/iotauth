@@ -595,7 +595,7 @@ void parse_session_message(UCHAR * ret, UINT * ret_length, UINT *seq_num, UCHAR 
 
 //sends msg to client_list
 void send_message(char * msg, connected_client_info * client){
-    //iotSecureSocket.js 60 send
+    //iotSecureSocket.js line 60 send
     //if() //TODO: check validity
     // if (!this.checkSessionKeyValidity()) {
     //     console.log('Session key expired!');

@@ -120,7 +120,7 @@ void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char
     }
     // verify! 
     unsigned char digest_buf[SHA256_DIGEST_LENGTH];
-    make_digest_msg(data, data_length, digest_buf);
+    SHA256_make_digest_msg(data, data_length, digest_buf);
     // RSA * rsa2 = create_RSA(authPublicKey,true);   
     int verify_result = RSA_verify(NID_sha256, digest_buf,SHA256_DIGEST_LENGTH,
           sign, sign_length, rsa);
