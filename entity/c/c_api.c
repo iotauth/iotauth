@@ -136,7 +136,7 @@ int main()
     print_buf(&session_key_list[2].key_id, KEY_ID_SIZE);
 }
 
-//session_key¸¦ ¿©·¯°³ ¹Þ°í½Í¾î¿ä. struct  ±¸Á¶? return?'
+//session_keyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ°ï¿½ï¿½Í¾ï¿½ï¿?. struct  ï¿½ï¿½ï¿½ï¿½? return?'
 /*
     config = load_config();
     malloc(sizeof(session_key)*numkey);
