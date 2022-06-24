@@ -28,13 +28,15 @@
 #define abc 6
 #define ddd 1+abc*2
 
+typedef struct{
+    unsigned char * hi;
+    unsigned int hello;
+    unsigned char good[10];
+}tester;
 
 int main(){
 
-    unsigned char temp[] = "senderbuf";
-    printf("%s\n", temp);
-    unsigned char buf [] = "hello";
-    printf("%s\n", buf);
-    memcpy(temp-5, buf, 5);
+    tester *test = malloc(3 * sizeof(tester));
+    test[0].
     printf("%s\n", temp-5);
 }
