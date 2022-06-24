@@ -87,6 +87,18 @@ unsigned int var_length_int_to_num_t(unsigned char * buf, int buf_length)
 }
 
 //영빈이형 이거 check. 위에 두개 한번으로 합쳐놓은거. 
+/*
+function:
+    buf = (variable_length_buf) + (data_buf)
+    reads (variable_length_buf) to unsigned int (payload_length)
+    reads (variable_length_buf)'s buf_length to unsigned int (payload_buf_length)
+
+usage:
+    unsigned int data_buf_length;
+    unsigned int payload_buf_length; 
+    var_length_int_to_num(received_buf + MESSAGE_TYPE_SIZE, received_buf_length, data_buf_length, &payload_buf_length);
+*/
+
 void var_length_int_to_num(unsigned char * buf, unsigned int buf_length, unsigned int * payload_length, unsigned int * payload_buf_length)
 {
     unsigned int num = 0;

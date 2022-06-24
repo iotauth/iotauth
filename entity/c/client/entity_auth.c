@@ -32,7 +32,7 @@ int entity_auth(unsigned char * msg, size_t size)
     {
         printf("\nreceived session key response with distribution key attached! \n");
         int payload_len = payload_length(msg+1,size);
-        int buf_len = payload_buf_length(payload_len); // TODO: 함수 두 개로 나누는게 좋은지? 아니면 struct로 만드는게 좋은지? 이유: 너무 많이 쓰임!
+        int buf_len = payload_buf_length(payload_len);
         printf("payload len: %d, buf len: %d\n",payload_len,buf_len );
         unsigned char *s1 = malloc(payload_len - DIST_ENC_SIZE);
         slice(s1,msg,DIST_ENC_SIZE+1+buf_len,1+buf_len+payload_len);

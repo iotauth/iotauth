@@ -9,37 +9,46 @@
 #define DIST_KEY_EXPIRATION_TIME_SIZE 6
 #define KEY_EXPIRATION_TIME_SIZE 6
 #define SESSION_KEY_ID_SIZE 8
+#define REL_VALIDITY_SIZE 6
 
 #define MAC_KEY_SIZE 32
 #define CIPHER_KEY_SIZE 16
 #define RSA_KEY_SIZE 256
 #define RSA_ENCRYPT_SIGN_SIZE RSA_KEY_SIZE*2
 
+#define IV_SIZE 16
+
 #define SHA256_DIGEST_LENGTH 32
 
-// //TODO: #defineï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿?.s
-// typedef struct signed_data{zz
-//     unsigned char data[500];
-//     unsigned int data_length;
-//     unsigned char sign[500];
-//     unsigned int sign_length;
-// } signed_data;
 
 typedef struct
 {
-    unsigned char mac_key[MAC_KEY_SIZE];
-    unsigned char cipher_key[CIPHER_KEY_SIZE];
+    unsigned char data[RSA_KEY_SIZE];
+    unsigned char sign[RSA_KEY_SIZE];
+}signed_data_t;
+
+//must free mac & cipher key
+typedef struct
+{
+    unsigned char * mac_key;
+    unsigned int mac_key_size;
+    unsigned char * cipher_key;
+    unsigned int cipher_key_size;
     unsigned char absvalidity[DIST_KEY_EXPIRATION_TIME_SIZE];
     long int start_time;
 }distribution_key;
 
+
+//must free mac & cipher key
 typedef struct
 {
     unsigned char key_id[SESSION_KEY_ID_SIZE];
     unsigned char abs_validity[KEY_EXPIRATION_TIME_SIZE];
     unsigned char rel_validity[KEY_EXPIRATION_TIME_SIZE];
-    unsigned char mac_key[MAC_KEY_SIZE];
-    unsigned char cipher_key[CIPHER_KEY_SIZE];
+    unsigned char * mac_key;
+    unsigned int mac_key_size;
+    unsigned char * cipher_key;
+    unsigned int cipher_key_size;
 }session_key; 
 
 void print_last_error(char *msg);
