@@ -35,7 +35,7 @@ unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned 
 
 unsigned char * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, char * path_pub, char * path_priv, unsigned int * message_length)
 {
-    unsigned char encrypted[2048]; // embedded system에서는 문제가 될 수 있음 
+    unsigned char encrypted[2048]; 
     int encrypted_length= public_encrypt(buf, buf_len, 1, path_pub, encrypted);
 
     unsigned char sigret [1024];
@@ -63,7 +63,7 @@ void get_session_key()
         unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
         if(message_type == AUTH_HELLO)
         {
-
+            
             unsigned char sender[] = "net1.client";
             unsigned char purpose[] = "{\"group\":\"Servers\"}";
             unsigned char num_key = 3;
@@ -80,7 +80,7 @@ void get_session_key()
             const char * path_pub = "../auth_certs/Auth101EntityCert.pem";
             const char * path_priv = "../credentials/keys/net1/Net1.ClientKey.pem";
             unsigned int enc_length;
-            unsigned char * enc = encrypt_and_sign(serialized, ret_length, path_pub, path_priv, &message_length);
+            unsigned char * enc = encrypt_and_sign(serialized, ret_length, path_pub, path_priv, &enc_length);
             free(serialized);
 
             unsigned char message;
@@ -91,7 +91,7 @@ void get_session_key()
         }
         else if(message_type == SESSION_KEY_RESP_WITH_DIST_KEY)
         {
-
+            
         }
 
     }
