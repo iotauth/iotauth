@@ -12,7 +12,7 @@ void receive_message(unsigned int * seq_num, unsigned char * payload, unsigned i
     //TODO: check validity
     // 영빈이형이 이쪽 만들어주면 좋을듯? 함수로 하나 빼서?
     unsigned int decrypted_length;
-    unsigned char decrypted = symmetric_decrypt_authenticate(payload, payload_length, session_key->mac_key, MAC_KEY_SIZE, session_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
+    unsigned char * decrypted = symmetric_decrypt_authenticate(payload, payload_length, session_key->mac_key, MAC_KEY_SIZE, session_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
     *seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
     printf("Received seq_num: %d\n", *seq_num);
     printf("%s\n", decrypted+SEQ_NUM_SIZE);
