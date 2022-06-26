@@ -125,7 +125,51 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length, uns
     }
 }
 
+unsigned char * parse_handshake_1(session_key * s_key, unsigned char * entity_nonce, unsigned int * ret_length)
+{
+    //keyId8 + iv16 +data32 + hmac32
 
+    RAND_bytes(entity_nonce, HS_NONCE_SIZE);
+    unsigned char indicator_entity_nonce[1+HS_NONCE_SIZE];
+    memcpy(indicator_entity_nonce+1, entity_nonce, HS_NONCE_SIZE);
+    indicator_entity_nonce[0] = 1;
+
+    unsigned int encrypted_length;
+    unsigned char * encrypted = symmetric_encrypt_authenticate(indicator_entity_nonce, HS_NONCE_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
+    
+    *ret_length = encrypted_length + KEY_ID_SIZE;
+    unsigned char * ret = (unsigned char *)malloc(*ret_length);
+    memcpy(ret, s_key->key_id, KEY_ID_SIZE);
+    memcpy(ret + KEY_ID_SIZE, encrypted, encrypted_length);
+    free(encrypted);
+    return ret;
+};
+
+unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, unsigned int data_buf_length, unsigned char * entity_nonce, session_key * s_key, unsigned int *ret_length)
+{
+    printf("received session key handshake2!");
+    unsigned int decrypted_length;
+    unsigned char * decrypted = symmetric_decrypt_authenticate(data_buf, data_buf_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
+    HS_nonce hs;
+    parse_handshake(decrypted, &hs);
+    free(decrypted);
+
+    //compare my_nonce and received_nonce
+    if(strncmp(hs.reply_nonce, entity_nonce ,HS_NONCE_SIZE) != 0){
+        error_handling("Comm init failed: server NOT verified, nonce NOT matched, disconnecting...");
+    }
+    else{
+        printf("server authenticated/authorized by solving nonce!\n");
+    }
+
+    //send handshake_3
+    unsigned int buf_length = HS_INDICATOR_SIZE;
+    unsigned char buf[HS_INDICATOR_SIZE];
+    serialize_handshake(entity_nonce, hs.reply_nonce, buf);
+
+    unsigned char * ret = symmetric_encrypt_authenticate(buf, HS_NONCE_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, ret_length);
+    return ret;
+}
 
 
 //TODO: debugging 필요할수도 있음.

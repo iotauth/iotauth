@@ -181,7 +181,7 @@ return: unsigned char *. iv+encrypted_data+HMAC_tag ex)16 + n + 32
 
 usage:
     unsigned int encrypted_length;
-    unsigned char encrypted = symmetric_encrypt_authenticate(buf_to_encrypt, buf_to_encrypt_length, mac_key, MAC_KEY_SIZE, cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
+    unsigned char * encrypted = symmetric_encrypt_authenticate(buf_to_encrypt, buf_to_encrypt_length, mac_key, MAC_KEY_SIZE, cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
     ~~ use 'encrypted' ~~
     free(encrypted); //never forget!!
 */
@@ -213,7 +213,7 @@ unsigned char * symmetric_encrypt_authenticate(unsigned char * buf, unsigned int
 /*
 Usage:
     unsigned int decrypted_length;
-    unsigned char decrypted = symmetric_decrypt_authenticate(buf_to_decrypt, buf_to_decrypt_length, mac_key, MAC_KEY_SIZE, cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
+    unsigned char * decrypted = symmetric_decrypt_authenticate(buf_to_decrypt, buf_to_decrypt_length, mac_key, MAC_KEY_SIZE, cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
     ~~ use 'encrypted' ~~
     free(decrypted); //never forget!!
 */
