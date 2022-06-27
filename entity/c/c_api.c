@@ -112,11 +112,47 @@ session_key * get_session_key()
         }
 
     }
-
-
 }
 
-void secure_connection(){}
+int secure_connection(session_key * s_key)
+{
+    //load_config
+    int sock;
+    const char * IP_ADDRESS = "127.0.0.1";
+    const char * PORT_NUM = "21100";
+
+    connect_as_client(IP_ADDRESS, PORT_NUM, &sock);
+
+    unsigned char entity_nonce[HS_NONCE_SIZE];
+
+    unsigned int parsed_buf_length;
+    unsigned char * parsed_buf = parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
+    unsigned char sender[128]; //TODO: actually only needs 19 bytes.
+    unsigned int sender_length;
+    make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_1, sender, &sender_length);
+    write(sock, sender, sender_length);
+    free(parsed_buf);
+
+    //received handshake 2
+    unsigned char received_buf[1000];
+    unsigned int received_buf_length = read(sock, received_buf, sizeof(received_buf));
+    unsigned char message_type;
+    unsigned int data_buf_length;
+    unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
+    if(message_type == SKEY_HANDSHAKE_2)
+    {
+        unsigned int parsed_buf_length;
+        unsigned char * parsed_buf = check_handshake_2_send_handshake_3(data_buf, data_buf_length, entity_nonce, s_key, &parsed_buf_length);
+        unsigned char sender[128]; //TODO: actually only needs 19 bytes.
+        unsigned int sender_length;
+        make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_3, sender, &sender_length);
+        write(sock, sender, sender_length);
+        free(parsed_buf);
+
+        return sock;
+    }
+    
+}
 
 void send_secure_message(){}
 
@@ -127,9 +163,11 @@ void wait_connection_message(){}
 int main()
 {
     session_key * session_key_list = get_session_key();
-    print_buf(&session_key_list[0].key_id, KEY_ID_SIZE);
-    print_buf(&session_key_list[1].key_id, KEY_ID_SIZE);
-    print_buf(&session_key_list[2].key_id, KEY_ID_SIZE);
+    // print_buf(&session_key_list[0].key_id, KEY_ID_SIZE);
+    // print_buf(&session_key_list[1].key_id, KEY_ID_SIZE);
+    // print_buf(&session_key_list[2].key_id, KEY_ID_SIZE);
+    int sock = secure_connection(&session_key_list[0]);
+    printf("finished\n");
 }
 
 //session_key�� ������ �ް��;��?. struct  ����? return?'

@@ -217,7 +217,7 @@ function:   serializes handshake nonces and reply nonces.
             ret:indicator_1byte + nonce_8byte + reply_nonce_8byte
             The size of this buf is constant to HS_INDICATOR_SIZE
 
-input:  nonce(my_nonce) & reply_nonce(received_nonce)
+input:  nonce(my_nonce) & reply_nonce(received_target's nonce)
 usage: 
         unsigned int buf_length = HS_INDICATOR_SIZE;
         unsigned char buf[HS_INDICATOR_SIZE];
