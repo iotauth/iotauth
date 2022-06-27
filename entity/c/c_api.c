@@ -1,7 +1,8 @@
 #include "c_api.h"
 
-//gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
-
+/*
+gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
+*/
 
 void load_config()
 {

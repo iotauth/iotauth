@@ -147,7 +147,7 @@ unsigned char * parse_handshake_1(session_key * s_key, unsigned char * entity_no
 
 unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, unsigned int data_buf_length, unsigned char * entity_nonce, session_key * s_key, unsigned int *ret_length)
 {
-    printf("received session key handshake2!");
+    printf("received session key handshake2!\n");
     unsigned int decrypted_length;
     unsigned char * decrypted = symmetric_decrypt_authenticate(data_buf, data_buf_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
     HS_nonce hs;
@@ -156,7 +156,7 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
 
     //compare my_nonce and received_nonce
     if(strncmp(hs.reply_nonce, entity_nonce ,HS_NONCE_SIZE) != 0){
-        error_handling("Comm init failed: server NOT verified, nonce NOT matched, disconnecting...");
+        error_handling("Comm init failed: server NOT verified, nonce NOT matched, disconnecting...\n");
     }
     else{
         printf("server authenticated/authorized by solving nonce!\n");

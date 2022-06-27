@@ -241,6 +241,7 @@ unsigned char * symmetric_decrypt_authenticate(unsigned char * buf, unsigned int
     memcpy(temp, encrypted+iv_size, temp_length);  
     *ret_length = ((temp_length) +iv_size)/iv_size *iv_size;
     unsigned char * ret = (unsigned char *) malloc(*ret_length);
+    memset(ret, 0, *ret_length);
     AES_CBC_128_decrypt(temp, temp_length, cipher_key, cipher_key_size, iv, iv_size, ret, ret_length);
     free(encrypted);free(received_tag);free(hmac_tag);free(iv);free(temp);
     return ret;
