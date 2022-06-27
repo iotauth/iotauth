@@ -4,16 +4,13 @@
 gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto -pthread
 */
 
-extern int seq_num;
+extern int received_seq_num;
+extern int sent_seq_num;
 
 void load_config()
 {
 
 }
-
-
-
-
 
 session_key * get_session_key()
 {
@@ -33,7 +30,6 @@ session_key * get_session_key()
     unsigned char entity_nonce[NONCE_SIZE];
     while(1)
     {
-
         unsigned char received_buf[1000];
         unsigned int received_buf_length = read(sock, received_buf, sizeof(received_buf));
         unsigned char message_type;
@@ -150,29 +146,71 @@ int secure_connection(session_key * s_key)
         entity_client_state = HANDSHAKE_2_SENT;
         printf("switching to IN_COMM\n");
         entity_client_state = IN_COMM;
-        return sock;
     }
-    seq_num = 0;
-    pthread_t thread;
-    arg_struct args;
-    pthread_create(&thread, NULL, &receive_message, (void *)&args);
-    printf("wait");
+    received_seq_num = 0; //TODO: =0 at here?
+    sent_seq_num = 0;
+
+    printf("wait\n");
+    return sock;
 }
 
-void send_secure_message(){}
+
 
 void wait_connection_message(){}
 
-
-
-int main()
+/*
+usage:
+    pthread_t thread;
+    arg_struct args = {
+        .sock = sock,
+        .s_key = &session_key_list[0]
+    };
+    pthread_create(&thread, NULL, &receive_thread, (void *)&args);
+*/
+void * receive_thread(void * arguments)
 {
-    session_key * session_key_list = get_session_key();
-    // print_buf(&session_key_list[0].key_id, KEY_ID_SIZE);
-    // print_buf(&session_key_list[1].key_id, KEY_ID_SIZE);
-    // print_buf(&session_key_list[2].key_id, KEY_ID_SIZE);
-    int sock = secure_connection(&session_key_list[0]);
-    printf("finished\n");
+    while(1)
+    {
+        arg_struct * args = (arg_struct *) arguments;
+        unsigned char received_buf[1000];
+        unsigned int received_buf_length = read(args->sock, received_buf, sizeof(received_buf));
+        unsigned char message_type;
+        unsigned int data_buf_length;
+        unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
+        if(message_type == SECURE_COMM_MSG)
+        {
+            receive_message(data_buf, data_buf_length, args->s_key);
+        }
+    }
+}
+
+/*
+usage: 
+send_secure_message("Hello World", strlen("Hello World"), &session_key_list[0], sock);
+*/
+void send_secure_message(char * msg, unsigned int msg_length, session_key * s_key, int sock)
+{
+    //iotSecureSocket.js line 60 send
+    //if() //TODO: check validity
+    // if (!this.checkSessionKeyValidity()) {
+    //     console.log('Session key expired!');
+    //     return false;
+    // }
+    unsigned char * buf = (unsigned char *)malloc(SEQ_NUM_SIZE + msg_length);
+    memset(buf, 0, SEQ_NUM_SIZE + msg_length);
+    write_in_n_bytes(sent_seq_num, SEQ_NUM_SIZE, buf);
+    memcpy(buf+SEQ_NUM_SIZE, (unsigned char*) msg, msg_length);
+
+    //encrypt
+    unsigned int encrypted_length;
+    unsigned char * encrypted = symmetric_encrypt_authenticate(buf, SEQ_NUM_SIZE + msg_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
+    free(buf);
+    sent_seq_num++;
+    unsigned char sender_buf[1024]; //TODO: change later.
+    unsigned int sender_buf_length;
+    make_sender_buf(encrypted, encrypted_length, SECURE_COMM_MSG, sender_buf, &sender_buf_length);
+    free(encrypted);
+    write(sock, sender_buf, sender_buf_length);
 }
 
 //session_key�� ������ �ް��;��??. struct  ����? return?'

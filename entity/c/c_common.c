@@ -27,10 +27,21 @@ void generate_nonce(int length, unsigned char * buf)
 // num: number to write in buf, n: buf size 
 void write_in_n_bytes(int num, int n, unsigned char * buf)
 {
+    if(n<8)
+    {
         for(int i=0 ; i < n; i++)
         {
-            buf[i] |=  num >> 8*(n-1-i);
+            buf[i] |= num >> 8*(n-1-i);
         }
+    }
+    else if(n>=8)
+    {
+        for(int i=0 ; i < n; i++)
+        {
+            buf[i] |= (uint64_t) num >> (uint64_t) 8*(n-1-i);
+        }
+    }
+
 }
 
 //read variable int buffer 'buf' in Big Endian with length of 'byte_length' into unsigned int num

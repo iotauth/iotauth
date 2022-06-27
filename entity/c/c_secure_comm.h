@@ -12,8 +12,7 @@
 
 typedef struct
 {
-    unsigned char * message;
-    unsigned int message_length;
+    int sock;
     session_key * s_key;
 }arg_struct;
 
@@ -27,7 +26,7 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length, uns
 unsigned char * parse_handshake_1(session_key * s_key, unsigned char * entity_nonce, unsigned int * ret_length);
 unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, unsigned int data_buf_length, unsigned char * entity_nonce, session_key * s_key, unsigned int *ret_length);
 
-void * receive_message(void * args);
+void receive_message(unsigned char * data, unsigned int data_length, session_key * s_key);
 
 
 

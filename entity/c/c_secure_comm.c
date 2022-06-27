@@ -1,6 +1,7 @@
 #include "c_secure_comm.h"
 
-int seq_num;
+int received_seq_num;
+int sent_seq_num;
 
 /*
 function:   prints the seq_num & message.
@@ -177,20 +178,20 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     return ret;
 }
 
-
 //TODO: debugging 필요할수도 있음.
-void * receive_message(void * arguments)
+void receive_message(unsigned char * data, unsigned int data_length, session_key * s_key)
 {
     //TODO: check validity
     // 영빈이형이 이쪽 만들어주면 좋을듯? 함수로 하나 빼서?
 
-    arg_struct * args = (arg_struct *) arguments;
     unsigned int decrypted_length;
-    unsigned char * decrypted = symmetric_decrypt_authenticate(args->message, args->message_length, args->s_key->mac_key, MAC_KEY_SIZE, args->s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
-    seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
-    printf("Received seq_num: %d\n", seq_num);
+    unsigned char * decrypted = symmetric_decrypt_authenticate(data, data_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
+    received_seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
+    printf("Received seq_num: %d\n", received_seq_num);
     printf("%s\n", decrypted+SEQ_NUM_SIZE);
 }
+
+
 
 //TODO: 영빈이형이 하면 좋을듯.
 void check_validity(){}
