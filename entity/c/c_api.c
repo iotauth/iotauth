@@ -1,7 +1,8 @@
 #include "c_api.h"
 
-//gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
-
+/*
+gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
+*/
 
 void load_config()
 {
@@ -38,7 +39,6 @@ session_key * get_session_key()
     unsigned char entity_nonce[NONCE_SIZE];
     while(1)
     {
-
 
         unsigned char received_buf[1000];
         unsigned int received_buf_length = read(sock, received_buf, sizeof(received_buf));
@@ -100,22 +100,18 @@ session_key * get_session_key()
 
             printf("reply_nonce in sessionKeyResp: ");
             print_buf(reply_nonce, NONCE_SIZE);
-            if(strncmp(reply_nonce, entity_nonce ,NONCE_SIZE) != 0){ //compare generated entity's nonce & received entity's nonce.
+            if(strncmp(reply_nonce, entity_nonce ,NONCE_SIZE) != 0)
+            { //compare generated entity's nonce & received entity's nonce.
                 error_handling("auth nonce NOT verified");
             }
-            else{
+            else
+            {
                 printf("auth nonce verified!\n");
             }
             return session_key_list;
         }
 
     }
-
-
-
-
-
-
 
 
 }
@@ -136,7 +132,7 @@ int main()
     print_buf(&session_key_list[2].key_id, KEY_ID_SIZE);
 }
 
-//session_key�� ������ �ް��;��?. struct  ����? return?'
+//session_key�� ������ �ް��;��?. struct  ����? return?'
 /*
     config = load_config();
     malloc(sizeof(session_key)*numkey);

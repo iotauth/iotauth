@@ -19,7 +19,7 @@ void slice(unsigned char * des_buf, unsigned char * buf, int a, int b )
         des_buf[i] = buf[a+i];
     }
 }
-// buffer¿¡¼­ ±æÀÌ ±¸ÇÒ ¶§!
+// bufferï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½!
 int payload_buf_length(int b)
 {   
     int n = 1;
@@ -45,7 +45,7 @@ int payload_length(unsigned char * message, int b)
 }
 
 
-// buffer ¸¸µé¾î¾ß ÇÒ ¶§!
+// buffer ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½!
 
 int put_in_buf(unsigned char *buffer, int a)
 {
@@ -86,8 +86,8 @@ int print_seq_num(unsigned char *buf)
     return seq;
 }
 
-// payload¸¦ ¹öÆÛ·Î ¿Å±æ ¶§!!
-//c_common.c ¿¡¼­´Â write_in_n_bytes.
+// payloadï¿½ï¿½ ï¿½ï¿½ï¿½Û·ï¿½ ï¿½Å±ï¿½ ï¿½ï¿½!!
+//c_common.c ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ write_in_n_bytes.
 void num_key_to_buffer(unsigned char * buffer, int index, int n)
 {
         for(int i=0 ; i < NUMKEY_SIZE; i++)
