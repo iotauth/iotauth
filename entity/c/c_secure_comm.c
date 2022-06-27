@@ -135,7 +135,7 @@ unsigned char * parse_handshake_1(session_key * s_key, unsigned char * entity_no
     indicator_entity_nonce[0] = 1;
 
     unsigned int encrypted_length;
-    unsigned char * encrypted = symmetric_encrypt_authenticate(indicator_entity_nonce, HS_NONCE_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
+    unsigned char * encrypted = symmetric_encrypt_authenticate(indicator_entity_nonce, 1 + HS_NONCE_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
     
     *ret_length = encrypted_length + KEY_ID_SIZE;
     unsigned char * ret = (unsigned char *)malloc(*ret_length);
