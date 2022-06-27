@@ -102,11 +102,11 @@ config * load_config(char * path)
     fclose(fp); //파일 포인터 닫기
     return c;
 }
-void main()
-{
-    char path[] = "a.config";
-    config * config_info = load_config(path);
-}
 
 
-// gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
+// How to use//
+// void main()
+// {
+//     char path[] = "a.config";
+//     config * config_info = load_config(path);
+// }
