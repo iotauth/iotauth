@@ -1,5 +1,7 @@
 #include "c_secure_comm.h"
 
+int seq_num;
+
 /*
 function:   prints the seq_num & message.
             This decrypts the received 'payload', with the 'session_key', and calculates the seq_num.
@@ -165,22 +167,28 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     //send handshake_3
     unsigned int buf_length = HS_INDICATOR_SIZE;
     unsigned char buf[HS_INDICATOR_SIZE];
-    serialize_handshake(entity_nonce, hs.reply_nonce, buf);
+    memset(buf, 0, HS_INDICATOR_SIZE);
+    serialize_handshake(entity_nonce, hs.nonce, buf);
 
-    unsigned char * ret = symmetric_encrypt_authenticate(buf, HS_NONCE_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, ret_length);
+    unsigned char * ret = symmetric_encrypt_authenticate(buf, HS_INDICATOR_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, ret_length);
+    unsigned int test_length;
+    unsigned char * test = symmetric_decrypt_authenticate(ret, *ret_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &test_length);
+    
     return ret;
 }
 
 
 //TODO: debugging 필요할수도 있음.
-void receive_message(unsigned int * seq_num, unsigned char * payload, unsigned int payload_length, session_key * session_key)
+void * receive_message(void * arguments)
 {
     //TODO: check validity
     // 영빈이형이 이쪽 만들어주면 좋을듯? 함수로 하나 빼서?
+
+    arg_struct * args = (arg_struct *) arguments;
     unsigned int decrypted_length;
-    unsigned char * decrypted = symmetric_decrypt_authenticate(payload, payload_length, session_key->mac_key, MAC_KEY_SIZE, session_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
-    *seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
-    printf("Received seq_num: %d\n", *seq_num);
+    unsigned char * decrypted = symmetric_decrypt_authenticate(args->message, args->message_length, args->s_key->mac_key, MAC_KEY_SIZE, args->s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
+    seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
+    printf("Received seq_num: %d\n", seq_num);
     printf("%s\n", decrypted+SEQ_NUM_SIZE);
 }
 

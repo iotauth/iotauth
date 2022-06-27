@@ -1,8 +1,10 @@
 #include "c_api.h"
 
 /*
-gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
+gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto -pthread
 */
+
+extern int seq_num;
 
 void load_config()
 {
@@ -10,14 +12,6 @@ void load_config()
 }
 
 
-//client�� �̿���.
-//config�� �ʿ��Ѱ�: IP_ADDRESS PORT_NUM sender purpose num_key
-
-
-/*replyNonce[8byte]+auth_Nonce[8byte]+numkeys[4byte]+senderbuf[size:1 + buf]+purposeBuf[size:1 +buf]
-//usage:    unsigned int ret_length;
-            unsigned char * serialized = auth_hello_reply_message();
-*/
 
 
 
@@ -124,6 +118,7 @@ int secure_connection(session_key * s_key)
     connect_as_client(IP_ADDRESS, PORT_NUM, &sock);
 
     unsigned char entity_nonce[HS_NONCE_SIZE];
+    unsigned char entity_client_state;
 
     unsigned int parsed_buf_length;
     unsigned char * parsed_buf = parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
@@ -132,6 +127,7 @@ int secure_connection(session_key * s_key)
     make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_1, sender, &sender_length);
     write(sock, sender, sender_length);
     free(parsed_buf);
+    entity_client_state = HANDSHAKE_1_SENT;
 
     //received handshake 2
     unsigned char received_buf[1000];
@@ -141,17 +137,26 @@ int secure_connection(session_key * s_key)
     unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
     if(message_type == SKEY_HANDSHAKE_2)
     {
+        if(entity_client_state != HANDSHAKE_1_SENT){
+            printf("Comm init failed: wrong sequence of handshake, disconnecting...\n");
+        }
         unsigned int parsed_buf_length;
         unsigned char * parsed_buf = check_handshake_2_send_handshake_3(data_buf, data_buf_length, entity_nonce, s_key, &parsed_buf_length);
-        unsigned char sender[128]; //TODO: actually only needs 19 bytes.
+        unsigned char sender[256]; 
         unsigned int sender_length;
         make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_3, sender, &sender_length);
         write(sock, sender, sender_length);
         free(parsed_buf);
-
+        entity_client_state = HANDSHAKE_2_SENT;
+        printf("switching to IN_COMM\n");
+        entity_client_state = IN_COMM;
         return sock;
     }
-    
+    seq_num = 0;
+    pthread_t thread;
+    arg_struct args;
+    pthread_create(&thread, NULL, &receive_message, (void *)&args);
+    printf("wait");
 }
 
 void send_secure_message(){}
@@ -170,7 +175,7 @@ int main()
     printf("finished\n");
 }
 
-//session_key�� ������ �ް��;��?. struct  ����? return?'
+//session_key�� ������ �ް��;��??. struct  ����? return?'
 /*
     config = load_config();
     malloc(sizeof(session_key)*numkey);

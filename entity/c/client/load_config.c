@@ -37,11 +37,11 @@ const char entity_serverInfo_port_number[] = "entity.server.port.number" ;
 
 void file_log(char path)
 {
-    FILE* fp = fopen(path, "r");  //test파일을 r(읽기) 모드로 열기
+    FILE* fp = fopen(path, "r");  //open test file as 'r'(read) mode.
     char buffer[MAX] = { 0, };
     char *pline;
 
-    printf("config 내용!\n");
+    printf("config\n");
     while(!feof(fp))
     {
         pline = fgets(buffer,MAX,fp);
@@ -76,11 +76,11 @@ void main()
 }
 
 config * load_config()
-    FILE* fp = fopen("a.config", "r");  //test파일을 r(읽기) 모드로 열기
+    FILE* fp = fopen("a.config", "r");  //open test file as 'r'(read) mode.
     char buffer[MAX] = { 0, };
     char *pline;
 
-    printf("config 내용!\n");
+    printf("config\n");
     file_log("a.config");
     while(!feof(fp))
     {
@@ -146,7 +146,7 @@ config * load_config()
     }
     
 // gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
-    fclose(fp); //파일 포인터 닫기
+    fclose(fp); //close file pointer.
     
     
 
