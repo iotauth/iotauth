@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h> 
-#include "common.h"
+#include <stdlib.h>
+
 #define MAX 256
 
 #define EIN 1
@@ -23,7 +24,7 @@ typedef struct{
     unsigned char auth_port_num[5];
     unsigned char entity_server_ip_addr[15];
     unsigned char entity_server_port_num[5];
-}config;
+} config;
 
 const char entity_info_name[] = "entityInfo.name";
 const char entity_info_purpose[] = "entityInfo.purpose";
@@ -35,19 +36,20 @@ const char authInfo_port[] = "auth.port.number" ;
 const char entity_serverInfo_ip_address[] = "entity.server.ip.address" ;
 const char entity_serverInfo_port_number[] = "entity.server.port.number" ;
 
-void file_log(char path)
-{
-    FILE* fp = fopen(path, "r");  //test파일을 r(읽기) 모드로 열기
-    char buffer[MAX] = { 0, };
-    char *pline;
+// void file_log(char path)
+// {
+//     FILE* fp = fopen(&path, "r");  //test파일을 r(읽기) 모드로 열기
+//     char buffer[MAX] = { 0, };
+//     char *pline;
 
-    printf("config 내용!\n");
-    while(!feof(fp))
-    {
-        pline = fgets(buffer,MAX,fp);
-        unsigned char *ptr = strtok(pline, "=");
-        int a;
-}
+//     printf("config 내용!\n");
+//     while(!feof(fp))
+//     {
+//         pline = fgets(buffer,MAX,fp);
+//         unsigned char *ptr = strtok(pline, "=");
+//         int a;
+//     }
+// }
 
 int get_key_value(char * ptr)
 {
@@ -70,18 +72,17 @@ int get_key_value(char * ptr)
 //     get_key_value();
 // }
 
-void main()
+config * load_config() 
 {
-    config * config_info = load_config();
-}
-
-config * load_config()
-    FILE* fp = fopen("a.config", "r");  //test파일을 r(읽기) 모드로 열기
+    config *c = malloc(sizeof(config));
+    
+    char path[] = "a.config";
+    FILE* fp = fopen(path, "r");  //test파일을 r(읽기) 모드로 열기
     char buffer[MAX] = { 0, };
     char *pline;
 
     printf("config 내용!\n");
-    file_log("a.config");
+    // file_log("a.config");
     while(!feof(fp))
     {
         pline = fgets(buffer,MAX,fp);
@@ -94,69 +95,61 @@ config * load_config()
                 case EIN:
                     ptr = strtok(NULL, " ");
                     printf("name: %s\n", ptr);
-                    memcpy(c.name,ptr,sizeof(c.name));
+                    printf("Error \n");
+                    memcpy(c->name, ptr, sizeof(c->name));
+                    printf("Error \n");
                     break;
                 case EIP:
                     ptr = strtok(NULL, " ");
                     printf("purpose: %s\n", ptr);
-                    memcpy(c.purpose,ptr,sizeof(c.purpose));
+                    memcpy(c->purpose,ptr,sizeof(c->purpose));
                     break;
                 case EINK:
                     ptr = strtok(NULL, " ");
                     printf("Numkey: %s\n", ptr);
-                    memcpy(c.numkey,ptr,sizeof(c.numkey));
+                    memcpy(c->numkey,ptr,sizeof(c->numkey));
                     break;
                 case AIPP:
                     ptr = strtok(NULL, " ");
                     printf("Pubkey path of Auth: %s\n", ptr);
-                    memcpy(c.auth_pubkey_path, ptr, sizeof(c.auth_pubkey_path));
+                    memcpy(c->auth_pubkey_path, ptr, sizeof(c->auth_pubkey_path));
                     break;
                 case EIPP:
                     ptr = strtok(NULL, " ");
                     printf("Privkey path of Entity: %s\n", ptr);
-                    memcpy(c.entity_privkey_path, ptr, sizeof(c.entity_privkey_path));
+                    memcpy(c->entity_privkey_path, ptr, sizeof(c->entity_privkey_path));
                     break;
                 case AIIA:
                     ptr = strtok(NULL, " ");
                     printf("IP address of Auth: %s\n", ptr);
-                    memcpy(c.auth_ip_addr, ptr, sizeof(c.auth_ip_addr));
+                    memcpy(c->auth_ip_addr, ptr, sizeof(c->auth_ip_addr));
                     break;
                 case AIP:
                     ptr = strtok(NULL, " ");
                     printf("Port number of Auth: %s\n", ptr);
-                    memcpy(c.auth_port_num,ptr,sizeof(c.auth_port_num));
+                    memcpy(c->auth_port_num,ptr,sizeof(c->auth_port_num));
                     break;
                 case ESIIP:
                     ptr = strtok(NULL, " ");
                     printf("IP address of entity server: %s\n", ptr);
-                    memcpy(c.entity_server_ip_addr, ptr, sizeof(c.entity_server_ip_addr));
+                    memcpy(c->entity_server_ip_addr, ptr, sizeof(c->entity_server_ip_addr));
                     break;
                 case ESIP:
                     ptr = strtok(NULL, " ");
                     printf("Port number of entity server: %s\n", ptr);
-                    memcpy(c.entity_server_port_num,ptr,sizeof(c.entity_server_port_num));
+                    memcpy(c->entity_server_port_num,ptr,sizeof(c->entity_server_port_num));
                     break;
             }
             break;
-
-
-            // ptr = strtok(NULL, " ");
         }
-
     }
-    
-// gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
     fclose(fp); //파일 포인터 닫기
-    
-    
-
-    printf("c.numkey: %s\n", c.numkey);
-    printf("~~\n");
-    printf("c.auth_port_num: %s\n", c.auth_port_num);
-    printf("~~\n");
-    printf("c.entity_port_num: %s\n", c.entity_server_port_num);
-    printf("~~\n");
-
-    print_buf(c.auth_port_num,sizeof(c.auth_port_num));
-
+    return c;
 }
+void main()
+{
+    config * config_info = load_config();
+}
+
+
+// gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
