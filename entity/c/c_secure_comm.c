@@ -111,7 +111,7 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length, uns
     unsigned int buf_idx = NONCE_SIZE;
     unsigned int ret_length;
     unsigned char * ret = parse_string_param(buf, buf_length, buf_idx, &ret_length);
-    //TODO: cryptoSpec ±¸Çö ÇÊ¿ä. iotAuthService.js 260
+    //TODO: cryptoSpec ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½. iotAuthService.js 260
     //~~use ret~~
     free(ret);
     buf_idx += ret_length; //48
@@ -178,11 +178,11 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     return ret;
 }
 
-//TODO: debugging ÇÊ¿äÇÒ¼öµµ ÀÖÀ½.
+//TODO: debugging ï¿½Ê¿ï¿½ï¿½Ò¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 void receive_message(unsigned char * data, unsigned int data_length, session_key * s_key)
 {
     //TODO: check validity
-    // ¿µºóÀÌÇüÀÌ ÀÌÂÊ ¸¸µé¾îÁÖ¸é ÁÁÀ»µí? ÇÔ¼ö·Î ÇÏ³ª »©¼­?
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½? ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ï³ï¿½ ï¿½ï¿½ï¿½ï¿½?
 
     unsigned int decrypted_length;
     unsigned char * decrypted = symmetric_decrypt_authenticate(data, data_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
@@ -193,5 +193,30 @@ void receive_message(unsigned char * data, unsigned int data_length, session_key
 
 
 
-//TODO: ¿µºóÀÌÇüÀÌ ÇÏ¸é ÁÁÀ»µí.
-void check_validity(){}
+//TODO: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+
+int check_validity(long int st_time, int seq_n, unsigned char *rel_validity, unsigned char *abs_validity )
+{
+    if( seq_n == 0 && st_time == 0)
+    {       
+        st_time = time(NULL);
+    }
+    unsigned long int num_valid =1LU;
+    for(int i =0; i<SESSION_KEY_EXPIRATION_TIME_SIZE;i++)
+    {
+        unsigned long int num =1LU << 8*(SESSION_KEY_EXPIRATION_TIME_SIZE-1-i); 
+        num_valid |= num*abs_validity[i];
+    }
+    printf("abs_valid : %ld\n", num_valid);
+    num_valid = num_valid/1000;
+    long int relvalidity = read_unsigned_int_BE(rel_validity,SESSION_KEY_EXPIRATION_TIME_SIZE)/1000;
+    if(time(NULL) > num_valid || time(NULL) - st_time >relvalidity)
+    {
+        printf("session key is expired");
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}

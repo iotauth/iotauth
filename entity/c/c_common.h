@@ -64,6 +64,8 @@
 // Session key Resp //
 #define MAC_SIZE 32
 #define KEY_ID_SIZE 8
+
+
 typedef struct
 {
     unsigned char nonce[HS_NONCE_SIZE];
