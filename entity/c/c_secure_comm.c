@@ -1,5 +1,8 @@
 #include "c_secure_comm.h"
 
+int received_seq_num;
+int sent_seq_num;
+
 /*
 function:   prints the seq_num & message.
             This decrypts the received 'payload', with the 'session_key', and calculates the seq_num.
@@ -135,7 +138,7 @@ unsigned char * parse_handshake_1(session_key * s_key, unsigned char * entity_no
     indicator_entity_nonce[0] = 1;
 
     unsigned int encrypted_length;
-    unsigned char * encrypted = symmetric_encrypt_authenticate(indicator_entity_nonce, HS_NONCE_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
+    unsigned char * encrypted = symmetric_encrypt_authenticate(indicator_entity_nonce, 1 + HS_NONCE_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
     
     *ret_length = encrypted_length + KEY_ID_SIZE;
     unsigned char * ret = (unsigned char *)malloc(*ret_length);
@@ -165,24 +168,30 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     //send handshake_3
     unsigned int buf_length = HS_INDICATOR_SIZE;
     unsigned char buf[HS_INDICATOR_SIZE];
-    serialize_handshake(entity_nonce, hs.reply_nonce, buf);
+    memset(buf, 0, HS_INDICATOR_SIZE);
+    serialize_handshake(entity_nonce, hs.nonce, buf);
 
-    unsigned char * ret = symmetric_encrypt_authenticate(buf, HS_NONCE_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, ret_length);
+    unsigned char * ret = symmetric_encrypt_authenticate(buf, HS_INDICATOR_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, ret_length);
+    unsigned int test_length;
+    unsigned char * test = symmetric_decrypt_authenticate(ret, *ret_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &test_length);
+    
     return ret;
 }
 
-
 //TODO: debugging 필요할수도 있음.
-void receive_message(unsigned int * seq_num, unsigned char * payload, unsigned int payload_length, session_key * session_key)
+void receive_message(unsigned char * data, unsigned int data_length, session_key * s_key)
 {
     //TODO: check validity
     // 영빈이형이 이쪽 만들어주면 좋을듯? 함수로 하나 빼서?
+
     unsigned int decrypted_length;
-    unsigned char * decrypted = symmetric_decrypt_authenticate(payload, payload_length, session_key->mac_key, MAC_KEY_SIZE, session_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
-    *seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
-    printf("Received seq_num: %d\n", *seq_num);
+    unsigned char * decrypted = symmetric_decrypt_authenticate(data, data_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
+    received_seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
+    printf("Received seq_num: %d\n", received_seq_num);
     printf("%s\n", decrypted+SEQ_NUM_SIZE);
 }
+
+
 
 //TODO: 영빈이형이 하면 좋을듯.
 void check_validity(){}

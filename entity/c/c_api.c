@@ -1,25 +1,16 @@
 #include "c_api.h"
 
 /*
-gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto
+gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto -pthread
 */
+
+extern int received_seq_num;
+extern int sent_seq_num;
 
 void load_config()
 {
 
 }
-
-
-//client�� �̿���.
-//config�� �ʿ��Ѱ�: IP_ADDRESS PORT_NUM sender purpose num_key
-
-
-/*replyNonce[8byte]+auth_Nonce[8byte]+numkeys[4byte]+senderbuf[size:1 + buf]+purposeBuf[size:1 +buf]
-//usage:    unsigned int ret_length;
-            unsigned char * serialized = auth_hello_reply_message();
-*/
-
-
 
 session_key * get_session_key()
 {
@@ -39,7 +30,6 @@ session_key * get_session_key()
     unsigned char entity_nonce[NONCE_SIZE];
     while(1)
     {
-
         unsigned char received_buf[1000];
         unsigned int received_buf_length = read(sock, received_buf, sizeof(received_buf));
         unsigned char message_type;
@@ -124,6 +114,7 @@ int secure_connection(session_key * s_key)
     connect_as_client(IP_ADDRESS, PORT_NUM, &sock);
 
     unsigned char entity_nonce[HS_NONCE_SIZE];
+    unsigned char entity_client_state;
 
     unsigned int parsed_buf_length;
     unsigned char * parsed_buf = parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
@@ -132,6 +123,7 @@ int secure_connection(session_key * s_key)
     make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_1, sender, &sender_length);
     write(sock, sender, sender_length);
     free(parsed_buf);
+    entity_client_state = HANDSHAKE_1_SENT;
 
     //received handshake 2
     unsigned char received_buf[1000];
@@ -141,36 +133,87 @@ int secure_connection(session_key * s_key)
     unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
     if(message_type == SKEY_HANDSHAKE_2)
     {
+        if(entity_client_state != HANDSHAKE_1_SENT){
+            printf("Comm init failed: wrong sequence of handshake, disconnecting...\n");
+        }
         unsigned int parsed_buf_length;
         unsigned char * parsed_buf = check_handshake_2_send_handshake_3(data_buf, data_buf_length, entity_nonce, s_key, &parsed_buf_length);
-        unsigned char sender[128]; //TODO: actually only needs 19 bytes.
+        unsigned char sender[256]; 
         unsigned int sender_length;
         make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_3, sender, &sender_length);
         write(sock, sender, sender_length);
         free(parsed_buf);
-
-        return sock;
+        entity_client_state = HANDSHAKE_2_SENT;
+        printf("switching to IN_COMM\n");
+        entity_client_state = IN_COMM;
     }
-    
+    received_seq_num = 0; //TODO: =0 at here?
+    sent_seq_num = 0;
+
+    printf("wait\n");
+    return sock;
 }
 
-void send_secure_message(){}
+
 
 void wait_connection_message(){}
 
-
-
-int main()
+/*
+usage:
+    pthread_t thread;
+    arg_struct args = {
+        .sock = sock,
+        .s_key = &session_key_list[0]
+    };
+    pthread_create(&thread, NULL, &receive_thread, (void *)&args);
+*/
+void * receive_thread(void * arguments)
 {
-    session_key * session_key_list = get_session_key();
-    // print_buf(&session_key_list[0].key_id, KEY_ID_SIZE);
-    // print_buf(&session_key_list[1].key_id, KEY_ID_SIZE);
-    // print_buf(&session_key_list[2].key_id, KEY_ID_SIZE);
-    int sock = secure_connection(&session_key_list[0]);
-    printf("finished\n");
+    while(1)
+    {
+        arg_struct * args = (arg_struct *) arguments;
+        unsigned char received_buf[1000];
+        unsigned int received_buf_length = read(args->sock, received_buf, sizeof(received_buf));
+        unsigned char message_type;
+        unsigned int data_buf_length;
+        unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
+        if(message_type == SECURE_COMM_MSG)
+        {
+            receive_message(data_buf, data_buf_length, args->s_key);
+        }
+    }
 }
 
-//session_key�� ������ �ް��;��?. struct  ����? return?'
+/*
+usage: 
+send_secure_message("Hello World", strlen("Hello World"), &session_key_list[0], sock);
+*/
+void send_secure_message(char * msg, unsigned int msg_length, session_key * s_key, int sock)
+{
+    //iotSecureSocket.js line 60 send
+    //if() //TODO: check validity
+    // if (!this.checkSessionKeyValidity()) {
+    //     console.log('Session key expired!');
+    //     return false;
+    // }
+    unsigned char * buf = (unsigned char *)malloc(SEQ_NUM_SIZE + msg_length);
+    memset(buf, 0, SEQ_NUM_SIZE + msg_length);
+    write_in_n_bytes(sent_seq_num, SEQ_NUM_SIZE, buf);
+    memcpy(buf+SEQ_NUM_SIZE, (unsigned char*) msg, msg_length);
+
+    //encrypt
+    unsigned int encrypted_length;
+    unsigned char * encrypted = symmetric_encrypt_authenticate(buf, SEQ_NUM_SIZE + msg_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
+    free(buf);
+    sent_seq_num++;
+    unsigned char sender_buf[1024]; //TODO: change later.
+    unsigned int sender_buf_length;
+    make_sender_buf(encrypted, encrypted_length, SECURE_COMM_MSG, sender_buf, &sender_buf_length);
+    free(encrypted);
+    write(sock, sender_buf, sender_buf_length);
+}
+
+//session_key�� ������ �ް��;��??. struct  ����? return?'
 /*
     config = load_config();
     malloc(sizeof(session_key)*numkey);

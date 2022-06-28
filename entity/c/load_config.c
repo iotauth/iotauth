@@ -15,7 +15,6 @@ const char entity_serverInfo_ip_address[] = "entity.server.ip.address" ;
 const char entity_serverInfo_port_number[] = "entity.server.port.number" ;
 
 
-
 int get_key_value(char * ptr)
 {
     if(strcmp(ptr, entity_info_name) == 0) return EIN;
@@ -35,11 +34,11 @@ int get_key_value(char * ptr)
 config * load_config(char * path) 
 {
     config *c = malloc(sizeof(config));
-    FILE* fp = fopen(path, "r");  //test파일을 r(읽기) 모드로 열기
+    FILE* fp = fopen(path, "r");  ////open test file as 'r'(read) mode.
     char buffer[MAX] = { 0, };
     char *pline;
 
-    printf("--config 내용--\n");
+    printf("--config--\n");
     // file_log("a.config");
     while(!feof(fp))
     {
@@ -99,7 +98,7 @@ config * load_config(char * path)
             break;
         }
     }
-    fclose(fp); //파일 포인터 닫기
+    fclose(fp); //close file pointer.
     return c;
 }
 

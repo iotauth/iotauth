@@ -164,7 +164,7 @@ void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_lengt
         error_handling("AES key setting failed!") ;
     }; 
     AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //ivï¿½ï¿½ ï¿½Ù²ï¿½ï¿???po
-    *ret_length = ((encrypted_length) +iv_length)/iv_length *iv_length;
+    // *ret_length = ((encrypted_length) +iv_length)/iv_length *iv_length;
 }
 
 //encrypt buf to ret with mac_key, cipher_key
