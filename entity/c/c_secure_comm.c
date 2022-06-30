@@ -194,7 +194,10 @@ void receive_message(unsigned char * data, unsigned int data_length, session_key
 
 
 //TODO: ���������� �ϸ� ������.
-
+// 알아서 해줘~
+// long int validity_st_time = 0; // default number of communication starting time.
+// int seq_num = 0; // default number of sender's sequence.
+// input(start_time, sequence number, relative validity, absolute validity)
 int check_validity(long int st_time, int seq_n, unsigned char *rel_validity, unsigned char *abs_validity )
 {
     if( seq_n == 0 && st_time == 0)

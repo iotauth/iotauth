@@ -21,6 +21,7 @@ int time_validity(long int st_time, int seq_n, unsigned char *rel_validity, unsi
         num_valid |= num*abs_validity[i];
     }
     printf("abs_valid : %ld\n", num_valid);
+    printf("abs_valid : %ld\n", num_valid);
     num_valid = num_valid/1000;
     long int relvalidity = read_variable_UInt(rel_validity, 0, 6)/1000;
     if(time(NULL) > num_valid || time(NULL) - st_time >relvalidity)

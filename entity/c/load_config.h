@@ -1,6 +1,8 @@
 #ifndef LOAD_CONFIG
 #define LOAD_CONFIG
 
+
+
 #define MAX 256
 #define EIN 1
 #define EIP 2
