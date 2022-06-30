@@ -1,7 +1,9 @@
 #ifndef LOAD_CONFIG
 #define LOAD_CONFIG
 
-
+#include <stdio.h>
+#include <string.h> 
+#include <stdlib.h>
 
 #define MAX 256
 #define EIN 1
@@ -26,5 +28,7 @@ typedef struct{
     unsigned char entity_server_port_num[5];
 } config;
 
+int get_key_value(char * ptr);
+config * load_config(char * path) ;
 
 #endif

@@ -1,19 +1,17 @@
 #include "c_api.h"
 
 /*
-gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c -o c_api -lcrypto -pthread
+gcc -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c test.c -o test -lcrypto -pthread
 */
 
-extern int received_seq_num;
 extern int sent_seq_num;
+extern unsigned char entity_client_state;
+extern long int st_time;
 
-void load_config()
+
+session_key * get_session_key(config * config_info)
 {
 
-}
-
-session_key * get_session_key()
-{
     int sock;
     const char * IP_ADDRESS = "127.0.0.1";
     const char * PORT_NUM = "21900";
@@ -25,6 +23,9 @@ session_key * get_session_key()
     unsigned char num_key = 3;
     const char * path_pub = "../auth_certs/Auth101EntityCert.pem";
     const char * path_priv = "../credentials/keys/net1/Net1.ClientKey.pem";    
+
+    //TODO: startfrom here.
+
 
     session_key * session_key_list = malloc(sizeof(session_key) * num_key);
     unsigned char entity_nonce[NONCE_SIZE];
@@ -114,7 +115,7 @@ int secure_connection(session_key * s_key)
     connect_as_client(IP_ADDRESS, PORT_NUM, &sock);
 
     unsigned char entity_nonce[HS_NONCE_SIZE];
-    unsigned char entity_client_state;
+    
 
     unsigned int parsed_buf_length;
     unsigned char * parsed_buf = parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
@@ -143,20 +144,25 @@ int secure_connection(session_key * s_key)
         make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_3, sender, &sender_length);
         write(sock, sender, sender_length);
         free(parsed_buf);
-        entity_client_state = HANDSHAKE_2_SENT;
         printf("switching to IN_COMM\n");
         entity_client_state = IN_COMM;
     }
-    received_seq_num = 0; //TODO: =0 at here?
     sent_seq_num = 0;
-
+    st_time = 0;
     printf("wait\n");
     return sock;
 }
 
+/*
+function: waits for client to connect.
 
+usage: 
+*/
 
-void wait_connection_message(){}
+void wait_connection_message()
+{
+
+}
 
 /*
 usage:
@@ -190,12 +196,11 @@ send_secure_message("Hello World", strlen("Hello World"), &session_key_list[0], 
 */
 void send_secure_message(char * msg, unsigned int msg_length, session_key * s_key, int sock)
 {
-    //iotSecureSocket.js line 60 send
-    //if() //TODO: check validity
-    // if (!this.checkSessionKeyValidity()) {
-    //     console.log('Session key expired!');
-    //     return false;
-    // }
+
+    if(!check_validity(sent_seq_num, s_key->rel_validity, s_key->abs_validity, &st_time))
+    {
+        error_handling("Session key expired!\n");
+    }
     unsigned char * buf = (unsigned char *)malloc(SEQ_NUM_SIZE + msg_length);
     memset(buf, 0, SEQ_NUM_SIZE + msg_length);
     write_in_n_bytes(sent_seq_num, SEQ_NUM_SIZE, buf);
@@ -212,11 +217,3 @@ void send_secure_message(char * msg, unsigned int msg_length, session_key * s_ke
     free(encrypted);
     write(sock, sender_buf, sender_buf_length);
 }
-
-//session_key�� ������ �ް��;��??. struct  ����? return?'
-/*
-    config = load_config();
-    malloc(sizeof(session_key)*numkey);
-    session_key s[config.numkey];
-    get_session_key(&s);
-*/

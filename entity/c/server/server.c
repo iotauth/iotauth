@@ -1,4 +1,6 @@
 /*
+cd ../../../mnt/c/Users/user/project/iotauth
+
 gcc -g server.c common.c -o server -lcrypto -lm
 gcc -g server.c common.c secure_server.c auth.c -o server -lcrypto -lm -pthread
 

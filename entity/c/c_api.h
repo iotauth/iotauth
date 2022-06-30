@@ -2,8 +2,8 @@
 #define C_API_H
 
 #include "c_secure_comm.h"
+#include "load_config.h"
 
-void load_config();
 session_key * get_session_key();
 int secure_connection(session_key * s_key);
 void * receive_thread(void * arguments);

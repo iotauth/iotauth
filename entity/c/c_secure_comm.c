@@ -1,7 +1,10 @@
 #include "c_secure_comm.h"
 
-int received_seq_num;
 int sent_seq_num;
+
+unsigned char entity_client_state;
+
+long int st_time;
 
 /*
 function:   prints the seq_num & message.
@@ -84,7 +87,8 @@ unsigned int parse_session_key(session_key * ret, unsigned char *buf, unsigned i
     memcpy(ret->key_id, buf, SESSION_KEY_ID_SIZE);
     unsigned int cur_idx = SESSION_KEY_ID_SIZE;
     //TODO: abs_validity. iotAuthService.js 203
-    cur_idx += KEY_EXPIRATION_TIME_SIZE;
+    memcpy(ret->abs_validity,buf+cur_idx, ABS_VALIDITY_SIZE);
+    cur_idx += ABS_VALIDITY_SIZE;
     memcpy(ret->rel_validity, buf+cur_idx, REL_VALIDITY_SIZE);
     cur_idx += REL_VALIDITY_SIZE;
 
@@ -178,31 +182,32 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     return ret;
 }
 
-//TODO: debugging �ʿ��Ҽ��� ����.
 void receive_message(unsigned char * data, unsigned int data_length, session_key * s_key)
 {
-    //TODO: check validity
-    // ���������� ���� ������ָ� ������? �Լ��� �ϳ� ����?
-
     unsigned int decrypted_length;
     unsigned char * decrypted = symmetric_decrypt_authenticate(data, data_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
-    received_seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
+    unsigned int received_seq_num = read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
+    if(!check_validity(received_seq_num, s_key->rel_validity, s_key->abs_validity, &st_time))
+    {
+        error_handling("Session key expired!\n");
+    }
+
     printf("Received seq_num: %d\n", received_seq_num);
     printf("%s\n", decrypted+SEQ_NUM_SIZE);
 }
 
 
+/*
+usage:
+    long int st_time = 0;
+    check_valdity()
+*/
 
-//TODO: ���������� �ϸ� ������.
-// 알아서 해줘~
-// long int validity_st_time = 0; // default number of communication starting time.
-// int seq_num = 0; // default number of sender's sequence.
-// input(start_time, sequence number, relative validity, absolute validity)
-int check_validity(long int st_time, int seq_n, unsigned char *rel_validity, unsigned char *abs_validity )
+int check_validity(int seq_n, unsigned char *rel_validity, unsigned char *abs_validity, long int * st_time)
 {
-    if( seq_n == 0 && st_time == 0)
+    if(seq_n == 0 && *st_time == 0)
     {       
-        st_time = time(NULL);
+        *st_time = time(NULL);
     }
     unsigned long int num_valid =1LU;
     for(int i =0; i<SESSION_KEY_EXPIRATION_TIME_SIZE;i++)
@@ -210,12 +215,11 @@ int check_validity(long int st_time, int seq_n, unsigned char *rel_validity, uns
         unsigned long int num =1LU << 8*(SESSION_KEY_EXPIRATION_TIME_SIZE-1-i); 
         num_valid |= num*abs_validity[i];
     }
-    printf("abs_valid : %ld\n", num_valid);
+    // printf("abs_valid : %ld\n", num_valid);
     num_valid = num_valid/1000;
     long int relvalidity = read_unsigned_int_BE(rel_validity,SESSION_KEY_EXPIRATION_TIME_SIZE)/1000;
-    if(time(NULL) > num_valid || time(NULL) - st_time >relvalidity)
+    if(time(NULL) > num_valid || time(NULL) - *st_time >relvalidity)
     {
-        printf("session key is expired");
         return 0;
     }
     else
