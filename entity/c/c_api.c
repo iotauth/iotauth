@@ -1,20 +1,17 @@
 #include "c_api.h"
 
 /*
-gcc -g c_common.c c_crypto.c c_secure_comm.c c_api.c test.c -o test -lcrypto -pthread
+gcc -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c test.c -o test -lcrypto -pthread
 */
 
 extern int sent_seq_num;
 extern unsigned char entity_client_state;
 extern long int st_time;
 
-void load_config()
+
+session_key * get_session_key(config * config_info)
 {
 
-}
-
-session_key * get_session_key()
-{
     int sock;
     const char * IP_ADDRESS = "127.0.0.1";
     const char * PORT_NUM = "21900";
@@ -26,6 +23,9 @@ session_key * get_session_key()
     unsigned char num_key = 3;
     const char * path_pub = "../auth_certs/Auth101EntityCert.pem";
     const char * path_priv = "../credentials/keys/net1/Net1.ClientKey.pem";    
+
+    //TODO: startfrom here.
+
 
     session_key * session_key_list = malloc(sizeof(session_key) * num_key);
     unsigned char entity_nonce[NONCE_SIZE];
@@ -153,9 +153,16 @@ int secure_connection(session_key * s_key)
     return sock;
 }
 
+/*
+function: waits for client to connect.
 
+usage: 
+*/
 
-void wait_connection_message(){}
+void wait_connection_message()
+{
+
+}
 
 /*
 usage:
@@ -210,11 +217,3 @@ void send_secure_message(char * msg, unsigned int msg_length, session_key * s_ke
     free(encrypted);
     write(sock, sender_buf, sender_buf_length);
 }
-
-//session_key�� ������ �ް��;��??. struct  ����? return?'
-/*
-    config = load_config();
-    malloc(sizeof(session_key)*numkey);
-    session_key s[config.numkey];
-    get_session_key(&s);
-*/

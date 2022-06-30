@@ -2,7 +2,10 @@
 
 int main()
 {
-    session_key * session_key_list = get_session_key();
+    char path[] = "a.config";
+    config * config_info = load_config(path);
+
+    session_key * session_key_list = get_session_key(config_info);
     int sock = secure_connection(&session_key_list[0]);
     printf("finished\n");
     pthread_t thread;

@@ -182,7 +182,6 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     return ret;
 }
 
-//TODO: debugging �ʿ��Ҽ��� ����.
 void receive_message(unsigned char * data, unsigned int data_length, session_key * s_key)
 {
     unsigned int decrypted_length;
@@ -197,9 +196,6 @@ void receive_message(unsigned char * data, unsigned int data_length, session_key
     printf("%s\n", decrypted+SEQ_NUM_SIZE);
 }
 
-
-
-//TODO: ���������� �ϸ� ������.
 
 /*
 usage:
