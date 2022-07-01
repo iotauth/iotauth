@@ -36,7 +36,6 @@ typedef struct{
 
 int main(){
 
-    tester *test = malloc(3 * sizeof(tester));
-    test[0].
-    printf("%s\n", temp-5);
+    int c = NULL;
+    printf("%d\n", c);
 }
