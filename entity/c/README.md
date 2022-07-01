@@ -1,5 +1,6 @@
 # Code Hiearchy
-common -> crypto -> secure_server, secure_client -> main
+common -> crypto -> secure_comm -> c_api  -> test
+                    load_config -----¡è
 
 # writing function rules
 
@@ -13,26 +14,31 @@ void function(unsigned char * ret, unsigned int * ret_length, unsigned char * in
 
 **void load_config()**
 
-- ë‹¤ë¥¸ í•¨ìˆ˜ì˜ inputìœ¼ë¡œ ë“¤ì–´ê°ˆ ë‚´ìš©ì¸ sender, purpose, number of keys, crypto spec, pubkey path, privkey path ë“±ì˜ ë‚´ìš©ì„ config íŒŒì¼ë¡œ ë¶ˆëŸ¬ì˜¤ëŠ” ì‘ì—…
-- config ì–‘ì‹ì€ userê°€ ì‚¬ìš©í•  ìˆ˜ ìˆê²Œ ì œê³µí•  ì˜ˆì •
-- ë‹¤ë¥¸ í•¨ìˆ˜ì—ì„œ load í•˜ê²Œë˜ë©´ high computation, long running timeì´ ë°œìƒí•˜ë¯€ë¡œ ë”°ë¡œ í•¨ìˆ˜ë¥¼ ë§Œë“¦
+- ?‹¤ë¥? ?•¨?ˆ˜?˜ input?œ¼ë¡? ?“¤?–´ê°? ?‚´?š©?¸ sender, purpose, number of keys, crypto spec, pubkey path, privkey path ?“±?˜ ?‚´?š©?„ config ?ŒŒ?¼ë¡? ë¶ˆëŸ¬?˜¤?Š” ?‘?—…
+- config ?–‘?‹??? userê°? ?‚¬?š©?•  ?ˆ˜ ?ˆê²? ? œê³µí•  ?˜ˆ? •
+- ?‹¤ë¥? ?•¨?ˆ˜?—?„œ load ?•˜ê²Œë˜ë©? high computation, long running time?´ ë°œìƒ?•˜ë¯?ë¡? ?”°ë¡? ?•¨?ˆ˜ë¥? ë§Œë“¦
 - return struct config
 
 **void get_session_key()**
-- entity clientê°€ session keyë¥¼ ì–»ëŠ” ê³¼ì •
-- inputìœ¼ë¡œëŠ” struct config
+- entity clientê°? session keyë¥? ?–»?Š” ê³¼ì •
+- input?œ¼ë¡œëŠ” struct config
 - return struct session_key
 
 **void secure_connection()**
-- entity serverì—ê²Œ secure connectionì„ í•˜ê¸°ìœ„í•œ ê³¼ì •
-- inputìœ¼ë¡œëŠ” port, IP address, session keyê°€ ìˆìŒ
+- entity server?—ê²? secure connection?„ ?•˜ê¸°ìœ„?•œ ê³¼ì •
+- input?œ¼ë¡œëŠ” port, IP address, session keyê°? ?ˆ?Œ
 - return secure socket
 
 **void send_secure_message() **
 - send secure message by encrypting with session key
-- inputìœ¼ë¡œëŠ” session key, secure socket, messageê°€ ìˆìŒ
+- input?œ¼ë¡œëŠ” session key, secure socket, messageê°? ?ˆ?Œ
 
 **void wait_connection_message()**
-- entity serverê°€ clientì˜ ì…ë ¥ì„ ê¸°ë‹¤ë¦¬ëŠ” ê³¼ì •
-- inputìœ¼ë¡œëŠ” struct config
+- entity serverê°? client?˜ ?…? ¥?„ ê¸°ë‹¤ë¦¬ëŠ” ê³¼ì •
+- input?œ¼ë¡œëŠ” struct config
 - return struct session_key
+
+#compile
+
+$make
+$./test
