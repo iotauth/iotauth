@@ -173,10 +173,7 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     memset(buf, 0, HS_INDICATOR_SIZE);
     serialize_handshake(entity_nonce, hs.nonce, buf);
 
-    unsigned char * ret = symmetric_encrypt_authenticate(buf, HS_INDICATOR_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, ret_length);
-    unsigned int test_length;
-    unsigned char * test = symmetric_decrypt_authenticate(ret, *ret_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &test_length);
-    
+    unsigned char * ret = symmetric_encrypt_authenticate(buf, HS_INDICATOR_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, ret_length); 
     return ret;
 }
 

@@ -5,6 +5,7 @@
 
 //This file includes functions that uses the struct "session_key"
 
+#define IDLE 0
 #define HANDSHAKE_1_SENT 10
 #define HANDSHAKE_1_RECEIVED 21
 #define HANDSHAKE_2_SENT 22
