@@ -31,4 +31,4 @@ typedef struct{
 int get_key_value(char * ptr);
 config * load_config(char * path) ;
 
-#endif
+#endif //LOAD_CONFIG
