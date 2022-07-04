@@ -3,7 +3,6 @@
 int sent_seq_num;
 unsigned char entity_client_state;
 long int st_time;
-int serv_sock = 0;
 
 /*
 function:   prints the seq_num & message.

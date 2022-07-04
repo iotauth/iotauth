@@ -20,9 +20,9 @@ int main()
     sleep(1);
     send_secure_message("Hello Dongha", strlen("Hello Dongha"),&session_key_list[0], sock);
     sleep(1);
-    send_secure_message("Hello Yeongbin", strlen("Hello Yeongbin"),&session_key_list[0], sock);
-    sleep(10);
-    send_secure_message("Hello Yoonsang", strlen("Hello Yoonsang"),&session_key_list[0], sock);
+    // send_secure_message("Hello Yeongbin", strlen("Hello Yeongbin"),&session_key_list[0], sock);
+    // sleep(10);
+    // send_secure_message("Hello Yoonsang", strlen("Hello Yoonsang"),&session_key_list[0], sock);
 
     sleep(60);
 }

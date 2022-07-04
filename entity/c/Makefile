@@ -1,10 +1,16 @@
-all: test clean
+all: entity_client entity_server clean
 
-test: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o test.o
-	gcc -o test c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o test.o -lcrypto -pthread
+entity_client: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o
+	gcc -o entity_client c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o -lcrypto -pthread
 
-test.o: c_common.o c_crypto.o c_secure_comm.o load_config.o
-	gcc -c -o test.o test.c
+entity_client.o: c_common.o c_crypto.o c_secure_comm.o load_config.o
+	gcc -c -o entity_client.o entity_client.c
+
+entity_server: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_server.o
+	gcc -o entity_server c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_server.o -lcrypto -pthread
+
+entity_server.o: c_common.o c_crypto.o c_secure_comm.o load_config.o
+	gcc -c -o entity_server.o entity_server.c
 
 c_common.o: c_common.h c_common.c
 	gcc -c -o c_common.o c_common.c

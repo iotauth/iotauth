@@ -7,7 +7,6 @@ gcc -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c test.c -o tes
 extern int sent_seq_num;
 extern unsigned char entity_client_state;
 extern long int st_time;
-extern int serv_sock;
 
 
 session_key * get_session_key(config * config_info)
@@ -156,6 +155,39 @@ int secure_connection(session_key * s_key)
 }
 
 /*
+function:   Binds address and port to serv_sock.
+
+usage:
+    int serv_sock = init_server(config_info);
+*/
+
+
+//TODO: PORT_NUM needs to be in config_info. currently not implemented.
+int init_server(config *config_info)
+{
+    const char * PORT_NUM = "21100";
+
+    struct sockaddr_in serv_addr;
+    int serv_sock = socket(PF_INET, SOCK_STREAM, 0);
+    if(serv_sock == -1){
+        error_handling("socket() error");
+    }
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serv_addr.sin_port=htons(atoi(PORT_NUM));
+
+    if(bind(serv_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr))==-1){
+        error_handling("bind() error");
+    }
+
+    if(listen(serv_sock, 5)==-1){
+        error_handling("listen() error");
+    }
+    return serv_sock;
+}
+
+/*
 function: waits for client to connect.
 
 input: config, 
@@ -171,52 +203,36 @@ usage:
 
 */
 
-// void * wait_connection_message(void * arguments)
-// {
-//     arg_struct * args = (arg_struct *) arguments;
-//     int clnt_sock;
-//     const char * PORT_NUM = "21100";
+void * wait_connection_message(void * arguments)
+{
+    // arg_struct * args = (arg_struct *) arguments;
+    // int clnt_sock;
 
-//     helper_options_server helper_options[MAX_CLIENT_NUM];
+    // helper_options_server helper_options[MAX_CLIENT_NUM];
 
-//     struct sockaddr_in serv_addr;
-//     struct sockaddr_in clnt_addr;
-//     socklen_t clnt_addr_size;
-//     serv_sock = socket(PF_INET, SOCK_STREAM, 0);
-//     if(serv_sock == -1){
-//         error_handling("socket() error");
-//     }
-//     memset(&serv_addr, 0, sizeof(serv_addr));
-//     serv_addr.sin_family = AF_INET;
-//     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-//     serv_addr.sin_port=htons(atoi(PORT_NUM));
-
-//     if(bind(serv_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr))==-1){
-//         error_handling("bind() error");
-//     }
-
-//     if(listen(serv_sock, 5)==-1){
-//         error_handling("listen() error");
-//     }
-
-//     //TODO: for(;;){}
-//     for(int i = 0; i < MAX_CLIENT_NUM; i ++){
-//         clnt_addr_size = sizeof(clnt_addr);
-//         clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_addr, &clnt_addr_size);
-//         if(clnt_sock==-1){
-//             error_handling("accept() error");
-//         }
+    // struct sockaddr_in serv_addr;
+    // struct sockaddr_in clnt_addr;
+    // socklen_t clnt_addr_size;
 
 
-//         helper_options[i].entity_state = IDLE;
-//         //TODO: 추후 thread 화? 여러개의 client 받아야함.
-//         // connect_to_client(&serv_sock, &clnt_sock, PORT_NUM);
-//         helper_options[i].iot_secure_socket = clnt_sock;
-//         pthread_create(&p_thread[i+1], NULL, &server_client_communication, (void *)&helper_options[i]);
-//         printf("test");
-//         sleep(1);
-//     }
-// }
+    // //TODO: for(;;){}
+    // for(int i = 0; i < MAX_CLIENT_NUM; i ++){
+    //     clnt_addr_size = sizeof(clnt_addr);
+    //     clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_addr, &clnt_addr_size);
+    //     if(clnt_sock==-1){
+    //         error_handling("accept() error");
+    //     }
+
+
+    //     helper_options[i].entity_state = IDLE;
+    //     //TODO: 추후 thread 화? 여러개의 client 받아야함.
+    //     // connect_to_client(&serv_sock, &clnt_sock, PORT_NUM);
+    //     helper_options[i].iot_secure_socket = clnt_sock;
+    //     pthread_create(&p_thread[i+1], NULL, &server_client_communication, (void *)&helper_options[i]);
+    //     printf("test");
+    //     sleep(1);
+    // }
+}
 
 /*
 usage:
