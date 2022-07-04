@@ -1,5 +1,5 @@
-#ifndef LOAD_CONFIG
-#define LOAD_CONFIG
+#ifndef LOAD_CONFIG_H
+#define LOAD_CONFIG_H
 
 #include <stdio.h>
 #include <string.h> 
@@ -31,4 +31,4 @@ typedef struct{
 int get_key_value(char * ptr);
 config * load_config(char * path) ;
 
-#endif
+#endif // LOAD_CONFIG_H

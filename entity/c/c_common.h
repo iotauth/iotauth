@@ -99,4 +99,4 @@ void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, uns
 void parse_handshake(unsigned char *buf,  HS_nonce * ret);
 
 
-#endif
+#endif // C_COMMON_H

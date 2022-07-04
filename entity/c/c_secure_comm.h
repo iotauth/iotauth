@@ -31,4 +31,4 @@ void receive_message(unsigned char * data, unsigned int data_length, session_key
 int check_validity(int seq_n, unsigned char *rel_validity, unsigned char *abs_validity, long int *st_time);
 
 
-#endif
+#endif // C_SECURE_COMM_H
