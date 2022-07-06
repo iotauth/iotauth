@@ -1,6 +1,10 @@
+# Prerequisites
+
+- OpenSSL (TODO: Elaborate why OpenSSL is needed)
+
 # Code Hiearchy
 common -> crypto -> secure_comm -> c_api  -> test
-                    load_config -----¡è
+                    load_config -----Â¡Ã¨
 
 # writing function rules
 
@@ -14,28 +18,28 @@ void function(unsigned char * ret, unsigned int * ret_length, unsigned char * in
 
 **void load_config()**
 
-- ?‹¤ë¥? ?•¨?ˆ˜?˜ input?œ¼ë¡? ?“¤?–´ê°? ?‚´?š©?¸ sender, purpose, number of keys, crypto spec, pubkey path, privkey path ?“±?˜ ?‚´?š©?„ config ?ŒŒ?¼ë¡? ë¶ˆëŸ¬?˜¤?Š” ?‘?—…
-- config ?–‘?‹??? userê°? ?‚¬?š©?•  ?ˆ˜ ?ˆê²? ? œê³µí•  ?˜ˆ? •
-- ?‹¤ë¥? ?•¨?ˆ˜?—?„œ load ?•˜ê²Œë˜ë©? high computation, long running time?´ ë°œìƒ?•˜ë¯?ë¡? ?”°ë¡? ?•¨?ˆ˜ë¥? ë§Œë“¦
+- ?â€¹Â¤Ã«Â¥? ?â€¢Â¨?Ë†Ëœ?ÂËœ input?Å“Â¼Ã«Â¡? ?â€œÂ¤?â€“Â´ÃªÂ°? ?â€šÂ´?Å¡Â©?ÂÂ¸ sender, purpose, number of keys, crypto spec, pubkey path, privkey path ?â€œÂ±?ÂËœ ?â€šÂ´?Å¡Â©?Ââ€ config ?Å’Å’?ÂÂ¼Ã«Â¡? Ã«Â¶Ë†Ã«Å¸Â¬?ËœÂ¤?Å â€ ?Å¾â€˜?â€”â€¦
+- config ?â€“â€˜?â€¹Â??? userÃªÂ°? ?â€šÂ¬?Å¡Â©?â€¢Â  ?Ë†Ëœ ?Å¾Ë†ÃªÂ²? ?Â Å“ÃªÂ³ÂµÃ­â€¢Â  ?ËœË†?Â â€¢
+- ?â€¹Â¤Ã«Â¥? ?â€¢Â¨?Ë†Ëœ?â€”Â?â€Å“ load ?â€¢ËœÃªÂ²Å’Ã«ÂËœÃ«Â©? high computation, long running time?ÂÂ´ Ã«Â°Å“Ã¬Æ’Â?â€¢ËœÃ«Â¯?Ã«Â¡? ?â€Â°Ã«Â¡? ?â€¢Â¨?Ë†ËœÃ«Â¥? Ã«Â§Å’Ã«â€œÂ¦
 - return struct config
 
 **void get_session_key()**
-- entity clientê°? session keyë¥? ?–»?Š” ê³¼ì •
-- input?œ¼ë¡œëŠ” struct config
+- entity clientÃªÂ°? session keyÃ«Â¥? ?â€“Â»?Å â€ ÃªÂ³Â¼Ã¬Â â€¢
+- input?Å“Â¼Ã«Â¡Å“Ã«Å â€ struct config
 - return struct session_key
 
 **void secure_connection()**
-- entity server?—ê²? secure connection?„ ?•˜ê¸°ìœ„?•œ ê³¼ì •
-- input?œ¼ë¡œëŠ” port, IP address, session keyê°? ?ˆ?Œ
+- entity server?â€”ÂÃªÂ²? secure connection?Ââ€ ?â€¢ËœÃªÂ¸Â°Ã¬Å“â€?â€¢Å“ ÃªÂ³Â¼Ã¬Â â€¢
+- input?Å“Â¼Ã«Â¡Å“Ã«Å â€ port, IP address, session keyÃªÂ°? ?Å¾Ë†?ÂÅ’
 - return secure socket
 
 **void send_secure_message() **
 - send secure message by encrypting with session key
-- input?œ¼ë¡œëŠ” session key, secure socket, messageê°? ?ˆ?Œ
+- input?Å“Â¼Ã«Â¡Å“Ã«Å â€ session key, secure socket, messageÃªÂ°? ?Å¾Ë†?ÂÅ’
 
 **void wait_connection_message()**
-- entity serverê°? client?˜ ?…? ¥?„ ê¸°ë‹¤ë¦¬ëŠ” ê³¼ì •
-- input?œ¼ë¡œëŠ” struct config
+- entity serverÃªÂ°? client?ÂËœ ?Å¾â€¦?Â Â¥?Ââ€ ÃªÂ¸Â°Ã«â€¹Â¤Ã«Â¦Â¬Ã«Å â€ ÃªÂ³Â¼Ã¬Â â€¢
+- input?Å“Â¼Ã«Â¡Å“Ã«Å â€ struct config
 - return struct session_key
 
 #compile
