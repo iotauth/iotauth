@@ -55,7 +55,11 @@ auth_cred_gen() {
 	mv $KS_DIR/$FILE_PREFIX"Cert.pem" $CERTS_DIR/$FILE_PREFIX"Cert.pem"
 	rm $KS_DIR/$FILE_PREFIX"Key.pem"
 	rm $KS_DIR/$FILE_PREFIX"Req.pem"
-	rm $CA_DIR/CACert.srl
+
+	# CACert.srl is not generated in newer OpenSSL by default. Thus, we ignore
+	# error from the following rm command when there is no CACert.srl file by
+	# using `|| true`.
+	rm $CA_DIR/CACert.srl || true
 }
 
 auth_cred_gen "Internet" 
