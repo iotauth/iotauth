@@ -1,6 +1,9 @@
 # Prerequisites
 
-- OpenSSL (TODO: Elaborate why OpenSSL is needed)
+- OpenSSL (TODO: Elaborate why OpenSSL is needed).
+  - The following environment variables need to be set before running `make`.
+    - export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
+    - export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
 
 # Code Hiearchy
 common -> crypto -> secure_comm -> c_api  -> test
