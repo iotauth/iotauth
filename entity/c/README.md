@@ -22,29 +22,30 @@ void function(unsigned char * ret, unsigned int * ret_length, unsigned char * in
 
 **void load_config()**
 
-- ?‹¤ë¥? ?•¨?ˆ˜?˜ input?œ¼ë¡? ?“¤?–´ê°? ?‚´?š©?¸ sender, purpose, number of keys, crypto spec, pubkey path, privkey path ?“±?˜ ?‚´?š©?„ config ?ŒŒ?¼ë¡? ë¶ˆëŸ¬?˜¤?Š” ?ž‘?—…
-- config ?–‘?‹??? userê°? ?‚¬?š©?•  ?ˆ˜ ?žˆê²? ? œê³µí•  ?˜ˆ? •
-- ?‹¤ë¥? ?•¨?ˆ˜?—?„œ load ?•˜ê²Œë˜ë©? high computation, long running time?´ ë°œìƒ?•˜ë¯?ë¡? ?”°ë¡? ?•¨?ˆ˜ë¥? ë§Œë“¦
-- return struct config
+- load_config() is a function to load the config file.
+- The reason for creating this function is that if you load a file within another function, problems of high computation and long running time occur.
+- Input includes entity name, purpose, number of keys, public key path, private key path, auth ip address, port number, entity server ip, port number.
+- Return struct config
 
 **void get_session_key()**
-- entity clientê°? session keyë¥? ?–»?Š” ê³¼ì •
-- input?œ¼ë¡œëŠ” struct config
-- return struct session_key
+- get_session_key() is a function to get secure session key from Auth.
+- Input is the struct config returned from the load_config function. 
+- Return struct session_key
 
 **void secure_connection()**
-- entity server?—ê²? secure connection?„ ?•˜ê¸°ìœ„?•œ ê³¼ì •
-- input?œ¼ë¡œëŠ” port, IP address, session keyê°? ?žˆ?Œ
-- return secure socket
+- secure_connection() is a function that establishes a secure connection with the entity server in the struct config. 
+- Input is the struct config returned from load_config() and session key received from get_session_key().
+- Return secure socket
 
 **void send_secure_message() **
-- send secure message by encrypting with session key
-- input?œ¼ë¡œëŠ” session key, secure socket, messageê°? ?žˆ?Œ
+- send secure message() is a function that enables secure communication with the server by encrypting it with the session key.
+- Input includes session key, secure socket, message
+- Return sequence number
 
 **void wait_connection_message()**
-- entity serverê°? client?˜ ?ž…? ¥?„ ê¸°ë‹¤ë¦¬ëŠ” ê³¼ì •
-- input?œ¼ë¡œëŠ” struct config
-- return struct session_key
+- wait_connection_message() is a function that the server continues to wait for the entity client and, if the client tries to connect, proceeds with a secure connection.
+- Input is the struct config
+- Return struct session_key
 
 #compile
 

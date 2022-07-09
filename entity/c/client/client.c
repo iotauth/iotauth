@@ -52,6 +52,7 @@ int padding = RSA_PKCS1_PADDING;
 
 pthread_t thread[10];
 
+
 struct topic
 {
     char  group[10];
@@ -69,6 +70,7 @@ struct sessionKeyReq
     char Purpose [20] ;
     char Purpose_len [1] ;
 };
+
 typedef struct
 {
     unsigned char receive_message[100];
@@ -77,6 +79,7 @@ typedef struct
     unsigned char mac_key[32];
     unsigned char cipher_key[16];
 }message_arg;
+message_arg abc;
 
 typedef struct
 {
@@ -856,7 +859,7 @@ int main(int argc, char* argv[])
             //dec_data?? entity_nonce 8?? , ?? ?? ???? 39???? ??????? ???? 1??, crypto spec 39?? 0 0 0 3 => 3??
             //NONCE_SIZE + resp_message_length(9)???? NONCE_SIZE + resp_message_length+strLen ????
 
-            // cryptoSpec ??????? ?¥ê?!!!!
+            // cryptoSpec ??????? ?ï¿½ï¿½?!!!!
             int strLen = resp_num; // 39
             unsigned char resp_str[strLen];
             printf("crypto spec : ");
@@ -885,7 +888,7 @@ int main(int argc, char* argv[])
 
             for(int i = 0; i<resp_session_length;i++)
             {
-                printf("%d ¹øÂ°! \n", i+1);
+                printf("%d ï¿½ï¿½Â°! \n", i+1);
                 printf("key id size: %d\n", offset);
                 slice(session_key_info.key_id,parse_sessionkey,cur_index_par,cur_index_par+offset);
                 long int key_id = read_variable_UInt(parse_sessionkey,cur_index_par , offset);
