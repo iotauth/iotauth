@@ -1,4 +1,4 @@
-all: entity_client entity_server clean
+all: entity_client clean
 
 entity_client: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o
 	gcc ${CPPFLAGS} ${LDFLAGS} -o entity_client c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o -lcrypto -pthread
