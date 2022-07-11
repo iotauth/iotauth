@@ -132,7 +132,7 @@ unsigned char received_buf[1000];
 unsigned int received_buf_length = read(socket, received_buf, sizeof(received_buf));
 unsigned char message_type;
 unsigned int data_buf_length;
-unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length)
+unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
 */
 unsigned char * parse_received_message(unsigned char * received_buf, unsigned int received_buf_length, unsigned char * message_type, unsigned int * data_buf_length)
 {

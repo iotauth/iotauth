@@ -177,7 +177,8 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     return ret;
 }
 
-void receive_message(unsigned char * data, unsigned int data_length, session_key * s_key)
+//Decrypts message, reads seq_num, checks validity, and prints message
+void print_recevied_message(unsigned char * data, unsigned int data_length, session_key * s_key)
 {
     unsigned int decrypted_length;
     unsigned char * decrypted = symmetric_decrypt_authenticate(data, data_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
