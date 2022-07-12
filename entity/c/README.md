@@ -27,27 +27,42 @@ void function(unsigned char * ret, unsigned int * ret_length, unsigned char * in
 - Input includes entity name, purpose, number of keys, public key path, private key path, auth ip address, port number, entity server ip, port number.
 - Return struct config
 
-**void get_session_key()**
+**session_key_t * get_session_key()**
 - get_session_key() is a function to get secure session key from Auth.
 - Input is the struct config returned from the load_config function. 
 - Return struct session_key
 
-**void secure_connection()**
+**int secure_connection()**
 - secure_connection() is a function that establishes a secure connection with the entity server in the struct config. 
 - Input is the struct config returned from load_config() and session key received from get_session_key().
 - Return secure socket
 
-**void send_secure_message() **
+**session_key_t * server_secure_comm_setup()**
+- server_secure_comm_setup() is a function that the server continues to wait for the entity client and, if the client tries to connect, proceeds with a secure connection.
+- Input is the struct config
+- Return struct session_key
+
+**void send_secure_message()**
 - send secure message() is a function that enables secure communication with the server by encrypting it with the session key.
 - Input includes session key, secure socket, message
 - Return sequence number
 
-**void wait_connection_message()**
-- wait_connection_message() is a function that the server continues to wait for the entity client and, if the client tries to connect, proceeds with a secure connection.
-- Input is the struct config
-- Return struct session_key
+**void send_secure_message()**
+- send secure message() is a function that enables secure communication with the server by encrypting it with the session key.
+- Input includes session key, secure socket, message
+- Return sequence number
+
+**void *receive_thread()**
+- Creates a receive_thread
+
+**void receive_message()**
+- Enables receiving messages
 
 #compile
 
-$make
-$./test
+`$cd ~/entity/c`
+`$make`
+-Turn on two different terminals.
+
+`$./entity_client`
+`$./entity_server`

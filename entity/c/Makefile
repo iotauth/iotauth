@@ -1,4 +1,4 @@
-all: entity_client
+all: entity_client entity_server
 
 entity_client: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o
 	gcc ${CPPFLAGS} ${LDFLAGS} -o entity_client c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o -lcrypto -pthread
@@ -18,11 +18,11 @@ c_common.o: c_common.h c_common.c
 c_crypto.o: c_common.o c_crypto.h c_crypto.c
 	gcc ${CPPFLAGS} -c -o c_crypto.o c_crypto.c
 
-c_secure_comm.o: c_crypto.o c_secure_comm.h c_secure_comm.c
-	gcc ${CPPFLAGS} -c -o c_secure_comm.o c_secure_comm.c
-
 load_config.o: load_config.h load_config.c
 	gcc -c -o load_config.o load_config.c
+
+c_secure_comm.o: c_crypto.o load_config.o c_secure_comm.h c_secure_comm.c
+	gcc ${CPPFLAGS} -c -o c_secure_comm.o c_secure_comm.c
 
 c_api.o: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.h c_api.c
 	gcc ${CPPFLAGS} -c -o c_api.o c_api.c
