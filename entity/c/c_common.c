@@ -9,7 +9,7 @@ void error_handling(char *message){
 void print_buf(unsigned char * buf, int n)
 {
     for(int i=0 ; i<n; i++)
-        printf("%x  ", buf[i]);
+        printf("%x ", buf[i]);
     printf("\n");
 }
 
@@ -45,10 +45,10 @@ void write_in_n_bytes(int num, int n, unsigned char * buf)
 }
 
 //read variable int buffer 'buf' in Big Endian with length of 'byte_length' into unsigned int num
-/*TODO: ¿µºóÀÌÇü Ã¼Å©
-Çü ÄÚµå read_variable_unsigned_int ºÎºÐ°ú print_seq_num ºÎºÐ°ú °ãÄ§. 
+/*TODO: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼Å©
+ï¿½ï¿½ ï¿½Úµï¿½ read_variable_unsigned_int ï¿½ÎºÐ°ï¿½ print_seq_num ï¿½ÎºÐ°ï¿½ ï¿½ï¿½Ä§. 
 
-È®ÀÎ½Ã TODO Áö¿ï°Í.
+È®ï¿½Î½ï¿½ TODO ï¿½ï¿½ï¿½ï¿½ï¿½.
 */
 
 
@@ -62,8 +62,8 @@ unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
     return num; 
 }
 
-//TODO: ¹Ø¿¡ ÇÕÃÄ³õÀº ¹öÀü ÀÖÀ½.line 75 ¿µºóÀÌÇü Ã¼Å©.
-//³» ±â¾ïÀ¸·Î ±îÀÎ ÀÌÀ¯´Â ³»°¡ struct ½á¼­ ±îÀÎ°Å °°Àºµ¥ °°Àº ±â´ÉÇÏ¸é ÇÏ³ª·Î ÀÖ´Â°Ô È¿À²ÀûÀÌÁö ¾Ê³ª... Çü²¬·ÎÇÏ¸é ºñÆ® shiftingÀ» µÎ¹ø ÇØ¾ßÇÔ.
+//TODO: ï¿½Ø¿ï¿½ ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.line 75 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼Å©.
+//ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ struct ï¿½á¼­ ï¿½ï¿½ï¿½Î°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½Ö´Â°ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê³ï¿½... ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½Æ® shiftingï¿½ï¿½ ï¿½Î¹ï¿½ ï¿½Ø¾ï¿½ï¿½ï¿½.
 /*  
     function: (0,127) = 1, [128, 128^2] = 2, [128^2, 128^3] = 3 ..... 
     input: integer buffer to change
@@ -97,7 +97,7 @@ unsigned int var_length_int_to_num_t(unsigned char * buf, int buf_length)
     return num;
 }
 
-//¿µºóÀÌÇü ÀÌ°Å check. À§¿¡ µÎ°³ ÇÑ¹øÀ¸·Î ÇÕÃÄ³õÀº°Å. 
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì°ï¿½ check. ï¿½ï¿½ï¿½ï¿½ ï¿½Î°ï¿½ ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½ï¿½ï¿½. 
 /*
 function:
     buf = (variable_length_buf) + (data_buf)
@@ -170,7 +170,7 @@ void num_to_var_length_int(unsigned int data_length, unsigned char * payload_buf
 
 void make_buffer_header(unsigned char *data, unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int * header_length)
 {
-    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //¿ì¼± 5byte·Î Àâ±â.
+    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //ï¿½ì¼± 5byteï¿½ï¿½ ï¿½ï¿½ï¿½.
     unsigned char payload_buf_len;
     num_to_var_length_int(data_length, payload_buf, &payload_buf_len);
     *header_length = MESSAGE_TYPE_SIZE + payload_buf_len;
@@ -254,7 +254,7 @@ void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, uns
     ret[0] = indicator;
 }
 
-//TODO: check.¿Ö 1,2,4 Áö??
+//TODO: check.ï¿½ï¿½ 1,2,4 ï¿½ï¿½??
 void parse_handshake(unsigned char *buf,  HS_nonce_t * ret)
 {
     if((buf[0] & 1) != 0){

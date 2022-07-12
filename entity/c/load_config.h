@@ -20,12 +20,12 @@ typedef struct{
     unsigned char name[32];
     unsigned char purpose[32];
     unsigned char numkey[1];
-    unsigned char auth_pubkey_path[36];
-    unsigned char entity_privkey_path[44] ;
-    unsigned char auth_ip_addr[15];
-    unsigned char auth_port_num[5];
-    unsigned char entity_server_ip_addr[15];
-    unsigned char entity_server_port_num[5];
+    unsigned char auth_pubkey_path[50];
+    unsigned char entity_privkey_path[50] ;
+    unsigned char auth_ip_addr[17];
+    unsigned char auth_port_num[6];
+    unsigned char entity_server_ip_addr[17];
+    unsigned char entity_server_port_num[6];
 } config_t;
 
 int get_key_value(char * ptr);
