@@ -13,20 +13,16 @@ session_key_t * get_session_key(config_t * config_info)
 {
 
     int sock;
-    // const char * IP_ADDRESS = "127.0.0.1";
-    // const char * PORT_NUM = "21900";
     connect_as_client(config_info->auth_ip_addr, config_info->auth_port_num, &sock);
 
     //will be input from config.
-    unsigned char sender[] = "net1.client";
-    unsigned char purpose[] = "{\"group\":\"Servers\"}";
-    unsigned char num_key = 3;
-    const char * path_pub = "../auth_certs/Auth101EntityCert.pem";
-    const char * path_priv = "../credentials/keys/net1/Net1.ClientKey.pem";    
-
+    unsigned char * path_pub = malloc(strlen(config_info->auth_pubkey_path));
+    unsigned char * path_priv = malloc(strlen(config_info->entity_privkey_path));
+    memcpy(path_pub, config_info->auth_pubkey_path , strlen(config_info->auth_pubkey_path)-1);
+    memcpy(path_priv, config_info->entity_privkey_path, strlen(config_info->entity_privkey_path)-1);
     //TODO: startfrom here.
 
-
+    unsigned char num_key = atoi(config_info->numkey);
     session_key_t * session_key_list = malloc(sizeof(session_key_t) * num_key);
     unsigned char entity_nonce[NONCE_SIZE];
     while(1)
@@ -44,13 +40,14 @@ session_key_t * get_session_key(config_t * config_info)
             memcpy(auth_nonce, data_buf + AUTH_ID_LEN, NONCE_SIZE );
             RAND_bytes(entity_nonce, NONCE_SIZE);
             unsigned int ret_length;
-            unsigned char * serialized = auth_hello_reply_message(entity_nonce, auth_nonce, num_key, sender, sizeof(sender), purpose, sizeof(purpose), &ret_length);
+            unsigned char * serialized = auth_hello_reply_message(entity_nonce, auth_nonce, num_key, config_info->name, strlen(config_info->name), config_info->purpose, strlen(config_info->purpose), &ret_length);
             
             //TODO: when distribution key exists.
             unsigned int enc_length;
             unsigned char enc[RSA_ENCRYPT_SIGN_SIZE];
             encrypt_and_sign(serialized, ret_length, path_pub, path_priv, enc, &enc_length);
             free(serialized);
+            free(path_priv);
 
             unsigned char message[1024];
             unsigned int message_length;
@@ -73,6 +70,7 @@ session_key_t * get_session_key(config_t * config_info)
             //verify
             SHA256_verify(signed_data.data, key_size, signed_data.sign, key_size, path_pub);
             printf("auth signature verified\n");
+            free(path_pub);
 
             //decrypt encrypted_distribution_key
             unsigned char decrypted_distribution_key[key_size]; //TODO: may need to change size. Actual decrypted_length = 56 bytes.

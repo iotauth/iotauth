@@ -229,7 +229,7 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
 {
     int option;
     option = 1; //TODO: temp
-    // option = get_entity_config(); //TODO: ±¸Çö SecureCommServer.js 128ÁÙ
+    // option = get_entity_config(); //TODO: ï¿½ï¿½ï¿½ï¿½ SecureCommServer.js 128ï¿½ï¿½
 
     //TODO: check if needed
     //Temporary code. need to load?
