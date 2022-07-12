@@ -1,7 +1,7 @@
 #include "c_api.h"
 
 /*
-gcc -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c test.c -o test -lcrypto -pthread
+gcc -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_server.c -o entity_server -lcrypto -pthread
 */
 
 extern int sent_seq_num;
@@ -102,7 +102,6 @@ session_key_t * get_session_key(config_t * config_info)
             }
             return session_key_list;
         }
-
     }
 }
 
@@ -156,81 +155,119 @@ int secure_connection(session_key_t * s_key)
 
 /*
 function:   Binds address and port to serv_sock.
-
 usage:
     int serv_sock = init_server(config_info);
 */
 
-
-//TODO: PORT_NUM needs to be in config_info. currently not implemented.
-int init_server(config_t *config_info)
+session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
 {
-    const char * PORT_NUM = "21100";
+    unsigned char server_state = IDLE;
+    unsigned char server_nonce[HS_NONCE_SIZE];
+    session_key_t * s_key;
+    while(1)
+    {
+        unsigned char received_buf[1024];
+        int received_buf_length = read(clnt_sock, received_buf, sizeof(received_buf));
+        unsigned char message_type;
+        unsigned int data_buf_length;
+        unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
+        if(message_type == SKEY_HANDSHAKE_1)
+        {
+            printf("received session key handshake1\n");
+            if(server_state != IDLE)
+            {
+                error_handling("Error during comm init - in wrong state, expected: IDLE, disconnecting...\n");
+            }
+            printf("switching to HANDSHAKE_1_RECEIVED state.\n");
+            //TODO: entity state.
+            server_state == HANDSHAKE_1_RECEIVED;
+            unsigned char expected_key_id[SESSION_KEY_ID_SIZE];
+            memcpy(expected_key_id, data_buf, SESSION_KEY_ID_SIZE);
+            /*
+            //TODO: Implement? need to think how.
+            int session_key_found = check_session_key(server_args[i].s_key->key_id, &server_args, fd_max);
+            */ 
+            int session_key_found = -1;
+            if(session_key_found > 0)
+            {
+                //TODO: implement when session_key_found
+            }
+            else if(session_key_found == -1)
+            {
+                memcpy(config->purpose+9, expected_key_id, SESSION_KEY_ID_SIZE);
+                s_key = send_session_key_request_check_protocol(config, expected_key_id);
 
-    struct sockaddr_in serv_addr;
-    int serv_sock = socket(PF_INET, SOCK_STREAM, 0);
-    if(serv_sock == -1){
-        error_handling("socket() error");
+                if(server_state != HANDSHAKE_1_RECEIVED){
+                    error_handling("Error during comm init - in wrong state, expected: HANDSHAKE_1_RECEIVED, disconnecting...");
+                }
+
+                unsigned int parsed_buf_length;
+                unsigned char * parsed_buf = check_handshake1_send_handshake2(data_buf, data_buf_length, server_nonce, s_key, &parsed_buf_length);
+                
+                unsigned char sender[256]; 
+                unsigned int sender_length;
+                make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_2, sender, &sender_length);
+                write(clnt_sock, sender, sender_length);
+                free(parsed_buf);
+                printf("switching to HANDSHAKE_2_SENT'\n");
+                server_state = HANDSHAKE_2_SENT;
+            }
+        }  
+        else if(message_type == SKEY_HANDSHAKE_3)
+        {
+            printf("received session key handshake3!\n");
+            if(server_state != HANDSHAKE_2_SENT)
+            {
+                error_handling("Error during comm init - in wrong state, expected: IDLE, disconnecting...\n");
+            }
+            unsigned int decrypted_length;
+            unsigned char * decrypted = symmetric_decrypt_authenticate(data_buf, data_buf_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
+            HS_nonce_t hs;
+            parse_handshake(decrypted, &hs);
+            free(decrypted);
+            //compare my_nonce and received_nonce
+            if(strncmp(hs.reply_nonce, server_nonce, HS_NONCE_SIZE) != 0){
+                error_handling("Comm init failed: server NOT verified, nonce NOT matched, disconnecting...\n");
+            }
+            else{
+                printf("server authenticated/authorized by solving nonce!\n");
+            }
+            printf("switching to IN_COMM\n");
+            server_state = IN_COMM;
+            return s_key;
+        }
+        // else if(message_type == SECURE_COMM_MSG)
+        // {
+        //     printf("received secure communication!\n");
+        // }
     }
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port=htons(atoi(PORT_NUM));
-
-    if(bind(serv_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr))==-1){
-        error_handling("bind() error");
-    }
-
-    if(listen(serv_sock, 5)==-1){
-        error_handling("listen() error");
-    }
-    return serv_sock;
-}
-
-/*란
-input: config, 
-output: 
-
-usage: 
-    pthread_t wait_thread;
-    arg_struct_t args = {
-        .sock = sock,
-        .s_key = &session_key_list[0]
-    };
-    pthread_create(&wait_thread, NULL, &receive_thread, (void *)&args);
-
-*/
-
-// void * wait_connection_message(void * arguments)
+}     
+// //TODO: PORT_NUM needs to be in config_info. currently not implemented.
+// int init_server(config_t *config_info)
 // {
-//     arg_struct_t * args = (arg_struct_t *) arguments;
-//     int clnt_sock;
-
-//     helper_options_server helper_options[MAX_CLIENT_NUM];
+//     const char * PORT_NUM = "21100";
 
 //     struct sockaddr_in serv_addr;
-//     struct sockaddr_in clnt_addr;
-//     socklen_t clnt_addr_size;
-
-
-//     //TODO: for(;;){}
-//     for(int i = 0; i < MAX_CLIENT_NUM; i ++){
-//         clnt_addr_size = sizeof(clnt_addr);
-//         clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_addr, &clnt_addr_size);
-//         if(clnt_sock==-1){
-//             error_handling("accept() error");
-//         }
-
-
-//         helper_options[i].entity_state = IDLE;
-//         //TODO: 추후 thread 화? 여러개의 client 받아야함.
-//         // connect_to_client(&serv_sock, &clnt_sock, PORT_NUM);
-//         helper_options[i].iot_secure_socket = clnt_sock;
-//         pthread_create(&p_thread[i+1], NULL, &server_client_communication, (void *)&helper_options[i]);
-//         printf("test");
-//         sleep(1);
+//     int serv_sock = socket(PF_INET, SOCK_STREAM, 0);
+//     if(serv_sock == -1){
+//         error_handling("socket() error");
 //     }
+//     memset(&serv_addr, 0, sizeof(serv_addr));
+//     serv_addr.sin_family = AF_INET;
+//     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+//     serv_addr.sin_port=htons(atoi(PORT_NUM));
+
+//     if(bind(serv_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr))==-1){
+//         error_handling("bind() error");
+//     }
+
+//     if(listen(serv_sock, 5)==-1){
+//         error_handling("listen() error");
+//     }
+//     return serv_sock;
 // }
+
+
 
 /*
 usage:
@@ -291,3 +328,4 @@ void send_secure_message(char * msg, unsigned int msg_length, session_key_t * s_
     free(encrypted);
     write(sock, sender_buf, sender_buf_length);
 }
+

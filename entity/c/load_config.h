@@ -1,5 +1,5 @@
-#ifndef LOAD_config_t_H
-#define LOAD_config_t_H
+#ifndef LOAD_CONFIG_H
+#define LOAD_CONFIG_H
 
 #include <stdio.h>
 #include <string.h> 
