@@ -37,7 +37,7 @@ typedef struct
     unsigned int cipher_key_size;
     unsigned char absvalidity[DIST_KEY_EXPIRATION_TIME_SIZE];
     long int start_time;
-}distribution_key;
+}distribution_key_t;
 
 
 //must free mac & cipher key
@@ -50,7 +50,7 @@ typedef struct
     unsigned int mac_key_size;
     unsigned char * cipher_key;
     unsigned int cipher_key_size;
-}session_key; 
+}session_key_t; 
 
 void print_last_error(char *msg);
 int public_encrypt(unsigned char * data, int data_len,  int padding, const char * path, unsigned char *ret);

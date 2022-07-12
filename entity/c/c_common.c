@@ -255,7 +255,7 @@ void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, uns
 }
 
 //TODO: check.¿Ö 1,2,4 Áö??
-void parse_handshake(unsigned char *buf,  HS_nonce * ret)
+void parse_handshake(unsigned char *buf,  HS_nonce_t * ret)
 {
     if((buf[0] & 1) != 0){
         memcpy(ret->nonce, buf +1, HS_NONCE_SIZE);

@@ -73,7 +73,7 @@ typedef struct
     unsigned char nonce[HS_NONCE_SIZE];
     unsigned char reply_nonce[HS_NONCE_SIZE];
     unsigned char dhParam[HS_NONCE_SIZE]; //TODO: check_size.
-}HS_nonce;
+}HS_nonce_t;
 
 
 
@@ -98,7 +98,7 @@ void connect_as_client(const char * ip_addr, const char * port_num, int * sock);
 
 //Handshake
 void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, unsigned char * ret);
-void parse_handshake(unsigned char *buf,  HS_nonce * ret);
+void parse_handshake(unsigned char *buf,  HS_nonce_t * ret);
 
 
 #endif // C_COMMON_H

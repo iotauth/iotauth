@@ -29,9 +29,9 @@ int get_key_value(char * ptr)
 
 
 
-config * load_config(char * path) 
+config_t * load_config(char * path) 
 {
-    config *c = malloc(sizeof(config));
+    config_t *c = malloc(sizeof(config_t));
     FILE* fp = fopen(path, "r");  ////open test file as 'r'(read) mode.
     char buffer[MAX] = { 0, };
     char *pline;

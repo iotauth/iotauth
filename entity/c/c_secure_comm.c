@@ -46,7 +46,7 @@ void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * 
 
 
 //must free distribution_key.mac_key, distribution_key.cipher_key
-void parse_distribution_key(distribution_key * parsed_distribution_key, unsigned char * buf, unsigned int buf_length)
+void parse_distribution_key(distribution_key_t * parsed_distribution_key, unsigned char * buf, unsigned int buf_length)
 {
     unsigned int cur_index = DIST_KEY_EXPIRATION_TIME_SIZE;
     unsigned int cipher_key_size = buf[cur_index];
@@ -80,7 +80,7 @@ unsigned char * parse_string_param(unsigned char * buf, unsigned int buf_length,
     return return_to;
 }
 //must free when session_key expired or usage finished.
-unsigned int parse_session_key(session_key * ret, unsigned char *buf, unsigned int buf_length)
+unsigned int parse_session_key(session_key_t * ret, unsigned char *buf, unsigned int buf_length)
 {
     memcpy(ret->key_id, buf, SESSION_KEY_ID_SIZE);
     unsigned int cur_idx = SESSION_KEY_ID_SIZE;
@@ -107,7 +107,7 @@ unsigned int parse_session_key(session_key * ret, unsigned char *buf, unsigned i
     return cur_idx; 
 }
 
-void parse_session_key_response(unsigned char *buf, unsigned int buf_length, unsigned char * reply_nonce, session_key * session_key_list)
+void parse_session_key_response(unsigned char *buf, unsigned int buf_length, unsigned char * reply_nonce, session_key_t * session_key_list)
 {
     memcpy(reply_nonce, buf, NONCE_SIZE);
     unsigned int buf_idx = NONCE_SIZE;
@@ -130,7 +130,7 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length, uns
     }
 }
 
-unsigned char * parse_handshake_1(session_key * s_key, unsigned char * entity_nonce, unsigned int * ret_length)
+unsigned char * parse_handshake_1(session_key_t * s_key, unsigned char * entity_nonce, unsigned int * ret_length)
 {
     //keyId8 + iv16 +data32 + hmac32
 
@@ -150,12 +150,12 @@ unsigned char * parse_handshake_1(session_key * s_key, unsigned char * entity_no
     return ret;
 };
 
-unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, unsigned int data_buf_length, unsigned char * entity_nonce, session_key * s_key, unsigned int *ret_length)
+unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, unsigned int data_buf_length, unsigned char * entity_nonce, session_key_t * s_key, unsigned int *ret_length)
 {
     printf("received session key handshake2!\n");
     unsigned int decrypted_length;
     unsigned char * decrypted = symmetric_decrypt_authenticate(data_buf, data_buf_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
-    HS_nonce hs;
+    HS_nonce_t hs;
     parse_handshake(decrypted, &hs);
     free(decrypted);
 
@@ -178,7 +178,7 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
 }
 
 //Decrypts message, reads seq_num, checks validity, and prints message
-void print_recevied_message(unsigned char * data, unsigned int data_length, session_key * s_key)
+void print_recevied_message(unsigned char * data, unsigned int data_length, session_key_t * s_key)
 {
     unsigned int decrypted_length;
     unsigned char * decrypted = symmetric_decrypt_authenticate(data, data_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);

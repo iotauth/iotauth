@@ -2,7 +2,7 @@
 
 typedef struct{
     unsigned char server_state;
-    session_key * s_key; //TODO: think about this.
+    session_key_t * s_key; //TODO: think about this.
 } server_args_t;
 
 int check_session_key(unsigned char * key_id, server_args_t * server_args, int fd_max)
@@ -140,7 +140,7 @@ int main()
                         }
                         unsigned int decrypted_length;
                         unsigned char * decrypted = symmetric_decrypt_authenticate(data_buf, data_buf_length, server_args[i].s_key->mac_key, MAC_KEY_SIZE, server_args[i].s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
-                        HS_nonce hs;
+                        HS_nonce_t hs;
                         parse_handshake(decrypted, &hs);
                         free(decrypted);
 
@@ -234,7 +234,7 @@ main()
 3. 2번의 서버 세팅후 나온 serv_sock을 이용할건데,
 
     int client_sock;
-    session_key s_key;
+    session_key_t s_key;
     accept()
     server_waits_client(serv_sock, client_sock, &s_key);
     // 이 부분은 accept에서 blocking 됨.

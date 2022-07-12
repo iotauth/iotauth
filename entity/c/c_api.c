@@ -9,7 +9,7 @@ extern unsigned char entity_client_state;
 extern long int st_time;
 
 
-session_key * get_session_key(config * config_info)
+session_key_t * get_session_key(config_t * config_info)
 {
 
     int sock;
@@ -27,7 +27,7 @@ session_key * get_session_key(config * config_info)
     //TODO: startfrom here.
 
 
-    session_key * session_key_list = malloc(sizeof(session_key) * num_key);
+    session_key_t * session_key_list = malloc(sizeof(session_key_t) * num_key);
     unsigned char entity_nonce[NONCE_SIZE];
     while(1)
     {
@@ -60,7 +60,7 @@ session_key * get_session_key(config * config_info)
         else if(message_type == SESSION_KEY_RESP_WITH_DIST_KEY)
         {
             signed_data_t signed_data;
-            distribution_key dist_key;
+            distribution_key_t dist_key;
             unsigned int key_size = RSA_KEY_SIZE; //TODO: ??
 
             //parse data
@@ -106,7 +106,7 @@ session_key * get_session_key(config * config_info)
     }
 }
 
-int secure_connection(session_key * s_key)
+int secure_connection(session_key_t * s_key)
 {
     //load_config
     int sock;
@@ -163,7 +163,7 @@ usage:
 
 
 //TODO: PORT_NUM needs to be in config_info. currently not implemented.
-int init_server(config *config_info)
+int init_server(config_t *config_info)
 {
     const char * PORT_NUM = "21100";
 
@@ -193,7 +193,7 @@ output:
 
 usage: 
     pthread_t wait_thread;
-    arg_struct args = {
+    arg_struct_t args = {
         .sock = sock,
         .s_key = &session_key_list[0]
     };
@@ -203,7 +203,7 @@ usage:
 
 // void * wait_connection_message(void * arguments)
 // {
-//     arg_struct * args = (arg_struct *) arguments;
+//     arg_struct_t * args = (arg_struct_t *) arguments;
 //     int clnt_sock;
 
 //     helper_options_server helper_options[MAX_CLIENT_NUM];
@@ -245,14 +245,14 @@ void * receive_thread(void * arguments)
 {
     while(1)
     {
-        arg_struct * args = (arg_struct *) arguments;
+        arg_struct_t * args = (arg_struct_t *) arguments;
         unsigned char received_buf[1000];
         unsigned int received_buf_length = read(args->sock, received_buf, sizeof(received_buf));
         receive_message(received_buf, received_buf_length, args->s_key);
     }
 }
 
-void receive_message(unsigned char * received_buf, unsigned int received_buf_length, session_key * s_key)
+void receive_message(unsigned char * received_buf, unsigned int received_buf_length, session_key_t * s_key)
 {
     unsigned char message_type;
     unsigned int data_buf_length;
@@ -268,7 +268,7 @@ void receive_message(unsigned char * received_buf, unsigned int received_buf_len
 usage: 
 send_secure_message("Hello World", strlen("Hello World"), &session_key_list[0], sock);
 */
-void send_secure_message(char * msg, unsigned int msg_length, session_key * s_key, int sock)
+void send_secure_message(char * msg, unsigned int msg_length, session_key_t * s_key, int sock)
 {
 
     if(!check_validity(sent_seq_num, s_key->rel_validity, s_key->abs_validity, &st_time))
