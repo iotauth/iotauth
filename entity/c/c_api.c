@@ -13,9 +13,9 @@ session_key_t * get_session_key(config_t * config_info)
 {
 
     int sock;
-    const char * IP_ADDRESS = "127.0.0.1";
-    const char * PORT_NUM = "21900";
-    connect_as_client(IP_ADDRESS, PORT_NUM, &sock);
+    // const char * IP_ADDRESS = "127.0.0.1";
+    // const char * PORT_NUM = "21900";
+    connect_as_client(config_info->auth_ip_addr, config_info->auth_port_num, &sock);
 
     //will be input from config.
     unsigned char sender[] = "net1.client";
