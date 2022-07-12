@@ -28,7 +28,6 @@ int get_key_value(char * ptr)
 }
 
 
-
 config * load_config(char * path) 
 {
     config *c = malloc(sizeof(config));
