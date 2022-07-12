@@ -2,6 +2,7 @@
 
 int sent_seq_num;
 unsigned char entity_client_state;
+unsigned char entity_server_state;
 long int st_time;
 
 /*
@@ -280,7 +281,7 @@ session_key_t * send_session_key_req_via_TCP(config_t *config)
     // sprintf(purpose+9, "%s", s_key->key_id); // TODO: need to check.
     unsigned char num_key = 1;
     const char * path_pub = "../auth_certs/Auth101EntityCert.pem";
-    const char * path_priv = "../credentials/keys/net1/Net1.ClientKey.pem";    
+    const char * path_priv = "../credentials/keys/net1/Net1.ServerKey.pem";    
 
 
     int sock;

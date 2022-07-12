@@ -6,6 +6,7 @@ gcc -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_server
 
 extern int sent_seq_num;
 extern unsigned char entity_client_state;
+extern unsigned char entity_server_state;
 extern long int st_time;
 
 
@@ -159,7 +160,7 @@ usage:
 
 session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
 {
-    unsigned char server_state = IDLE;
+    entity_server_state = IDLE;
     unsigned char server_nonce[HS_NONCE_SIZE];
     session_key_t * s_key;
     while(1)
@@ -172,15 +173,16 @@ session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
         if(message_type == SKEY_HANDSHAKE_1)
         {
             printf("received session key handshake1\n");
-            if(server_state != IDLE)
+            if(entity_server_state != IDLE)
             {
                 error_handling("Error during comm init - in wrong state, expected: IDLE, disconnecting...\n");
             }
             printf("switching to HANDSHAKE_1_RECEIVED state.\n");
             //TODO: entity state.
-            server_state == HANDSHAKE_1_RECEIVED;
+            entity_server_state = HANDSHAKE_1_RECEIVED;
             unsigned char expected_key_id[SESSION_KEY_ID_SIZE];
             memcpy(expected_key_id, data_buf, SESSION_KEY_ID_SIZE);
+            unsigned int expected_key_id_int = read_unsigned_int_BE(expected_key_id, SESSION_KEY_ID_SIZE);
             /*
             //TODO: Implement? need to think how.
             int session_key_found = check_session_key(server_args[i].s_key->key_id, &server_args, fd_max);
@@ -192,10 +194,14 @@ session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
             }
             else if(session_key_found == -1)
             {
-                memcpy(config->purpose+9, expected_key_id, SESSION_KEY_ID_SIZE);
+                // sprintf(config->purpose + 9, "%d", expected_key_id_int);
+                unsigned char temp_buf [SESSION_KEY_ID_SIZE];
+                sprintf(temp_buf, "%d", expected_key_id_int);
+                memcpy(config->purpose + 9, temp_buf, SESSION_KEY_ID_SIZE);
+
                 s_key = send_session_key_request_check_protocol(config, expected_key_id);
 
-                if(server_state != HANDSHAKE_1_RECEIVED){
+                if(entity_server_state != HANDSHAKE_1_RECEIVED){
                     error_handling("Error during comm init - in wrong state, expected: HANDSHAKE_1_RECEIVED, disconnecting...");
                 }
 
@@ -208,13 +214,13 @@ session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
                 write(clnt_sock, sender, sender_length);
                 free(parsed_buf);
                 printf("switching to HANDSHAKE_2_SENT'\n");
-                server_state = HANDSHAKE_2_SENT;
+                entity_server_state = HANDSHAKE_2_SENT;
             }
         }  
         else if(message_type == SKEY_HANDSHAKE_3)
         {
             printf("received session key handshake3!\n");
-            if(server_state != HANDSHAKE_2_SENT)
+            if(entity_server_state != HANDSHAKE_2_SENT)
             {
                 error_handling("Error during comm init - in wrong state, expected: IDLE, disconnecting...\n");
             }
@@ -231,7 +237,7 @@ session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
                 printf("server authenticated/authorized by solving nonce!\n");
             }
             printf("switching to IN_COMM\n");
-            server_state = IN_COMM;
+            entity_server_state = IN_COMM;
             return s_key;
         }
         // else if(message_type == SECURE_COMM_MSG)

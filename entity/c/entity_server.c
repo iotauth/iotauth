@@ -64,7 +64,17 @@ int main()
         .s_key = s_key
     };
     pthread_create(&thread, NULL, &receive_thread, (void *)&args);
-    sleep(10);
+    sleep(1);
+
+    send_secure_message("Hello World", strlen("Hello World"), s_key, clnt_sock);
+    sleep(1);
+    send_secure_message("Hello Dongha", strlen("Hello Dongha"), s_key, clnt_sock);
+    sleep(1);
+    // send_secure_message("Hello Yeongbin", strlen("Hello Yeongbin"),&session_key_list[0], sock);
+    // sleep(10);
+    // send_secure_message("Hello Yoonsang", strlen("Hello Yoonsang"),&session_key_list[0], sock);
+
+    sleep(60);
 }
 
 
