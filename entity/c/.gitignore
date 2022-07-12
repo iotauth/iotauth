@@ -1,0 +1,3 @@
+*.o
+entity_client
+entity_server

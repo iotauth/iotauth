@@ -1,5 +1,5 @@
-#ifndef LOAD_CONFIG_H
-#define LOAD_CONFIG_H
+#ifndef LOAD_config_t_H
+#define LOAD_config_t_H
 
 #include <stdio.h>
 #include <string.h> 
@@ -26,9 +26,9 @@ typedef struct{
     unsigned char auth_port_num[5];
     unsigned char entity_server_ip_addr[15];
     unsigned char entity_server_port_num[5];
-} config;
+} config_t;
 
 int get_key_value(char * ptr);
-config * load_config(char * path) ;
+config_t * load_config(char * path) ;
 
-#endif // LOAD_CONFIG_H
+#endif // LOAD_config_t_H

@@ -3,13 +3,13 @@
 int main()
 {
     char path[] = "a.config";
-    config * config_info = load_config(path);
+    config_t * config_info = load_config(path);
 
-    session_key * session_key_list = get_session_key(config_info);
+    session_key_t * session_key_list = get_session_key(config_info);
     int sock = secure_connection(&session_key_list[0]);
     printf("finished\n");
     pthread_t thread;
-    arg_struct args = {
+    arg_struct_t args = {
         .sock = sock,
         .s_key = &session_key_list[0]
     };

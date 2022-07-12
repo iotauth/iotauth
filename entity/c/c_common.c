@@ -132,7 +132,7 @@ unsigned char received_buf[1000];
 unsigned int received_buf_length = read(socket, received_buf, sizeof(received_buf));
 unsigned char message_type;
 unsigned int data_buf_length;
-unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length)
+unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
 */
 unsigned char * parse_received_message(unsigned char * received_buf, unsigned int received_buf_length, unsigned char * message_type, unsigned int * data_buf_length)
 {
@@ -255,7 +255,7 @@ void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, uns
 }
 
 //TODO: check.¿Ö 1,2,4 Áö??
-void parse_handshake(unsigned char *buf,  HS_nonce * ret)
+void parse_handshake(unsigned char *buf,  HS_nonce_t * ret)
 {
     if((buf[0] & 1) != 0){
         memcpy(ret->nonce, buf +1, HS_NONCE_SIZE);
