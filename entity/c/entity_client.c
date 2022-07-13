@@ -15,7 +15,6 @@ int main()
     };
     pthread_create(&thread, NULL, &receive_thread, (void *)&args);
     sleep(1);
-
     send_secure_message("Hello World", strlen("Hello World"), &session_key_list[0], sock);
     sleep(1);
     send_secure_message("Hello Dongha", strlen("Hello Dongha"),&session_key_list[0], sock);

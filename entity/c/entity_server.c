@@ -33,7 +33,6 @@ int main()
     if(clnt_sock==-1){
         error_handling("accept() error");
     }
-
     char path[] = "server.config";
     config_t * config = load_config(path);
     session_key_t * s_key = server_secure_comm_setup(config, clnt_sock);
@@ -55,7 +54,9 @@ int main()
     // sleep(10);
     // send_secure_message("Hello Yoonsang", strlen("Hello Yoonsang"),&session_key_list[0], sock);
 
-    sleep(60);
+    sleep(10);
+    close(clnt_sock);
+    close(serv_sock);
 }
 
 

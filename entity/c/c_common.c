@@ -48,7 +48,7 @@ void write_in_n_bytes(int num, int n, unsigned char * buf)
 /*TODO: �������� üũ
 �� �ڵ� read_variable_unsigned_int �κа� print_seq_num �κа� ��ħ. 
 
-Ȯ�ν� TODO �����.
+Ȯ�ν� TODO �����?.
 */
 
 
@@ -63,7 +63,7 @@ unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
 }
 
 //TODO: �ؿ� ���ĳ��� ���� ����.line 75 �������� üũ.
-//�� ������� ���� ������ ���� struct �Ἥ ���ΰ� ������ ���� ����ϸ� �ϳ��� �ִ°� ȿ�������� �ʳ�... �������ϸ� ��Ʈ shifting�� �ι� �ؾ���.
+//�� �������? ���� ������ ���� struct �Ἥ ���ΰ� ������ ���� ����ϸ�? �ϳ��� �ִ°� ȿ�������� �ʳ�... �������ϸ� ��Ʈ shifting�� �ι� �ؾ���.
 /*  
     function: (0,127) = 1, [128, 128^2] = 2, [128^2, 128^3] = 3 ..... 
     input: integer buffer to change
@@ -170,7 +170,7 @@ void num_to_var_length_int(unsigned int data_length, unsigned char * payload_buf
 
 void make_buffer_header(unsigned char *data, unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int * header_length)
 {
-    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���.
+    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���?.
     unsigned char payload_buf_len;
     num_to_var_length_int(data_length, payload_buf, &payload_buf_len);
     *header_length = MESSAGE_TYPE_SIZE + payload_buf_len;

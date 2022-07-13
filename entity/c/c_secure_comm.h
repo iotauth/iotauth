@@ -34,6 +34,6 @@ int check_validity(int seq_n, unsigned char *rel_validity, unsigned char *abs_va
 
 session_key_t * send_session_key_request_check_protocol(config_t *config, unsigned char * target_key_id);
 session_key_t * send_session_key_req_via_TCP(config_t *config);
-void send_session_key_req_via_UDP();
+session_key_t * send_session_key_req_via_UDP();
 unsigned char * check_handshake1_send_handshake2(unsigned char * received_buf, unsigned int received_buf_length, unsigned char * server_nonce, session_key_t * s_key, unsigned int *ret_length);
 #endif // C_SECURE_COMM_H

@@ -12,97 +12,16 @@ extern long int st_time;
 
 session_key_t * get_session_key(config_t * config_info)
 {
-
-    int sock;
-    connect_as_client(config_info->auth_ip_addr, config_info->auth_port_num, &sock);
-
-    //will be input from config.
-    unsigned char * path_pub = malloc(strlen(config_info->auth_pubkey_path));
-    unsigned char * path_priv = malloc(strlen(config_info->entity_privkey_path));
-    memcpy(path_pub, config_info->auth_pubkey_path , strlen(config_info->auth_pubkey_path)-1);
-    memcpy(path_priv, config_info->entity_privkey_path, strlen(config_info->entity_privkey_path)-1);
-    //TODO: startfrom here.
-
-    unsigned char num_key = atoi(config_info->numkey);
-    session_key_t * session_key_list = malloc(sizeof(session_key_t) * num_key);
-    unsigned char entity_nonce[NONCE_SIZE];
-    while(1)
+    unsigned char option = 1;
+    if(option == 1)
     {
-        unsigned char received_buf[1000];
-        unsigned int received_buf_length = read(sock, received_buf, sizeof(received_buf));
-        unsigned char message_type;
-        unsigned int data_buf_length;
-        unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
-        if(message_type == AUTH_HELLO)
-        {
-            unsigned int auth_Id;
-            unsigned char auth_nonce[NONCE_SIZE];
-            auth_Id = read_unsigned_int_BE(data_buf,  AUTH_ID_LEN);
-            memcpy(auth_nonce, data_buf + AUTH_ID_LEN, NONCE_SIZE );
-            RAND_bytes(entity_nonce, NONCE_SIZE);
-            unsigned int ret_length;
-            unsigned char * serialized = auth_hello_reply_message(entity_nonce, auth_nonce, num_key, config_info->name, strlen(config_info->name), config_info->purpose, strlen(config_info->purpose), &ret_length);
-            
-            //TODO: when distribution key exists.
-            unsigned int enc_length;
-            unsigned char enc[RSA_ENCRYPT_SIGN_SIZE];
-            encrypt_and_sign(serialized, ret_length, path_pub, path_priv, enc, &enc_length);
-            free(serialized);
-            free(path_priv);
-
-            unsigned char message[1024];
-            unsigned int message_length;
-            make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC, message, &message_length);
-            write(sock, message, message_length);
-        }
-        else if(message_type == SESSION_KEY_RESP_WITH_DIST_KEY)
-        {
-            signed_data_t signed_data;
-            distribution_key_t dist_key;
-            unsigned int key_size = RSA_KEY_SIZE; //TODO: ??
-
-            //parse data
-            unsigned int encrypted_session_key_length = data_buf_length - (key_size * 2);
-            unsigned char * encrypted_session_key = (unsigned char *)malloc(encrypted_session_key_length);
-            memcpy(signed_data.data, data_buf, key_size);
-            memcpy(signed_data.sign, data_buf + key_size, key_size);
-            memcpy(encrypted_session_key, data_buf + key_size*2, encrypted_session_key_length);
-
-            //verify
-            SHA256_verify(signed_data.data, key_size, signed_data.sign, key_size, path_pub);
-            printf("auth signature verified\n");
-            free(path_pub);
-
-            //decrypt encrypted_distribution_key
-            unsigned char decrypted_distribution_key[key_size]; //TODO: may need to change size. Actual decrypted_length = 56 bytes.
-            unsigned int decrypted_distribution_key_length = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, path_priv, decrypted_distribution_key);
-
-            //parse decrypted_distribution_key to mac_key & cipher_key
-            parse_distribution_key(&dist_key, decrypted_distribution_key, decrypted_distribution_key_length);
-
-            //decrypt session_key with decrypted_distribution_key
-            unsigned int decrypted_session_key_response_length;
-            unsigned char * decrypted_session_key_response = symmetric_decrypt_authenticate(encrypted_session_key, encrypted_session_key_length, dist_key.mac_key, dist_key.mac_key_size, dist_key.cipher_key, dist_key.cipher_key_size, IV_SIZE, &decrypted_session_key_response_length);
-            free(encrypted_session_key);
-
-            //parse decrypted_session_key_response for nonce comparison & session_key.
-            unsigned char reply_nonce[NONCE_SIZE];
-            parse_session_key_response(decrypted_session_key_response, decrypted_session_key_response_length, reply_nonce, session_key_list);
-
-            printf("reply_nonce in sessionKeyResp: ");
-            print_buf(reply_nonce, NONCE_SIZE);
-            if(strncmp(reply_nonce, entity_nonce ,NONCE_SIZE) != 0)
-            { //compare generated entity's nonce & received entity's nonce.
-                error_handling("auth nonce NOT verified");
-            }
-            else
-            {
-                printf("auth nonce verified!\n");
-            }
-            close(sock);
-            return session_key_list;
-        }
+        return send_session_key_req_via_TCP(config_info);
     }
+    else if(option ==2)
+    {
+        return send_session_key_req_via_UDP();
+    }
+    
 }
 
 int secure_connection(session_key_t * s_key)
@@ -241,10 +160,6 @@ session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
             entity_server_state = IN_COMM;
             return s_key;
         }
-        // else if(message_type == SECURE_COMM_MSG)
-        // {
-        //     printf("received secure communication!\n");
-        // }
     }
 }     
 // //TODO: PORT_NUM needs to be in config_info. currently not implemented.

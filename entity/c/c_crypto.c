@@ -25,7 +25,7 @@ void print_last_error(char *msg)
     input: 'ret': encrypted buf, 'data': data to encrypt
     output: length of encrypted data
 */
-int public_encrypt(unsigned char * data, int data_len,  int padding, const char * path, unsigned char *ret) 
+int public_encrypt(unsigned char * data, int data_len, int padding, const char * path, unsigned char *ret) 
 {
     FILE *pemFile = fopen(path, "rb");
     X509 *cert = PEM_read_X509(pemFile, NULL, NULL, NULL );
