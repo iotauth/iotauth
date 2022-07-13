@@ -58,7 +58,7 @@ void function(unsigned char * ret, unsigned int * ret_length, unsigned char * in
 **void receive_message()**
 - Enables receiving messages
 
-#compile
+# Compile
 
 `$cd ~/entity/c`
 `$make`
@@ -66,3 +66,7 @@ void function(unsigned char * ret, unsigned int * ret_length, unsigned char * in
 
 `$./entity_client`
 `$./entity_server`
+
+# TODO
+
+* Implement an additional API function for extracting session key from cached session keys.
