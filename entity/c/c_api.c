@@ -99,6 +99,7 @@ session_key_t * get_session_key(config_t * config_info)
             {
                 printf("auth nonce verified!\n");
             }
+            close(sock);
             return session_key_list;
         }
     }

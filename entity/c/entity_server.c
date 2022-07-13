@@ -1,24 +1,5 @@
 #include "c_api.h"
 
-typedef struct{
-    unsigned char server_state;
-    session_key_t * s_key; //TODO: think about this.
-} server_args_t;
-
-int check_session_key(unsigned char * key_id, server_args_t * server_args, int fd_max)
-{
-    bool ret;
-    for(int i=0; i<fd_max+1; i++)
-    {
-        if(strncmp(server_args[i].s_key->key_id, key_id, SESSION_KEY_ID_SIZE) == 0)
-        {
-            return i;
-        }
-    }
-    return -1;
-}
-
-
 int main()
 {
     // char path[] = "a.config";
