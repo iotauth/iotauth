@@ -25,6 +25,8 @@ import org.apache.commons.cli.ParseException;
 import org.bouncycastle.cert.CertIOException;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
+import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -649,7 +651,10 @@ public class AuthServer {
 
         sslContextFactory.customize(sslEngine);
 
-        HttpClient clientForTrustedAuths = new HttpClient(sslContextFactory);
+        ClientConnector clientConnector = new ClientConnector();
+        clientConnector.setSslContextFactory(sslContextFactory);
+
+        HttpClient clientForTrustedAuths = new HttpClient(new HttpClientTransportDynamic(clientConnector));
 
         return clientForTrustedAuths;
     }
