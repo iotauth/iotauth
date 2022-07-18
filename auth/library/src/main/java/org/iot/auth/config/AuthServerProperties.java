@@ -58,6 +58,7 @@ public class AuthServerProperties {
         auth_database_dir,
         auth_db_protection_method,
         backup_enabled,
+        bluetooth_enabled,
 
         qps_throttling_enabled,
         qps_limit,
@@ -93,6 +94,7 @@ public class AuthServerProperties {
     private String authDatabaseDir;
     private int authDBProtectionMethod;
     private boolean backupEnabled;
+    private boolean bluetoothEnabled;
 
     private boolean qpsThrottlingEnabled;
     private float qpsLimit;
@@ -179,6 +181,9 @@ public class AuthServerProperties {
             backupEnabled = Boolean.parseBoolean(prop.getProperty(key.backup_enabled.toString()));
             logger.info("key:value = {}:{}", key.backup_enabled.toString(), backupEnabled);
 
+            bluetoothEnabled = Boolean.parseBoolean(prop.getProperty(key.bluetooth_enabled.toString()));
+            logger.info("key:value = {}:{}", key.bluetooth_enabled.toString(), bluetoothEnabled);
+
             qpsThrottlingEnabled = Boolean.parseBoolean(prop.getProperty(key.qps_throttling_enabled.toString()));
             logger.info("key:value = {}:{}", key.qps_throttling_enabled.toString(), qpsThrottlingEnabled);
 
@@ -252,6 +257,9 @@ public class AuthServerProperties {
     public int getAuthDBProtectionMethod() { return authDBProtectionMethod; }
     public boolean getBackupEnabled() {
         return backupEnabled;
+    }
+    public boolean getBluetoothEnabled() {
+        return bluetoothEnabled;
     }
 
     public boolean getQpsThrottlingEnabled() {
