@@ -202,6 +202,8 @@ function generatePropertiesFiles() {
             'auth_db_protection_method': auth.dbProtectionMethod,
             // currently default is true, set false only when this is given by the graph file
             'backup_enabled': (auth.backupEnabled != null && !auth.backupEnabled) ? false : true,
+            // Bluetooth is turned off by default.
+            'bluetooth_enabled': false,
             // currently default is false
             'qps_throttling_enabled': auth.capacityQpsLimit == null ? false : true,
             'qps_limit': auth.capacityQpsLimit == null ? 10 : auth.capacityQpsLimit/60.0,
