@@ -9,6 +9,8 @@ extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
 extern long int st_time;
 
+// get sessio key() is a function for getting secure session key from Auth 
+// using OpenSSL which provides the cryptography, MAC, and Block cipher etc..
 
 session_key_t * get_session_key(config_t * config_info)
 {
@@ -21,9 +23,9 @@ session_key_t * get_session_key(config_t * config_info)
     {
         return send_session_key_req_via_UDP();
     }
-    
 }
-
+// secure connection() is a function for secure communication with other entity such as entity servers
+// input is session key struct received by Auth 
 int secure_connection(session_key_t * s_key)
 {
     //load_config

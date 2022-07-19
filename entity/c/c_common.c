@@ -1,11 +1,19 @@
 #include "c_common.h"
 
+/*
+error_handling() is a function to exit if message has error.
+message: input message
+*/
 void error_handling(char *message){
     fputs(message, stderr);
     fputc('\n', stderr);
     exit(1);
 }
 
+/*
+print_buf() is a function to show the buffer context.
+buf: input buffer to print, n: number of buffer to print
+*/
 void print_buf(unsigned char * buf, int n)
 {
     for(int i=0 ; i<n; i++)
@@ -13,7 +21,10 @@ void print_buf(unsigned char * buf, int n)
     printf("\n");
 }
 
-// nonce generator;
+/*
+generate_nonce() is a function to generate secure nonce.
+length: length to generate the nonce, buf: buffer to save the generated nonce
+*/
 void generate_nonce(int length, unsigned char * buf)  
 {
     int x = RAND_bytes(buf, length);
@@ -24,7 +35,10 @@ void generate_nonce(int length, unsigned char * buf)
     }
 }   
 
-// num: number to write in buf, n: buf size 
+/*
+write_in_n_bytes() is a function to write number in buffer.
+num: number to write in buf, n: buf size, buf: output buffer 
+*/
 void write_in_n_bytes(int num, int n, unsigned char * buf)
 {
     if(n<8)
@@ -44,14 +58,11 @@ void write_in_n_bytes(int num, int n, unsigned char * buf)
 
 }
 
-//read variable int buffer 'buf' in Big Endian with length of 'byte_length' into unsigned int num
-/*TODO: �������� üũ
-�� �ڵ� read_variable_unsigned_int �κа� print_seq_num �κа� ��ħ. 
-
-Ȯ�ν� TODO �����?.
+/*
+read_unsigned_int_BE() is a function to show the total number in big endian buffer.
+buf: input buffer, byte_length: buffer length to want to make the number
+return: total number
 */
-
-
 unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
 {
     int num =0;
@@ -62,12 +73,10 @@ unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
     return num; 
 }
 
-//TODO: �ؿ� ���ĳ��� ���� ����.line 75 �������� üũ.
-//�� �������? ���� ������ ���� struct �Ἥ ���ΰ� ������ ���� ����ϸ�? �ϳ��� �ִ°� ȿ�������� �ʳ�... �������ϸ� ��Ʈ shifting�� �ι� �ؾ���.
 /*  
-    function: (0,127) = 1, [128, 128^2] = 2, [128^2, 128^3] = 3 ..... 
-    input: integer buffer to change
-    return: payload_buf_length
+    payload_buf_length() is a function to know payload buffer length using total number of buffer. 
+    b: total number of buffer
+    return: payload buffer length
 */
 unsigned int payload_buf_length(int b)
 {   
@@ -170,7 +179,7 @@ void num_to_var_length_int(unsigned int data_length, unsigned char * payload_buf
 
 void make_buffer_header(unsigned char *data, unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int * header_length)
 {
-    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���?.
+    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���?.
     unsigned char payload_buf_len;
     num_to_var_length_int(data_length, payload_buf, &payload_buf_len);
     *header_length = MESSAGE_TYPE_SIZE + payload_buf_len;
