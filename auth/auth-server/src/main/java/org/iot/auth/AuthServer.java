@@ -25,6 +25,8 @@ import org.apache.commons.cli.ParseException;
 import org.bouncycastle.cert.CertIOException;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
+import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -129,6 +131,7 @@ public class AuthServer {
         serverForContextualCallbacks = initServerForContextualCallbacks(properties);
 
         backupEnabled = properties.getBackupEnabled();
+        bluetoothEnabled = properties.getBluetoothEnabled();
 
         if (properties.getQpsThrottlingEnabled()) {
             qpsCalculator = new QPSCalculator(properties.getQpsLimit(), properties.getQpsCalculationBucketSizeInSec());
@@ -294,8 +297,12 @@ public class AuthServer {
      */
     private void begin() throws Exception {
         setRunning(true);
-        EntityBluetoothListener entityBluetoothListener = new EntityBluetoothListener(this);
-        entityBluetoothListener.start();
+
+        logger.info("Bluetooth entities - {}", this.bluetoothEnabled ? "ENABLED" : "DISABLED");
+        if (bluetoothEnabled) {
+            EntityBluetoothListener entityBluetoothListener = new EntityBluetoothListener(this);
+            entityBluetoothListener.start();
+        }
 
         EntityTcpPortListener entityTcpPortListener = new EntityTcpPortListener(this);
         entityTcpPortListener.start();
@@ -649,7 +656,10 @@ public class AuthServer {
 
         sslContextFactory.customize(sslEngine);
 
-        HttpClient clientForTrustedAuths = new HttpClient(sslContextFactory);
+        ClientConnector clientConnector = new ClientConnector();
+        clientConnector.setSslContextFactory(sslContextFactory);
+
+        HttpClient clientForTrustedAuths = new HttpClient(new HttpClientTransportDynamic(clientConnector));
 
         return clientForTrustedAuths;
     }
@@ -762,14 +772,14 @@ public class AuthServer {
             this.server = server;
         }
         public void run() {
-            if (!LocalDevice.isPowerOn()) {
-                logger.error("Bluetooth for Auth is not turned on, Bluetooth will be disabled.");
-                return;
-            }
             StreamConnectionNotifier notifier;
-            StreamConnection connection = null;
-
+            StreamConnection connection;
             try {
+                if (!LocalDevice.isPowerOn()) {
+                    logger.warn("Bluetooth device for Auth is not turned on, Bluetooth will be disabled.");
+                    return;
+                }
+
                 final LocalDevice device = LocalDevice.getLocalDevice();
                 device.setDiscoverable(DiscoveryAgent.GIAC); // General/Unlimited Inquiry Access Code (GIAC).
                 String uuidString = "d0c722b07e1511e1b0c40800200c9a66";
@@ -783,10 +793,17 @@ public class AuthServer {
             }
             catch (BluetoothStateException e)
             {
+                logger.error("BluetoothStateException occurred while initializing Bluetooth.");
                 throw new RuntimeException(e.getMessage());
             }
             catch (IOException e)
             {
+                logger.error("IOException occurred while initializing Bluetooth.");
+                throw new RuntimeException(e.getMessage());
+            }
+            catch (Error e)
+            {
+                logger.error("Error occurred while initializing Bluetooth.");
                 throw new RuntimeException(e.getMessage());
             }
 
@@ -1051,5 +1068,6 @@ public class AuthServer {
     private Server serverForContextualCallbacks;
     private HttpClient clientForTrustedAuths;
     private boolean backupEnabled;
+    private boolean bluetoothEnabled;
     private QPSCalculator qpsCalculator = null;
 }
