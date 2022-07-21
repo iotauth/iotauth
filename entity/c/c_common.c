@@ -1,8 +1,9 @@
 #include "c_common.h"
 
 /*
-error_handling() is a function to exit if message has error.
-message: input message
+Handle whether message has error or not.
+See error_handling() for details.
+@param message input message
 */
 void error_handling(char *message){
     fputs(message, stderr);
@@ -11,19 +12,23 @@ void error_handling(char *message){
 }
 
 /*
-print_buf() is a function to show the buffer context.
-buf: input buffer to print, n: number of buffer to print
+Print the buffer which you want 
+See print_buf() for details.
+@param buf input buffer to print
+@param size buffer size to print
 */
-void print_buf(unsigned char * buf, int n)
+void print_buf(unsigned char * buf, int size)
 {
-    for(int i=0 ; i<n; i++)
+    for(int i=0 ; i<size; i++)
         printf("%x ", buf[i]);
     printf("\n");
 }
 
 /*
-generate_nonce() is a function to generate secure nonce.
-length: length to generate the nonce, buf: buffer to save the generated nonce
+Generate secure randome nonce by using OpenSSL.
+See generate_nonce() for details.
+@param length length to generate the nonce
+@param buf buffer to save the generated nonce
 */
 void generate_nonce(int length, unsigned char * buf)  
 {
@@ -36,8 +41,11 @@ void generate_nonce(int length, unsigned char * buf)
 }   
 
 /*
-write_in_n_bytes() is a function to write number in buffer.
-num: number to write in buf, n: buf size, buf: output buffer 
+Write number in buffer.
+See write_in_n_bytes() for details.
+@param num number to write in buffer
+@param n buffer size
+@param buf output buffer 
 */
 void write_in_n_bytes(int num, int n, unsigned char * buf)
 {
@@ -59,9 +67,11 @@ void write_in_n_bytes(int num, int n, unsigned char * buf)
 }
 
 /*
-read_unsigned_int_BE() is a function to show the total number in big endian buffer.
-buf: input buffer, byte_length: buffer length to want to make the number
-return: total number
+Make the total int number in big endian buffer.
+See read_unsigned_int_BE() for details.
+@param buf input buffer
+@param byte_length buffer length to make the total number
+@return total number of input buffer
 */
 unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
 {
@@ -74,9 +84,10 @@ unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
 }
 
 /*  
-    payload_buf_length() is a function to know payload buffer length using total number of buffer. 
-    b: total number of buffer
-    return: payload buffer length
+    Look for payload buffer length using total number of input buffer. 
+    See payload_buf_length() for details.
+    @param b total number of buffer
+    @return payload buffer length
 */
 unsigned int payload_buf_length(int b)
 {   
@@ -88,9 +99,12 @@ unsigned int payload_buf_length(int b)
     }
     return n;
 }
-/*return: message length of the payload
-input: buffer from after messagetype, 
-buf_length: total read message length
+/*
+    Make the total number of input buffer.
+    See var_length_int_to_num_t() for details.
+    @param buf input buffer from after messagetype
+    @param buf_length total read message length
+    @return message length of the payload
 */
 unsigned int var_length_int_to_num_t(unsigned char * buf, int buf_length)
 {
@@ -106,7 +120,6 @@ unsigned int var_length_int_to_num_t(unsigned char * buf, int buf_length)
     return num;
 }
 
-//�������� �̰� check. ���� �ΰ� �ѹ����� ���ĳ�����. 
 /*
 function:
     buf = (variable_length_buf) + (data_buf)
@@ -117,6 +130,15 @@ usage:
     unsigned int data_buf_length;
     unsigned int payload_buf_length; 
     var_length_int_to_num(received_buf + MESSAGE_TYPE_SIZE, received_buf_length, data_buf_length, &payload_buf_length);
+*/
+
+/*
+Length of paylaod buffer length and payload length from input buffer.
+See var_length_int_to_num_t() for details.
+@param buf input buffer
+@param buf_length length of input buffer
+@param payload_length length of information
+@param payload_buf_length length of payload buffer to use this length as index
 */
 
 void var_length_int_to_num(unsigned char * buf, unsigned int buf_length, unsigned int * payload_length, unsigned int * payload_buf_length)
