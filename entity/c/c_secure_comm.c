@@ -345,11 +345,13 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
             
 
             //decrypt encrypted_distribution_key
-            unsigned char decrypted_distribution_key[key_size]; //TODO: may need to change size. Actual decrypted_length = 56 bytes.
-            unsigned int decrypted_distribution_key_length = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, path_priv, decrypted_distribution_key);
+            unsigned int decrypted_distribution_key_length;
+            unsigned char * decrypted_distribution_key = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, path_priv, &decrypted_distribution_key_length); 
+            
 
             //parse decrypted_distribution_key to mac_key & cipher_key
             parse_distribution_key(&dist_key, decrypted_distribution_key, decrypted_distribution_key_length);
+            free(decrypted_distribution_key);
 
             //decrypt session_key with decrypted_distribution_key
             unsigned int decrypted_session_key_response_length;

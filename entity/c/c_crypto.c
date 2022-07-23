@@ -78,21 +78,42 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     input: 'ret': decrypted result buf, 'enc_data': data to decrypt
     output: return decrypted length
 */
-int private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned char *ret)
+unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned char *ret_len)
 {
     FILE *keyfile = fopen(path, "rb"); 
-    RSA *rsa = PEM_read_RSAPrivateKey(keyfile, NULL, NULL, NULL);
-    RSA *PEM_read_RSAPublicKey(FILE *fp, RSA **x,
-                                        pem_password_cb *cb, void *u);
-    int result = RSA_private_decrypt(enc_data_len, enc_data, ret, rsa, padding);
-    if(result == -1){  // RSA_private_decrypt() returns -1 on error
-        print_last_error("Private Decrypt failed!");
-        exit(0);
-    }
-    else{
-        printf("Private Decrypt Success!\n");
-    }
-    return result;
+    EVP_PKEY *key = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
+
+    EVP_PKEY_CTX *ctx;
+    ENGINE *eng;
+    unsigned char *out;
+
+    /*
+    * NB: assumes key, eng, in, inlen are already set up
+    * and that key is an RSA private key
+    */
+    ctx = EVP_PKEY_CTX_new(key, eng);
+    if (!ctx)
+    print_last_error("EVP_PKEY_CTX_new failed");
+    if (EVP_PKEY_decrypt_init(ctx) <= 0)
+    print_last_error("EVP_PKEY_decrypt_init failed");
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0)
+    print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
+
+    /* Determine buffer length */
+    if (EVP_PKEY_decrypt(ctx, NULL, ret_len, enc_data, enc_data_len) <= 0)
+    print_last_error("EVP_PKEY_decrypt failed");
+
+    out = OPENSSL_malloc(*ret_len);
+
+    if (!out)
+    print_last_error("OPENSSL_malloc failed");
+
+    if (EVP_PKEY_decrypt(ctx, out, ret_len, enc_data, enc_data_len) <= 0)
+    print_last_error("EVP_PKEY_decrypt failed");
+
+    /* Decrypted data is outlen bytes written to buffer out */
+
+    return out;
 }
 
 /*
