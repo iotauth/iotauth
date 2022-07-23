@@ -25,7 +25,9 @@ void print_last_error(char *msg)
     input: 'ret': encrypted buf, 'data': data to encrypt
     output: length of encrypted data
 */
-int public_encrypt(unsigned char * data, int data_len, int padding, const char * path, unsigned char *ret) 
+
+
+unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, const char * path, unsigned int *ret_len) 
 {
     FILE *pemFile = fopen(path, "rb");
     X509 *cert = PEM_read_X509(pemFile, NULL, NULL, NULL );
@@ -37,19 +39,36 @@ int public_encrypt(unsigned char * data, int data_len, int padding, const char *
     if ( id != EVP_PKEY_RSA ) {
         print_last_error("is not RSA Encryption file");
     }
-    RSA *rsa = EVP_PKEY_get1_RSA(pkey);
-    if ( rsa == NULL ) {
-        print_last_error("EVP_PKEY_get1_RSA fail");
-    }
-    int result = RSA_public_encrypt(data_len, data, ret, rsa, padding);
-    if(result == -1){ // RSA_public_encrypt() returns -1 on error
-        print_last_error("Public Encrypt failed!\n");
-        exit(0);
-    }
-    else{
-        printf("Public Encryption Success!\n");
-    }
-    return result; // RSA_public_encrypt() returns the size of the encrypted data 
+    /*openssl 3.0 -> do not change to RSA. 
+    directly use EVP_PKEY
+    */
+    EVP_PKEY_CTX *ctx;
+    ENGINE *eng;
+    unsigned char *out;
+
+    ctx = EVP_PKEY_CTX_new(pkey, eng);
+    if (!ctx)
+    print_last_error("EVP_PKEY_CTX_new failed");
+    if (EVP_PKEY_encrypt_init(ctx) <= 0)
+    print_last_error("EVP_PKEY_encrypt_init failed");
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0)
+    print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
+
+    /* Determine buffer length */
+    if (EVP_PKEY_encrypt(ctx, NULL, (size_t *) ret_len, data, data_len) <= 0)
+    print_last_error("EVP_PKEY_encrypt failed");
+
+
+    out = OPENSSL_malloc(*ret_len);
+
+    if (!out)
+    print_last_error("OPENSSL_malloc failed");
+
+    if (EVP_PKEY_encrypt(ctx, out, (size_t *) ret_len, data, data_len) <= 0)
+    print_last_error("EVP_PKEY_encrypt failed");
+
+ /* Encrypted data is outlen bytes written to buffer out */
+    return out;
 }
 
 //TODO: �������� ���⵵ ���� �ٲ����?
@@ -88,12 +107,50 @@ void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const 
     unsigned char dig_enc[SHA256_DIGEST_LENGTH];
     SHA256_make_digest_msg(encrypted, encrypted_length, dig_enc);
 
+
     int sign_result = RSA_sign(NID_sha256, dig_enc,SHA256_DIGEST_LENGTH,
             sigret, sigret_length, rsa);
     if(sign_result == 1)
         printf("Sign successed! \n");
     else
         print_last_error("Sign failed! \n");
+
+    
+    EVP_PKEY_CTX *ctx;
+    /* md is a SHA-256 digest in this example. */
+    unsigned char *md, *sig;
+    size_t mdlen = 32, siglen;
+    EVP_PKEY *signing_key;
+
+    /*
+    * NB: assumes signing_key and md are set up before the next
+    * step. signing_key must be an RSA private key and md must
+    * point to the SHA-256 digest to be signed.
+    */
+    ctx = EVP_PKEY_CTX_new(signing_key, NULL /* no engine */);
+    if (!ctx)
+        /* Error occurred */
+    if (EVP_PKEY_sign_init(ctx) <= 0)
+        /* Error */
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+        /* Error */
+    if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
+        /* Error */
+
+    /* Determine buffer length */
+    if (EVP_PKEY_sign(ctx, NULL, &siglen, md, mdlen) <= 0)
+        /* Error */
+
+    sig = OPENSSL_malloc(siglen);
+
+    if (!sig)
+        /* malloc failure */
+
+    if (EVP_PKEY_sign(ctx, sig, &siglen, md, mdlen) <= 0)
+        /* Error */
+        print_last_error("H");
+
+    /* Signature is siglen bytes written to buffer sig */
 }
 
 /*

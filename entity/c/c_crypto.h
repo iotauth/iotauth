@@ -53,7 +53,7 @@ typedef struct
 }session_key_t; 
 
 void print_last_error(char *msg);
-int public_encrypt(unsigned char * data, int data_len,  int padding, const char * path, unsigned char *ret);
+unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, const char * path, unsigned int *ret_len); 
 int private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned char *ret);
 void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned char *sigret, unsigned int * sigret_length);
 void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char * sign, unsigned int sign_length, const char * path);

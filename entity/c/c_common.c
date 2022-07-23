@@ -199,9 +199,9 @@ void num_to_var_length_int(unsigned int data_length, unsigned char * payload_buf
     payload_buf[*buf_len-1] = data_length;
 }
 
-void make_buffer_header(unsigned char *data, unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int * header_length)
+void make_buffer_header(unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int * header_length)
 {
-    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���?.
+    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���??.
     unsigned char payload_buf_len;
     num_to_var_length_int(data_length, payload_buf, &payload_buf_len);
     *header_length = MESSAGE_TYPE_SIZE + payload_buf_len;
@@ -220,9 +220,11 @@ void make_sender_buf(unsigned char *payload, unsigned int payload_length, unsign
 {
     unsigned char header[MAX_PAYLOAD_BUF_SIZE+1];
     unsigned int header_length;
-    make_buffer_header(payload, payload_length, MESSAGE_TYPE, header, &header_length);
+    make_buffer_header(payload_length, MESSAGE_TYPE, header, &header_length);
     concat_buffer_header_and_payload(header, header_length, payload, payload_length, sender, sender_length);
 }
+
+
 
 /*
 function: Connects to server as client. Maybe the entity client-Auth, entity_client - entity_server, entity_server - Auth.
