@@ -71,6 +71,7 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     return out;
 }
 
+//test
 
 /*
     function: read PEM key from 'path'. RSA_Private_decrypt 'encrypted' and save in 'ret' with 'padding'
