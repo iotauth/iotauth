@@ -100,6 +100,8 @@ int private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, con
     input:'sigret': return signed buf, 'encrypted': data to sign
     output: 
 */
+
+//under construction
 void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned char *sigret, unsigned int * sigret_length)
 {
     FILE *keyfile = fopen(path, "rb"); 
