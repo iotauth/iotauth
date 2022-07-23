@@ -71,7 +71,6 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     return out;
 }
 
-//TODO: �������� ���⵵ ���� �ٲ����?
 
 /*
     function: read PEM key from 'path'. RSA_Private_decrypt 'encrypted' and save in 'ret' with 'padding'
@@ -212,7 +211,7 @@ void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_lengt
     if(AES_set_encrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
         error_handling("AES key setting failed!") ;
     }; 
-    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv �� �ٲ��?.
+    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv �� �ٲ��?.
     *ret_length = ((plaintext_length) +iv_length)/iv_length *iv_length;
 }
 
@@ -222,7 +221,7 @@ void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_lengt
     if(AES_set_decrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
         error_handling("AES key setting failed!") ;
     }; 
-    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //iv�� �ٲ��???po
+    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //iv�� �ٲ��???po
     // *ret_length = ((encrypted_length) +iv_length)/iv_length *iv_length;
 }
 
