@@ -100,7 +100,7 @@ unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int 
     print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
 
     /* Determine buffer length */
-    if (EVP_PKEY_decrypt(ctx, NULL, ret_len, enc_data, enc_data_len) <= 0)
+    if (EVP_PKEY_decrypt(ctx, NULL, (size_t *) ret_len, enc_data, enc_data_len) <= 0)
     print_last_error("EVP_PKEY_decrypt failed");
 
     out = OPENSSL_malloc(*ret_len);
@@ -108,7 +108,7 @@ unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int 
     if (!out)
     print_last_error("OPENSSL_malloc failed");
 
-    if (EVP_PKEY_decrypt(ctx, out, ret_len, enc_data, enc_data_len) <= 0)
+    if (EVP_PKEY_decrypt(ctx, out, (size_t *) ret_len, enc_data, enc_data_len) <= 0)
     print_last_error("EVP_PKEY_decrypt failed");
 
     /* Decrypted data is outlen bytes written to buffer out */
