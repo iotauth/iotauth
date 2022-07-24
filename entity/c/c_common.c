@@ -84,10 +84,10 @@ unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
 }
 
 /*  
-    Look for payload buffer length using total number of input buffer. 
-    See payload_buf_length() for details.
-    @param b total number of buffer
-    @return payload buffer length
+Look for payload buffer length using total number of input buffer. 
+See payload_buf_length() for details.
+@param b total number of buffer
+@return payload buffer length
 */
 unsigned int payload_buf_length(int b)
 {   
@@ -100,11 +100,11 @@ unsigned int payload_buf_length(int b)
     return n;
 }
 /*
-    Make the total number of input buffer.
-    See var_length_int_to_num_t() for details.
-    @param buf input buffer from after messagetype
-    @param buf_length total read message length
-    @return message length of the payload
+Make the total number of input buffer.
+See var_length_int_to_num_t() for details.
+@param buf input buffer from after messagetype
+@param buf_length total read message length
+@return message length of the payload
 */
 unsigned int var_length_int_to_num_t(unsigned char * buf, int buf_length)
 {
@@ -197,7 +197,6 @@ input: data to send., message_type, pointer to save.
 
 */
 
-
 /*
 Make the payload buffer and length to connect with total buffer. 
 See num_to_var_length_int() for details.
@@ -219,22 +218,20 @@ void num_to_var_length_int(unsigned int data_length, unsigned char * payload_buf
 /*
 Make the header buffer including the message type and payload buffer.
 See make_buffer_header() for details.
-@param data input data buffer
 @param data_length input data buffer length
 @param MESSAGE_TYPE message type according to purpose
 @param header output header buffer including the message type and payload buffer 
 @param header_length header buffer length
 */
-void make_buffer_header(unsigned char *data, unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int * header_length)
+void make_buffer_header(unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int * header_length)
 {
-    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���?.
+    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���??.
     unsigned char payload_buf_len;
     num_to_var_length_int(data_length, payload_buf, &payload_buf_len);
     *header_length = MESSAGE_TYPE_SIZE + payload_buf_len;
     header[0] = MESSAGE_TYPE;
     memcpy(header + MESSAGE_TYPE_SIZE, payload_buf, payload_buf_len);
 }
-
 /*
 Concat the two buffers into a new return buffer
 See concat_buffer_header_and_payload() for details.
@@ -245,14 +242,12 @@ See concat_buffer_header_and_payload() for details.
 @param ret header new return buffer
 @param ret_length length of return buffer
 */
-
 void concat_buffer_header_and_payload(unsigned char *header, unsigned int header_length, unsigned char *payload, unsigned int payload_length, unsigned char *ret, unsigned int * ret_length)
 {
     memcpy(ret, header, header_length);
     memcpy(ret + header_length, payload, payload_length);
     *ret_length = header_length + payload_length;
 }
-
 /*
 Make the buffer sending to Auth by using make_buffer_header() and concat_buffer_header_and_payload().
 See make_sender_buf() for details.
@@ -266,9 +261,11 @@ void make_sender_buf(unsigned char *payload, unsigned int payload_length, unsign
 {
     unsigned char header[MAX_PAYLOAD_BUF_SIZE+1];
     unsigned int header_length;
-    make_buffer_header(payload, payload_length, MESSAGE_TYPE, header, &header_length);
+    make_buffer_header(payload_length, MESSAGE_TYPE, header, &header_length);
     concat_buffer_header_and_payload(header, header_length, payload, payload_length, sender, sender_length);
 }
+
+
 
 /*
 function: Connects to server as client. Maybe the entity client-Auth, entity_client - entity_server, entity_server - Auth.
