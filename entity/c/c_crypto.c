@@ -1,13 +1,16 @@
 #include "c_crypto.h"
 /*
-    function:
-    input:
-    output:
+explanation for this function.
+See function() for details.
+@param variable comment
+@return comment
 */
+
+
 /*
-    function: prints error message
-    input: Error message to display
-    output: input message & openssl error
+Print error message when the code has error.
+See print_last_error() for details.
+@param msg message to print the error
 */
 void print_last_error(char *msg)
 {
@@ -26,7 +29,17 @@ void print_last_error(char *msg)
     output: length of encrypted data
 */
 
-
+/*
+Encrypt the message with public key using public key encryption from OpenSSL.
+See public_encrypt() for details.
+@param data message for public key encryption
+@param data_len length of message
+@param padding set of padding , 1 if padding is used, 0 if not used.
+padding prevents an attacker from knowing the exact length of the plaintext message.
+@param path public key path
+@param ret_len length of encrypted message 
+@return encrypted message from public key encryption
+*/
 unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, const char * path, unsigned int *ret_len) 
 {
     FILE *pemFile = fopen(path, "rb");
@@ -78,6 +91,17 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     input: 'ret': decrypted result buf, 'enc_data': data to decrypt
     output: return decrypted length
 */
+/*
+Decrypt message with private key using private key decryption from OpenSSL.
+See private_decrypt() for details.
+@param enc_data encrypted message for private key decryption
+@param enc_data_len length of encrypted message
+@param padding set of padding , 1 if padding is used, 0 if not used.
+padding prevents an attacker from knowing the exact length of the plaintext message.
+@param path private key path
+@param ret_len length of decrypted message 
+@return decrypted message from private key decryption
+*/
 unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned char *ret_len)
 {
     FILE *keyfile = fopen(path, "rb"); 
@@ -123,6 +147,17 @@ unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int 
 */
 
 //under construction
+
+/*
+After digest the encrypted message, sign digested message 
+with private key using private key signature from OpenSSL.
+See SHA256_sign() for details.
+@param encrypted encrypted message to sign
+@param encrypted_length length of encrypted message
+@param path private key path for private key signature
+@param sigret signed buffer
+@param sigret_length length of signed buffer
+*/
 void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned char *sigret, unsigned int * sigret_length)
 {
     FILE *keyfile = fopen(path, "rb"); 
@@ -181,7 +216,16 @@ void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const 
     input:
     output: error when verify fails
 */
-
+/*
+Verification of comparison between encrypted data and signature
+using the RSA verification providing to openssl.
+See SHA256_verify() for details.
+@param data encrypted data
+@param data_length length of encrypted data
+@param sign signature buffer
+@param sign_length length of signiture
+@param path public key path
+*/
 void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char * sign, unsigned int sign_length, const char * path)
 {
     FILE *pemFile = fopen(path, "rb");
@@ -216,6 +260,14 @@ void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char
     input:
     output:
 */
+
+/*
+digest the encrypted message using the SHA256 digest function providing to openssl.
+See SHA256_make_digest_msg() for details.
+@param encrypted encrypted data
+@param encrypted_length length of encrypted data
+@param dig_enc digest message generating from encrypted data
+*/
 void SHA256_make_digest_msg(unsigned char *encrypted ,int encrypted_length, unsigned char *dig_enc)
 {
     SHA256_CTX ctx;
@@ -223,8 +275,22 @@ void SHA256_make_digest_msg(unsigned char *encrypted ,int encrypted_length, unsi
     SHA256_Update(&ctx, encrypted, encrypted_length); 
     SHA256_Final(dig_enc, &ctx);   
 }
-
-void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_length, unsigned char * key, unsigned int key_length, unsigned char * iv, unsigned int iv_length, unsigned char * ret, unsigned int * ret_length)
+/*
+Encrypt the message with the cipher key of the session key obtained from Auth
+by using Cipher Block Chaining(CBC) encryption of OpenSSL. 
+See AES_CBC_128_encrypt() for details.
+@param plaintext message to encrypt
+@param plaintext_length length of plaintext
+@param key cipher key of session key to be used in CBC encryption
+@param key_length length of cipher key
+@param iv initialize vector to be used in first encryption of CBC encryption
+@param iv_length length of iv buffer
+@param ret encrypted message received from CBC encryption
+@param ret_length length of ret
+*/
+void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_length, 
+unsigned char * key, unsigned int key_length, unsigned char * iv, unsigned int iv_length, 
+unsigned char * ret, unsigned int * ret_length)
 { 
     unsigned char iv_temp[AES_CBC_128_IV_SIZE];
     memcpy(iv_temp, iv, AES_CBC_128_IV_SIZE);
@@ -236,8 +302,22 @@ void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_lengt
     AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv �� �ٲ��?.
     *ret_length = ((plaintext_length) +iv_length)/iv_length *iv_length;
 }
-
-void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_length, unsigned char * key, unsigned int key_length, unsigned char  * iv, unsigned int iv_length, unsigned char * ret, unsigned int * ret_length)
+/*
+Decrypt the message with the cipher key of the session key obtained from Auth
+by using Cipher Block Chaining(CBC) decryption of OpenSSL. 
+See AES_CBC_128_decrypt() for details.
+@param encrypted encrypted data
+@param encrypted_length length of encrypted data
+@param key cipher key of session key to be used in CBC encryption
+@param key_length length of cipher key
+@param iv initialize vector to be used in first decryption of CBC encryption
+@param iv_length length of iv buffer
+@param ret decrypted message received from CBC decryption
+@param ret_length length of ret
+*/
+void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_length, 
+unsigned char * key, unsigned int key_length, unsigned char  * iv, unsigned int iv_length, 
+unsigned char * ret, unsigned int * ret_length)
 { 
     AES_KEY enc_key_128;
     if(AES_set_decrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
@@ -266,7 +346,22 @@ usage:
     free(encrypted); //never forget!!
 */
 
-unsigned char * symmetric_encrypt_authenticate(unsigned char * buf, unsigned int buf_length, unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
+/*
+Encrypt the message with cipher key and 
+do HMAC(Hashed Message Authenticate Code) with mac key from session key.
+See symmetric_encrypt_authenticate() for details.
+@param buf input message
+@param buf_length length of buf
+@param mac_key mac key of session key to be used in HMAC
+@param mac_key_size size of mac key
+@param cipher_key cipher key of session key to be used in CBC encryption
+@param cipher_key_size size of cipher key
+@param iv_size size of iv(initialize vector)
+@param ret_length length of return buffer
+*/
+unsigned char * symmetric_encrypt_authenticate(unsigned char * buf, unsigned int buf_length,
+unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, 
+unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
 {
     unsigned char * iv = (unsigned char *) malloc(iv_size);
     generate_nonce(iv_size, iv);
@@ -297,8 +392,22 @@ Usage:
     ~~ use 'encrypted' ~~
     free(decrypted); //never forget!!
 */
-
-unsigned char * symmetric_decrypt_authenticate(unsigned char * buf, unsigned int buf_length, unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
+/*
+Decrypt the encrypted message with cipher key and 
+do HMAC(Hashed Message Authenticate Code) with mac key from session key.
+See symmetric_decrypt_authenticate() for details.
+@param buf input message
+@param buf_length length of buf
+@param mac_key mac key of session key to be used in HMAC
+@param mac_key_size size of mac key
+@param cipher_key cipher key of session key to be used in CBC decryption
+@param cipher_key_size size of cipher key
+@param iv_size size of iv(initialize vector)
+@param ret_length length of return buffer
+*/
+unsigned char * symmetric_decrypt_authenticate(unsigned char * buf, unsigned int buf_length, 
+unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, 
+unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
 {
     unsigned int encrypted_length = buf_length - mac_key_size;
     unsigned char * encrypted = (unsigned char *) malloc(encrypted_length);
