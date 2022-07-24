@@ -3,6 +3,18 @@
 
 #include "c_common.h"
 
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/aes.h> 
+#include <openssl/pem.h>
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/sha.h>
+#include <openssl/x509.h>
+#include <openssl/hmac.h>
+
 #define AES_CBC_128_KEY_SIZE 128
 #define AES_CBC_128_IV_SIZE 16
 

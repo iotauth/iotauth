@@ -200,27 +200,87 @@ unsigned char * digest_message_SHA_256(unsigned char *message, int message_lengt
     return digest;
 }
 
+ int do_crypt(char *outfile)
+ {
+     unsigned char outbuf[1024];
+     int outlen, tmplen;
+     /*
+      * Bogus key and IV: we'd normally set these from
+      * another source.
+      */
+     unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+     unsigned char iv[] = {1,2,3,4,5,6,7,8};
+     char intext[] = "Some Crypto Text";
+
+     FILE *out;
+
+     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+     EVP_EncryptInit_ex2(ctx, EVP_idea_cbc(), key, iv, NULL);
+
+     if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext, strlen(intext))) {
+         /* Error */
+         EVP_CIPHER_CTX_free(ctx);
+         return 0;
+     }
+     /*
+      * Buffer passed to EVP_EncryptFinal() must be after data just
+      * encrypted to avoid overwriting it.
+      */
+     if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)) {
+         /* Error */
+         EVP_CIPHER_CTX_free(ctx);
+         return 0;
+     }
+     outlen += tmplen;
+     EVP_CIPHER_CTX_free(ctx);
+     /*
+      * Need binary mode for fopen because encrypted data is
+      * binary data. Also cannot use strlen() on it because
+      * it won't be NUL terminated and may contain embedded
+      * NULs.
+      */
+     out = fopen(outfile, "wb");
+     if (out == NULL) {
+         /* Error */
+         return 0;
+     }
+     fwrite(outbuf, 1, outlen, out);
+     fclose(out);
+     return 1;
+ }
+
 void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_length, unsigned char * key, unsigned int key_length, unsigned char * iv, unsigned int iv_length, unsigned char * ret, unsigned int * ret_length)
 { 
-    unsigned char iv_temp[AES_CBC_128_IV_SIZE];
-    memcpy(iv_temp, iv, AES_CBC_128_IV_SIZE);
-    //TODO: check iv changing. if not needed, erase.
-    AES_KEY enc_key_128;
-    if(AES_set_encrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
-        error_handling("AES key setting failed!") ;
-    }; 
-    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv ï¿½ï¿½ ï¿½Ù²ï¿½ï¿??.
-    *ret_length = ((plaintext_length) +iv_length)/iv_length *iv_length;
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex2(ctx, EVP_aes_128_cbc(), key, iv, NULL);
+    if (!EVP_EncryptUpdate(ctx, ret, ret_length, plaintext, plaintext_length)) {
+        EVP_CIPHER_CTX_free(ctx);
+        print_last_error("EVP_EncryptUpdate failed");
+    }    
+    unsigned int temp_len;
+    if (!EVP_EncryptFinal_ex(ctx, ret + *ret_length, &temp_len)) {
+        EVP_CIPHER_CTX_free(ctx);
+        print_last_error("EVP_EncryptFinal_ex failed");
+    }
+    *ret_length += temp_len;
+    EVP_CIPHER_CTX_free(ctx);
 }
 
 void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_length, unsigned char * key, unsigned int key_length, unsigned char  * iv, unsigned int iv_length, unsigned char * ret, unsigned int * ret_length)
 { 
-    AES_KEY enc_key_128;
-    if(AES_set_decrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
-        error_handling("AES key setting failed!") ;
-    }; 
-    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //ivï¿½ï¿½ ï¿½Ù²ï¿½ï¿????po
-    // *ret_length = ((encrypted_length) +iv_length)/iv_length *iv_length;
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit_ex2(ctx, EVP_aes_128_cbc(), key, iv, NULL);
+    if (!EVP_DecryptUpdate(ctx, ret, ret_length, encrypted, encrypted_length)) {
+        EVP_CIPHER_CTX_free(ctx);
+        print_last_error("EVP_DecryptUpdate failed");
+    }    
+    unsigned int temp_len;
+    if (!EVP_DecryptFinal_ex(ctx, ret + *ret_length, &temp_len)) {
+        EVP_CIPHER_CTX_free(ctx);
+        print_last_error("EVP_DecryptFinal_ex failed");
+    }
+    *ret_length += temp_len;
+    EVP_CIPHER_CTX_free(ctx);
 }
 
 //encrypt buf to ret with mac_key, cipher_key
