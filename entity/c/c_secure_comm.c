@@ -34,8 +34,10 @@ unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned 
 
 void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, const char * path_priv, unsigned char * message, unsigned int * message_length)
 {
-    unsigned char encrypted[256]; 
-    int encrypted_length= public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, message); //TODO: need padding as input?
+    // unsigned char encrypted[256]; 
+    unsigned int encrypted_length;
+    unsigned char * encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, &encrypted_length);
+    // int encrypted_length= public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, message); //TODO: need padding as input?
 
     unsigned char sigret [256];
     unsigned int  sigret_length;
@@ -43,6 +45,7 @@ void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * 
     SHA256_sign(message, encrypted_length, path_priv, sigret, &sigret_length);
     *message_length = sigret_length + encrypted_length;
     memcpy(message+encrypted_length,sigret,sigret_length);
+    free(encrypted);
 }
 
 
@@ -312,6 +315,8 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
             unsigned int enc_length;
             unsigned char enc[RSA_ENCRYPT_SIGN_SIZE];
             encrypt_and_sign(serialized, ret_length, path_pub, path_priv, enc, &enc_length);
+
+            // unsigned char * enc = encrypt_and_sign();
             free(serialized);
             
 
@@ -319,6 +324,7 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
             unsigned int message_length;
             make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC, message, &message_length);
             write(sock, message, message_length);
+            // free(enc);
         }
         else if(message_type == SESSION_KEY_RESP_WITH_DIST_KEY)
         {
@@ -339,11 +345,13 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
             
 
             //decrypt encrypted_distribution_key
-            unsigned char decrypted_distribution_key[key_size]; //TODO: may need to change size. Actual decrypted_length = 56 bytes.
-            unsigned int decrypted_distribution_key_length = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, path_priv, decrypted_distribution_key);
+            unsigned int decrypted_distribution_key_length;
+            unsigned char * decrypted_distribution_key = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, path_priv, &decrypted_distribution_key_length); 
+            
 
             //parse decrypted_distribution_key to mac_key & cipher_key
             parse_distribution_key(&dist_key, decrypted_distribution_key, decrypted_distribution_key_length);
+            free(decrypted_distribution_key);
 
             //decrypt session_key with decrypted_distribution_key
             unsigned int decrypted_session_key_response_length;
