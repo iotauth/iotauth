@@ -1,5 +1,12 @@
 #include "c_secure_comm.h"
 
+/*
+explanation for this function.
+See function() for details.
+@param variable comment
+@return comment
+*/
+
 int sent_seq_num;
 unsigned char entity_client_state;
 unsigned char entity_server_state;
@@ -11,7 +18,23 @@ function:   prints the seq_num & message.
 input: seq_num(the seq_num must be saved), payload(data to decrypt), session_key
 */
 
-unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned char * auth_nonce, unsigned char num_key, unsigned char * sender, unsigned int sender_length, unsigned char* purpose, unsigned int purpose_length, unsigned int * ret_length)
+/*
+Concat entity, auth nonce and information such as name 
+and purpose obtained from the config file,
+See auth_hello_reply_message() for details.
+@param entity_nonce entity's nonce 
+@param auth_nonce received auth's nonce
+@param num_key number of keys to receive from auth
+@param sender name of sender
+@param sender_length length of sender
+@param purpose purpose to get session key
+@param purpose_length length of purpose
+@param ret_length length of return buffer 
+@return concated total buffer
+*/
+unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned char * auth_nonce,
+ unsigned char num_key, unsigned char * sender, unsigned int sender_length, unsigned char* purpose,
+  unsigned int purpose_length, unsigned int * ret_length)
 {
     unsigned char * ret = (unsigned char *)malloc(NONCE_SIZE*2 + NUMKEY_SIZE + sender_length + purpose_length);
     // unsigned char ret[100];
@@ -31,6 +54,7 @@ unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned 
 
     return ret;
 }
+//여기 encrypted랑 message가 어떻게 연결되는거지?
 
 void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, const char * path_priv, unsigned char * message, unsigned int * message_length)
 {
@@ -39,13 +63,13 @@ void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * 
     unsigned char * encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, &encrypted_length);
     // int encrypted_length= public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, message); //TODO: need padding as input?
 
-    unsigned int sigret_length;
+    unsigned char sigret [256];
+    unsigned int  sigret_length;
 
-    unsigned char * sigret = SHA256_sign(message, encrypted_length, path_priv, &sigret_length);
+    SHA256_sign(message, encrypted_length, path_priv, sigret, &sigret_length);
     *message_length = sigret_length + encrypted_length;
-    memcpy(message+encrypted_length, sigret, sigret_length);
+    memcpy(message+encrypted_length,sigret,sigret_length);
     free(encrypted);
-    free(sigret);
 }
 
 
