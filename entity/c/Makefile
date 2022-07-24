@@ -19,7 +19,7 @@ c_crypto.o: c_common.o c_crypto.h c_crypto.c
 	gcc ${CPPFLAGS} -c -o c_crypto.o c_crypto.c
 
 load_config.o: load_config.h load_config.c
-	gcc -c -o load_config.o load_config.c
+	gcc ${CPPFLAGS} -c -o load_config.o load_config.c
 
 c_secure_comm.o: c_crypto.o load_config.o c_secure_comm.h c_secure_comm.c
 	gcc ${CPPFLAGS} -c -o c_secure_comm.o c_secure_comm.c
