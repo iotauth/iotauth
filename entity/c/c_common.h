@@ -17,16 +17,6 @@
 #include <time.h>
 #include <math.h>
 #include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/aes.h> 
-#include <openssl/pem.h>
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/sha.h>
-#include <openssl/x509.h>
-#include <openssl/hmac.h>
 #include <pthread.h>
 
 // message type //

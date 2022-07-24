@@ -3,6 +3,18 @@
 
 #include "c_common.h"
 
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/aes.h> 
+#include <openssl/pem.h>
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/sha.h>
+#include <openssl/x509.h>
+#include <openssl/hmac.h>
+
 #define AES_CBC_128_KEY_SIZE 128
 #define AES_CBC_128_IV_SIZE 16
 
@@ -54,10 +66,10 @@ typedef struct
 
 void print_last_error(char *msg);
 unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, const char * path, unsigned int *ret_len); 
-unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned char *ret_len);
-void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned char *sigret, unsigned int * sigret_length);
+unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned int *ret_len);
+unsigned char * SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned int * sig_length);
 void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char * sign, unsigned int sign_length, const char * path);
-void SHA256_make_digest_msg(unsigned char *encrypted ,int encrypted_length, unsigned char *dig_enc);
+unsigned char * digest_message_SHA_256(unsigned char *message, int message_length, unsigned int *digest_len);
 void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_length, unsigned char * key, unsigned int key_length, unsigned char * iv, unsigned int iv_length, unsigned char * ret, unsigned int * ret_length);
 void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_length, unsigned char * key, unsigned int key_length, unsigned char  * iv, unsigned int iv_length, unsigned char * ret, unsigned int * ret_length);
 
