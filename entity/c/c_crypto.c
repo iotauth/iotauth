@@ -18,8 +18,6 @@ void print_last_error(char *msg)
     free(err);
 }
 
-//TODO: �������� ���� check input ���� ���߷��� input ���� �ٲ�. Ȯ�ν� �����a.
-
 /*
     function: read X509cert.pem file & get pubkey from 'path'. RSA_public_encrypt 'data' to 'ret' with 'padding'
     input: 'ret': encrypted buf, 'data': data to encrypt
@@ -43,10 +41,9 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     directly use EVP_PKEY
     */
     EVP_PKEY_CTX *ctx;
-    ENGINE *eng;
     unsigned char *out;
 
-    ctx = EVP_PKEY_CTX_new(pkey, eng);
+    ctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (!ctx)
     print_last_error("EVP_PKEY_CTX_new failed");
     if (EVP_PKEY_encrypt_init(ctx) <= 0)
@@ -71,27 +68,19 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     return out;
 }
 
-//test
-
 /*
     function: read PEM key from 'path'. RSA_Private_decrypt 'encrypted' and save in 'ret' with 'padding'
     input: 'ret': decrypted result buf, 'enc_data': data to decrypt
     output: return decrypted length
 */
-unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned char *ret_len)
+unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, const char * path, unsigned int *ret_len)
 {
     FILE *keyfile = fopen(path, "rb"); 
     EVP_PKEY *key = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
 
     EVP_PKEY_CTX *ctx;
-    ENGINE *eng;
     unsigned char *out;
-
-    /*
-    * NB: assumes key, eng, in, inlen are already set up
-    * and that key is an RSA private key
-    */
-    ctx = EVP_PKEY_CTX_new(key, eng);
+    ctx = EVP_PKEY_CTX_new(key, NULL);
     if (!ctx)
     print_last_error("EVP_PKEY_CTX_new failed");
     if (EVP_PKEY_decrypt_init(ctx) <= 0)
@@ -111,8 +100,6 @@ unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int 
     if (EVP_PKEY_decrypt(ctx, out, (size_t *) ret_len, enc_data, enc_data_len) <= 0)
     print_last_error("EVP_PKEY_decrypt failed");
 
-    /* Decrypted data is outlen bytes written to buffer out */
-
     return out;
 }
 
@@ -123,57 +110,35 @@ unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int 
 */
 
 //under construction
-void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned char *sigret, unsigned int * sigret_length)
+unsigned char * SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned int * sig_length)
 {
     FILE *keyfile = fopen(path, "rb"); 
-    RSA *rsa = PEM_read_RSAPrivateKey(keyfile, NULL, NULL, NULL);
-    unsigned char dig_enc[SHA256_DIGEST_LENGTH];
-    SHA256_make_digest_msg(encrypted, encrypted_length, dig_enc);
-
-
-    int sign_result = RSA_sign(NID_sha256, dig_enc,SHA256_DIGEST_LENGTH,
-            sigret, sigret_length, rsa);
-    if(sign_result == 1)
-        printf("Sign successed! \n");
-    else
-        print_last_error("Sign failed! \n");
-
-    
+    EVP_PKEY *signing_key = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
+    unsigned int md_length;
+    unsigned char * md = digest_message_SHA_256(encrypted, encrypted_length, &md_length);  
     EVP_PKEY_CTX *ctx;
-    /* md is a SHA-256 digest in this example. */
-    unsigned char *md, *sig;
-    size_t mdlen = 32, siglen;
-    EVP_PKEY *signing_key;
-
-    /*
-    * NB: assumes signing_key and md are set up before the next
-    * step. signing_key must be an RSA private key and md must
-    * point to the SHA-256 digest to be signed.
-    */
-    ctx = EVP_PKEY_CTX_new(signing_key, NULL /* no engine */);
+    unsigned char *sig;
+    ctx = EVP_PKEY_CTX_new(signing_key, NULL);
     if (!ctx)
-        /* Error occurred */
+        print_last_error("EVP_PKEY_CTX_new failed");
     if (EVP_PKEY_sign_init(ctx) <= 0)
-        /* Error */
+        print_last_error("EVP_PKEY_sign_init failed");
     if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
-        /* Error */
+        print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
     if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
-        /* Error */
+        print_last_error("EVP_PKEY_CTX_set_signature_md failed");
 
     /* Determine buffer length */
-    if (EVP_PKEY_sign(ctx, NULL, &siglen, md, mdlen) <= 0)
-        /* Error */
+    if (EVP_PKEY_sign(ctx, NULL, (size_t *) sig_length, md, md_length) <= 0)
+        print_last_error("EVP_PKEY_sign failed");
 
-    sig = OPENSSL_malloc(siglen);
-
+    sig = OPENSSL_malloc(*sig_length);
     if (!sig)
-        /* malloc failure */
-
-    if (EVP_PKEY_sign(ctx, sig, &siglen, md, mdlen) <= 0)
-        /* Error */
-        print_last_error("H");
-
-    /* Signature is siglen bytes written to buffer sig */
+        print_last_error("OPENSSL_malloc failed");
+    if (EVP_PKEY_sign(ctx, sig, (size_t *) sig_length, md, md_length) <= 0)
+        print_last_error("EVP_PKEY_sign failed");
+    free(md);
+    return sig;
 }
 
 /*
@@ -182,46 +147,57 @@ void SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const 
     output: error when verify fails
 */
 
-void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char * sign, unsigned int sign_length, const char * path)
+void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char * sig, unsigned int sig_length, const char * path)
 {
     FILE *pemFile = fopen(path, "rb");
-    X509 *cert = PEM_read_X509( pemFile, NULL, NULL, NULL );
-    EVP_PKEY *pkey = X509_get_pubkey(cert);
-    if (pkey == NULL){
+    X509 *cert = PEM_read_X509(pemFile, NULL, NULL, NULL );
+    EVP_PKEY *verify_key = X509_get_pubkey(cert);
+    if (verify_key == NULL){
         print_last_error("public key getting fail");
     }
-    int id = EVP_PKEY_id(pkey);
+    int id = EVP_PKEY_id(verify_key);
     if ( id != EVP_PKEY_RSA ) {
         print_last_error("is not RSA Encryption file");
     }
-    RSA *rsa = EVP_PKEY_get1_RSA(pkey);
-    if ( rsa == NULL ) {
-        print_last_error("EVP_PKEY_get1_RSA fail");
-    }
-    // verify! 
-    unsigned char digest_buf[SHA256_DIGEST_LENGTH];
-    SHA256_make_digest_msg(data, data_length, digest_buf);
-    // RSA * rsa2 = create_RSA(authPublicKey,true);   
-    int verify_result = RSA_verify(NID_sha256, digest_buf,SHA256_DIGEST_LENGTH,
-          sign, sign_length, rsa);
+    EVP_PKEY_CTX *ctx;
+    unsigned int md_length;
+    unsigned char * md = digest_message_SHA_256(data, data_length, &md_length);  
 
-    if(verify_result ==1)
-        printf("verify success\n\n");
-    else{
-        print_last_error("verify failed\n");
-    }
+    ctx = EVP_PKEY_CTX_new(verify_key, NULL);
+    if (!ctx)
+        print_last_error("EVP_PKEY_CTX_new failed");
+    if (EVP_PKEY_verify_init(ctx) <= 0)
+        print_last_error("EVP_PKEY_verify_init failed");
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+        print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
+    if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
+        print_last_error("EVP_PKEY_CTX_set_signature_md failed");
+    /* Perform operation */
+    if(EVP_PKEY_verify(ctx, sig, sig_length, md, md_length) != 1)
+        print_last_error("EVP_PKEY_verify failed");
+    free (md);
 }
 /*
     function: make SHA256 digest message
     input:
     output:
 */
-void SHA256_make_digest_msg(unsigned char *encrypted ,int encrypted_length, unsigned char *dig_enc)
+
+unsigned char * digest_message_SHA_256(unsigned char *message, int message_length, unsigned int *digest_len)
 {
-    SHA256_CTX ctx;
-    SHA256_Init(&ctx);
-    SHA256_Update(&ctx, encrypted, encrypted_length); 
-    SHA256_Final(dig_enc, &ctx);   
+    EVP_MD_CTX *mdctx;
+
+    if((mdctx = EVP_MD_CTX_create()) == NULL)
+        print_last_error("EVP_MD_CTX_create() failed");
+    if(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1)
+        print_last_error("EVP_DigestInit_ex failed");
+    if(EVP_DigestUpdate(mdctx, message, message_length) != 1)
+        print_last_error("EVP_DigestUpdate failed");
+    unsigned char *digest = (unsigned char *)OPENSSL_malloc(EVP_MD_size(EVP_sha256()));
+    if(EVP_DigestFinal_ex(mdctx, digest, digest_len) != 1)
+        print_last_error("failed");
+    EVP_MD_CTX_destroy(mdctx);
+    return digest;
 }
 
 void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_length, unsigned char * key, unsigned int key_length, unsigned char * iv, unsigned int iv_length, unsigned char * ret, unsigned int * ret_length)
@@ -233,7 +209,7 @@ void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_lengt
     if(AES_set_encrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
         error_handling("AES key setting failed!") ;
     }; 
-    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv �� �ٲ��?.
+    AES_cbc_encrypt(plaintext, ret, plaintext_length , &enc_key_128, iv_temp, AES_ENCRYPT);  //iv �� �ٲ��??.
     *ret_length = ((plaintext_length) +iv_length)/iv_length *iv_length;
 }
 
@@ -243,7 +219,7 @@ void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_lengt
     if(AES_set_decrypt_key(key, AES_CBC_128_KEY_SIZE, &enc_key_128) < 0){
         error_handling("AES key setting failed!") ;
     }; 
-    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //iv�� �ٲ��???po
+    AES_cbc_encrypt(encrypted, ret, encrypted_length, &enc_key_128, iv, AES_DECRYPT); //iv�� �ٲ��????po
     // *ret_length = ((encrypted_length) +iv_length)/iv_length *iv_length;
 }
 

@@ -39,13 +39,13 @@ void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * 
     unsigned char * encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, &encrypted_length);
     // int encrypted_length= public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, message); //TODO: need padding as input?
 
-    unsigned char sigret [256];
-    unsigned int  sigret_length;
+    unsigned int sigret_length;
 
-    SHA256_sign(message, encrypted_length, path_priv, sigret, &sigret_length);
+    unsigned char * sigret = SHA256_sign(message, encrypted_length, path_priv, &sigret_length);
     *message_length = sigret_length + encrypted_length;
-    memcpy(message+encrypted_length,sigret,sigret_length);
+    memcpy(message+encrypted_length, sigret, sigret_length);
     free(encrypted);
+    free(sigret);
 }
 
 
