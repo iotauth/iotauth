@@ -1,22 +1,29 @@
 #include "c_common.h"
 
-/*
-Handle whether message has error or not.
-See error_handling() for details.
-@param message input message
-*/
+/**
+ *explanation for this function.
+ *See function() for details.
+ *@param variable comment
+ *@return comment
+ */
+
+/**
+ *Handle whether message has error or not.
+ *See error_handling() for details.
+ *@param message input message
+ */
 void error_handling(char *message){
     fputs(message, stderr);
     fputc('\n', stderr);
     exit(1);
 }
 
-/*
-Print the buffer which you want 
-See print_buf() for details.
-@param buf input buffer to print
-@param size buffer size to print
-*/
+/**
+ *Print the buffer which you want 
+ *See print_buf() for details.
+ *@param buf input buffer to print
+ *@param size buffer size to print
+ */
 void print_buf(unsigned char * buf, int size)
 {
     for(int i=0 ; i<size; i++)
@@ -24,12 +31,12 @@ void print_buf(unsigned char * buf, int size)
     printf("\n");
 }
 
-/*
-Generate secure randome nonce by using OpenSSL.
-See generate_nonce() for details.
-@param length length to generate the nonce
-@param buf buffer to save the generated nonce
-*/
+/**
+ *Generate secure randome nonce by using OpenSSL.
+ *See generate_nonce() for details.
+ *@param length length to generate the nonce
+ *@param buf buffer to save the generated nonce
+ */
 void generate_nonce(int length, unsigned char * buf)  
 {
     int x = RAND_bytes(buf, length);
@@ -40,13 +47,13 @@ void generate_nonce(int length, unsigned char * buf)
     }
 }   
 
-/*
-Write number in buffer.
-See write_in_n_bytes() for details.
-@param num number to write in buffer
-@param n buffer size
-@param buf output buffer 
-*/
+/**
+ *Write number in buffer.
+ *See write_in_n_bytes() for details.
+ *@param num number to write in buffer
+ *@param n buffer size
+ *@param buf output buffer 
+ */
 void write_in_n_bytes(int num, int n, unsigned char * buf)
 {
     if(n<8)
@@ -66,13 +73,13 @@ void write_in_n_bytes(int num, int n, unsigned char * buf)
 
 }
 
-/*
-Make the total int number in big endian buffer.
-See read_unsigned_int_BE() for details.
-@param buf input buffer
-@param byte_length buffer length to make the total number
-@return total number of input buffer
-*/
+/**
+ *Make the total int number in big endian buffer.
+ *See read_unsigned_int_BE() for details.
+ *@param buf input buffer
+ *@param byte_length buffer length to make the total number
+ *@return total number of input buffer
+ */
 unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
 {
     int num =0;
@@ -83,12 +90,12 @@ unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
     return num; 
 }
 
-/*  
-Look for payload buffer length using total number of input buffer. 
-See payload_buf_length() for details.
-@param b total number of buffer
-@return payload buffer length
-*/
+/**  
+ *Look for payload buffer length using total number of input buffer. 
+ *See payload_buf_length() for details.
+ *@param b total number of buffer
+ *@return payload buffer length
+ */
 unsigned int payload_buf_length(int b)
 {   
     int n = 1;
@@ -99,13 +106,13 @@ unsigned int payload_buf_length(int b)
     }
     return n;
 }
-/*
-Make the total number of input buffer.
-See var_length_int_to_num_t() for details.
-@param buf input buffer from after messagetype
-@param buf_length total read message length
-@return message length of the payload
-*/
+/**
+ *Make the total number of input buffer.
+ *See var_length_int_to_num_t() for details.
+ *@param buf input buffer from after messagetype
+ *@param buf_length total read message length
+ *@return message length of the payload
+ */
 unsigned int var_length_int_to_num_t(unsigned char * buf, int buf_length)
 {
     int num = 0;
@@ -120,7 +127,7 @@ unsigned int var_length_int_to_num_t(unsigned char * buf, int buf_length)
     return num;
 }
 
-/*
+/**
 function:
     buf = (variable_length_buf) + (data_buf)
     reads (variable_length_buf) to unsigned int (payload_length)
@@ -132,14 +139,14 @@ usage:
     var_length_int_to_num(received_buf + MESSAGE_TYPE_SIZE, received_buf_length, data_buf_length, &payload_buf_length);
 */
 
-/*
-Length of paylaod buffer length and payload length from input buffer.
-See var_length_int_to_num_t() for details.
-@param buf input buffer
-@param buf_length length of input buffer
-@param payload_length length of information
-@param payload_buf_length length of payload buffer to use this length as index
-*/
+/**
+ *Length of paylaod buffer length and payload length from input buffer.
+ *See var_length_int_to_num_t() for details.
+ *@param buf input buffer
+ *@param buf_length length of input buffer
+ *@param payload_length length of information
+ *@param payload_buf_length length of payload buffer to use this length as index
+ */
 
 void var_length_int_to_num(unsigned char * buf, unsigned int buf_length, unsigned int * payload_length, unsigned int * payload_buf_length)
 {
@@ -155,7 +162,7 @@ void var_length_int_to_num(unsigned char * buf, unsigned int buf_length, unsigne
     }
 }
 
-/*
+/**
 function: parses received message into 'message_type', and data after msg_type+payload_buf to 'data_buf'
 
 USAGE:
@@ -166,16 +173,16 @@ unsigned int data_buf_length;
 unsigned char * data_buf = parse_received_message(received_buf, received_buf_length, &message_type, &data_buf_length);
 */
 
-/*
-Message type from received message and 
-information which we needs from received message.
-See parse_received_message() for details.
-@param received_buf input buffer
-@param received_buf_length length of input buffer
-@param message_type message type of received input buffer
-@param data_buf_length length of return information
-@return starting address of information from input buffer
-*/
+/**
+ *Message type from received message and 
+ *information which we needs from received message.
+ *See parse_received_message() for details.
+ *@param received_buf input buffer
+ *@param received_buf_length length of input buffer
+ *@param message_type message type of received input buffer
+ *@param data_buf_length length of return information
+ *@return starting address of information from input buffer
+ */
 unsigned char * parse_received_message(unsigned char * received_buf, unsigned int received_buf_length, unsigned char * message_type, unsigned int * data_buf_length)
 {
     *message_type = received_buf[0];
@@ -185,7 +192,7 @@ unsigned char * parse_received_message(unsigned char * received_buf, unsigned in
 }
 
 
-/*parse_session_message
+/**parse_session_message
 
 only need to know make_sender_buf()
 
@@ -197,13 +204,13 @@ input: data to send., message_type, pointer to save.
 
 */
 
-/*
-Make the payload buffer and length to connect with total buffer. 
-See num_to_var_length_int() for details.
-@param data_length input data length
-@param payload_buf payload buffer in terms of input data length
-@param buf_len  length of payload buffer
-*/
+/**
+ *Make the payload buffer and length to connect with total buffer. 
+ *See num_to_var_length_int() for details.
+ *@param data_length input data length
+ *@param payload_buf payload buffer in terms of input data length
+ *@param buf_len  length of payload buffer
+ */
 void num_to_var_length_int(unsigned int data_length, unsigned char * payload_buf, unsigned char * buf_len)
 {
     *buf_len= 1;
@@ -215,14 +222,14 @@ void num_to_var_length_int(unsigned int data_length, unsigned char * payload_buf
     }
     payload_buf[*buf_len-1] = data_length;
 }
-/*
-Make the header buffer including the message type and payload buffer.
-See make_buffer_header() for details.
-@param data_length input data buffer length
-@param MESSAGE_TYPE message type according to purpose
-@param header output header buffer including the message type and payload buffer 
-@param header_length header buffer length
-*/
+/**
+ *Make the header buffer including the message type and payload buffer.
+ *See make_buffer_header() for details.
+ *@param data_length input data buffer length
+ *@param MESSAGE_TYPE message type according to purpose
+ *@param header output header buffer including the message type and payload buffer 
+ *@param header_length header buffer length
+ */
 void make_buffer_header(unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int * header_length)
 {
     unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //�켱 5byte�� ���??.
@@ -232,31 +239,31 @@ void make_buffer_header(unsigned int data_length, unsigned char MESSAGE_TYPE, un
     header[0] = MESSAGE_TYPE;
     memcpy(header + MESSAGE_TYPE_SIZE, payload_buf, payload_buf_len);
 }
-/*
-Concat the two buffers into a new return buffer
-See concat_buffer_header_and_payload() for details.
-@param header buffer to be copied the beginning of the return buffer
-@param header_length length of header buffer 
-@param payload buffer to be copied to the back of the return buffer
-@param payload_length length of payload buffer
-@param ret header new return buffer
-@param ret_length length of return buffer
-*/
+/**
+ *Concat the two buffers into a new return buffer
+ *See concat_buffer_header_and_payload() for details.
+ *@param header buffer to be copied the beginning of the return buffer
+ *@param header_length length of header buffer 
+ *@param payload buffer to be copied to the back of the return buffer
+ *@param payload_length length of payload buffer
+ *@param ret header new return buffer
+ *@param ret_length length of return buffer
+ */
 void concat_buffer_header_and_payload(unsigned char *header, unsigned int header_length, unsigned char *payload, unsigned int payload_length, unsigned char *ret, unsigned int * ret_length)
 {
     memcpy(ret, header, header_length);
     memcpy(ret + header_length, payload, payload_length);
     *ret_length = header_length + payload_length;
 }
-/*
-Make the buffer sending to Auth by using make_buffer_header() and concat_buffer_header_and_payload().
-See make_sender_buf() for details.
-@param payload input data buffer
-@param payload_length length of input data buffer
-@param MESSAGE_TYPE message type according to purpose
-@param sender buffer to send to Auth
-@param sender_length length of sender buffer
-*/
+/**
+ *Make the buffer sending to Auth by using make_buffer_header() and concat_buffer_header_and_payload().
+ *See make_sender_buf() for details.
+ *@param payload input data buffer
+ *@param payload_length length of input data buffer
+ *@param MESSAGE_TYPE message type according to purpose
+ *@param sender buffer to send to Auth
+ *@param sender_length length of sender buffer
+ */
 void make_sender_buf(unsigned char *payload, unsigned int payload_length, unsigned char MESSAGE_TYPE, unsigned char *sender, unsigned int * sender_length)
 {
     unsigned char header[MAX_PAYLOAD_BUF_SIZE+1];
@@ -267,7 +274,7 @@ void make_sender_buf(unsigned char *payload, unsigned int payload_length, unsign
 
 
 
-/*
+/**
 function: Connects to server as client. Maybe the entity client-Auth, entity_client - entity_server, entity_server - Auth.
 input:  sock: The target socket.
         ip_addr: The target ip_address to connect to.
@@ -279,13 +286,13 @@ usage:
     connection(&sock, IP_ADDRESS, PORT_NUM);
 */
 
-/*
-Connect to the server as client by using ip address, port number, and sock.
-See connect_as_client() for details.
-@param ip_addr IP address of server
-@param port_num port number to connect IP address
-@param sock socket number
-*/
+/**
+ *Connect to the server as client by using ip address, port number, and sock.
+ *See connect_as_client() for details.
+ *@param ip_addr IP address of server
+ *@param port_num port number to connect IP address
+ *@param sock socket number
+ */
 void connect_as_client(const char * ip_addr, const char * port_num, int * sock)
 {
     struct sockaddr_in serv_addr;
@@ -304,7 +311,7 @@ void connect_as_client(const char * ip_addr, const char * port_num, int * sock)
     printf("\n\n------------Connected-------------\n");
 }
 
-/*
+/**
 function:   serializes handshake nonces and reply nonces.
             ret:indicator_1byte + nonce_8byte + reply_nonce_8byte
             The size of this buf is constant to HS_INDICATOR_SIZE
@@ -318,13 +325,13 @@ usage:
         free(buf);
 */
 
-/*
-Create a buffer based on the nonce type such as nonce and reply nonce.
-See serialize_handshake() for details.
-@param nonce a nonce made by yourself
-@param reply_nonce nonce received from the other entity or Auth
-@param ret return buffer
-*/
+/**
+ *Create a buffer based on the nonce type such as nonce and reply nonce.
+ *See serialize_handshake() for details.
+ *@param nonce a nonce made by yourself
+ *@param reply_nonce nonce received from the other entity or Auth
+ *@param ret return buffer
+ */
 void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, unsigned char * ret)
 {
     if(nonce == NULL && reply_nonce == NULL){
@@ -343,12 +350,12 @@ void serialize_handshake(unsigned char * nonce, unsigned char * reply_nonce, uns
     ret[0] = indicator;
 }
 
-/*
-Create a buffer based on the nonce type such as nonce and reply nonce
-See parse_handshake() for details.
-@param buf input buffer incluing nonce.
-@param ret return buffer
-*/
+/**
+ *Create a buffer based on the nonce type such as nonce and reply nonce
+ *See parse_handshake() for details.
+ *@param buf input buffer incluing nonce.
+ *@param ret return buffer
+ */
 void parse_handshake(unsigned char *buf,  HS_nonce_t * ret)
 {
     if((buf[0] & 1) != 0){

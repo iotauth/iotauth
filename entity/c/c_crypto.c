@@ -1,17 +1,17 @@
 #include "c_crypto.h"
-/*
-explanation for this function.
-See function() for details.
-@param variable comment
-@return comment
-*/
+/**
+ * explanation for this function.
+ * See function() for details.
+ * @param variable comment
+ * @return comment
+ */
 
 
-/*
-Print error message when the code has error.
-See print_last_error() for details.
-@param msg message to print the error
-*/
+/**
+ * See print_last_error() for details.
+ * Print error message when the code has error.
+ * @param msg message to print the error
+ */
 void print_last_error(char *msg)
 {
     char * err = malloc(130);;
@@ -21,23 +21,17 @@ void print_last_error(char *msg)
     free(err);
 }
 
-/*
-    function: read X509cert.pem file & get pubkey from 'path'. RSA_public_encrypt 'data' to 'ret' with 'padding'
-    input: 'ret': encrypted buf, 'data': data to encrypt
-    output: length of encrypted data
-*/
-
-/*
-Encrypt the message with public key using public key encryption from OpenSSL.
-See public_encrypt() for details.
-@param data message for public key encryption
-@param data_len length of message
-@param padding set of padding , 1 if padding is used, 0 if not used.
-padding prevents an attacker from knowing the exact length of the plaintext message.
-@param path public key path
-@param ret_len length of encrypted message 
-@return encrypted message from public key encryption
-*/
+/**
+ *Encrypt the message with public key using public key encryption from OpenSSL.
+ *See public_encrypt() for details.
+ *@param data message for public key encryption
+ *@param data_len length of message
+ *@param padding set of padding , 1 if padding is used, 0 if not used.
+ *padding prevents an attacker from knowing the exact length of the plaintext message.
+ *@param path public key path
+ *@param ret_len length of encrypted message 
+ *@return encrypted message from public key encryption
+ */
 unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, const char * path, unsigned int *ret_len) 
 {
     FILE *pemFile = fopen(path, "rb");
@@ -50,7 +44,7 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     if ( id != EVP_PKEY_RSA ) {
         print_last_error("is not RSA Encryption file");
     }
-    /*openssl 3.0 -> do not change to RSA. 
+    /**openssl 3.0 -> do not change to RSA. 
     directly use EVP_PKEY
     */
     EVP_PKEY_CTX *ctx;
@@ -64,7 +58,7 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0)
     print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
 
-    /* Determine buffer length */
+    /** Determine buffer length */
     if (EVP_PKEY_encrypt(ctx, NULL, (size_t *) ret_len, data, data_len) <= 0)
     print_last_error("EVP_PKEY_encrypt failed");
 
@@ -77,26 +71,21 @@ unsigned char * public_encrypt(unsigned char * data, int data_len, int padding, 
     if (EVP_PKEY_encrypt(ctx, out, (size_t *) ret_len, data, data_len) <= 0)
     print_last_error("EVP_PKEY_encrypt failed");
 
- /* Encrypted data is outlen bytes written to buffer out */
+ /** Encrypted data is outlen bytes written to buffer out */
     return out;
 }
 
-/*
-    function: read PEM key from 'path'. RSA_Private_decrypt 'encrypted' and save in 'ret' with 'padding'
-    input: 'ret': decrypted result buf, 'enc_data': data to decrypt
-    output: return decrypted length
-*/
-/*
-Decrypt message with private key using private key decryption from OpenSSL.
-See private_decrypt() for details.
-@param enc_data encrypted message for private key decryption
-@param enc_data_len length of encrypted message
-@param padding set of padding , 1 if padding is used, 0 if not used.
-padding prevents an attacker from knowing the exact length of the plaintext message.
-@param path private key path
-@param ret_len length of decrypted message 
-@return decrypted message from private key decryption
-*/
+/**
+ *Decrypt message with private key using private key decryption from OpenSSL.
+ *See private_decrypt() for details.
+ *@param enc_data encrypted message for private key decryption
+ *@param enc_data_len length of encrypted message
+ *@param padding set of padding , 1 if padding is used, 0 if not used.
+ *padding prevents an attacker from knowing the exact length of the plaintext message.
+ *@param path private key path
+ *@param ret_len length of decrypted message 
+ *@return decrypted message from private key decryption
+ */
 unsigned char * private_decrypt(unsigned char * enc_data, int enc_data_len, int padding, 
 const char * path, unsigned int *ret_len)
 {
@@ -113,7 +102,7 @@ const char * path, unsigned int *ret_len)
     if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0)
     print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
 
-    /* Determine buffer length */
+    /** Determine buffer length */
     if (EVP_PKEY_decrypt(ctx, NULL, (size_t *) ret_len, enc_data, enc_data_len) <= 0)
     print_last_error("EVP_PKEY_decrypt failed");
 
@@ -128,24 +117,24 @@ const char * path, unsigned int *ret_len)
     return out;
 }
 
-/*
+/**
     function: make sign to 'sigret' buf, with private key from 'path', and data 'encrypted' 
     input:'sigret': return signed buf, 'encrypted': data to sign
     output: 
 */
 
 //under construction
-/*
-After digest the encrypted message, sign digested message 
-with private key using private key signature from OpenSSL.
-See SHA256_sign() for details.
-@param encrypted encrypted message to sign
-@param encrypted_length length of encrypted message
-@param path private key path for private key signature
-@param sigret signed buffer // TODO:
-@param sig_length length of signed buffer
-@return  TODO:
-*/
+/**
+ *After digest the encrypted message, sign digested message 
+ *with private key using private key signature from OpenSSL.
+ *See SHA256_sign() for details.
+ *@param encrypted encrypted message to sign
+ *@param encrypted_length length of encrypted message
+ *@param path private key path for private key signature
+ *@param sigret signed buffer // TODO:
+ *@param sig_length length of signed buffer
+ *@return  TODO:
+ */
 unsigned char * SHA256_sign(unsigned char *encrypted, unsigned int encrypted_length, const char * path, unsigned int * sig_length)
 {
     FILE *keyfile = fopen(path, "rb"); 
@@ -164,7 +153,7 @@ unsigned char * SHA256_sign(unsigned char *encrypted, unsigned int encrypted_len
     if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
         print_last_error("EVP_PKEY_CTX_set_signature_md failed");
 
-    /* Determine buffer length */
+    /** Determine buffer length */
     if (EVP_PKEY_sign(ctx, NULL, (size_t *) sig_length, md, md_length) <= 0)
         print_last_error("EVP_PKEY_sign failed");
 
@@ -177,21 +166,21 @@ unsigned char * SHA256_sign(unsigned char *encrypted, unsigned int encrypted_len
     return sig;
 }
 
-/*
+/**
     function: Checks if sign and data verified. needs to digest message.
     input:
     output: error when verify fails
 */
-/*
-Verification of comparison between encrypted data and signature
-using the RSA verification providing to openssl.
-See SHA256_verify() for details.
-@param data encrypted data
-@param data_length length of encrypted data
-@param sig signature buffer
-@param sig_length length of signiture
-@param path public key path
-*/
+/**
+ *Verification of comparison between encrypted data and signature
+ *using the RSA verification providing to openssl.
+ *See SHA256_verify() for details.
+ *@param data encrypted data
+ *@param data_length length of encrypted data
+ *@param sig signature buffer
+ *@param sig_length length of signiture
+ *@param path public key path
+ */
 void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char * sig, unsigned int sig_length, const char * path)
 {
     FILE *pemFile = fopen(path, "rb");
@@ -217,24 +206,24 @@ void SHA256_verify(unsigned char * data, unsigned int data_length, unsigned char
         print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
     if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
         print_last_error("EVP_PKEY_CTX_set_signature_md failed");
-    /* Perform operation */
+    /** Perform operation */
     if(EVP_PKEY_verify(ctx, sig, sig_length, md, md_length) != 1)
         print_last_error("EVP_PKEY_verify failed");
     free (md);
 }
-/*
+/**
     function: make SHA256 digest message
     input:
     output:
 */
-/*
-digest the encrypted message using the SHA256 digest function providing to openssl.
-See digest_message_SHA_256() for details.
-@param message encrypted data
-@param message_length length of encrypted data
-@param dig_enc digest message generating from encrypted data // TODO:
-@return TODO:
-*/
+/**
+ *digest the encrypted message using the SHA256 digest function providing to openssl.
+ *See digest_message_SHA_256() for details.
+ *@param message encrypted data
+ *@param message_length length of encrypted data
+ *@param dig_enc digest message generating from encrypted data // TODO:
+ *@return TODO:
+ */
 unsigned char * digest_message_SHA_256(unsigned char *message, int message_length, unsigned int *digest_len)
 {
     EVP_MD_CTX *mdctx;
@@ -252,19 +241,19 @@ unsigned char * digest_message_SHA_256(unsigned char *message, int message_lengt
     return digest;
 }
 
-/*
-Encrypt the message with the cipher key of the session key obtained from Auth
-by using Cipher Block Chaining(CBC) encryption of OpenSSL. 
-See AES_CBC_128_encrypt() for details.
-@param plaintext data to encrypt
-@param plaintext_length length of plaintext
-@param key cipher key of session key to be used in CBC encryption
-@param key_length length of cipher key
-@param iv initialize vector to be used in first encryption of CBC encryption
-@param iv_length length of iv buffer
-@param ret decrypted message received from CBC encryption
-@param ret_length length of ret
-*/
+/**
+ *Encrypt the message with the cipher key of the session key obtained from Auth
+ *by using Cipher Block Chaining(CBC) encryption of OpenSSL. 
+ *See AES_CBC_128_encrypt() for details.
+ *@param plaintext data to encrypt
+ *@param plaintext_length length of plaintext
+ *@param key cipher key of session key to be used in CBC encryption
+ *@param key_length length of cipher key
+ *@param iv initialize vector to be used in first encryption of CBC encryption
+ *@param iv_length length of iv buffer
+ *@param ret decrypted message received from CBC encryption
+ *@param ret_length length of ret
+ */
 void AES_CBC_128_encrypt(unsigned char * plaintext, unsigned int plaintext_length, 
 unsigned char * key, unsigned int key_length, unsigned char * iv, unsigned int iv_length, 
 unsigned char * ret, unsigned int * ret_length)
@@ -283,19 +272,19 @@ unsigned char * ret, unsigned int * ret_length)
     *ret_length += temp_len;
     EVP_CIPHER_CTX_free(ctx);
 }
-/*
-Decrypt the message with the cipher key of the session key obtained from Auth
-by using Cipher Block Chaining(CBC) decryption of OpenSSL. 
-See AES_CBC_128_decrypt() for details.
-@param encrypted encrypted data
-@param encrypted_length length of encrypted data
-@param key cipher key of session key to be used in CBC decryption
-@param key_length length of cipher key
-@param iv initialize vector to be used in first decryption of CBC decryption
-@param iv_length length of iv buffer
-@param ret decrypted message received from CBC decryption
-@param ret_length length of ret
-*/
+/**
+ *Decrypt the message with the cipher key of the session key obtained from Auth
+ *by using Cipher Block Chaining(CBC) decryption of OpenSSL. 
+ *See AES_CBC_128_decrypt() for details.
+ *@param encrypted encrypted data
+ *@param encrypted_length length of encrypted data
+ *@param key cipher key of session key to be used in CBC decryption
+ *@param key_length length of cipher key
+ *@param iv initialize vector to be used in first decryption of CBC decryption
+ *@param iv_length length of iv buffer
+ *@param ret decrypted message received from CBC decryption
+ *@param ret_length length of ret
+ */
 void AES_CBC_128_decrypt(unsigned char * encrypted, unsigned int encrypted_length, 
 unsigned char * key, unsigned int key_length, unsigned char  * iv, unsigned int iv_length, 
 unsigned char * ret, unsigned int * ret_length)
@@ -317,7 +306,7 @@ unsigned char * ret, unsigned int * ret_length)
 
 //encrypt buf to ret with mac_key, cipher_key
 //iv16+encrypted_data+HMAC_tag32
-/*
+/**
 function: 
 
 input:  buf: buf to encrypt
@@ -334,19 +323,19 @@ usage:
     free(encrypted); //never forget!!
 */
 
-/*
-Encrypt the message with cipher key and 
-do HMAC(Hashed Message Authenticate Code) with mac key from session key.
-See symmetric_encrypt_authenticate() for details.
-@param buf input message
-@param buf_length length of buf
-@param mac_key mac key of session key to be used in HMAC
-@param mac_key_size size of mac key
-@param cipher_key cipher key of session key to be used in CBC encryption
-@param cipher_key_size size of cipher key
-@param iv_size size of iv(initialize vector)
-@param ret_length length of return buffer
-*/
+/**
+ *Encrypt the message with cipher key and 
+ *do HMAC(Hashed Message Authenticate Code) with mac key from session key.
+ *See symmetric_encrypt_authenticate() for details.
+ *@param buf input message
+ *@param buf_length length of buf
+ *@param mac_key mac key of session key to be used in HMAC
+ *@param mac_key_size size of mac key
+ *@param cipher_key cipher key of session key to be used in CBC encryption
+ *@param cipher_key_size size of cipher key
+ *@param iv_size size of iv(initialize vector)
+ *@param ret_length length of return buffer
+ */
 unsigned char * symmetric_encrypt_authenticate(unsigned char * buf, unsigned int buf_length,
 unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, 
 unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
@@ -373,26 +362,26 @@ unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
     return ret;
 }
 
-/*
+/**
 Usage:
     unsigned int decrypted_length;
     unsigned char * decrypted = symmetric_decrypt_authenticate(buf_to_decrypt, buf_to_decrypt_length, mac_key, MAC_KEY_SIZE, cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
     ~~ use 'encrypted' ~~
     free(decrypted); //never forget!!
 */
-/*
-Decrypt the encrypted message with cipher key and 
-do HMAC(Hashed Message Authenticate Code) with mac key from session key.
-See symmetric_decrypt_authenticate() for details.
-@param buf input message
-@param buf_length length of buf
-@param mac_key mac key of session key to be used in HMAC
-@param mac_key_size size of mac key
-@param cipher_key cipher key of session key to be used in CBC decryption
-@param cipher_key_size size of cipher key
-@param iv_size size of iv(initialize vector)
-@param ret_length length of return buffer
-*/
+/**
+ *Decrypt the encrypted message with cipher key and 
+ *do HMAC(Hashed Message Authenticate Code) with mac key from session key.
+ *See symmetric_decrypt_authenticate() for details.
+ *@param buf input message
+ *@param buf_length length of buf
+ *@param mac_key mac key of session key to be used in HMAC
+ *@param mac_key_size size of mac key
+ *@param cipher_key cipher key of session key to be used in CBC decryption
+ *@param cipher_key_size size of cipher key
+ *@param iv_size size of iv(initialize vector)
+ *@param ret_length length of return buffer
+ */
 unsigned char * symmetric_decrypt_authenticate(unsigned char * buf, unsigned int buf_length, 
 unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, 
 unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
