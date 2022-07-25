@@ -1,5 +1,12 @@
 #include "c_api.h"
 
+/**
+ *explanation for this function.
+ *See function() for details.
+ *@param variable comment
+ *@return comment
+ */
+
 /*
 gcc -I/usr/local/include/openssl -L/usr/local/lib64 -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_client.c -o entity_client -lcrypto -pthread
 gcc -I/usr/local/include/openssl -L/usr/local/lib64 -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_server.c -o entity_server -lcrypto -pthread
@@ -10,9 +17,15 @@ extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
 extern long int st_time;
 
-// get sessio key() is a function for getting secure session key from Auth 
-// using OpenSSL which provides the cryptography, MAC, and Block cipher etc..
 
+
+/**
+ *Request and get session key from Auth according to secure connection
+ *by using OpenSSL which provides the cryptography, MAC, and Block cipher etc..
+ *See get_session_key() for details.
+ *@param config_info config struct obtained from load_config()
+ *@return secure session key
+ */
 session_key_t * get_session_key(config_t * config_info)
 {
     unsigned char option = 1;
@@ -28,6 +41,13 @@ session_key_t * get_session_key(config_t * config_info)
 }
 // secure connection() is a function for secure communication with other entity such as entity servers
 // input is session key struct received by Auth 
+
+/**
+ *Connect with other entity such as entity servers using secure session key.
+ *See secure_connection() for details.
+ *@param s_key session key struct received by Auth
+ *@return secure socket number
+ */
 int secure_connection(session_key_t * s_key)
 {
     //load_config
@@ -82,6 +102,15 @@ usage:
     int serv_sock = init_server(config_info);
 */
 
+
+/**
+ *Wait the entity client to get the session key and
+ *make a secure connection using session key.
+ *See server_secure_comm_setup() for details.
+ *@param config config struct for information
+ *@param clnt_sock entity client socket number
+ *@return session key struct
+ */
 session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
 {
     entity_server_state = IDLE;
@@ -202,6 +231,12 @@ usage:
     };
     pthread_create(&thread, NULL, &receive_thread, (void *)&args);
 */
+
+/**
+ *
+ *See receive_thread() for details.
+ *@param arguments struct including session key and socket number
+ */
 void * receive_thread(void * arguments)
 {
     while(1)
@@ -212,7 +247,13 @@ void * receive_thread(void * arguments)
         receive_message(received_buf, received_buf_length, args->s_key);
     }
 }
-
+/**
+ *Receive the message and print the message after decrypting with session key.
+ *See receive_message() for details.
+ *@param received_buf received message buffer
+ *@param received_buf_length length of received_buf
+ *@param s_key session key struct
+ */
 void receive_message(unsigned char * received_buf, unsigned int received_buf_length, session_key_t * s_key)
 {
     unsigned char message_type;
@@ -229,6 +270,15 @@ void receive_message(unsigned char * received_buf, unsigned int received_buf_len
 usage: 
 send_secure_message("Hello World", strlen("Hello World"), &session_key_list[0], sock);
 */
+
+/**
+ *Encrypt the message with session key and send the encrypted message.
+ *See receive_message() for details.
+ *@param msg message to send
+ *@param msg_length length of message
+ *@param s_key session key struct
+ *@param sock socket number
+ */
 void send_secure_message(char * msg, unsigned int msg_length, session_key_t * s_key, int sock)
 {
 
