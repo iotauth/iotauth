@@ -337,8 +337,8 @@ usage:
  *@param ret_length length of return buffer
  */
 unsigned char * symmetric_encrypt_authenticate(unsigned char * buf, unsigned int buf_length,
-unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, 
-unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
+                                               unsigned char * mac_key, unsigned int mac_key_size, unsigned char * cipher_key, 
+                                               unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
 {
     unsigned char * iv = (unsigned char *) malloc(iv_size);
     generate_nonce(iv_size, iv);

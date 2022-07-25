@@ -54,27 +54,43 @@ unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned 
 
     return ret;
 }
-
-unsigned char * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, 
- const char * path_priv, unsigned int * message_length)
+/**
+ *Encrypt the message and sign the encrypted message.
+ *See encrypt_and_sign() for details.
+ *@param buf input buffer 
+ *@param buf_len length of buf
+ *@param path_pub public key path
+ *@param path_priv private key path
+ *@param message message with encrypted message and signature
+ *@param message_length length of message
+ */
+void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, 
+const char * path_priv, unsigned char * message, unsigned int * message_length)
 {
-    unsigned int encrypted_length;
+    // unsigned char encrypted[256]; 
+    unsigned int encrypted_length; 
     unsigned char * encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, &encrypted_length);
+    // int encrypted_length= public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, message); //TODO: need padding as input?
 
     unsigned int  sigret_length;
 
-    unsigned char *sigret = SHA256_sign(encrypted, encrypted_length, path_priv, &sigret_length);
+    unsigned char *sigret = SHA256_sign(message, encrypted_length, path_priv, &sigret_length);
     *message_length = sigret_length + encrypted_length;
-    unsigned char * message = (unsigned char *) malloc(*message_length);
-    memcpy(message, encrypted, encrypted_length);
-    memcpy(message+encrypted_length, sigret, sigret_length);
+    memcpy(message+encrypted_length,sigret,sigret_length);
     free(encrypted);
     free(sigret);
-    return message;
 }
 
 
 //must free distribution_key.mac_key, distribution_key.cipher_key
+/**
+ *Separate the message received from Auth and
+ *store the distribution key in the distribution key struct
+ *See parse_distribution_key() for details.
+ *@param parsed_distribution_key distribution key struct to save information
+ *@param buf input buffer with distribution key
+ *@param buf_length length of buf
+ */
 void parse_distribution_key(distribution_key_t * parsed_distribution_key, unsigned char * buf, unsigned int buf_length)
 {
     unsigned int cur_index = DIST_KEY_EXPIRATION_TIME_SIZE;
@@ -92,6 +108,15 @@ void parse_distribution_key(distribution_key_t * parsed_distribution_key, unsign
 }
 
 // must free ()
+/**
+ *
+ *See parse_string_param() for details.
+ *@param buf input buffer with crypto spec
+ *@param buf_length length of buf
+ *@param offset buffer index
+ *@param return_to_length length of return buffer
+ *@return buffer with crypto spec
+ */
 unsigned char * parse_string_param(unsigned char * buf, unsigned int buf_length, int offset, unsigned int * return_to_length)
 {
     unsigned int num; 
@@ -109,6 +134,14 @@ unsigned char * parse_string_param(unsigned char * buf, unsigned int buf_length,
     return return_to;
 }
 //must free when session_key expired or usage finished.
+/**
+ *store the session key in the session key struct
+ *See parse_session_key() for details.
+ *@param ret session key struct to save key info
+ *@param buf input buffer with session key
+ *@param buf_length length of buf
+ *@return index number for another session key
+ */
 unsigned int parse_session_key(session_key_t * ret, unsigned char *buf, unsigned int buf_length)
 {
     memcpy(ret->key_id, buf, SESSION_KEY_ID_SIZE);
@@ -135,7 +168,14 @@ unsigned int parse_session_key(session_key_t * ret, unsigned char *buf, unsigned
 
     return cur_idx; 
 }
-
+/**
+ *Separate the session key, nonce, and crypto spec from the message.
+ *See parse_session_key_response() for details.
+ *@param buf input buffer with session key, nonce, and crypto spec
+ *@param buf_length length of buf
+ *@param reply_nonce nonce to compare with 
+ *@param session_key_list session key list struct
+ */
 void parse_session_key_response(unsigned char *buf, unsigned int buf_length, unsigned char * reply_nonce, session_key_t * session_key_list)
 {
     memcpy(reply_nonce, buf, NONCE_SIZE);
@@ -158,7 +198,16 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length, uns
         // buf_idx += parse_session_key(&session_key_response->session_key_list[i], temp, temp_length);
     }
 }
-
+/**
+ *Generate the nonce to send to entity server,
+ *encrypt the message with session key, and
+ *make the total message including the session key id and encrypted message.
+ *See parse_handshake_1() for details.
+ *@param s_key session key struct to encrypt the message
+ *@param entity_nonce nonce to protect the reply attack
+ *@param ret_length length of return buffer
+ *@return total buffer with session key id and encrypted message
+ */
 unsigned char * parse_handshake_1(session_key_t * s_key, unsigned char * entity_nonce, unsigned int * ret_length)
 {
     //keyId8 + iv16 +data32 + hmac32
@@ -178,8 +227,19 @@ unsigned char * parse_handshake_1(session_key_t * s_key, unsigned char * entity_
     free(encrypted);
     return ret;
 };
-
-unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, unsigned int data_buf_length, unsigned char * entity_nonce, session_key_t * s_key, unsigned int *ret_length)
+/**
+ *Check the nonce obtained in decryption with own nonce and
+ *make the encrypted message with other entity's nonce.
+ *See check_handshake_2_send_handshake_3() for details.
+ *@param data_buf input data buffer
+ *@param data_buf_length length of data buffer
+ *@param entity_nonce own nonce 
+ *@param s_key session key struct
+ *@param ret_length length of return buffer
+ *@return buffer with encrypted message
+ */
+unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, unsigned int data_buf_length,
+                                                   unsigned char * entity_nonce, session_key_t * s_key, unsigned int *ret_length)
 {
     printf("received session key handshake2!\n");
     unsigned int decrypted_length;
@@ -189,7 +249,7 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     free(decrypted);
 
     //compare my_nonce and received_nonce
-    if(strncmp((const char *) hs.reply_nonce, (const char *) entity_nonce ,HS_NONCE_SIZE) != 0){
+    if(strncmp(hs.reply_nonce, entity_nonce ,HS_NONCE_SIZE) != 0){
         error_handling("Comm init failed: server NOT verified, nonce NOT matched, disconnecting...\n");
     }
     else{
@@ -207,6 +267,13 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
 }
 
 //Decrypts message, reads seq_num, checks validity, and prints message
+/**
+ *
+ *See print_recevied_message() for details.
+ *@param data input data buffer
+ *@param data_length length of data buffer
+ *@param s_key session key struct
+ */
 void print_recevied_message(unsigned char * data, unsigned int data_length, session_key_t * s_key)
 {
     unsigned int decrypted_length;
@@ -277,10 +344,10 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
         // if(){} //TODO: migration
         // if(){} //TODO: check received_dist_key null;
         // if(strncmp(callback_params.target_session_key_cache, "Clients", callback_params.target_session_key_cache_length) == 0){} //TODO: check. 
-        if(strncmp((const char *)target_session_key_cache, "none", target_session_key_cache_length) == 0)
+        if(strncmp(target_session_key_cache, "none", target_session_key_cache_length) == 0)
         {
             // check received (keyId from auth == keyId from entity_client)
-            if(strncmp((const char *)s_key->key_id, (const char *)target_key_id, SESSION_KEY_ID_SIZE) != 0)
+            if(strncmp(s_key->key_id, target_key_id, SESSION_KEY_ID_SIZE) != 0)
             {
                 error_handling("Session key id is NOT as expected\n");
                 //SecureCommServer.js sendHandshake2Callback
@@ -294,10 +361,8 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
     }
     if(option == 2)
     { //UDP
-        session_key_t * s_key = send_session_key_req_via_UDP();
-        return s_key;
-    }
-    return 0;
+        send_session_key_req_via_UDP();
+    }    
 }
         
 
@@ -305,20 +370,20 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
 session_key_t * send_session_key_req_via_TCP(config_t *config_info)
 {
     int sock;
-    connect_as_client((const char *) config_info->auth_ip_addr, (const char *) config_info->auth_port_num, &sock);
+    connect_as_client(config_info->auth_ip_addr, config_info->auth_port_num, &sock);
 
     //will be input from config.
-    unsigned char * path_pub = malloc(strlen((const char *) config_info->auth_pubkey_path));
-    unsigned char * path_priv = malloc(strlen((const char *) config_info->entity_privkey_path));
-    memset(path_pub, 0, strlen((const char *) config_info->auth_pubkey_path));
-    memcpy(path_pub, config_info->auth_pubkey_path , strlen((const char *) config_info->auth_pubkey_path)-1);
+    unsigned char * path_pub = malloc(strlen(config_info->auth_pubkey_path));
+    unsigned char * path_priv = malloc(strlen(config_info->entity_privkey_path));
+    memset(path_pub, 0, strlen(config_info->auth_pubkey_path));
+    memcpy(path_pub, config_info->auth_pubkey_path , strlen(config_info->auth_pubkey_path)-1);
 
-    memset(path_priv, 0, strlen((const char *) config_info->entity_privkey_path));
-    memcpy(path_priv, config_info->entity_privkey_path, strlen((const char *) config_info->entity_privkey_path)-1);
+    memset(path_priv, 0, strlen(config_info->entity_privkey_path));
+    memcpy(path_priv, config_info->entity_privkey_path, strlen(config_info->entity_privkey_path)-1);
 
     //TODO: startfrom here.
 
-    unsigned char num_key = atoi((const char *) config_info->numkey);
+    unsigned char num_key = atoi(config_info->numkey);
     session_key_t * session_key_list = malloc(sizeof(session_key_t) * num_key);
     unsigned char entity_nonce[NONCE_SIZE];
     while(1)
@@ -335,19 +400,23 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
             auth_Id = read_unsigned_int_BE(data_buf,  AUTH_ID_LEN);
             memcpy(auth_nonce, data_buf + AUTH_ID_LEN, NONCE_SIZE );
             RAND_bytes(entity_nonce, NONCE_SIZE);
-            unsigned int serialized_length;
-            unsigned char * serialized = auth_hello_reply_message(entity_nonce, auth_nonce, num_key, config_info->name, strlen((const char *) config_info->name), config_info->purpose, strlen((const char *) config_info->purpose), &serialized_length);
+            unsigned int ret_length;
+            unsigned char * serialized = auth_hello_reply_message(entity_nonce, auth_nonce, num_key, config_info->name, strlen(config_info->name), config_info->purpose, strlen(config_info->purpose), &ret_length);
             
             //TODO: when distribution key exists.
             unsigned int enc_length;
-            unsigned char * enc = encrypt_and_sign(serialized, serialized_length, (const char *) path_pub, (const char *) path_priv, &enc_length);
+            unsigned char enc[RSA_ENCRYPT_SIGN_SIZE];
+            encrypt_and_sign(serialized, ret_length, path_pub, path_priv, enc, &enc_length);
+
+            // unsigned char * enc = encrypt_and_sign();
             free(serialized);
             
+
             unsigned char message[1024];
             unsigned int message_length;
             make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC, message, &message_length);
             write(sock, message, message_length);
-            free(enc);
+            // free(enc);
         }
         else if(message_type == SESSION_KEY_RESP_WITH_DIST_KEY)
         {
@@ -363,13 +432,13 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
             memcpy(encrypted_session_key, data_buf + key_size*2, encrypted_session_key_length);
 
             //verify
-            SHA256_verify(signed_data.data, key_size, signed_data.sign, key_size, (const char *) path_pub);
+            SHA256_verify(signed_data.data, key_size, signed_data.sign, key_size, path_pub);
             printf("auth signature verified\n");
             
 
             //decrypt encrypted_distribution_key
             unsigned int decrypted_distribution_key_length;
-            unsigned char * decrypted_distribution_key = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, (const char *) path_priv, &decrypted_distribution_key_length); 
+            unsigned char * decrypted_distribution_key = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, path_priv, &decrypted_distribution_key_length); 
             
 
             //parse decrypted_distribution_key to mac_key & cipher_key
@@ -387,7 +456,7 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
 
             printf("reply_nonce in sessionKeyResp: ");
             print_buf(reply_nonce, NONCE_SIZE);
-            if(strncmp((const char *)reply_nonce, (const char *)entity_nonce ,NONCE_SIZE) != 0)
+            if(strncmp(reply_nonce, entity_nonce ,NONCE_SIZE) != 0)
             { //compare generated entity's nonce & received entity's nonce.
                 error_handling("auth nonce NOT verified");
             }
@@ -403,11 +472,7 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
     }
 } 
 
-session_key_t * send_session_key_req_via_UDP(){
-    session_key_t * s_key;
-    return s_key;
-
-} //TODO:
+session_key_t * send_session_key_req_via_UDP(){} //TODO:
 
 unsigned char * check_handshake1_send_handshake2(unsigned char * received_buf, unsigned int received_buf_length, unsigned char * server_nonce, session_key_t * s_key, unsigned int *ret_length)
 {

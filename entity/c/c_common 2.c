@@ -84,10 +84,10 @@ unsigned int read_unsigned_int_BE(unsigned char * buf, int byte_length)
 }
 
 /*  
-    Look for payload buffer length using total number of input buffer. 
-    See payload_buf_length() for details.
-    @param b total number of buffer
-    @return payload buffer length
+Look for payload buffer length using total number of input buffer. 
+See payload_buf_length() for details.
+@param b total number of buffer
+@return payload buffer length
 */
 unsigned int payload_buf_length(int b)
 {   
