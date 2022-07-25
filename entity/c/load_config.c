@@ -12,7 +12,12 @@ const char authInfo_port[] = "auth.port.number" ;
 const char entity_serverInfo_ip_address[] = "entity.server.ip.address" ;
 const char entity_serverInfo_port_number[] = "entity.server.port.number" ;
 
-
+/**
+ *Get a value by comparing a string of conditional statement with a variable.
+ *See get_key_value() for details.
+ *@param ptr input variable to compare with string
+ *@return value
+ */
 int get_key_value(char * ptr)
 {
     if(strcmp(ptr, entity_info_name) == 0) return EIN;
@@ -28,7 +33,12 @@ int get_key_value(char * ptr)
 }
 
 
-
+/**
+ *Load config file from path and save the information in config struct.
+ *See load_config() for details.
+ *@param path config file path
+ *@return config struct to use when we connect to Auth
+ */
 config_t * load_config(char * path) 
 {
     config_t *c = malloc(sizeof(config_t));
