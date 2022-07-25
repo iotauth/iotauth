@@ -1,7 +1,8 @@
 #include "c_api.h"
 
 /*
-gcc -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_server.c -o entity_server -lcrypto -pthread
+gcc -I/usr/local/include/openssl -L/usr/local/lib64 -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_client.c -o entity_client -lcrypto -pthread
+gcc -I/usr/local/include/openssl -L/usr/local/lib64 -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_server.c -o entity_server -lcrypto -pthread
 */
 
 extern int sent_seq_num;

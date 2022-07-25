@@ -61,12 +61,13 @@ unsigned char * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, cons
     unsigned int encrypted_length;
     unsigned char * encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, &encrypted_length);
 
-    unsigned int  sigret_length;
-
-    unsigned char *sigret = SHA256_sign(encrypted, encrypted_length, path_priv, &sigret_length);
-    *message_length = sigret_length + encrypted_length;
     unsigned char * message = (unsigned char *) malloc(*message_length);
     memcpy(message, encrypted, encrypted_length);
+
+    unsigned int  sigret_length;
+    unsigned char *sigret = SHA256_sign(encrypted, encrypted_length, path_priv, &sigret_length);
+    *message_length = sigret_length + encrypted_length;
+    message = (unsigned char *) realloc(message, *message_length);
     memcpy(message+encrypted_length, sigret, sigret_length);
     free(encrypted);
     free(sigret);
