@@ -55,7 +55,7 @@ unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned 
     return ret;
 }
 
-void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, const char * path_priv, unsigned char * message, unsigned int * message_length)
+unsigned char * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, const char * path_priv, unsigned int * message_length)
 {
     // unsigned char encrypted[256]; 
     unsigned int encrypted_length;
@@ -64,11 +64,14 @@ void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * 
 
     unsigned int  sigret_length;
 
-    unsigned char *sigret = SHA256_sign(message, encrypted_length, path_priv, &sigret_length);
+    unsigned char *sigret = SHA256_sign(encrypted, encrypted_length, path_priv, &sigret_length);
     *message_length = sigret_length + encrypted_length;
-    memcpy(message+encrypted_length,sigret,sigret_length);
+    unsigned char * message = (unsigned char *) malloc(*message_length);
+    memcpy(message, encrypted, encrypted_length);
+    memcpy(message+encrypted_length, sigret, sigret_length);
     free(encrypted);
     free(sigret);
+    return message;
 }
 
 
@@ -187,7 +190,7 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
     free(decrypted);
 
     //compare my_nonce and received_nonce
-    if(strncmp(hs.reply_nonce, entity_nonce ,HS_NONCE_SIZE) != 0){
+    if(strncmp((const char *) hs.reply_nonce, (const char *) entity_nonce ,HS_NONCE_SIZE) != 0){
         error_handling("Comm init failed: server NOT verified, nonce NOT matched, disconnecting...\n");
     }
     else{
@@ -275,10 +278,10 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
         // if(){} //TODO: migration
         // if(){} //TODO: check received_dist_key null;
         // if(strncmp(callback_params.target_session_key_cache, "Clients", callback_params.target_session_key_cache_length) == 0){} //TODO: check. 
-        if(strncmp(target_session_key_cache, "none", target_session_key_cache_length) == 0)
+        if(strncmp((const char *)target_session_key_cache, "none", target_session_key_cache_length) == 0)
         {
             // check received (keyId from auth == keyId from entity_client)
-            if(strncmp(s_key->key_id, target_key_id, SESSION_KEY_ID_SIZE) != 0)
+            if(strncmp((const char *)s_key->key_id, (const char *)target_key_id, SESSION_KEY_ID_SIZE) != 0)
             {
                 error_handling("Session key id is NOT as expected\n");
                 //SecureCommServer.js sendHandshake2Callback
@@ -292,7 +295,8 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
     }
     if(option == 2)
     { //UDP
-        send_session_key_req_via_UDP();
+        session_key_t * s_key = send_session_key_req_via_UDP();
+        return s_key;
     }    
 }
         
@@ -301,20 +305,20 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
 session_key_t * send_session_key_req_via_TCP(config_t *config_info)
 {
     int sock;
-    connect_as_client(config_info->auth_ip_addr, config_info->auth_port_num, &sock);
+    connect_as_client((const char *) config_info->auth_ip_addr, (const char *) config_info->auth_port_num, &sock);
 
     //will be input from config.
-    unsigned char * path_pub = malloc(strlen(config_info->auth_pubkey_path));
-    unsigned char * path_priv = malloc(strlen(config_info->entity_privkey_path));
-    memset(path_pub, 0, strlen(config_info->auth_pubkey_path));
-    memcpy(path_pub, config_info->auth_pubkey_path , strlen(config_info->auth_pubkey_path)-1);
+    unsigned char * path_pub = malloc(strlen((const char *) config_info->auth_pubkey_path));
+    unsigned char * path_priv = malloc(strlen((const char *) config_info->entity_privkey_path));
+    memset(path_pub, 0, strlen((const char *) config_info->auth_pubkey_path));
+    memcpy(path_pub, config_info->auth_pubkey_path , strlen((const char *) config_info->auth_pubkey_path)-1);
 
-    memset(path_priv, 0, strlen(config_info->entity_privkey_path));
-    memcpy(path_priv, config_info->entity_privkey_path, strlen(config_info->entity_privkey_path)-1);
+    memset(path_priv, 0, strlen((const char *) config_info->entity_privkey_path));
+    memcpy(path_priv, config_info->entity_privkey_path, strlen((const char *) config_info->entity_privkey_path)-1);
 
     //TODO: startfrom here.
 
-    unsigned char num_key = atoi(config_info->numkey);
+    unsigned char num_key = atoi((const char *) config_info->numkey);
     session_key_t * session_key_list = malloc(sizeof(session_key_t) * num_key);
     unsigned char entity_nonce[NONCE_SIZE];
     while(1)
@@ -331,23 +335,19 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
             auth_Id = read_unsigned_int_BE(data_buf,  AUTH_ID_LEN);
             memcpy(auth_nonce, data_buf + AUTH_ID_LEN, NONCE_SIZE );
             RAND_bytes(entity_nonce, NONCE_SIZE);
-            unsigned int ret_length;
-            unsigned char * serialized = auth_hello_reply_message(entity_nonce, auth_nonce, num_key, config_info->name, strlen(config_info->name), config_info->purpose, strlen(config_info->purpose), &ret_length);
+            unsigned int serialized_length;
+            unsigned char * serialized = auth_hello_reply_message(entity_nonce, auth_nonce, num_key, config_info->name, strlen((const char *) config_info->name), config_info->purpose, strlen((const char *) config_info->purpose), &serialized_length);
             
             //TODO: when distribution key exists.
             unsigned int enc_length;
-            unsigned char enc[RSA_ENCRYPT_SIGN_SIZE];
-            encrypt_and_sign(serialized, ret_length, path_pub, path_priv, enc, &enc_length);
-
-            // unsigned char * enc = encrypt_and_sign();
+            unsigned char * enc = encrypt_and_sign(serialized, serialized_length, (const char *) path_pub, (const char *) path_priv, &enc_length);
             free(serialized);
             
-
             unsigned char message[1024];
             unsigned int message_length;
             make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC, message, &message_length);
             write(sock, message, message_length);
-            // free(enc);
+            free(enc);
         }
         else if(message_type == SESSION_KEY_RESP_WITH_DIST_KEY)
         {
@@ -363,13 +363,13 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
             memcpy(encrypted_session_key, data_buf + key_size*2, encrypted_session_key_length);
 
             //verify
-            SHA256_verify(signed_data.data, key_size, signed_data.sign, key_size, path_pub);
+            SHA256_verify(signed_data.data, key_size, signed_data.sign, key_size, (const char *) path_pub);
             printf("auth signature verified\n");
             
 
             //decrypt encrypted_distribution_key
             unsigned int decrypted_distribution_key_length;
-            unsigned char * decrypted_distribution_key = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, path_priv, &decrypted_distribution_key_length); 
+            unsigned char * decrypted_distribution_key = private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING, (const char *) path_priv, &decrypted_distribution_key_length); 
             
 
             //parse decrypted_distribution_key to mac_key & cipher_key
@@ -387,7 +387,7 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
 
             printf("reply_nonce in sessionKeyResp: ");
             print_buf(reply_nonce, NONCE_SIZE);
-            if(strncmp(reply_nonce, entity_nonce ,NONCE_SIZE) != 0)
+            if(strncmp((const char *)reply_nonce, (const char *)entity_nonce ,NONCE_SIZE) != 0)
             { //compare generated entity's nonce & received entity's nonce.
                 error_handling("auth nonce NOT verified");
             }
@@ -403,7 +403,11 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
     }
 } 
 
-session_key_t * send_session_key_req_via_UDP(){} //TODO:
+session_key_t * send_session_key_req_via_UDP(){
+    session_key_t * s_key;
+    return s_key;
+
+} //TODO:
 
 unsigned char * check_handshake1_send_handshake2(unsigned char * received_buf, unsigned int received_buf_length, unsigned char * server_nonce, session_key_t * s_key, unsigned int *ret_length)
 {

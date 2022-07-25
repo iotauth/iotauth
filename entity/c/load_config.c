@@ -41,7 +41,7 @@ config_t * load_config(char * path)
     while(!feof(fp))
     {
         pline = fgets(buffer,MAX,fp);
-        unsigned char *ptr = strtok(pline, "=");
+        char *ptr = strtok(pline, "=");
         int a;
         while(ptr != NULL)
         {

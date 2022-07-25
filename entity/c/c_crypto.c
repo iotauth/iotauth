@@ -271,12 +271,12 @@ unsigned char * ret, unsigned int * ret_length)
 { 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit_ex2(ctx, EVP_aes_128_cbc(), key, iv, NULL);
-    if (!EVP_EncryptUpdate(ctx, ret, ret_length, plaintext, plaintext_length)) {
+    if (!EVP_EncryptUpdate(ctx, ret, (int *) ret_length, plaintext, plaintext_length)) {
         EVP_CIPHER_CTX_free(ctx);
         print_last_error("EVP_EncryptUpdate failed");
     }    
     unsigned int temp_len;
-    if (!EVP_EncryptFinal_ex(ctx, ret + *ret_length, &temp_len)) {
+    if (!EVP_EncryptFinal_ex(ctx, ret + *ret_length, (int *) &temp_len)) {
         EVP_CIPHER_CTX_free(ctx);
         print_last_error("EVP_EncryptFinal_ex failed");
     }
@@ -302,12 +302,12 @@ unsigned char * ret, unsigned int * ret_length)
 { 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     EVP_DecryptInit_ex2(ctx, EVP_aes_128_cbc(), key, iv, NULL);
-    if (!EVP_DecryptUpdate(ctx, ret, ret_length, encrypted, encrypted_length)) {
+    if (!EVP_DecryptUpdate(ctx, ret, (int *) ret_length, encrypted, encrypted_length)) {
         EVP_CIPHER_CTX_free(ctx);
         print_last_error("EVP_DecryptUpdate failed");
     }    
     unsigned int temp_len;
-    if (!EVP_DecryptFinal_ex(ctx, ret + *ret_length, &temp_len)) {
+    if (!EVP_DecryptFinal_ex(ctx, ret + *ret_length, (int *) &temp_len)) {
         EVP_CIPHER_CTX_free(ctx);
         print_last_error("EVP_DecryptFinal_ex failed");
     }
@@ -404,7 +404,7 @@ unsigned int cipher_key_size, unsigned int iv_size, unsigned int * ret_length)
     memcpy(received_tag, buf + encrypted_length, mac_key_size);
     unsigned char * hmac_tag = (unsigned char *) malloc(mac_key_size);
     HMAC(EVP_sha256(), mac_key, mac_key_size, encrypted, encrypted_length, hmac_tag, &mac_key_size );
-    if(strncmp(received_tag, hmac_tag, mac_key_size) != 0){
+    if(strncmp((const char *) received_tag, (const char *) hmac_tag, mac_key_size) != 0){
         error_handling("Ivalid MAC error!");
     }
     else{
