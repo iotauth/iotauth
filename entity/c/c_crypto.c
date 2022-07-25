@@ -241,54 +241,6 @@ unsigned char * digest_message_SHA_256(unsigned char *message, int message_lengt
     return digest;
 }
 
-int do_crypt(char *outfile)
- {
-     unsigned char outbuf[1024];
-     int outlen, tmplen;
-     /**
-      * Bogus key and IV: we'd normally set these from
-      * another source.
-      */
-     unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-     unsigned char iv[] = {1,2,3,4,5,6,7,8};
-     char intext[] = "Some Crypto Text";
-
-     FILE *out;
-
-     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-     EVP_EncryptInit_ex2(ctx, EVP_idea_cbc(), key, iv, NULL);
-
-     if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext, strlen(intext))) {
-         /** Error */
-         EVP_CIPHER_CTX_free(ctx);
-         return 0;
-     }
-     /**
-      * Buffer passed to EVP_EncryptFinal() must be after data just
-      * encrypted to avoid overwriting it.
-      */
-     if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)) {
-         /** Error */
-         EVP_CIPHER_CTX_free(ctx);
-         return 0;
-     }
-     outlen += tmplen;
-     EVP_CIPHER_CTX_free(ctx);
-     /**
-      * Need binary mode for fopen because encrypted data is
-      * binary data. Also cannot use strlen() on it because
-      * it won't be NUL terminated and may contain embedded
-      * NULs.
-      */
-     out = fopen(outfile, "wb");
-     if (out == NULL) {
-         /** Error */
-         return 0;
-     }
-     fwrite(outbuf, 1, outlen, out);
-     fclose(out);
-     return 1;
- }
 /**
  *Encrypt the message with the cipher key of the session key obtained from Auth
  *by using Cipher Block Chaining(CBC) encryption of OpenSSL. 

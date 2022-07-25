@@ -1,5 +1,18 @@
 all: entity_client entity_server
 
+UNAME := $(shell uname)
+
+ifeq ($(UNAME), Linux)
+	LDFLAGS=-L/usr/local/lib64
+	CPPFLAGS=-I/usr/local/include/openssl
+
+endif
+ifeq ($(UNAME), Darwin)
+    LDFLAGS=-L/opt/homebrew/opt/openssl@3/lib
+    CPPFLAGS=-I/opt/homebrew/opt/openssl@3/include
+endif
+
+
 entity_client: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o
 	gcc ${CPPFLAGS} ${LDFLAGS} -o entity_client c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o -lcrypto -pthread
 
