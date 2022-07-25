@@ -23,6 +23,7 @@ session_key_t * get_session_key(config_t * config_info)
     {
         return send_session_key_req_via_UDP();
     }
+    return 0;
 }
 // secure connection() is a function for secure communication with other entity such as entity servers
 // input is session key struct received by Auth 
@@ -118,7 +119,7 @@ session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
             {
                 // sprintf(config->purpose + 9, "%d", expected_key_id_int);
                 unsigned char temp_buf [SESSION_KEY_ID_SIZE];
-                sprintf(temp_buf, "%d", expected_key_id_int);
+                sprintf((char *)temp_buf, "%d", expected_key_id_int);
                 memcpy(config->purpose + 9, temp_buf, SESSION_KEY_ID_SIZE);
 
                 s_key = send_session_key_request_check_protocol(config, expected_key_id);
@@ -152,7 +153,7 @@ session_key_t * server_secure_comm_setup(config_t * config, int clnt_sock)
             parse_handshake(decrypted, &hs);
             free(decrypted);
             //compare my_nonce and received_nonce
-            if(strncmp(hs.reply_nonce, server_nonce, HS_NONCE_SIZE) != 0){
+            if(strncmp((const char *) hs.reply_nonce, (const char *) server_nonce, HS_NONCE_SIZE) != 0){
                 error_handling("Comm init failed: server NOT verified, nonce NOT matched, disconnecting...\n");
             }
             else{

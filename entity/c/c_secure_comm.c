@@ -296,7 +296,8 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
     { //UDP
         session_key_t * s_key = send_session_key_req_via_UDP();
         return s_key;
-    }    
+    }
+    return 0;
 }
         
 
