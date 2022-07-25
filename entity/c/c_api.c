@@ -252,4 +252,3 @@ void send_secure_message(char * msg, unsigned int msg_length, session_key_t * s_
     free(encrypted);
     write(sock, sender_buf, sender_buf_length);
 }
-
