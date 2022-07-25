@@ -54,7 +54,16 @@ unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned 
 
     return ret;
 }
-
+/**
+ *Encrypt the message and sign the encrypted message.
+ *See encrypt_and_sign() for details.
+ *@param buf input buffer 
+ *@param buf_len length of buf
+ *@param path_pub public key path
+ *@param path_priv private key path
+ *@param message message with encrypted message and signature
+ *@param message_length length of message
+ */
 unsigned char * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, 
  const char * path_priv, unsigned int * message_length)
 {
@@ -76,6 +85,14 @@ unsigned char * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, cons
 
 
 //must free distribution_key.mac_key, distribution_key.cipher_key
+/**
+ *Separate the message received from Auth and
+ *store the distribution key in the distribution key struct
+ *See parse_distribution_key() for details.
+ *@param parsed_distribution_key distribution key struct to save information
+ *@param buf input buffer with distribution key
+ *@param buf_length length of buf
+ */
 void parse_distribution_key(distribution_key_t * parsed_distribution_key, unsigned char * buf, unsigned int buf_length)
 {
     unsigned int cur_index = DIST_KEY_EXPIRATION_TIME_SIZE;
@@ -93,6 +110,15 @@ void parse_distribution_key(distribution_key_t * parsed_distribution_key, unsign
 }
 
 // must free ()
+/**
+ *
+ *See parse_string_param() for details.
+ *@param buf input buffer with crypto spec
+ *@param buf_length length of buf
+ *@param offset buffer index
+ *@param return_to_length length of return buffer
+ *@return buffer with crypto spec
+ */
 unsigned char * parse_string_param(unsigned char * buf, unsigned int buf_length, int offset, unsigned int * return_to_length)
 {
     unsigned int num; 
@@ -110,6 +136,14 @@ unsigned char * parse_string_param(unsigned char * buf, unsigned int buf_length,
     return return_to;
 }
 //must free when session_key expired or usage finished.
+/**
+ *store the session key in the session key struct
+ *See parse_session_key() for details.
+ *@param ret session key struct to save key info
+ *@param buf input buffer with session key
+ *@param buf_length length of buf
+ *@return index number for another session key
+ */
 unsigned int parse_session_key(session_key_t * ret, unsigned char *buf, unsigned int buf_length)
 {
     memcpy(ret->key_id, buf, SESSION_KEY_ID_SIZE);
@@ -136,7 +170,14 @@ unsigned int parse_session_key(session_key_t * ret, unsigned char *buf, unsigned
 
     return cur_idx; 
 }
-
+/**
+ *Separate the session key, nonce, and crypto spec from the message.
+ *See parse_session_key_response() for details.
+ *@param buf input buffer with session key, nonce, and crypto spec
+ *@param buf_length length of buf
+ *@param reply_nonce nonce to compare with 
+ *@param session_key_list session key list struct
+ */
 void parse_session_key_response(unsigned char *buf, unsigned int buf_length, unsigned char * reply_nonce, session_key_t * session_key_list)
 {
     memcpy(reply_nonce, buf, NONCE_SIZE);
@@ -159,7 +200,16 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length, uns
         // buf_idx += parse_session_key(&session_key_response->session_key_list[i], temp, temp_length);
     }
 }
-
+/**
+ *Generate the nonce to send to entity server,
+ *encrypt the message with session key, and
+ *make the total message including the session key id and encrypted message.
+ *See parse_handshake_1() for details.
+ *@param s_key session key struct to encrypt the message
+ *@param entity_nonce nonce to protect the reply attack
+ *@param ret_length length of return buffer
+ *@return total buffer with session key id and encrypted message
+ */
 unsigned char * parse_handshake_1(session_key_t * s_key, unsigned char * entity_nonce, unsigned int * ret_length)
 {
     //keyId8 + iv16 +data32 + hmac32
@@ -179,7 +229,17 @@ unsigned char * parse_handshake_1(session_key_t * s_key, unsigned char * entity_
     free(encrypted);
     return ret;
 };
-
+/**
+ *Check the nonce obtained in decryption with own nonce and
+ *make the encrypted message with other entity's nonce.
+ *See check_handshake_2_send_handshake_3() for details.
+ *@param data_buf input data buffer
+ *@param data_buf_length length of data buffer
+ *@param entity_nonce own nonce 
+ *@param s_key session key struct
+ *@param ret_length length of return buffer
+ *@return buffer with encrypted message
+ */
 unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, unsigned int data_buf_length, unsigned char * entity_nonce, session_key_t * s_key, unsigned int *ret_length)
 {
     printf("received session key handshake2!\n");
@@ -208,6 +268,13 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
 }
 
 //Decrypts message, reads seq_num, checks validity, and prints message
+/**
+ *
+ *See print_recevied_message() for details.
+ *@param data input data buffer
+ *@param data_length length of data buffer
+ *@param s_key session key struct
+ */
 void print_recevied_message(unsigned char * data, unsigned int data_length, session_key_t * s_key)
 {
     unsigned int decrypted_length;
