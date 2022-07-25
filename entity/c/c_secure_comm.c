@@ -55,13 +55,11 @@ unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned 
     return ret;
 }
 
-void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, 
-const char * path_priv, unsigned int * message_length)
+unsigned char * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, 
+ const char * path_priv, unsigned int * message_length)
 {
-    // unsigned char encrypted[256]; 
     unsigned int encrypted_length;
     unsigned char * encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, &encrypted_length);
-    // int encrypted_length= public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, message); //TODO: need padding as input?
 
     unsigned int  sigret_length;
 
