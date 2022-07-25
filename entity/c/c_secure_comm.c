@@ -1,37 +1,37 @@
 #include "c_secure_comm.h"
 
-/*
-explanation for this function.
-See function() for details.
-@param variable comment
-@return comment
-*/
+/**
+ *explanation for this function.
+ *See function() for details.
+ *@param variable comment
+ *@return comment
+ */
 
 int sent_seq_num;
 unsigned char entity_client_state;
 unsigned char entity_server_state;
 long int st_time;
 
-/*
+/**
 function:   prints the seq_num & message.
             This decrypts the received 'payload', with the 'session_key', and calculates the seq_num.
 input: seq_num(the seq_num must be saved), payload(data to decrypt), session_key
 */
 
-/*
-Concat entity, auth nonce and information such as name 
-and purpose obtained from the config file,
-See auth_hello_reply_message() for details.
-@param entity_nonce entity's nonce 
-@param auth_nonce received auth's nonce
-@param num_key number of keys to receive from auth
-@param sender name of sender
-@param sender_length length of sender
-@param purpose purpose to get session key
-@param purpose_length length of purpose
-@param ret_length length of return buffer 
-@return concated total buffer
-*/
+/**
+ *Concat entity, auth nonce and information such as name 
+ *and purpose obtained from the config file,
+ *See auth_hello_reply_message() for details.
+ *@param entity_nonce entity's nonce 
+ *@param auth_nonce received auth's nonce
+ *@param num_key number of keys to receive from auth
+ *@param sender name of sender
+ *@param sender_length length of sender
+ *@param purpose purpose to get session key
+ *@param purpose_length length of purpose
+ *@param ret_length length of return buffer 
+ *@return concated total buffer
+ */
 unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned char * auth_nonce,
  unsigned char num_key, unsigned char * sender, unsigned int sender_length, unsigned char* purpose,
   unsigned int purpose_length, unsigned int * ret_length)
@@ -55,7 +55,8 @@ unsigned char * auth_hello_reply_message(unsigned char * entity_nonce, unsigned 
     return ret;
 }
 
-void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, const char * path_priv, unsigned char * message, unsigned int * message_length)
+void * encrypt_and_sign(unsigned char * buf, unsigned int buf_len, const char * path_pub, 
+const char * path_priv, unsigned char * message, unsigned int * message_length)
 {
     // unsigned char encrypted[256]; 
     unsigned int encrypted_length;
@@ -220,7 +221,7 @@ void print_recevied_message(unsigned char * data, unsigned int data_length, sess
 }
 
 
-/*
+/**
 usage:
     long int st_time = 0;
     check_valdity()
