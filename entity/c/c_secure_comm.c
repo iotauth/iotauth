@@ -269,7 +269,7 @@ unsigned char * check_handshake_2_send_handshake_3(unsigned char * data_buf, uns
 
 //Decrypts message, reads seq_num, checks validity, and prints message
 /**
- *
+ *Print the received message and sequence number after check validity of session key.
  *See print_recevied_message() for details.
  *@param data input data buffer
  *@param data_length length of data buffer
@@ -295,7 +295,15 @@ usage:
     long int st_time = 0;
     check_valdity()
 */
-
+/**
+ *Check the validity of session key by calculating relative time and absolute time.
+ *See check_validity() for details.
+ *@param seq_n sequence number of received message
+ *@param rel_validity relative validity time of session key
+ *@param abs_validity absolute validity time of session key
+ *@param st_time time of first use of session key
+ *@return 1 or 0 depending on validity
+ */
 int check_validity(int seq_n, unsigned char *rel_validity, unsigned char *abs_validity, long int * st_time)
 {
     if(seq_n == 0 && *st_time == 0)
@@ -321,7 +329,13 @@ int check_validity(int seq_n, unsigned char *rel_validity, unsigned char *abs_va
     }
 }
 
-
+/**
+ *Check if entity has session key and if not, request the session key to Auth.
+ *See send_session_key_request_check_protocol() for details.
+ *@param config config struct for the entity information
+ *@param target_key_id id of session key
+ *@return session key struct according to key id
+ */
 session_key_t * send_session_key_request_check_protocol(config_t *config, unsigned char * target_key_id)
 {
     int option;
@@ -369,7 +383,12 @@ session_key_t * send_session_key_request_check_protocol(config_t *config, unsign
 }
         
 
-
+/**
+ *Request the session key to Auth according to session key id.
+ *See send_session_key_req_via_TCP() for details.
+ *@param config_info config struct for the entity information
+ *@return session key struct according to key id
+ */
 session_key_t * send_session_key_req_via_TCP(config_t *config_info)
 {
     int sock;
@@ -470,14 +489,32 @@ session_key_t * send_session_key_req_via_TCP(config_t *config_info)
         }
     }
 } 
-
+/**
+ *Request the session key to Auth according to session key id.
+ *See send_session_key_req_via_UDP() for details.
+ *@param 
+ *@return session key struct according to key id
+ */
 session_key_t * send_session_key_req_via_UDP(){
     session_key_t * s_key;
     return s_key;
 
 } //TODO:
 
-unsigned char * check_handshake1_send_handshake2(unsigned char * received_buf, unsigned int received_buf_length, unsigned char * server_nonce, session_key_t * s_key, unsigned int *ret_length)
+
+/**
+ *Check the nonce obtained in decryption with own nonce and
+ *make the encrypted message with other entity's nonce.
+ *See check_handshake1_send_handshake2() for details.
+ *@param received_buf received buffer
+ *@param received_buf_length length of received buffer
+ *@param server_nonce own nonce 
+ *@param s_key session key struct
+ *@param ret_length length of return buffer
+ *@return buffer with encrypted message
+ */
+unsigned char * check_handshake1_send_handshake2(unsigned char * received_buf, unsigned int received_buf_length,
+                                                 unsigned char * server_nonce, session_key_t * s_key, unsigned int *ret_length)
 {
     unsigned int decrypted_length;
     unsigned char * decrypted = symmetric_decrypt_authenticate(received_buf+SESSION_KEY_ID_SIZE, received_buf_length - SESSION_KEY_ID_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
