@@ -162,7 +162,7 @@ unsigned char * SHA256_sign(unsigned char *encrypted, unsigned int encrypted_len
         print_last_error("OPENSSL_malloc failed");
     if (EVP_PKEY_sign(ctx, sig, (size_t *) sig_length, md, md_length) <= 0)
         print_last_error("EVP_PKEY_sign failed");
-    free(md);
+    // free(md);
     return sig;
 }
 

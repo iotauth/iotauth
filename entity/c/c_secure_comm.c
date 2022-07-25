@@ -72,11 +72,14 @@ const char * path_priv, unsigned char * message, unsigned int * message_length)
     unsigned char * encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, &encrypted_length);
     // int encrypted_length= public_encrypt(buf, buf_len, RSA_PKCS1_PADDING, path_pub, message); //TODO: need padding as input?
 
-    unsigned int  sigret_length;
+    unsigned char * message = (unsigned char *) malloc(*message_length);
+    memcpy(message, encrypted, encrypted_length);
 
-    unsigned char *sigret = SHA256_sign(message, encrypted_length, path_priv, &sigret_length);
+    unsigned int  sigret_length;
+    unsigned char *sigret = SHA256_sign(encrypted, encrypted_length, path_priv, &sigret_length);
     *message_length = sigret_length + encrypted_length;
-    memcpy(message+encrypted_length,sigret,sigret_length);
+    message = (unsigned char *) realloc(message, *message_length);
+    memcpy(message+encrypted_length, sigret, sigret_length);
     free(encrypted);
     free(sigret);
 }
