@@ -2,47 +2,46 @@
 
 int main()
 {
-    // char path[] = "a.config";
-    // config * config_info = load_config(path);
-
-    // int serv_sock = init_server(config_info);
 
     int serv_sock, clnt_sock;
-    const char * PORT_NUM = "21100";
+    const char *PORT_NUM = "21100";
 
     struct sockaddr_in serv_addr, clnt_addr;
     socklen_t clnt_addr_size;
     serv_sock = socket(PF_INET, SOCK_STREAM, 0);
-    if(serv_sock == -1){
+    if (serv_sock == -1)
+    {
         error_handling("socket() error");
     }
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port=htons(atoi(PORT_NUM));
+    serv_addr.sin_port = htons(atoi(PORT_NUM));
 
-    if(bind(serv_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr))==-1){
+    if (bind(serv_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
+    {
         error_handling("bind() error");
     }
 
-    if(listen(serv_sock, 5)==-1){
+    if (listen(serv_sock, 5) == -1)
+    {
         error_handling("listen() error");
     }
     clnt_addr_size = sizeof(clnt_addr);
-    clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_addr, &clnt_addr_size);
-    if(clnt_sock==-1){
+    clnt_sock = accept(serv_sock, (struct sockaddr *)&clnt_addr, &clnt_addr_size);
+    if (clnt_sock == -1)
+    {
         error_handling("accept() error");
     }
-    char path[] = "server.config";
-    config_t * config = load_config(path);
-    session_key_t * s_key = server_secure_comm_setup(config, clnt_sock);
+    char path[] = "c_server.config";
+    config_t *config = load_config(path);
+    session_key_t *s_key = server_secure_comm_setup(config, clnt_sock);
 
     printf("finished\n");
     pthread_t thread;
     arg_struct_t args = {
         .sock = clnt_sock,
-        .s_key = s_key
-    };
+        .s_key = s_key};
     pthread_create(&thread, NULL, &receive_thread, (void *)&args);
     sleep(1);
 
@@ -59,15 +58,6 @@ int main()
     close(serv_sock);
 }
 
-
-
-
-
-
-
-
-
-
 /*
 //Multiplexing version.
 main()
@@ -79,19 +69,19 @@ main()
     int clnt_sock = accept(serv_sock);
     data_length = read();
     session_key_t s_key = server_secure_comm_setup(data, data_length, clnt_sock, )
-    parse -> 
+    parse ->
 
     pthread_create(&wait_thread, NULL, &wait_connection, (void *)&args);
     //this covers all connections and receiving messages.
 
-    send_to_everyone(); 
+    send_to_everyone();
 }
 */
 
 /*
 2. wait_server 첫 server socket 세팅에서
 
-    2-1 
+    2-1
             const char * PORT_NUM = "21100";
             struct sockaddr_in serv_addr;
             int serv_sock = socket(PF_INET, SOCK_STREAM, 0);
@@ -110,10 +100,10 @@ main()
 
     이런 것들을 user 가 직접 입력해야 하는건지 아니면,
     2-2
-            int serv_sock = init_server(config *config_info); 
+            int serv_sock = init_server(config *config_info);
             이런식으로 config를 통해 가져와야하는건지?
  2-2로
-        
+
 
 3. 2번의 서버 세팅후 나온 serv_sock을 이용할건데,
 
@@ -125,7 +115,7 @@ main()
     print_recevied_message(client_sock, &s_key);
     이정도로만 만들면 되고 thread를 만들고 client관리 등은 user가 해야하는 것인가?
 
-    accept까지는 user가. 
+    accept까지는 user가.
 
 
 4. send 는 전체에게 버전 + 단일 client에게 버전으로 만들어야 하는가? 아니면 전체에게 버전은 user가 알아서 해야하는것인가?
@@ -134,7 +124,7 @@ main()
     단일 client에게 버전
 
 5. server_state 도 변수로 넘겨야하는데 이걸 어떻게 해야하나?
-    server_state란, 
+    server_state란,
     #define IDLE 0 //start state.
     #define HANDSHAKE_1_SENT 10
     #define HANDSHAKE_1_RECEIVED 21
@@ -148,7 +138,7 @@ main()
 
 .h파일에 comment 해주기.
 
-high level은 .h에 
+high level은 .h에
 
 usage에서 각 인풋들이 어떻게쓰이는지 설명. ex) 이 버퍼 사이즈는 받을 데이터사이즈다~~이런거.
 

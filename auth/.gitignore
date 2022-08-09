@@ -6,6 +6,8 @@
 .idea/kotlinc.xml
 
 .idea/*.xml
+auth-server/package-lock.json
+package-lock.json
 
 *.class
 auth-server/target/*.jar
