@@ -3,6 +3,11 @@
 
 #include "c_secure_comm.h"
 
+// Load config file from path and save the information in config struct.
+// @param path config file path
+// @return config struct to use when connecting to Auth
+config_t *load_config(char *path);
+
 // Request and get session key from Auth according to secure connection
 // by using OpenSSL which provides the cryptography, MAC, and Block cipher etc..
 // @param config_info config struct obtained from load_config()

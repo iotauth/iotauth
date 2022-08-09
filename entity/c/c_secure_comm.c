@@ -1,43 +1,15 @@
 #include "c_secure_comm.h"
 
-/**
- *explanation for this function.
- *See function() for details.
- *@param variable comment
- *@return comment
- */
-
 int sent_seq_num;
 unsigned char entity_client_state;
 unsigned char entity_server_state;
 long int st_time;
 
-/**
-function:   prints the seq_num & message.
-            This decrypts the received 'payload', with the 'session_key', and calculates the seq_num.
-input: seq_num(the seq_num must be saved), payload(data to decrypt), session_key
-*/
-
-/**
- *Concat entity, auth nonce and information such as name
- *and purpose obtained from the config file,
- *See auth_hello_reply_message() for details.
- *@param entity_nonce entity's nonce
- *@param auth_nonce received auth's nonce
- *@param num_key number of keys to receive from auth
- *@param sender name of sender
- *@param sender_length length of sender
- *@param purpose purpose to get session key
- *@param purpose_length length of purpose
- *@param ret_length length of return buffer
- *@return concated total buffer
- */
 unsigned char *auth_hello_reply_message(unsigned char *entity_nonce, unsigned char *auth_nonce,
                                         unsigned char num_key, unsigned char *sender, unsigned int sender_length, unsigned char *purpose,
                                         unsigned int purpose_length, unsigned int *ret_length)
 {
     unsigned char *ret = (unsigned char *)malloc(NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + purpose_length);
-    // unsigned char ret[100];
     unsigned char num_key_buf[NUMKEY_SIZE];
     memset(num_key_buf, 0, NUMKEY_SIZE);
     write_in_n_bytes((int)num_key, NUMKEY_SIZE, num_key_buf);
@@ -54,16 +26,7 @@ unsigned char *auth_hello_reply_message(unsigned char *entity_nonce, unsigned ch
 
     return ret;
 }
-/**
- *Encrypt the message and sign the encrypted message.
- *See encrypt_and_sign() for details.
- *@param buf input buffer
- *@param buf_len length of buf
- *@param path_pub public key path
- *@param path_priv private key path
- *@param message message with encrypted message and signature
- *@param message_length length of message
- */
+
 unsigned char *encrypt_and_sign(unsigned char *buf, unsigned int buf_len, const char *path_pub,
                                 const char *path_priv, unsigned int *message_length)
 {
@@ -80,15 +43,6 @@ unsigned char *encrypt_and_sign(unsigned char *buf, unsigned int buf_len, const 
     return message;
 }
 
-// must free distribution_key.mac_key, distribution_key.cipher_key
-/**
- *Separate the message received from Auth and
- *store the distribution key in the distribution key struct
- *See parse_distribution_key() for details.
- *@param parsed_distribution_key distribution key struct to save information
- *@param buf input buffer with distribution key
- *@param buf_length length of buf
- */
 void parse_distribution_key(distribution_key_t *parsed_distribution_key, unsigned char *buf, unsigned int buf_length)
 {
     unsigned int cur_index = DIST_KEY_EXPIRATION_TIME_SIZE;
@@ -105,16 +59,6 @@ void parse_distribution_key(distribution_key_t *parsed_distribution_key, unsigne
     memcpy(parsed_distribution_key->mac_key, buf + cur_index, mac_key_size);
 }
 
-// must free ()
-/**
- *
- *See parse_string_param() for details.
- *@param buf input buffer with crypto spec
- *@param buf_length length of buf
- *@param offset buffer index
- *@param return_to_length length of return buffer
- *@return buffer with crypto spec
- */
 unsigned char *parse_string_param(unsigned char *buf, unsigned int buf_length, int offset, unsigned int *return_to_length)
 {
     unsigned int num;
@@ -132,15 +76,7 @@ unsigned char *parse_string_param(unsigned char *buf, unsigned int buf_length, i
     memcpy(return_to, buf + offset + payload_buf_length, num);
     return return_to;
 }
-// must free when session_key expired or usage finished.
-/**
- *store the session key in the session key struct
- *See parse_session_key() for details.
- *@param ret session key struct to save key info
- *@param buf input buffer with session key
- *@param buf_length length of buf
- *@return index number for another session key
- */
+
 unsigned int parse_session_key(session_key_t *ret, unsigned char *buf, unsigned int buf_length)
 {
     memcpy(ret->key_id, buf, SESSION_KEY_ID_SIZE);
@@ -167,47 +103,26 @@ unsigned int parse_session_key(session_key_t *ret, unsigned char *buf, unsigned 
 
     return cur_idx;
 }
-/**
- *Separate the session key, nonce, and crypto spec from the message.
- *See parse_session_key_response() for details.
- *@param buf input buffer with session key, nonce, and crypto spec
- *@param buf_length length of buf
- *@param reply_nonce nonce to compare with
- *@param session_key_list session key list struct
- */
+
 void parse_session_key_response(unsigned char *buf, unsigned int buf_length, unsigned char *reply_nonce, session_key_t *session_key_list)
 {
     memcpy(reply_nonce, buf, NONCE_SIZE);
     unsigned int buf_idx = NONCE_SIZE;
     unsigned int ret_length;
     unsigned char *ret = parse_string_param(buf, buf_length, buf_idx, &ret_length);
-    // TODO: cryptoSpec ���� �ʿ�. iotAuthService.js 260
+    // TODO: need to apply cryptoSpec?
     //~~use ret~~
     free(ret);
-    buf_idx += ret_length;                                                         // 48
-    unsigned int session_key_list_length = read_unsigned_int_BE(&buf[buf_idx], 4); // TODO: may need a struct session_key_list including list_length;
+    buf_idx += ret_length; // 48
+    unsigned int session_key_list_length = read_unsigned_int_BE(&buf[buf_idx], 4);
     buf_idx += 4;
     for (int i = 0; i < session_key_list_length; i++)
     {
         buf = buf + buf_idx;
         buf_idx = parse_session_key(&session_key_list[i], buf, buf_length);
-        // unsigned char temp[1024];
-        // unsigned int temp_length;
-        // memcpy(temp, buf+buf_idx, buf_length - buf_idx);
-        // temp_length = buf_length - buf_idx;
-        // buf_idx += parse_session_key(&session_key_response->session_key_list[i], temp, temp_length);
     }
 }
-/**
- *Generate the nonce to send to entity server,
- *encrypt the message with session key, and
- *make the total message including the session key id and encrypted message.
- *See parse_handshake_1() for details.
- *@param s_key session key struct to encrypt the message
- *@param entity_nonce nonce to protect the reply attack
- *@param ret_length length of return buffer
- *@return total buffer with session key id and encrypted message
- */
+
 unsigned char *parse_handshake_1(session_key_t *s_key, unsigned char *entity_nonce, unsigned int *ret_length)
 {
     // keyId8 + iv16 +data32 + hmac32
@@ -227,17 +142,7 @@ unsigned char *parse_handshake_1(session_key_t *s_key, unsigned char *entity_non
     free(encrypted);
     return ret;
 };
-/**
- *Check the nonce obtained in decryption with own nonce and
- *make the encrypted message with other entity's nonce.
- *See check_handshake_2_send_handshake_3() for details.
- *@param data_buf input data buffer
- *@param data_buf_length length of data buffer
- *@param entity_nonce own nonce
- *@param s_key session key struct
- *@param ret_length length of return buffer
- *@return buffer with encrypted message
- */
+
 unsigned char *check_handshake_2_send_handshake_3(unsigned char *data_buf, unsigned int data_buf_length, unsigned char *entity_nonce, session_key_t *s_key, unsigned int *ret_length)
 {
     printf("received session key handshake2!\n");
@@ -267,14 +172,6 @@ unsigned char *check_handshake_2_send_handshake_3(unsigned char *data_buf, unsig
     return ret;
 }
 
-// Decrypts message, reads seq_num, checks validity, and prints message
-/**
- *Print the received message and sequence number after check validity of session key.
- *See print_recevied_message() for details.
- *@param data input data buffer
- *@param data_length length of data buffer
- *@param s_key session key struct
- */
 void print_recevied_message(unsigned char *data, unsigned int data_length, session_key_t *s_key)
 {
     unsigned int decrypted_length;
@@ -289,20 +186,6 @@ void print_recevied_message(unsigned char *data, unsigned int data_length, sessi
     printf("%s\n", decrypted + SEQ_NUM_SIZE);
 }
 
-/**
-usage:
-    long int st_time = 0;
-    check_valdity()
-*/
-/**
- *Check the validity of session key by calculating relative time and absolute time.
- *See check_validity() for details.
- *@param seq_n sequence number of received message
- *@param rel_validity relative validity time of session key
- *@param abs_validity absolute validity time of session key
- *@param st_time time of first use of session key
- *@return 1 or 0 depending on validity
- */
 int check_validity(int seq_n, unsigned char *rel_validity, unsigned char *abs_validity, long int *st_time)
 {
     if (seq_n == 0 && *st_time == 0)
@@ -328,19 +211,8 @@ int check_validity(int seq_n, unsigned char *rel_validity, unsigned char *abs_va
     }
 }
 
-/**
- *Check if entity has session key and if not, request the session key to Auth.
- *See send_session_key_request_check_protocol() for details.
- *@param config config struct for the entity information
- *@param target_key_id id of session key
- *@return session key struct according to key id
- */
 session_key_t *send_session_key_request_check_protocol(config_t *config, unsigned char *target_key_id)
 {
-    int option;
-    option = 1; // TODO: temp
-    // option = get_entity_config(); //TODO: ���� SecureCommServer.js 128��
-
     // TODO: check if needed
     // Temporary code. need to load?
     unsigned char target_session_key_cache[10];
@@ -348,11 +220,10 @@ session_key_t *send_session_key_request_check_protocol(config_t *config, unsigne
     target_session_key_cache_length = (unsigned char)sizeof("none") / sizeof(unsigned char) - 1;
     memcpy(target_session_key_cache, "none", target_session_key_cache_length);
 
-    if (option == 1)
+    if (strncmp((const char *)config->network_protocol, "TCP", 3) == 0)
     { // TCP
-        // TODO: need to read from config?
         session_key_t *s_key = send_session_key_req_via_TCP(config);
-        printf("received %s keys\n", config->numkey); // TODO: check.
+        printf("received %s keys\n", config->numkey);
 
         // SecureCommServer.js handleSessionKeyResp
         //  if(){} //TODO: migration
@@ -373,7 +244,7 @@ session_key_t *send_session_key_request_check_protocol(config_t *config, unsigne
             return s_key;
         }
     }
-    if (option == 2)
+    if (strncmp((const char *)config->network_protocol, "UDP", 3) == 0)
     { // UDP
         session_key_t *s_key = send_session_key_req_via_UDP();
         return s_key;
@@ -381,12 +252,6 @@ session_key_t *send_session_key_request_check_protocol(config_t *config, unsigne
     return 0;
 }
 
-/**
- *Request the session key to Auth according to session key id.
- *See send_session_key_req_via_TCP() for details.
- *@param config_info config struct for the entity information
- *@return session key struct according to key id
- */
 session_key_t *send_session_key_req_via_TCP(config_t *config_info)
 {
     int sock;
@@ -400,8 +265,6 @@ session_key_t *send_session_key_req_via_TCP(config_t *config_info)
 
     memset(path_priv, 0, strlen((const char *)config_info->entity_privkey_path));
     memcpy(path_priv, config_info->entity_privkey_path, strlen((const char *)config_info->entity_privkey_path) - 1);
-
-    // TODO: startfrom here.
 
     unsigned char num_key = atoi((const char *)config_info->numkey);
     session_key_t *session_key_list = malloc(sizeof(session_key_t) * num_key);
@@ -438,7 +301,7 @@ session_key_t *send_session_key_req_via_TCP(config_t *config_info)
         {
             signed_data_t signed_data;
             distribution_key_t dist_key;
-            size_t key_size = RSA_KEY_SIZE; // TODO: ??
+            size_t key_size = RSA_KEY_SIZE;
 
             // parse data
             unsigned int encrypted_session_key_length = data_buf_length - (key_size * 2);
@@ -485,12 +348,7 @@ session_key_t *send_session_key_req_via_TCP(config_t *config_info)
         }
     }
 }
-/**
- *Request the session key to Auth according to session key id.
- *See send_session_key_req_via_UDP() for details.
- *@param
- *@return session key struct according to key id
- */
+
 session_key_t *send_session_key_req_via_UDP()
 {
     session_key_t *s_key;
@@ -498,17 +356,6 @@ session_key_t *send_session_key_req_via_UDP()
 
 } // TODO:
 
-/**
- *Check the nonce obtained in decryption with own nonce and
- *make the encrypted message with other entity's nonce.
- *See check_handshake1_send_handshake2() for details.
- *@param received_buf received buffer
- *@param received_buf_length length of received buffer
- *@param server_nonce own nonce
- *@param s_key session key struct
- *@param ret_length length of return buffer
- *@return buffer with encrypted message
- */
 unsigned char *check_handshake1_send_handshake2(unsigned char *received_buf, unsigned int received_buf_length,
                                                 unsigned char *server_nonce, session_key_t *s_key, unsigned int *ret_length)
 {

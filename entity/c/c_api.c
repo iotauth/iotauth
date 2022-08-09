@@ -5,14 +5,18 @@ extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
 extern long int st_time;
 
+config_t *load_config(char *path)
+{
+    return load_config_t(path);
+}
+
 session_key_t *get_session_key(config_t *config_info)
 {
-    unsigned char option = 1;
-    if (option == 1)
+    if (strncmp((const char *)config_info->network_protocol, "TCP", 3) == 0)
     {
         return send_session_key_req_via_TCP(config_info);
     }
-    else if (option == 2)
+    else if (strncmp((const char *)config_info->network_protocol, "UDP", 3) == 0)
     {
         return send_session_key_req_via_UDP();
     }
@@ -21,13 +25,9 @@ session_key_t *get_session_key(config_t *config_info)
 
 int secure_connect_to_server(session_key_t *s_key, config_t *config_info)
 {
-    // load_config
     int sock;
-
     connect_as_client((const char *)config_info->entity_server_ip_addr, (const char *)config_info->entity_server_port_num, &sock);
-
     unsigned char entity_nonce[HS_NONCE_SIZE];
-
     unsigned int parsed_buf_length;
     unsigned char *parsed_buf = parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
     unsigned char sender[128]; // TODO: actually only needs 19 bytes.
@@ -85,7 +85,6 @@ session_key_t *server_secure_comm_setup(config_t *config, int clnt_sock)
                 error_handling("Error during comm init - in wrong state, expected: IDLE, disconnecting...\n");
             }
             printf("switching to HANDSHAKE_1_RECEIVED state.\n");
-            // TODO: entity state.
             entity_server_state = HANDSHAKE_1_RECEIVED;
             unsigned char expected_key_id[SESSION_KEY_ID_SIZE];
             memcpy(expected_key_id, data_buf, SESSION_KEY_ID_SIZE);
@@ -101,7 +100,6 @@ session_key_t *server_secure_comm_setup(config_t *config, int clnt_sock)
             }
             else if (session_key_found == -1)
             {
-                // sprintf(config->purpose + 9, "%d", expected_key_id_int);
                 unsigned char temp_buf[SESSION_KEY_ID_SIZE];
                 sprintf((char *)temp_buf, "%d", expected_key_id_int);
                 memcpy(config->purpose + 9, temp_buf, SESSION_KEY_ID_SIZE);
@@ -177,7 +175,6 @@ void receive_message(unsigned char *received_buf, unsigned int received_buf_leng
 
 void send_secure_message(char *msg, unsigned int msg_length, session_key_t *s_key, int sock)
 {
-
     if (!check_validity(sent_seq_num, s_key->rel_validity, s_key->abs_validity, &st_time))
     {
         error_handling("Session key expired!\n");

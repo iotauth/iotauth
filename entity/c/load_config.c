@@ -10,13 +10,8 @@ const char authInfo_ip_address[] = "auth.ip.address";
 const char authInfo_port[] = "auth.port.number";
 const char entity_serverInfo_ip_address[] = "entity.server.ip.address";
 const char entity_serverInfo_port_number[] = "entity.server.port.number";
+const char network_protocol[] = "network.protocol";
 
-/**
- *Get a value by comparing a string of conditional statement with a variable.
- *See get_key_value() for details.
- *@param ptr input variable to compare with string
- *@return value
- */
 int get_key_value(char *ptr)
 {
     if (strcmp(ptr, entity_info_name) == 0)
@@ -37,20 +32,16 @@ int get_key_value(char *ptr)
         return ESIIP;
     else if (strcmp(ptr, entity_serverInfo_port_number) == 0)
         return ESIP;
+    else if (strcmp(ptr, network_protocol) == 0)
+        return NP;
     else
         return -1;
 }
 
-/**
- *Load config file from path and save the information in config struct.
- *See load_config() for details.
- *@param path config file path
- *@return config struct to use when we connect to Auth
- */
-config_t *load_config(char *path)
+config_t *load_config_t(char *path)
 {
     config_t *c = malloc(sizeof(config_t));
-    FILE *fp = fopen(path, "r"); ////open test file as 'r'(read) mode.
+    FILE *fp = fopen(path, "r");
     char buffer[MAX] = {
         0,
     };
@@ -108,8 +99,13 @@ config_t *load_config(char *path)
                 break;
             case ESIP:
                 ptr = strtok(NULL, " ");
-                printf("Port number of entity server: %s\n", ptr);
+                printf("Port number of entity server: %s", ptr);
                 memcpy(c->entity_server_port_num, ptr, sizeof(c->entity_server_port_num));
+                break;
+            case NP:
+                ptr = strtok(NULL, " ");
+                printf("Network Protocol: %s\n", ptr);
+                memcpy(c->network_protocol, ptr, sizeof(c->network_protocol));
                 break;
             }
             break;
@@ -118,10 +114,3 @@ config_t *load_config(char *path)
     fclose(fp); // close file pointer.
     return c;
 }
-
-// How to use//
-// void main()
-// {
-//     char path[] = "c_client.config";
-//     config * config_info = load_config(path);
-// }
