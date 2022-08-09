@@ -34,10 +34,10 @@ void function(unsigned char _ ret, unsigned int _ ret_length, unsigned char _ in
 - Input is the struct config returned from the load_config function.
 - Return struct session_key
 
-**int secure_connection()**
+**int secure_connect_to_server()**
 
-- secure_connection() is a function that establishes a secure connection with the entity server in the struct config.
-- Input is the struct config returned from load_config() and session key received from get_session_key().
+- secure_connect_to_server() is a function that establishes a secure connection with the entity server in the struct config.
+- Input is the session key received from get_session_key() and struct config returned from load_config().
 - Return secure socket
 
 **session_key_t \* server_secure_comm_setup()**

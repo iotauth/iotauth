@@ -1,10 +1,5 @@
 #include "c_api.h"
 
-/*
-gcc -I/usr/local/include/openssl -L/usr/local/lib64 -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_client.c -o entity_client -lcrypto -pthread
-gcc -I/usr/local/include/openssl -L/usr/local/lib64 -g c_common.c c_crypto.c c_secure_comm.c load_config.c c_api.c entity_server.c -o entity_server -lcrypto -pthread
-*/
-
 extern int sent_seq_num;
 extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
@@ -24,14 +19,12 @@ session_key_t *get_session_key(config_t *config_info)
     return 0;
 }
 
-int secure_connection(session_key_t *s_key)
+int secure_connect_to_server(session_key_t *s_key, config_t *config_info)
 {
     // load_config
     int sock;
-    const char *IP_ADDRESS = "127.0.0.1";
-    const char *PORT_NUM = "21100";
 
-    connect_as_client(IP_ADDRESS, PORT_NUM, &sock);
+    connect_as_client((const char *)config_info->entity_server_ip_addr, (const char *)config_info->entity_server_port_num, &sock);
 
     unsigned char entity_nonce[HS_NONCE_SIZE];
 
@@ -128,7 +121,7 @@ session_key_t *server_secure_comm_setup(config_t *config, int clnt_sock)
                 make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_2, sender, &sender_length);
                 write(clnt_sock, sender, sender_length);
                 free(parsed_buf);
-                printf("switching to HANDSHAKE_2_SENT'\n");
+                printf("switching to HANDSHAKE_2_SENT\n");
                 entity_server_state = HANDSHAKE_2_SENT;
             }
         }
@@ -181,8 +174,6 @@ void receive_message(unsigned char *received_buf, unsigned int received_buf_leng
         print_recevied_message(data_buf, data_buf_length, s_key);
     }
 }
-
-
 
 void send_secure_message(char *msg, unsigned int msg_length, session_key_t *s_key, int sock)
 {

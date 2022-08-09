@@ -6,7 +6,7 @@ int main()
     config_t *config_info = load_config(path);
 
     session_key_t *session_key_list = get_session_key(config_info);
-    int sock = secure_connection(&session_key_list[0]);
+    int sock = secure_connect_to_server(&session_key_list[0], config_info);
     printf("finished\n");
     pthread_t thread;
     arg_struct_t args = {

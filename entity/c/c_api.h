@@ -12,11 +12,10 @@ session_key_t *get_session_key(config_t *config_info);
 // Connect with other entity such as entity servers using secure session key.
 // @param s_key session key struct received by Auth
 // @return secure socket number
-int secure_connection(session_key_t *s_key);
+int secure_connect_to_server(session_key_t *s_key, config_t *config_info);
 
 // Wait the entity client to get the session key and
 // make a secure connection using session key.
-// See server_secure_comm_setup() for details.
 // @param config config struct for information
 // @param clnt_sock entity client socket number
 // @return session key struct
