@@ -8,10 +8,10 @@
   "author": "Hokeun Kim",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "int64-buffer": "^1.0.1",
     "mqtt": "*",
+    "sleep": "*",
     "pem": "*",
-    "sleep": "*"
+    "int64-buffer": "*"
   },
   "description": "Node.js module with example Node.js entities"
 }
