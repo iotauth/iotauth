@@ -29,13 +29,13 @@ For the following instructions, we use $ROOT to indicate the root directory of t
   * Right click on pom.xml
   * Select Maven -> Reload Project (or something similar)
 
-* To enable Maven projects auto-import,
+* To enable Maven projects auto-import (*optional*),
   * On menu, click on
-    * File | Other Settings | Default Settings
+    * IntelliJ IDEA | Preferences
   * In the pop-up window, select 
     * Build, Execution, Deployment -> Build Tools -> Maven -> Importing
-  * Check
-    * Import Maven projects automatically
+  * Check under `Automatically download`
+    * Sources, Documentation, Annotations (whichever you prefer)
 
 * To build jar
   * In maven project tab, inside auth-server -> lifecycle 
