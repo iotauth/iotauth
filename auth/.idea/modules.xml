@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/auth-root.iml" filepath="$PROJECT_DIR$/auth-root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/auth-server/auth-server.iml" filepath="$PROJECT_DIR$/auth-server/auth-server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/example-auth-db-generator/example-auth-db-generator.iml" filepath="$PROJECT_DIR$/example-auth-db-generator/example-auth-db-generator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/library/library.iml" filepath="$PROJECT_DIR$/library/library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/migration-solver/migration-solver.iml" filepath="$PROJECT_DIR$/migration-solver/migration-solver.iml" />
+    </modules>
+  </component>
+</project>
