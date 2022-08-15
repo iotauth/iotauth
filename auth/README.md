@@ -51,6 +51,9 @@ For the following instructions, we use $ROOT to indicate the root directory of t
   * Check "single instance only"
   
 * To configure run/debug configurations for example Auths,
+  * Properties
+    * `-p ../properties/exampleAuth101.properties`
+    * `-p ../properties/exampleAuth102.properties`
 
 ![Image of Auth101 Config](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/auth101_intellij_config.png)
 
