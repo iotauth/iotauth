@@ -41,4 +41,4 @@ c_api.o: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.h c_api.c
 	gcc ${CPPFLAGS} -c -o c_api.o c_api.c
 
 clean:
-	rm -f *.o
+	rm -f entity_client entity_server *.o
