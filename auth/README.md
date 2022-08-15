@@ -27,7 +27,7 @@ For the following instructions, we use $ROOT to indicate the root directory of t
 
 * To import Maven dependencies,
   * Right click on pom.xml
-  * Select Maven -> Reimport
+  * Select Maven -> Reload Project (or something similar)
 
 * To enable Maven projects auto-import,
   * On menu, click on
