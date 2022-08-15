@@ -45,7 +45,7 @@ For the following instructions, we use $ROOT to indicate the root directory of t
   * See the [this](https://github.com/iotauth/iotauth/blob/master/auth/auth-server/README.md) (the README file of auth-server module.)
 
 * To generate JavaDoc
-  * In IntelliJ IDEA, Tools -> Generate JavaDoc, set output directory $ROOT/auth/doc and click OK. The directory will be created automatically.
+  * In menu bar, select Tools -> Generate JavaDoc, set output directory $ROOT/auth/doc and click OK. The directory will be created automatically.
 
 * Run -> Run/Debug configurations
   * Check "single instance only"
