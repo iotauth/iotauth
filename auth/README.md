@@ -20,6 +20,11 @@ For the following instructions, we use $ROOT to indicate the root directory of t
 
 * First, open project ($Root/auth) from IntelliJ IDEA
 
+* To configure JDK (When you get `No JDK specified` error)
+  * Select File -> Project Structure.
+  * Choose SDK (e.g., openjdk-11 or openjdk-17)
+  * Choose Language level (11 or above).
+
 * To import Maven dependencies,
   * Right click on pom.xml
   * Select Maven -> Reimport
