@@ -90,7 +90,7 @@ void num_to_var_length_int(unsigned int data_length, unsigned char *payload_buf,
 
 void make_buffer_header(unsigned int data_length, unsigned char MESSAGE_TYPE, unsigned char *header, unsigned int *header_length)
 {
-    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE]; //ï¿½ì¼± 5byteï¿½ï¿½ ï¿½ï¿½ï¿???.
+    unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE];
     unsigned char payload_buf_len;
     num_to_var_length_int(data_length, payload_buf, &payload_buf_len);
     *header_length = MESSAGE_TYPE_SIZE + payload_buf_len;

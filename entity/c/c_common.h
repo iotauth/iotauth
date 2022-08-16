@@ -64,7 +64,7 @@ typedef struct
 {
     unsigned char nonce[HS_NONCE_SIZE];
     unsigned char reply_nonce[HS_NONCE_SIZE];
-    unsigned char dhParam[HS_NONCE_SIZE]; // TODO: check_size.
+    unsigned char dhParam[]; // TODO: The buffer size is temporarily defined none. Need to implement diffie_helman protocol.
 } HS_nonce_t;
 
 // Handle whether message has error or not.
