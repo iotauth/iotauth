@@ -30,10 +30,10 @@ int secure_connect_to_server(session_key_t *s_key, config_t *config_info)
     unsigned char entity_nonce[HS_NONCE_SIZE];
     unsigned int parsed_buf_length;
     unsigned char *parsed_buf = parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
-    unsigned char sender[128]; // TODO: actually only needs 19 bytes.
-    unsigned int sender_length;
-    make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_1, sender, &sender_length);
-    write(sock, sender, sender_length);
+    unsigned char sender_HS_1[128]; // TODO: actually only needs 19 bytes.
+    unsigned int sender_HS_1_length;
+    make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_1, sender_HS_1, &sender_HS_1_length);
+    write(sock, sender_HS_1, sender_HS_1_length);
     free(parsed_buf);
     entity_client_state = HANDSHAKE_1_SENT;
 
@@ -51,10 +51,10 @@ int secure_connect_to_server(session_key_t *s_key, config_t *config_info)
         }
         unsigned int parsed_buf_length;
         unsigned char *parsed_buf = check_handshake_2_send_handshake_3(data_buf, data_buf_length, entity_nonce, s_key, &parsed_buf_length);
-        unsigned char sender[256];
-        unsigned int sender_length;
-        make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_3, sender, &sender_length);
-        write(sock, sender, sender_length);
+        unsigned char sender_HS_2[256];
+        unsigned int sender_HS_2_length;
+        make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_3, sender_HS_2, &sender_HS_2_length);
+        write(sock, sender_HS_2, sender_HS_2_length);
         free(parsed_buf);
         printf("switching to IN_COMM\n");
         entity_client_state = IN_COMM;

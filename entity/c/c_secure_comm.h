@@ -74,9 +74,10 @@ unsigned int parse_session_key(session_key_t *ret, unsigned char *buf, unsigned 
 // @param session_key_list session key list struct
 void parse_session_key_response(unsigned char *buf, unsigned int buf_length, unsigned char *reply_nonce, session_key_t *session_key_list);
 
-// Generate the nonce to send to entity server,
-// encrypt the message with session key, and
-// make the total message including the session key id and encrypted message.
+// Parses the handshake1 buffer to send.
+// First generates the entity client's nonce to send to entity server,
+// encrypts the nonce with session key, and
+// make the total message including the session key id and encrypted nonce.
 // @param s_key session key struct to encrypt the message
 // @param entity_nonce nonce to protect the reply attack
 // @param ret_length length of return buffer
