@@ -2,8 +2,8 @@
 #define LOAD_CONFIG_H
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX 256
 #define ENTITY_INFO_NAME 1
@@ -17,8 +17,7 @@
 #define ENTITY_SERVER_INFO_PORT_NUMBER 9
 #define NETWORK_PROTOCOL 10
 
-typedef struct
-{
+typedef struct {
     unsigned char name[32];
     unsigned char purpose[32];
     unsigned char numkey[1];
@@ -41,4 +40,4 @@ int get_key_value(char *ptr);
 // @return config struct to use when connecting to Auth
 config_t *load_config_t(char *path);
 
-#endif // LOAD_CONFIG_H
+#endif  // LOAD_CONFIG_H

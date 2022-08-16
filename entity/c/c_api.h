@@ -36,13 +36,16 @@ void *receive_thread(void *arguments);
 // @param received_buf received message buffer
 // @param received_buf_length length of received_buf
 // @param s_key session key struct
-void receive_message(unsigned char *received_buf, unsigned int received_buf_length, session_key_t *s_key);
+void receive_message(unsigned char *received_buf,
+                     unsigned int received_buf_length, session_key_t *s_key);
 
-// Encrypt the message with session key and send the encrypted message to the socket.
+// Encrypt the message with session key and send the encrypted message to the
+// socket.
 // @param msg message to send
 // @param msg_length length of message
 // @param s_key session key struct
 // @param sock socket number
-void send_secure_message(char *msg, unsigned int msg_length, session_key_t *s_key, int sock);
+void send_secure_message(char *msg, unsigned int msg_length,
+                         session_key_t *s_key, int sock);
 
-#endif // C_API_H
+#endif  // C_API_H
