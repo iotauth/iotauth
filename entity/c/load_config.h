@@ -6,16 +6,16 @@
 #include <stdlib.h>
 
 #define MAX 256
-#define EIN 1
-#define EIP 2
-#define EINK 3
-#define AIPP 4
-#define EIPP 5
-#define AIIA 6
-#define AIP 7
-#define ESIIP 8
-#define ESIP 9
-#define NP 10
+#define ENTITY_INFO_NAME 1
+#define ENTITY_INFO_PURPOSE 2
+#define ENTITY_INFO_NUMKEY 3
+#define AUTH_INFO_PUBKEY_PATH 4
+#define ENTITY_INFO_PRIVKEY_PATH 5
+#define AUTH_INFO_IP_ADDRESS 6
+#define AUTH_INFO_PORT 7
+#define ENTITY_SERVER_INFO_IP_ADDRESS 8
+#define ENTITY_SERVER_INFO_PORT_NUMBER 9
+#define NETWORK_PROTOCOL 10
 
 typedef struct
 {
