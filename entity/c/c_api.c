@@ -12,11 +12,11 @@ config_t *load_config(char *path)
 
 session_key_t *get_session_key(config_t *config_info)
 {
-    if (strncmp((const char *)config_info->network_protocol, "TCP", 3) == 0)
+    if (strcmp((const char *)config_info->network_protocol, "TCP") == 0)
     {
         return send_session_key_req_via_TCP(config_info);
     }
-    else if (strncmp((const char *)config_info->network_protocol, "UDP", 3) == 0)
+    else if (strcmp((const char *)config_info->network_protocol, "UDP") == 0)
     {
         return send_session_key_req_via_UDP();
     }
