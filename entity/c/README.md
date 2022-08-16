@@ -1,10 +1,7 @@
 # Prerequisites
 
--   OpenSSL (TODO: Elaborate why OpenSSL is needed).
-    -   On Max OS X, OpenSSL can be installed using `brew install openssl`.
-    -   Following environment variables need to be set before running `make`. The exact variable values can be found from the output of `brew install openssl`.
-        -   export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
-        -   export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
+-   OpenSSL:
+    SST uses the APIs from OpenSSL for encryption and decryption. OpenSSL 3.0 above is mandatory, and does not support versions of 1.x.x. - On Max OS X, OpenSSL can be installed using `brew install openssl`. - Following environment variables need to be set before running `make`. The exact variable values can be found from the output of `brew install openssl`. - export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib" - export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
 
 # Code Hiearchy
 

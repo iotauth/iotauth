@@ -90,7 +90,8 @@ session_key_t *server_secure_comm_setup(config_t *config, int clnt_sock)
             memcpy(expected_key_id, data_buf, SESSION_KEY_ID_SIZE);
             unsigned int expected_key_id_int = read_unsigned_int_BE(expected_key_id, SESSION_KEY_ID_SIZE);
             /*
-            //TODO: Implement? need to think how.
+            // TODO: Need to check if the entity_server currently holds the session key of the expected_key_id.
+            // If the entity_server already has the corresponding session key, it does not have to request session key from Auth.
             int session_key_found = check_session_key(server_args[i].s_key->key_id, &server_args, fd_max);
             */
             int session_key_found = -1;
