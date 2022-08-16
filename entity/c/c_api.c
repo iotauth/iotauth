@@ -190,7 +190,7 @@ void send_secure_message(char *msg, unsigned int msg_length, session_key_t *s_ke
     unsigned char *encrypted = symmetric_encrypt_authenticate(buf, SEQ_NUM_SIZE + msg_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &encrypted_length);
     free(buf);
     sent_seq_num++;
-    unsigned char sender_buf[1024]; // TODO: Currently the send message does not support dynamic sizes, the max length is shorter than 1024. 
+    unsigned char sender_buf[1024]; // TODO: Currently the send message does not support dynamic sizes, the max length is shorter than 1024. Must need to decide static or dynamic buffer size.
     unsigned int sender_buf_length;
     make_sender_buf(encrypted, encrypted_length, SECURE_COMM_MSG, sender_buf, &sender_buf_length);
     free(encrypted);

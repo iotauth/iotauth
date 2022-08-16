@@ -49,9 +49,6 @@ int main()
     sleep(1);
     send_secure_message("Hello Dongha", strlen("Hello Dongha"), s_key, clnt_sock);
     sleep(1);
-    // send_secure_message("Hello Yeongbin", strlen("Hello Yeongbin"),&session_key_list[0], sock);
-    // sleep(10);
-    // send_secure_message("Hello Yoonsang", strlen("Hello Yoonsang"),&session_key_list[0], sock);
 
     sleep(10);
     close(clnt_sock);
