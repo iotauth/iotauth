@@ -37,10 +37,9 @@ typedef struct {
 // @param ret_length length of return buffer
 // @return concated total buffer
 unsigned char *auth_hello_reply_message(
-    unsigned char *entity_nonce, unsigned char *auth_nonce,
-    int num_key, unsigned char *sender, unsigned int sender_length,
-    unsigned char *purpose, unsigned int purpose_length,
-    unsigned int *ret_length);
+    unsigned char *entity_nonce, unsigned char *auth_nonce, int num_key,
+    unsigned char *sender, unsigned int sender_length, unsigned char *purpose,
+    unsigned int purpose_length, unsigned int *ret_length);
 
 // Encrypt the message and sign the encrypted message.
 // @param buf input buffer
@@ -138,7 +137,7 @@ int check_validity(int seq_n, unsigned char *rel_validity,
 // @param config config struct for the entity information
 // @param target_key_id id of session key
 // @return session key struct according to key id
-session_key_t *send_session_key_request_check_protocol(
+session_key_list_t *send_session_key_request_check_protocol(
     config_t *config, unsigned char *target_key_id);
 
 // Request the session key to Auth according to session key id via TCP

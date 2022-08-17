@@ -24,7 +24,8 @@ int secure_connect_to_server(session_key_t *s_key, config_t *config_info);
 // @param config config struct for information
 // @param clnt_sock entity client socket number
 // @return session key struct
-session_key_t *server_secure_comm_setup(config_t *config, int clnt_sock);
+session_key_list_t *server_secure_comm_setup(
+    config_t *config, int clnt_sock, session_key_list_t *existing_s_key_list);
 
 // Creates a thread to receive messages.
 // Max buffer length is 1000 bytes currently.

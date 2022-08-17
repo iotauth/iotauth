@@ -6,10 +6,9 @@ unsigned char entity_server_state;
 long int st_time;
 
 unsigned char *auth_hello_reply_message(
-    unsigned char *entity_nonce, unsigned char *auth_nonce,
-    int num_key, unsigned char *sender, unsigned int sender_length,
-    unsigned char *purpose, unsigned int purpose_length,
-    unsigned int *ret_length) {
+    unsigned char *entity_nonce, unsigned char *auth_nonce, int num_key,
+    unsigned char *sender, unsigned int sender_length, unsigned char *purpose,
+    unsigned int purpose_length, unsigned int *ret_length) {
     unsigned char *ret = (unsigned char *)malloc(
         NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + purpose_length);
     unsigned char num_key_buf[NUMKEY_SIZE];
@@ -232,7 +231,7 @@ int check_validity(int seq_n, unsigned char *rel_validity,
     }
 }
 
-session_key_t *send_session_key_request_check_protocol(
+session_key_list_t *send_session_key_request_check_protocol(
     config_t *config, unsigned char *target_key_id) {
     // TODO: check if needed
     // Temporary code. need to load?
@@ -241,10 +240,8 @@ session_key_t *send_session_key_request_check_protocol(
     target_session_key_cache_length =
         (unsigned char)sizeof("none") / sizeof(unsigned char) - 1;
     memcpy(target_session_key_cache, "none", target_session_key_cache_length);
-
-    if (strncmp((const char *)config->network_protocol, "TCP", 3) ==
-        0) {  // TCP
-        session_key_t *s_key = send_session_key_req_via_TCP(config);
+    if (strcmp((const char *)config->network_protocol, "TCP") == 0) {  // TCP
+        session_key_list_t *s_key_list = send_session_key_req_via_TCP(config);
         printf("received %d keys\n", config->numkey);
 
         // SecureCommServer.js handleSessionKeyResp
@@ -256,7 +253,7 @@ session_key_t *send_session_key_request_check_protocol(
         if (strncmp((const char *)target_session_key_cache, "none",
                     target_session_key_cache_length) == 0) {
             // check received (keyId from auth == keyId from entity_client)
-            if (strncmp((const char *)s_key->key_id,
+            if (strncmp((const char *)s_key_list->s_key[0].key_id,
                         (const char *)target_key_id,
                         SESSION_KEY_ID_SIZE) != 0) {
                 error_handling("Session key id is NOT as expected\n");
@@ -264,19 +261,20 @@ session_key_t *send_session_key_request_check_protocol(
             } else {
                 printf("Session key id is as expected\n");
             }
-            return s_key;
+            return s_key_list;
         }
     }
-    if (strncmp((const char *)config->network_protocol, "UDP", 3) ==
-        0) {  
-        // TODO(Dongha Kim): Implement session key request via UDP.
-        session_key_t *s_key = send_session_key_req_via_UDP();
-        return s_key;
+    if (strcmp((const char *)config->network_protocol, "UDP") == 0) {
+        // TODO:(Dongha Kim): Implement session key request via UDP.
+        session_key_list_t *s_key_list = send_session_key_req_via_UDP();
+        return s_key_list;
     }
     return 0;
 }
 
-session_key_list_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO: , distribution_key_t *existing_dist_key, distribution_key_t *new_dist_key
+session_key_list_t *send_session_key_req_via_TCP(
+    config_t *config_info) {  // TODO: , distribution_key_t *existing_dist_key,
+                              // distribution_key_t *new_dist_key
     int sock;
     connect_as_client((const char *)config_info->auth_ip_addr,
                       (const char *)config_info->auth_port_num, &sock);
@@ -295,11 +293,14 @@ session_key_list_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO
     memcpy(path_priv, config_info->entity_privkey_path,
            strlen((const char *)config_info->entity_privkey_path) - 1);
 
-    int num_key = config_info->numkey;
-    session_key_list_t *session_key_list;
-    session_key_list->num_key = 3;
-    session_key_list->s_key = malloc(sizeof(session_key_t) * num_key);
-    // session_key_t *session_key_list = malloc(sizeof(session_key_t) * num_key);
+    session_key_list_t *session_key_list = malloc(sizeof(session_key_list_t));
+
+    session_key_list->num_key = config_info->numkey;
+    session_key_list->s_key =
+        malloc(sizeof(session_key_t) * config_info->numkey);
+
+    // session_key_t *session_key_list = malloc(sizeof(session_key_t) *
+    // num_key);
     unsigned char entity_nonce[NONCE_SIZE];
     while (1) {
         unsigned char received_buf[1000];
@@ -317,8 +318,9 @@ session_key_list_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO
             RAND_bytes(entity_nonce, NONCE_SIZE);
             unsigned int serialized_length;
             unsigned char *serialized = auth_hello_reply_message(
-                entity_nonce, auth_nonce, num_key, config_info->name,
-                strlen((const char *)config_info->name), config_info->purpose,
+                entity_nonce, auth_nonce, session_key_list->num_key,
+                config_info->name, strlen((const char *)config_info->name),
+                config_info->purpose,
                 strlen((const char *)config_info->purpose), &serialized_length);
 
             // TODO: when distribution key exists.
