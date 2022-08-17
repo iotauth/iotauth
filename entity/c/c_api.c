@@ -7,7 +7,7 @@ extern long int st_time;
 
 config_t *load_config(char *path) { return load_config_t(path); } //key load.
 
-session_key_t *get_session_key(config_t *config_info) { //TODO: struct ctx - distribution_key, config_t, pubkey, privkey
+session_key_list_t *get_session_key(config_t *config_info) { //TODO: struct ctx - distribution_key, config_t, pubkey, privkey
     if (strcmp((const char *)config_info->network_protocol, "TCP") == 0) {
         return send_session_key_req_via_TCP(config_info);
     } else if (strcmp((const char *)config_info->network_protocol, "UDP") ==

@@ -19,6 +19,11 @@ typedef struct {
     session_key_t *s_key;
 } arg_struct_t;
 
+typedef struct {
+    int num_key;
+    session_key_t *s_key;
+} session_key_list_t;
+
 // Parses the the reply message sending to Auth.
 // Concat entity, auth nonce and information such as sender
 // and purpose obtained from the config file.
@@ -140,13 +145,13 @@ session_key_t *send_session_key_request_check_protocol(
 // connection
 // @param config_info config struct for the entity information
 // @return session_key_t struct according to key id
-session_key_t *send_session_key_req_via_TCP(config_t *config);
+session_key_list_t *send_session_key_req_via_TCP(config_t *config);
 
 // Request the session key to Auth according to session key id via UDP
 // connection.
 // @param
 // @return session key struct according to key id
-session_key_t *send_session_key_req_via_UDP();
+session_key_list_t *send_session_key_req_via_UDP();
 
 // Check the nonce obtained in decryption with own nonce and
 // make the encrypted message with other entity's nonce.

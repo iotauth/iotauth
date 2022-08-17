@@ -12,7 +12,7 @@ config_t *load_config(char *path);
 // by using OpenSSL which provides the cryptography, MAC, and Block cipher etc..
 // @param config_info config struct obtained from load_config()
 // @return secure session key
-session_key_t *get_session_key(config_t *config_info);
+session_key_list_t *get_session_key(config_t *config_info);
 
 // Connect with other entity such as entity servers using secure session key.
 // @param s_key session key struct received by Auth

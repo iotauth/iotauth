@@ -276,7 +276,7 @@ session_key_t *send_session_key_request_check_protocol(
     return 0;
 }
 
-session_key_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO: , distribution_key_t *existing_dist_key, distribution_key_t *new_dist_key
+session_key_list_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO: , distribution_key_t *existing_dist_key, distribution_key_t *new_dist_key
     int sock;
     connect_as_client((const char *)config_info->auth_ip_addr,
                       (const char *)config_info->auth_port_num, &sock);
@@ -296,7 +296,10 @@ session_key_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO: , d
            strlen((const char *)config_info->entity_privkey_path) - 1);
 
     int num_key = config_info->numkey;
-    session_key_t *session_key_list = malloc(sizeof(session_key_t) * num_key);
+    session_key_list_t *session_key_list;
+    session_key_list->num_key = 3;
+    session_key_list->s_key = malloc(sizeof(session_key_t) * num_key);
+    // session_key_t *session_key_list = malloc(sizeof(session_key_t) * num_key);
     unsigned char entity_nonce[NONCE_SIZE];
     while (1) {
         unsigned char received_buf[1000];
@@ -377,7 +380,7 @@ session_key_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO: , d
             unsigned char reply_nonce[NONCE_SIZE];
             parse_session_key_response(decrypted_session_key_response,
                                        decrypted_session_key_response_length,
-                                       reply_nonce, session_key_list);
+                                       reply_nonce, session_key_list->s_key);
 
             printf("reply_nonce in sessionKeyResp: ");
             print_buf(reply_nonce, NONCE_SIZE);
@@ -396,8 +399,8 @@ session_key_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO: , d
     }
 }
 
-session_key_t *send_session_key_req_via_UDP() {
-    session_key_t *s_key;
+session_key_list_t *send_session_key_req_via_UDP() {
+    session_key_list_t *s_key;
     return s_key;
     // TODO(Dongha Kim): Implemen this function.
     error_handling("This function is not implemented yet.");
