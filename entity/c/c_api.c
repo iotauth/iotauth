@@ -5,9 +5,9 @@ extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
 extern long int st_time;
 
-config_t *load_config(char *path) { return load_config_t(path); }
+config_t *load_config(char *path) { return load_config_t(path); } //key load.
 
-session_key_t *get_session_key(config_t *config_info) {
+session_key_t *get_session_key(config_t *config_info) { //TODO: struct ctx - distribution_key, config_t, pubkey, privkey
     if (strcmp((const char *)config_info->network_protocol, "TCP") == 0) {
         return send_session_key_req_via_TCP(config_info);
     } else if (strcmp((const char *)config_info->network_protocol, "UDP") ==
@@ -65,7 +65,7 @@ int secure_connect_to_server(session_key_t *s_key, config_t *config_info) {
     return sock;
 }
 
-session_key_t *server_secure_comm_setup(config_t *config, int clnt_sock) {
+session_key_t *server_secure_comm_setup(config_t *config, int clnt_sock) { //TODO: optional session_key_list
     entity_server_state = IDLE;
     unsigned char server_nonce[HS_NONCE_SIZE];
     session_key_t *s_key;

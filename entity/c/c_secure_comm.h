@@ -33,7 +33,7 @@ typedef struct {
 // @return concated total buffer
 unsigned char *auth_hello_reply_message(
     unsigned char *entity_nonce, unsigned char *auth_nonce,
-    unsigned char num_key, unsigned char *sender, unsigned int sender_length,
+    int num_key, unsigned char *sender, unsigned int sender_length,
     unsigned char *purpose, unsigned int purpose_length,
     unsigned int *ret_length);
 

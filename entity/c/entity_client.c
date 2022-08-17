@@ -4,7 +4,7 @@ int main() {
     char path[] = "c_client.config";
     config_t *config_info = load_config(path);
 
-    session_key_t *session_key_list = get_session_key(config_info);
+    session_key_t *session_key_list = get_session_key(config_info); //TODO: session_key_list struct.
     int sock = secure_connect_to_server(&session_key_list[0], config_info);
     printf("finished\n");
     pthread_t thread;

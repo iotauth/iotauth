@@ -20,7 +20,7 @@
 typedef struct {
     unsigned char name[32];
     unsigned char purpose[32];
-    unsigned char numkey[1];
+    int numkey;
     unsigned char auth_pubkey_path[50];
     unsigned char entity_privkey_path[50];
     unsigned char auth_ip_addr[17];

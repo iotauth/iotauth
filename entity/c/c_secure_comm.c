@@ -7,14 +7,14 @@ long int st_time;
 
 unsigned char *auth_hello_reply_message(
     unsigned char *entity_nonce, unsigned char *auth_nonce,
-    unsigned char num_key, unsigned char *sender, unsigned int sender_length,
+    int num_key, unsigned char *sender, unsigned int sender_length,
     unsigned char *purpose, unsigned int purpose_length,
     unsigned int *ret_length) {
     unsigned char *ret = (unsigned char *)malloc(
         NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + purpose_length);
     unsigned char num_key_buf[NUMKEY_SIZE];
     memset(num_key_buf, 0, NUMKEY_SIZE);
-    write_in_n_bytes((int)num_key, NUMKEY_SIZE, num_key_buf);
+    write_in_n_bytes(num_key, NUMKEY_SIZE, num_key_buf);
     unsigned char temp[] = {sender_length - 1};
     unsigned char temp2[] = {purpose_length - 1};
     memcpy(ret, entity_nonce, NONCE_SIZE);
@@ -245,7 +245,7 @@ session_key_t *send_session_key_request_check_protocol(
     if (strncmp((const char *)config->network_protocol, "TCP", 3) ==
         0) {  // TCP
         session_key_t *s_key = send_session_key_req_via_TCP(config);
-        printf("received %s keys\n", config->numkey);
+        printf("received %d keys\n", config->numkey);
 
         // SecureCommServer.js handleSessionKeyResp
         //  if(){} //TODO: migration
@@ -276,7 +276,7 @@ session_key_t *send_session_key_request_check_protocol(
     return 0;
 }
 
-session_key_t *send_session_key_req_via_TCP(config_t *config_info) {
+session_key_t *send_session_key_req_via_TCP(config_t *config_info) { //TODO: , distribution_key_t *existing_dist_key, distribution_key_t *new_dist_key
     int sock;
     connect_as_client((const char *)config_info->auth_ip_addr,
                       (const char *)config_info->auth_port_num, &sock);
@@ -295,7 +295,7 @@ session_key_t *send_session_key_req_via_TCP(config_t *config_info) {
     memcpy(path_priv, config_info->entity_privkey_path,
            strlen((const char *)config_info->entity_privkey_path) - 1);
 
-    unsigned char num_key = atoi((const char *)config_info->numkey);
+    int num_key = config_info->numkey;
     session_key_t *session_key_list = malloc(sizeof(session_key_t) * num_key);
     unsigned char entity_nonce[NONCE_SIZE];
     while (1) {

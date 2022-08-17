@@ -65,7 +65,7 @@ config_t *load_config_t(char *path) {
                 case ENTITY_INFO_NUMKEY:
                     ptr = strtok(NULL, " ");
                     printf("Numkey: %s", ptr);
-                    memcpy(c->numkey, ptr, sizeof(c->numkey));
+                    c->numkey = atoi((const char *)ptr);
                     break;
                 case AUTH_INFO_PUBKEY_PATH:
                     ptr = strtok(NULL, " ");
