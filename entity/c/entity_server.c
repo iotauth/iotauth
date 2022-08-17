@@ -31,20 +31,22 @@ int main() {
     }
     char path[] = "c_server.config";
     config_t *config = load_config(path);
-    session_key_list_t *s_key_list =
-        server_secure_comm_setup(config, clnt_sock, NULL);
+
+    session_key_list_t *s_key_list = get_session_key(config);
+
+    session_key_t *s_key =
+        server_secure_comm_setup(config, clnt_sock, s_key_list);
 
     printf("finished\n");
     pthread_t thread;
-    arg_struct_t args = {.sock = clnt_sock, .s_key = &s_key_list->s_key[0]};
+    arg_struct_t args = {.sock = clnt_sock, .s_key = s_key};
     pthread_create(&thread, NULL, &receive_thread, (void *)&args);
     sleep(1);
 
-    send_secure_message("Hello World", strlen("Hello World"),
-                        &s_key_list->s_key[0], clnt_sock);
+    send_secure_message("Hello World", strlen("Hello World"), s_key, clnt_sock);
     sleep(1);
-    send_secure_message("Hello Dongha", strlen("Hello Dongha"),
-                        &s_key_list->s_key[0], clnt_sock);
+    send_secure_message("Hello Dongha", strlen("Hello Dongha"), s_key,
+                        clnt_sock);
     sleep(1);
 
     sleep(10);

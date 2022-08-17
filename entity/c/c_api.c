@@ -67,11 +67,12 @@ int secure_connect_to_server(session_key_t *s_key, config_t *config_info) {
     return sock;
 }
 
-session_key_list_t *server_secure_comm_setup(
+session_key_t *server_secure_comm_setup(
     config_t *config, int clnt_sock, session_key_list_t *existing_s_key_list) {
     entity_server_state = IDLE;
     unsigned char server_nonce[HS_NONCE_SIZE];
-    session_key_list_t *s_key_list;
+
+    session_key_t *s_key;
     while (1) {
         unsigned char received_buf[1024];
         int received_buf_length =
@@ -101,19 +102,25 @@ session_key_list_t *server_secure_comm_setup(
             session_key_found = check_session_key(server_args[i].s_key->key_id,
             &server_args, fd_max);
             */
-            for (int i = 0; i < s_key_list->num_key; i++) {
-            }
             int session_key_found = -1;
-            if (session_key_found > 0) {
+            if (existing_s_key_list != NULL) {
+                for (int i = 0; i < existing_s_key_list->num_key; i++) {
+                    session_key_found = check_session_key(
+                        expected_key_id, existing_s_key_list, i);
+                }
+            }
+            if (session_key_found >= 0) {
                 // TODO: implement when session_key_found
+                s_key = &existing_s_key_list->s_key[session_key_found];
             } else if (session_key_found == -1) {
                 unsigned char temp_buf[SESSION_KEY_ID_SIZE];
                 sprintf((char *)temp_buf, "%d", expected_key_id_int);
                 memcpy(config->purpose + 9, temp_buf, SESSION_KEY_ID_SIZE);
 
+                session_key_list_t *s_key_list;
                 s_key_list = send_session_key_request_check_protocol(
                     config, expected_key_id);
-
+                s_key = s_key_list->s_key;
                 if (entity_server_state != HANDSHAKE_1_RECEIVED) {
                     error_handling(
                         "Error during comm init - in wrong state, expected: "
@@ -122,7 +129,7 @@ session_key_list_t *server_secure_comm_setup(
             }
             unsigned int parsed_buf_length;
             unsigned char *parsed_buf = check_handshake1_send_handshake2(
-                data_buf, data_buf_length, server_nonce, &s_key_list->s_key[0],
+                data_buf, data_buf_length, server_nonce, s_key,
                 &parsed_buf_length);
 
             unsigned char sender[256];
@@ -143,9 +150,9 @@ session_key_list_t *server_secure_comm_setup(
             }
             unsigned int decrypted_length;
             unsigned char *decrypted = symmetric_decrypt_authenticate(
-                data_buf, data_buf_length, s_key_list->s_key[0].mac_key,
-                MAC_KEY_SIZE, s_key_list->s_key[0].cipher_key, CIPHER_KEY_SIZE,
-                AES_CBC_128_IV_SIZE, &decrypted_length);
+                data_buf, data_buf_length, s_key->mac_key, MAC_KEY_SIZE,
+                s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE,
+                &decrypted_length);
             HS_nonce_t hs;
             parse_handshake(decrypted, &hs);
             free(decrypted);
@@ -160,7 +167,7 @@ session_key_list_t *server_secure_comm_setup(
             }
             printf("switching to IN_COMM\n");
             entity_server_state = IN_COMM;
-            return s_key_list;
+            return s_key;
         }
     }
 }

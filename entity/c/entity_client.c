@@ -2,10 +2,10 @@
 
 int main() {
     char path[] = "c_client.config";
-    config_t *config_info = load_config(path);
+    config_t *config = load_config(path);
 
-    session_key_list_t *s_key_list = get_session_key(config_info);
-    int sock = secure_connect_to_server(&s_key_list->s_key[0], config_info);
+    session_key_list_t *s_key_list = get_session_key(config);
+    int sock = secure_connect_to_server(&s_key_list->s_key[0], config);
     printf("finished\n");
     pthread_t thread;
     arg_struct_t args = {.sock = sock, .s_key = &s_key_list->s_key[0]};

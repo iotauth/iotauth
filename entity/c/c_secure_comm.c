@@ -299,8 +299,6 @@ session_key_list_t *send_session_key_req_via_TCP(
     session_key_list->s_key =
         malloc(sizeof(session_key_t) * config_info->numkey);
 
-    // session_key_t *session_key_list = malloc(sizeof(session_key_t) *
-    // num_key);
     unsigned char entity_nonce[NONCE_SIZE];
     while (1) {
         unsigned char received_buf[1000];
@@ -440,4 +438,13 @@ unsigned char *check_handshake1_send_handshake2(
         buf, HS_INDICATOR_SIZE, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key,
         CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, ret_length);
     return ret;
+}
+
+int check_session_key(unsigned char * key_id, session_key_list_t * s_key_list, int idx){
+    if(strncmp(key_id, s_key_list->s_key[idx].key_id, SESSION_KEY_ID_SIZE) == 0){        
+        return idx;
+    }
+    else{
+        return -1;
+    }
 }
