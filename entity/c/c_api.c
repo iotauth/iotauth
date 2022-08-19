@@ -103,6 +103,14 @@ session_key_t *server_secure_comm_setup(
             &server_args, fd_max);
             */
             int session_key_found = -1;
+            //
+            int c = 0 ;
+            if(c == 0){
+                c = 1;
+            }
+
+
+
             if (existing_s_key_list != NULL) {
                 for (int i = 0; i < existing_s_key_list->num_key; i++) {
                     session_key_found = check_session_key(
@@ -121,11 +129,15 @@ session_key_t *server_secure_comm_setup(
                 s_key_list = send_session_key_request_check_protocol(
                     config, expected_key_id);
                 s_key = s_key_list->s_key;
-                if (entity_server_state != HANDSHAKE_1_RECEIVED) {
+                if (existing_s_key_list != NULL) {
+                    add_session_key_to_list(s_key, existing_s_key_list);
+                }
+                
+            }
+            if (entity_server_state != HANDSHAKE_1_RECEIVED) {
                     error_handling(
                         "Error during comm init - in wrong state, expected: "
                         "HANDSHAKE_1_RECEIVED, disconnecting...");
-                }
             }
             unsigned int parsed_buf_length;
             unsigned char *parsed_buf = check_handshake1_send_handshake2(

@@ -32,11 +32,14 @@ int main() {
     char path[] = "c_server.config";
     config_t *config = load_config(path);
 
-    session_key_list_t *s_key_list = get_session_key(config);
-
+    // session_key_list_t *s_key_list = get_session_key(config);
+    // session_key_t *s_key =
+    //     server_secure_comm_setup(config, clnt_sock, s_key_list);
     session_key_t *s_key =
-        server_secure_comm_setup(config, clnt_sock, s_key_list);
+        server_secure_comm_setup(config, clnt_sock, NULL);
 
+    INIT_SESSION_KEY_LIST(s_key_list);
+    add_session_key_to_list(s_key, s_key_list);
     printf("finished\n");
     pthread_t thread;
     arg_struct_t args = {.sock = clnt_sock, .s_key = s_key};

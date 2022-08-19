@@ -448,3 +448,16 @@ int check_session_key(unsigned char * key_id, session_key_list_t * s_key_list, i
         return -1;
     }
 }
+
+void add_session_key_to_list(session_key_t *s_key, session_key_list_t *existing_s_key_list){
+    if(existing_s_key_list->num_key == 0){
+        existing_s_key_list = malloc(sizeof(session_key_list_t));
+        existing_s_key_list->num_key = 1;
+        existing_s_key_list->s_key = malloc(sizeof(session_key_t));
+    }
+    else{
+        existing_s_key_list->num_key ++;
+        realloc(existing_s_key_list->s_key, sizeof(session_key_t) * existing_s_key_list->num_key);
+    }
+    memcpy(&existing_s_key_list->s_key[existing_s_key_list->num_key -1], s_key, sizeof(session_key_t));
+}

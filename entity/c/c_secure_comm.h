@@ -24,6 +24,8 @@ typedef struct {
     session_key_t *s_key;
 } session_key_list_t;
 
+#define INIT_SESSION_KEY_LIST(X) session_key_list_t *X = {.num_key = 0, .s_key =malloc(sizeof(session_key_t))}
+
 // Parses the the reply message sending to Auth.
 // Concat entity, auth nonce and information such as sender
 // and purpose obtained from the config file.
@@ -174,5 +176,8 @@ unsigned char *check_handshake1_send_handshake2(
 // @return index of the s_key_list
 int check_session_key(unsigned char *key_id, session_key_list_t *s_key_list,
                       int idx);
+
+
+void add_session_key_to_list(session_key_t *s_key, session_key_list_t *existing_s_key_list);
 
 #endif  // C_SECURE_COMM_H
