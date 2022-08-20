@@ -3,6 +3,10 @@
 extern int sent_seq_num;
 
 int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        error_handling("Enter config path");
+    }
+
     int serv_sock, clnt_sock, clnt_sock2;
     const char *PORT_NUM = "21100";
 
@@ -37,12 +41,12 @@ int main(int argc, char *argv[]) {
         error_handling("accept() error");
     }
 
-    char *path = argv[1];
-    config_t *config = load_config(path);
+    char *config_path = argv[1];
+    ctx_t *ctx = init_SST(config_path);
 
     INIT_SESSION_KEY_LIST(s_key_list);
     session_key_t *s_key =
-        server_secure_comm_setup(config, clnt_sock, &s_key_list);
+        server_secure_comm_setup(ctx, clnt_sock, &s_key_list);
 
     pthread_t thread;
     arg_struct_t args = {.sock = &clnt_sock, .s_key = s_key};
@@ -66,7 +70,7 @@ int main(int argc, char *argv[]) {
         error_handling("accept() error");
     }
     session_key_t *s_key2 =
-        server_secure_comm_setup(config, clnt_sock2, &s_key_list);
+        server_secure_comm_setup(ctx, clnt_sock2, &s_key_list);
 
     pthread_t thread2;
     arg_struct_t args2 = {.sock = &clnt_sock2, .s_key = s_key2};

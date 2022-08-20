@@ -10,25 +10,41 @@ void print_last_error(char *msg) {
     exit(1);
 }
 
-unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
-                              const char *path, size_t *ret_len) {
+EVP_PKEY *load_auth_public_key(const char *path) {
+    errno = 0;
     FILE *pemFile = fopen(path, "rb");
+    if (pemFile == NULL) {
+        printf("Error %d \n", errno);
+        print_last_error("Loading auth_pub_key_path failed");
+    }
     X509 *cert = PEM_read_X509(pemFile, NULL, NULL, NULL);
-    EVP_PKEY *pkey = X509_get_pubkey(cert);
-    if (pkey == NULL) {
+    EVP_PKEY *pub_key = X509_get_pubkey(cert);
+    if (pub_key == NULL) {
         print_last_error("public key getting fail");
     }
-    int id = EVP_PKEY_id(pkey);
+    int id = EVP_PKEY_id(pub_key);
     if (id != EVP_PKEY_RSA) {
         print_last_error("is not RSA Encryption file");
     }
+    free(cert);
+    return pub_key;
+}
+
+EVP_PKEY *load_entity_private_key(const char *path) {
+    FILE *keyfile = fopen(path, "rb");
+    EVP_PKEY *priv_key = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
+    return priv_key;
+}
+
+unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
+                              EVP_PKEY *pub_key, size_t *ret_len) {
     /**openssl 3.0 -> do not change to RSA.
     directly use EVP_PKEY
     */
     EVP_PKEY_CTX *ctx;
     unsigned char *out;
 
-    ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    ctx = EVP_PKEY_CTX_new(pub_key, NULL);
     if (!ctx) {
         print_last_error("EVP_PKEY_CTX_new failed");
     }
@@ -50,20 +66,17 @@ unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
     if (EVP_PKEY_encrypt(ctx, out, ret_len, data, data_len) <= 0) {
         print_last_error("EVP_PKEY_encrypt failed");
     }
-    free(cert);
-    free(pkey);
     free(ctx);
     /** Encrypted data is outlen bytes written to buffer out */
     return out;
 }
 
 unsigned char *private_decrypt(unsigned char *enc_data, size_t enc_data_len,
-                               int padding, const char *path, size_t *ret_len) {
-    FILE *keyfile = fopen(path, "rb");
-    EVP_PKEY *key = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
+                               int padding, EVP_PKEY *priv_key,
+                               size_t *ret_len) {
     EVP_PKEY_CTX *ctx;
     unsigned char *out;
-    ctx = EVP_PKEY_CTX_new(key, NULL);
+    ctx = EVP_PKEY_CTX_new(priv_key, NULL);
     if (!ctx) {
         print_last_error("EVP_PKEY_CTX_new failed");
     }
@@ -88,16 +101,14 @@ unsigned char *private_decrypt(unsigned char *enc_data, size_t enc_data_len,
 }
 
 unsigned char *SHA256_sign(unsigned char *encrypted,
-                           unsigned int encrypted_length, const char *path,
+                           unsigned int encrypted_length, EVP_PKEY *priv_key,
                            size_t *sig_length) {
-    FILE *keyfile = fopen(path, "rb");
-    EVP_PKEY *signing_key = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
     unsigned int md_length;
     unsigned char *md =
         digest_message_SHA_256(encrypted, encrypted_length, &md_length);
     EVP_PKEY_CTX *ctx;
     unsigned char *sig;
-    ctx = EVP_PKEY_CTX_new(signing_key, NULL);
+    ctx = EVP_PKEY_CTX_new(priv_key, NULL);
     if (!ctx) {
         print_last_error("EVP_PKEY_CTX_new failed");
     }
@@ -129,22 +140,12 @@ unsigned char *SHA256_sign(unsigned char *encrypted,
 }
 
 void SHA256_verify(unsigned char *data, unsigned int data_length,
-                   unsigned char *sig, size_t sig_length, const char *path) {
-    FILE *pemFile = fopen(path, "rb");
-    X509 *cert = PEM_read_X509(pemFile, NULL, NULL, NULL);
-    EVP_PKEY *verify_key = X509_get_pubkey(cert);
-    if (verify_key == NULL) {
-        print_last_error("public key getting fail");
-    }
-    int id = EVP_PKEY_id(verify_key);
-    if (id != EVP_PKEY_RSA) {
-        print_last_error("is not RSA Encryption file");
-    }
+                   unsigned char *sig, size_t sig_length, EVP_PKEY *pub_key) {
     EVP_PKEY_CTX *ctx;
     unsigned int md_length;
     unsigned char *md = digest_message_SHA_256(data, data_length, &md_length);
 
-    ctx = EVP_PKEY_CTX_new(verify_key, NULL);
+    ctx = EVP_PKEY_CTX_new(pub_key, NULL);
     if (!ctx) {
         print_last_error("EVP_PKEY_CTX_new failed");
     }

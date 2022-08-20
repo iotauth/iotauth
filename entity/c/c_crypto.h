@@ -60,6 +60,9 @@ typedef struct {
 // @param msg message to print the error
 void print_last_error(char *msg);
 
+EVP_PKEY *load_auth_public_key(const char *path);
+EVP_PKEY *load_entity_private_key(const char *path);
+
 // Encrypt the message with public key using public key encryption from OpenSSL.
 // @param data message for public key encryption
 // @param data_len length of message
@@ -70,7 +73,7 @@ void print_last_error(char *msg);
 // @param ret_len length of encrypted message
 // @return encrypted message from public key encryption
 unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
-                              const char *path, size_t *ret_len);
+                              EVP_PKEY *pub_key, size_t *ret_len);
 
 // Decrypt message with private key using private key decryption from OpenSSL.
 // @param enc_data encrypted message for private key decryption
@@ -82,7 +85,7 @@ unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
 // @param ret_len length of decrypted message
 // @return decrypted message from private key decryption
 unsigned char *private_decrypt(unsigned char *enc_data, size_t enc_data_len,
-                               int padding, const char *path, size_t *ret_len);
+                               int padding, EVP_PKEY *priv_key, size_t *ret_len);
 
 // After digest the encrypted message, sign digested message
 // with private key using private key signature from OpenSSL.
@@ -92,7 +95,7 @@ unsigned char *private_decrypt(unsigned char *enc_data, size_t enc_data_len,
 // @param sig_length length of signed buffer
 // @return sign sign of the encrypted message
 unsigned char *SHA256_sign(unsigned char *encrypted,
-                           unsigned int encrypted_length, const char *path,
+                           unsigned int encrypted_length, EVP_PKEY *priv_key,
                            size_t *sig_length);
 
 // Verification of encrypted data and signature
@@ -103,7 +106,7 @@ unsigned char *SHA256_sign(unsigned char *encrypted,
 // @param sign_length length of signiture
 // @param path public key path
 void SHA256_verify(unsigned char *data, unsigned int data_length,
-                   unsigned char *sign, size_t sign_length, const char *path);
+                   unsigned char *sig, size_t sig_length, EVP_PKEY *pub_key);
 
 // Digest the encrypted message using the SHA256 digest function from OpenSSL.
 // @param message encrypted data

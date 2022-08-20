@@ -30,14 +30,13 @@ unsigned char *auth_hello_reply_message(
 }
 
 unsigned char *encrypt_and_sign(unsigned char *buf, unsigned int buf_len,
-                                const char *path_pub, const char *path_priv,
-                                unsigned int *message_length) {
+                                ctx_t *ctx, unsigned int *message_length) {
     size_t encrypted_length;
     unsigned char *encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING,
-                                              path_pub, &encrypted_length);
+                                              ctx->pub_key, &encrypted_length);
     size_t sigret_length;
     unsigned char *sigret =
-        SHA256_sign(encrypted, encrypted_length, path_priv, &sigret_length);
+        SHA256_sign(encrypted, encrypted_length, ctx->priv_key, &sigret_length);
     *message_length = sigret_length + encrypted_length;
     unsigned char *message = (unsigned char *)malloc(*message_length);
     memcpy(message, encrypted, encrypted_length);
@@ -232,7 +231,7 @@ int check_validity(int seq_n, unsigned char *rel_validity,
 }
 
 session_key_list_t *send_session_key_request_check_protocol(
-    config_t *config, unsigned char *target_key_id) {
+    ctx_t *ctx, unsigned char *target_key_id) {
     // TODO: check if needed
     // Temporary code. need to load?
     unsigned char target_session_key_cache[10];
@@ -240,9 +239,10 @@ session_key_list_t *send_session_key_request_check_protocol(
     target_session_key_cache_length =
         (unsigned char)sizeof("none") / sizeof(unsigned char) - 1;
     memcpy(target_session_key_cache, "none", target_session_key_cache_length);
-    if (strcmp((const char *)config->network_protocol, "TCP") == 0) {  // TCP
-        session_key_list_t *s_key_list = send_session_key_req_via_TCP(config);
-        printf("received %d keys\n", config->numkey);
+    if (strcmp((const char *)ctx->config->network_protocol, "TCP") ==
+        0) {  // TCP
+        session_key_list_t *s_key_list = send_session_key_req_via_TCP(ctx);
+        printf("received %d keys\n", ctx->config->numkey);
 
         // SecureCommServer.js handleSessionKeyResp
         //  if(){} //TODO: migration
@@ -264,40 +264,26 @@ session_key_list_t *send_session_key_request_check_protocol(
             return s_key_list;
         }
     }
-    if (strcmp((const char *)config->network_protocol, "UDP") == 0) {
+    if (strcmp((const char *)ctx->config->network_protocol, "UDP") == 0) {
         // TODO:(Dongha Kim): Implement session key request via UDP.
-        session_key_list_t *s_key_list = send_session_key_req_via_UDP();
+        session_key_list_t *s_key_list = send_session_key_req_via_UDP(NULL);
         return s_key_list;
     }
     return 0;
 }
 
 session_key_list_t *send_session_key_req_via_TCP(
-    config_t *config_info) {  // TODO: , distribution_key_t *existing_dist_key,
-                              // distribution_key_t *new_dist_key
+    ctx_t *ctx) {  // TODO: , distribution_key_t *existing_dist_key,
+                   // distribution_key_t *new_dist_key
     int sock;
-    connect_as_client((const char *)config_info->auth_ip_addr,
-                      (const char *)config_info->auth_port_num, &sock);
-
-    // will be input from config.
-    unsigned char *path_pub =
-        malloc(strlen((const char *)config_info->auth_pubkey_path));
-    unsigned char *path_priv =
-        malloc(strlen((const char *)config_info->entity_privkey_path));
-    memset(path_pub, 0, strlen((const char *)config_info->auth_pubkey_path));
-    memcpy(path_pub, config_info->auth_pubkey_path,
-           strlen((const char *)config_info->auth_pubkey_path) - 1);
-
-    memset(path_priv, 0,
-           strlen((const char *)config_info->entity_privkey_path));
-    memcpy(path_priv, config_info->entity_privkey_path,
-           strlen((const char *)config_info->entity_privkey_path) - 1);
+    connect_as_client((const char *)ctx->config->auth_ip_addr,
+                      (const char *)ctx->config->auth_port_num, &sock);
 
     session_key_list_t *session_key_list = malloc(sizeof(session_key_list_t));
 
-    session_key_list->num_key = config_info->numkey;
+    session_key_list->num_key = ctx->config->numkey;
     session_key_list->s_key =
-        malloc(sizeof(session_key_t) * config_info->numkey);
+        malloc(sizeof(session_key_t) * ctx->config->numkey);
 
     unsigned char entity_nonce[NONCE_SIZE];
     while (1) {
@@ -317,15 +303,14 @@ session_key_list_t *send_session_key_req_via_TCP(
             unsigned int serialized_length;
             unsigned char *serialized = auth_hello_reply_message(
                 entity_nonce, auth_nonce, session_key_list->num_key,
-                config_info->name, strlen((const char *)config_info->name),
-                config_info->purpose,
-                strlen((const char *)config_info->purpose), &serialized_length);
+                ctx->config->name, strlen((const char *)ctx->config->name),
+                ctx->config->purpose,
+                strlen((const char *)ctx->config->purpose), &serialized_length);
 
             // TODO: when distribution key exists.
             unsigned int enc_length;
-            unsigned char *enc = encrypt_and_sign(
-                serialized, serialized_length, (const char *)path_pub,
-                (const char *)path_priv, &enc_length);
+            unsigned char *enc = encrypt_and_sign(serialized, serialized_length,
+                                                  ctx, &enc_length);
             free(serialized);
 
             unsigned char message[1024];
@@ -351,14 +336,14 @@ session_key_list_t *send_session_key_req_via_TCP(
 
             // verify
             SHA256_verify(signed_data.data, key_size, signed_data.sign,
-                          key_size, (const char *)path_pub);
+                          key_size, ctx->pub_key);
             printf("auth signature verified\n");
 
             // decrypt encrypted_distribution_key
             size_t decrypted_distribution_key_length;
             unsigned char *decrypted_distribution_key = private_decrypt(
-                signed_data.data, key_size, RSA_PKCS1_PADDING,
-                (const char *)path_priv, &decrypted_distribution_key_length);
+                signed_data.data, key_size, RSA_PKCS1_PADDING, ctx->priv_key,
+                &decrypted_distribution_key_length);
 
             // parse decrypted_distribution_key to mac_key & cipher_key
             parse_distribution_key(&dist_key, decrypted_distribution_key,
@@ -392,14 +377,12 @@ session_key_list_t *send_session_key_req_via_TCP(
                 printf("auth nonce verified!\n");
             }
             close(sock);
-            free(path_pub);
-            free(path_priv);
             return session_key_list;
         }
     }
 }
 
-session_key_list_t *send_session_key_req_via_UDP() {
+session_key_list_t *send_session_key_req_via_UDP(ctx_t *ctx) {
     session_key_list_t *s_key;
     return s_key;
     // TODO(Dongha Kim): Implemen this function.

@@ -1,11 +1,12 @@
 #include "c_api.h"
 
 int main(int argc, char *argv[]) {
-    char *path = argv[1];
-    config_t *config = load_config(path);
+    char *config_path = argv[1];
 
-    session_key_list_t *s_key_list = get_session_key(config);
-    int sock = secure_connect_to_server(&s_key_list->s_key[0], config);
+    ctx_t *ctx = init_SST(config_path);
+
+    session_key_list_t *s_key_list = get_session_key(ctx);
+    int sock = secure_connect_to_server(&s_key_list->s_key[0], ctx);
     printf("finished\n");
     pthread_t thread;
     arg_struct_t args = {.sock = &sock, .s_key = &s_key_list->s_key[0]};

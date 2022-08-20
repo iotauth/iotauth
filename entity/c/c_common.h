@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
 
 // Message Type //
 #define AUTH_HELLO 0

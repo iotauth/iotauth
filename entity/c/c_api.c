@@ -5,24 +5,30 @@ extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
 extern long int st_time;
 
-config_t *load_config(char *path) { return load_config_t(path); }  // key load.
+ctx_t *init_SST(char *config_path) {
+    ctx_t *ctx = malloc(sizeof(ctx_t));
+    ctx->config = load_config(config_path);
+    ctx->pub_key = load_auth_public_key(ctx->config->auth_pubkey_path);
+    ctx->priv_key = load_entity_private_key(ctx->config->entity_privkey_path);
+    ctx->dist_key = malloc(sizeof(distribution_key_t));
+}  // key load.
 
 session_key_list_t *get_session_key(
-    config_t *config_info) {  // TODO: struct ctx - distribution_key, config_t,
-                              // pubkey, privkey
-    if (strcmp((const char *)config_info->network_protocol, "TCP") == 0) {
-        return send_session_key_req_via_TCP(config_info);
-    } else if (strcmp((const char *)config_info->network_protocol, "UDP") ==
+    ctx_t *ctx) {  // TODO: struct ctx - distribution_key, config_t,
+                   // pubkey, privkey
+    if (strcmp((const char *)ctx->config->network_protocol, "TCP") == 0) {
+        return send_session_key_req_via_TCP(ctx);
+    } else if (strcmp((const char *)ctx->config->network_protocol, "UDP") ==
                0) {
-        return send_session_key_req_via_UDP();
+        return send_session_key_req_via_UDP(ctx);
     }
     return 0;
 }
 
-int secure_connect_to_server(session_key_t *s_key, config_t *config_info) {
+int secure_connect_to_server(session_key_t *s_key, ctx_t *ctx) {
     int sock;
-    connect_as_client((const char *)config_info->entity_server_ip_addr,
-                      (const char *)config_info->entity_server_port_num, &sock);
+    connect_as_client((const char *)ctx->config->entity_server_ip_addr,
+                      (const char *)ctx->config->entity_server_port_num, &sock);
     unsigned char entity_nonce[HS_NONCE_SIZE];
     unsigned int parsed_buf_length;
     unsigned char *parsed_buf =
@@ -68,7 +74,7 @@ int secure_connect_to_server(session_key_t *s_key, config_t *config_info) {
 }
 
 session_key_t *server_secure_comm_setup(
-    config_t *config, int clnt_sock, session_key_list_t *existing_s_key_list) {
+    ctx_t *ctx, int clnt_sock, session_key_list_t *existing_s_key_list) {
     entity_server_state = IDLE;
     unsigned char server_nonce[HS_NONCE_SIZE];
 
@@ -96,7 +102,7 @@ session_key_t *server_secure_comm_setup(
                 read_unsigned_int_BE(expected_key_id, SESSION_KEY_ID_SIZE);
 
             // If the entity_server already has the corresponding session key,
-            // it does not have to request session key from Auth. int
+            // it does not have to request session key from Auth
             int session_key_found = -1;
             if (existing_s_key_list != NULL) {
                 for (int i = 0; i < existing_s_key_list->num_key; i++) {
@@ -105,16 +111,15 @@ session_key_t *server_secure_comm_setup(
                 }
             }
             if (session_key_found >= 0) {
-                // TODO: implement when session_key_found
                 s_key = &existing_s_key_list->s_key[session_key_found];
             } else if (session_key_found == -1) {
                 unsigned char temp_buf[SESSION_KEY_ID_SIZE];
                 sprintf((char *)temp_buf, "%d", expected_key_id_int);
-                memcpy(config->purpose + 9, temp_buf, SESSION_KEY_ID_SIZE);
+                memcpy(ctx->config->purpose + 9, temp_buf, SESSION_KEY_ID_SIZE);
 
                 session_key_list_t *s_key_list;
                 s_key_list = send_session_key_request_check_protocol(
-                    config, expected_key_id);
+                    ctx, expected_key_id);
                 s_key = s_key_list->s_key;
                 if (existing_s_key_list != NULL) {
                     add_session_key_to_list(s_key, existing_s_key_list);

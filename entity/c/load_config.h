@@ -21,8 +21,8 @@ typedef struct {
     unsigned char name[32];
     unsigned char purpose[32];
     int numkey;
-    unsigned char auth_pubkey_path[50];
-    unsigned char entity_privkey_path[50];
+    unsigned char *auth_pubkey_path;
+    unsigned char *entity_privkey_path;
     unsigned char auth_ip_addr[17];
     unsigned char auth_port_num[6];
     unsigned char entity_server_ip_addr[17];
@@ -38,6 +38,6 @@ int get_key_value(char *ptr);
 // Load config file from path and save the information in config struct.
 // @param path config file path
 // @return config struct to use when connecting to Auth
-config_t *load_config_t(char *path);
+config_t *load_config(char *path);
 
 #endif  // LOAD_CONFIG_H

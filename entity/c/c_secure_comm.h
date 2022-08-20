@@ -24,7 +24,16 @@ typedef struct {
     session_key_t *s_key;
 } session_key_list_t;
 
-#define INIT_SESSION_KEY_LIST(X) session_key_list_t X = {.num_key = 0, .s_key =malloc(sizeof(session_key_t))}
+typedef struct {
+    distribution_key_t *dist_key;
+    config_t *config;
+    EVP_PKEY *pub_key;
+    EVP_PKEY *priv_key;
+} ctx_t;
+
+#define INIT_SESSION_KEY_LIST(X)          \
+    session_key_list_t X = {.num_key = 0, \
+                            .s_key = malloc(sizeof(session_key_t))}
 
 // Parses the the reply message sending to Auth.
 // Concat entity, auth nonce and information such as sender
@@ -46,13 +55,11 @@ unsigned char *auth_hello_reply_message(
 // Encrypt the message and sign the encrypted message.
 // @param buf input buffer
 // @param buf_len length of buf
-// @param path_pub public key path
-// @param path_priv private key path
+// @param ctx ctx
 // @param message message with encrypted message and signature
 // @param message_length length of message
 unsigned char *encrypt_and_sign(unsigned char *buf, unsigned int buf_len,
-                                const char *path_pub, const char *path_priv,
-                                unsigned int *message_length);
+                                ctx_t *ctx, unsigned int *message_length);
 
 // Separate the message received from Auth and
 // store the distribution key in the distribution key struct
@@ -136,23 +143,23 @@ int check_validity(int seq_n, unsigned char *rel_validity,
                    unsigned char *abs_validity, long int *st_time);
 
 // Check if entity has session key and if not, request the session key to Auth.
-// @param config config struct for the entity information
+// @param ctx ctx struct
 // @param target_key_id id of session key
 // @return session key struct according to key id
 session_key_list_t *send_session_key_request_check_protocol(
-    config_t *config, unsigned char *target_key_id);
+    ctx_t *ctx, unsigned char *target_key_id);
 
 // Request the session key to Auth according to session key id via TCP
 // connection
 // @param config_info config struct for the entity information
 // @return session_key_t struct according to key id
-session_key_list_t *send_session_key_req_via_TCP(config_t *config);
+session_key_list_t *send_session_key_req_via_TCP(ctx_t *ctx);
 
 // Request the session key to Auth according to session key id via UDP
 // connection.
 // @param
 // @return session key struct according to key id
-session_key_list_t *send_session_key_req_via_UDP();
+session_key_list_t *send_session_key_req_via_UDP(ctx_t *ctx);
 
 // Check the nonce obtained in decryption with own nonce and
 // make the encrypted message with other entity's nonce.
@@ -177,7 +184,7 @@ unsigned char *check_handshake1_send_handshake2(
 int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
                       int idx);
 
-
-void add_session_key_to_list(session_key_t *s_key, session_key_list_t *existing_s_key_list);
+void add_session_key_to_list(session_key_t *s_key,
+                             session_key_list_t *existing_s_key_list);
 
 #endif  // C_SECURE_COMM_H

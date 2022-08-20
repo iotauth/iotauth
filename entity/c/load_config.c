@@ -37,7 +37,7 @@ int get_key_value(char *ptr) {
         return -1;
 }
 
-config_t *load_config_t(char *path) {
+config_t *load_config(char *path) {
     config_t *c = malloc(sizeof(config_t));
     FILE *fp = fopen(path, "r");
     char buffer[MAX] = {
@@ -70,14 +70,14 @@ config_t *load_config_t(char *path) {
                 case AUTH_INFO_PUBKEY_PATH:
                     ptr = strtok(NULL, " ");
                     printf("Pubkey path of Auth: %s", ptr);
-                    memcpy(c->auth_pubkey_path, ptr,
-                           sizeof(c->auth_pubkey_path));
+                    c->auth_pubkey_path = malloc(strlen(ptr) - 1);
+                    memcpy(c->auth_pubkey_path, ptr, strlen(ptr) - 1);
                     break;
                 case ENTITY_INFO_PRIVKEY_PATH:
                     ptr = strtok(NULL, " ");
                     printf("Privkey path of Entity: %s", ptr);
-                    memcpy(c->entity_privkey_path, ptr,
-                           sizeof(c->entity_privkey_path));
+                    c->entity_privkey_path = malloc(strlen(ptr) - 1);
+                    memcpy(c->entity_privkey_path, ptr, strlen(ptr) - 1);
                     break;
                 case AUTH_INFO_IP_ADDRESS:
                     ptr = strtok(NULL, " ");
