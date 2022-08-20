@@ -422,7 +422,7 @@ unsigned char *check_handshake1_send_handshake2(
     free(decrypted);
 
     printf("client's nonce: ");  // client's nonce,, received nonce
-    print_buf(hs.reply_nonce, HS_NONCE_SIZE);
+    print_buf(hs.nonce, HS_NONCE_SIZE);
 
     RAND_bytes(server_nonce, HS_NONCE_SIZE);
     printf("server's nonce: ");
@@ -440,24 +440,28 @@ unsigned char *check_handshake1_send_handshake2(
     return ret;
 }
 
-int check_session_key(unsigned char * key_id, session_key_list_t * s_key_list, int idx){
-    if(strncmp(key_id, s_key_list->s_key[idx].key_id, SESSION_KEY_ID_SIZE) == 0){        
+int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
+                      int idx) {
+    // print("%s", *key_id);
+    unsigned int list_key_id = read_unsigned_int_BE(
+        s_key_list->s_key[idx].key_id, SESSION_KEY_ID_SIZE);
+
+    if (key_id == list_key_id) {
         return idx;
-    }
-    else{
+    } else {
         return -1;
     }
 }
 
-void add_session_key_to_list(session_key_t *s_key, session_key_list_t *existing_s_key_list){
-    if(existing_s_key_list->num_key == 0){
-        existing_s_key_list = malloc(sizeof(session_key_list_t));
-        existing_s_key_list->num_key = 1;
-        existing_s_key_list->s_key = malloc(sizeof(session_key_t));
+void add_session_key_to_list(session_key_t *s_key,
+                             session_key_list_t *existing_s_key_list) {
+    existing_s_key_list->num_key++;
+    existing_s_key_list->s_key =
+        realloc(existing_s_key_list->s_key,
+                sizeof(session_key_t) * existing_s_key_list->num_key);
+    if (existing_s_key_list->s_key == NULL) {
+        return error_handling("Failed to realloc memory");
     }
-    else{
-        existing_s_key_list->num_key ++;
-        realloc(existing_s_key_list->s_key, sizeof(session_key_t) * existing_s_key_list->num_key);
-    }
-    memcpy(&existing_s_key_list->s_key[existing_s_key_list->num_key -1], s_key, sizeof(session_key_t));
+    memcpy(&existing_s_key_list->s_key[existing_s_key_list->num_key - 1], s_key,
+           sizeof(session_key_t));
 }

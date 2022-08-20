@@ -1,7 +1,9 @@
 #include "c_api.h"
 
-int main() {
-    int serv_sock, clnt_sock;
+extern int sent_seq_num;
+
+int main(int argc, char *argv[]) {
+    int serv_sock, clnt_sock, clnt_sock2;
     const char *PORT_NUM = "21100";
 
     struct sockaddr_in serv_addr, clnt_addr;
@@ -9,6 +11,11 @@ int main() {
     serv_sock = socket(PF_INET, SOCK_STREAM, 0);
     if (serv_sock == -1) {
         error_handling("socket() error");
+    }
+    int on = 1;
+    if (setsockopt(serv_sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
+        printf("socket option set error\n");
+        return -1;
     }
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -29,20 +36,16 @@ int main() {
     if (clnt_sock == -1) {
         error_handling("accept() error");
     }
-    char path[] = "c_server.config";
+
+    char *path = argv[1];
     config_t *config = load_config(path);
 
-    // session_key_list_t *s_key_list = get_session_key(config);
-    // session_key_t *s_key =
-    //     server_secure_comm_setup(config, clnt_sock, s_key_list);
-    session_key_t *s_key =
-        server_secure_comm_setup(config, clnt_sock, NULL);
-
     INIT_SESSION_KEY_LIST(s_key_list);
-    add_session_key_to_list(s_key, s_key_list);
-    printf("finished\n");
+    session_key_t *s_key =
+        server_secure_comm_setup(config, clnt_sock, &s_key_list);
+
     pthread_t thread;
-    arg_struct_t args = {.sock = clnt_sock, .s_key = s_key};
+    arg_struct_t args = {.sock = &clnt_sock, .s_key = s_key};
     pthread_create(&thread, NULL, &receive_thread, (void *)&args);
     sleep(1);
 
@@ -51,8 +54,34 @@ int main() {
     send_secure_message("Hello Dongha", strlen("Hello Dongha"), s_key,
                         clnt_sock);
     sleep(1);
-
-    sleep(10);
     close(clnt_sock);
+    pthread_cancel(thread);
+    printf("Finished first communication\n");
+
+    // Second connection. session_key_list caches the session key.
+    sent_seq_num = 0;  // TODO: temporarily resets sent_seq_num;
+    clnt_sock2 =
+        accept(serv_sock, (struct sockaddr *)&clnt_addr, &clnt_addr_size);
+    if (clnt_sock2 == -1) {
+        error_handling("accept() error");
+    }
+    session_key_t *s_key2 =
+        server_secure_comm_setup(config, clnt_sock2, &s_key_list);
+
+    pthread_t thread2;
+    arg_struct_t args2 = {.sock = &clnt_sock2, .s_key = s_key2};
+    pthread_create(&thread2, NULL, &receive_thread, (void *)&args2);
+    sleep(1);
+
+    send_secure_message("Hello World", strlen("Hello World"), s_key2,
+                        clnt_sock2);
+    sleep(1);
+    send_secure_message("Hello Dongha", strlen("Hello Dongha"), s_key2,
+                        clnt_sock2);
+    sleep(1);
+
+    sleep(100);
+    close(clnt_sock2);
+    pthread_cancel(thread2);
     close(serv_sock);
 }

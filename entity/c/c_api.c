@@ -94,27 +94,14 @@ session_key_t *server_secure_comm_setup(
             memcpy(expected_key_id, data_buf, SESSION_KEY_ID_SIZE);
             unsigned int expected_key_id_int =
                 read_unsigned_int_BE(expected_key_id, SESSION_KEY_ID_SIZE);
-            /*
-            // TODO: Need to check if the entity_server currently holds the
-            session key of the expected_key_id.
+
             // If the entity_server already has the corresponding session key,
-            it does not have to request session key from Auth. int
-            session_key_found = check_session_key(server_args[i].s_key->key_id,
-            &server_args, fd_max);
-            */
+            // it does not have to request session key from Auth. int
             int session_key_found = -1;
-            //
-            int c = 0 ;
-            if(c == 0){
-                c = 1;
-            }
-
-
-
             if (existing_s_key_list != NULL) {
                 for (int i = 0; i < existing_s_key_list->num_key; i++) {
                     session_key_found = check_session_key(
-                        expected_key_id, existing_s_key_list, i);
+                        expected_key_id_int, existing_s_key_list, i);
                 }
             }
             if (session_key_found >= 0) {
@@ -132,12 +119,11 @@ session_key_t *server_secure_comm_setup(
                 if (existing_s_key_list != NULL) {
                     add_session_key_to_list(s_key, existing_s_key_list);
                 }
-                
             }
             if (entity_server_state != HANDSHAKE_1_RECEIVED) {
-                    error_handling(
-                        "Error during comm init - in wrong state, expected: "
-                        "HANDSHAKE_1_RECEIVED, disconnecting...");
+                error_handling(
+                    "Error during comm init - in wrong state, expected: "
+                    "HANDSHAKE_1_RECEIVED, disconnecting...");
             }
             unsigned int parsed_buf_length;
             unsigned char *parsed_buf = check_handshake1_send_handshake2(
@@ -185,11 +171,15 @@ session_key_t *server_secure_comm_setup(
 }
 
 void *receive_thread(void *arguments) {
+    arg_struct_t *args = (arg_struct_t *)arguments;
+    unsigned char received_buf[1024];
+    unsigned int received_buf_length = 0;
     while (1) {
-        arg_struct_t *args = (arg_struct_t *)arguments;
-        unsigned char received_buf[1000];
-        unsigned int received_buf_length =
-            read(args->sock, received_buf, sizeof(received_buf));
+        received_buf_length =
+            read(*args->sock, received_buf, sizeof(received_buf));
+        if (received_buf_length == -1) {
+            pthread_exit(NULL);
+        }
         receive_message(received_buf, received_buf_length, args->s_key);
     }
 }

@@ -15,7 +15,7 @@
 
 // This struct is used in receive_thread()
 typedef struct {
-    int sock;
+    int *sock;
     session_key_t *s_key;
 } arg_struct_t;
 
@@ -24,7 +24,7 @@ typedef struct {
     session_key_t *s_key;
 } session_key_list_t;
 
-#define INIT_SESSION_KEY_LIST(X) session_key_list_t *X = {.num_key = 0, .s_key =malloc(sizeof(session_key_t))}
+#define INIT_SESSION_KEY_LIST(X) session_key_list_t X = {.num_key = 0, .s_key =malloc(sizeof(session_key_t))}
 
 // Parses the the reply message sending to Auth.
 // Concat entity, auth nonce and information such as sender
@@ -174,7 +174,7 @@ unsigned char *check_handshake1_send_handshake2(
 // @param s_key_list the cached session_key_list
 // @param idx current index
 // @return index of the s_key_list
-int check_session_key(unsigned char *key_id, session_key_list_t *s_key_list,
+int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
                       int idx);
 
 

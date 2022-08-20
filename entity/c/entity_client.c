@@ -1,14 +1,14 @@
 #include "c_api.h"
 
-int main() {
-    char path[] = "c_client.config";
+int main(int argc, char *argv[]) {
+    char *path = argv[1];
     config_t *config = load_config(path);
 
     session_key_list_t *s_key_list = get_session_key(config);
     int sock = secure_connect_to_server(&s_key_list->s_key[0], config);
     printf("finished\n");
     pthread_t thread;
-    arg_struct_t args = {.sock = sock, .s_key = &s_key_list->s_key[0]};
+    arg_struct_t args = {.sock = &sock, .s_key = &s_key_list->s_key[0]};
     pthread_create(&thread, NULL, &receive_thread, (void *)&args);
     sleep(1);
     send_secure_message("Hello World", strlen("Hello World"),
