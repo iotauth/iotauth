@@ -85,7 +85,8 @@ unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
 // @param ret_len length of decrypted message
 // @return decrypted message from private key decryption
 unsigned char *private_decrypt(unsigned char *enc_data, size_t enc_data_len,
-                               int padding, EVP_PKEY *priv_key, size_t *ret_len);
+                               int padding, EVP_PKEY *priv_key,
+                               size_t *ret_len);
 
 // After digest the encrypted message, sign digested message
 // with private key using private key signature from OpenSSL.

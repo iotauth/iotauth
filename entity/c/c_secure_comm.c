@@ -272,9 +272,7 @@ session_key_list_t *send_session_key_request_check_protocol(
     return 0;
 }
 
-session_key_list_t *send_session_key_req_via_TCP(
-    ctx_t *ctx) {  // TODO: , distribution_key_t *existing_dist_key,
-                   // distribution_key_t *new_dist_key
+session_key_list_t *send_session_key_req_via_TCP(ctx_t *ctx) {
     int sock;
     connect_as_client((const char *)ctx->config->auth_ip_addr,
                       (const char *)ctx->config->auth_port_num, &sock);
@@ -321,7 +319,6 @@ session_key_list_t *send_session_key_req_via_TCP(
             free(enc);
         } else if (message_type == SESSION_KEY_RESP_WITH_DIST_KEY) {
             signed_data_t signed_data;
-            distribution_key_t dist_key;
             size_t key_size = RSA_KEY_SIZE;
 
             // parse data
@@ -346,7 +343,7 @@ session_key_list_t *send_session_key_req_via_TCP(
                 &decrypted_distribution_key_length);
 
             // parse decrypted_distribution_key to mac_key & cipher_key
-            parse_distribution_key(&dist_key, decrypted_distribution_key,
+            parse_distribution_key(ctx->dist_key, decrypted_distribution_key,
                                    decrypted_distribution_key_length);
             free(decrypted_distribution_key);
 
@@ -355,9 +352,9 @@ session_key_list_t *send_session_key_req_via_TCP(
             unsigned char *decrypted_session_key_response =
                 symmetric_decrypt_authenticate(
                     encrypted_session_key, encrypted_session_key_length,
-                    dist_key.mac_key, dist_key.mac_key_size,
-                    dist_key.cipher_key, dist_key.cipher_key_size, IV_SIZE,
-                    &decrypted_session_key_response_length);
+                    ctx->dist_key->mac_key, ctx->dist_key->mac_key_size,
+                    ctx->dist_key->cipher_key, ctx->dist_key->cipher_key_size,
+                    IV_SIZE, &decrypted_session_key_response_length);
             free(encrypted_session_key);
 
             // parse decrypted_session_key_response for nonce comparison &

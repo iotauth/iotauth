@@ -24,6 +24,8 @@ typedef struct {
     session_key_t *s_key;
 } session_key_list_t;
 
+// This struct contains distribution_key, loaded config, public and private
+// keys.
 typedef struct {
     distribution_key_t *dist_key;
     config_t *config;
