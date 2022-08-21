@@ -298,6 +298,14 @@ session_key_list_t *send_session_key_req_via_TCP(ctx_t *ctx) {
             auth_Id = read_unsigned_int_BE(data_buf, AUTH_ID_LEN);
             memcpy(auth_nonce, data_buf + AUTH_ID_LEN, NONCE_SIZE);
             RAND_bytes(entity_nonce, NONCE_SIZE);
+
+            // TODO: (Dongha Kim)check distribution_key validity
+            // if (options.distributionKey == null || options.distributionKey.absValidity < new Date()) {
+            //     if (options.distributionKey != null) {
+            //         console.log('current distribution key expired, '
+            //             + 'requesting new distribution key as well...');
+            //     }
+            // }
             unsigned int serialized_length;
             unsigned char *serialized = auth_hello_reply_message(
                 entity_nonce, auth_nonce, session_key_list->num_key,
