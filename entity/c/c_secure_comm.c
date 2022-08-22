@@ -448,12 +448,19 @@ void add_session_key_to_list(session_key_t *s_key,
                              session_key_list_t *existing_s_key_list) {
                                 //TODO: circular array or cleanup function. - 
     existing_s_key_list->num_key++;
-    existing_s_key_list->s_key =
-        realloc(existing_s_key_list->s_key,
-                sizeof(session_key_t) * existing_s_key_list->num_key);
-    if (existing_s_key_list->s_key == NULL) {
-        return error_handling("Failed to realloc memory");
+    if(existing_s_key_list->num_key > MAX_SESSION_KEY){
+        printf("Session_key_list is full. Deleting oldest key, and adding new key.");
     }
-    memcpy(&existing_s_key_list->s_key[existing_s_key_list->num_key - 1], s_key,
-           sizeof(session_key_t));
+    memcpy(&existing_s_key_list->s_key[existing_s_key_list->rear_idx], s_key, sizeof(session_key_t));
+    existing_s_key_list->rear_idx = (existing_s_key_list->rear_idx +1) %MAX_SESSION_KEY;
+
+
+    // existing_s_key_list->s_key =
+    //     realloc(existing_s_key_list->s_key,
+    //             sizeof(session_key_t) * existing_s_key_list->num_key);
+    // if (existing_s_key_list->s_key == NULL) {
+    //     return error_handling("Failed to realloc memory");
+    // }
+    // memcpy(&existing_s_key_list->s_key[existing_s_key_list->num_key - 1], s_key,
+    //        sizeof(session_key_t));
 }

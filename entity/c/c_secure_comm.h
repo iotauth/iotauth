@@ -13,6 +13,8 @@
 #define IN_COMM 30
 #define SESSION_KEY_EXPIRATION_TIME_SIZE 6
 
+#define MAX_SESSION_KEY 10
+
 // This struct is used in receive_thread()
 typedef struct {
     int sock;
@@ -24,6 +26,7 @@ typedef struct {
 typedef struct {
     int num_key;
     session_key_t *s_key;
+    int rear_idx;
 } session_key_list_t;
 
 // This struct contains distribution_key, loaded config, public and private
@@ -37,7 +40,8 @@ typedef struct {
 
 #define INIT_SESSION_KEY_LIST(X)          \
     session_key_list_t X = {.num_key = 0, \
-                            .s_key = malloc(sizeof(session_key_t))}
+                            .s_key = malloc(sizeof(session_key_t) * MAX_SESSION_KEY), \
+                            .rear_idx = 0}
 
 // Parses the the reply message sending to Auth.
 // Concat entity, auth nonce and information such as sender

@@ -17,6 +17,11 @@ int main(int argc, char *argv[]) {
     send_secure_message("Hello Dongha", strlen("Hello Dongha"),
                         session_ctx);
     sleep(1);
+    // session_key_list_t *s_key_list = get_session_key(ctx);
+
+    // session_key_list_t *s_key_list = get_session_key(ctx);
+
+    // session_key_list_t *s_key_list = get_session_key(ctx);
 
     sleep(60);
 }
