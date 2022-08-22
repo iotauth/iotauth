@@ -30,7 +30,7 @@ unsigned char *auth_hello_reply_message(
 }
 
 unsigned char *encrypt_and_sign(unsigned char *buf, unsigned int buf_len,
-                                ctx_t *ctx, unsigned int *message_length) {
+                                SST_ctx_t *ctx, unsigned int *message_length) {
     size_t encrypted_length;
     unsigned char *encrypted = public_encrypt(buf, buf_len, RSA_PKCS1_PADDING,
                                               ctx->pub_key, &encrypted_length);
@@ -198,6 +198,7 @@ void print_recevied_message(unsigned char *data, unsigned int data_length,
         CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
     unsigned int received_seq_num =
         read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
+        //TODO: need to check the recieved seq_num matches the tracked seq_num
     if (!check_validity(received_seq_num, s_key->rel_validity,
                         s_key->abs_validity, &st_time)) {
         error_handling("Session key expired!\n");
@@ -231,7 +232,7 @@ int check_validity(int seq_n, unsigned char *rel_validity,
 }
 
 session_key_list_t *send_session_key_request_check_protocol(
-    ctx_t *ctx, unsigned char *target_key_id) {
+    SST_ctx_t *ctx, unsigned char *target_key_id) {
     // TODO: check if needed
     // Temporary code. need to load?
     unsigned char target_session_key_cache[10];
@@ -272,7 +273,7 @@ session_key_list_t *send_session_key_request_check_protocol(
     return 0;
 }
 
-session_key_list_t *send_session_key_req_via_TCP(ctx_t *ctx) {
+session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
     int sock;
     connect_as_client((const char *)ctx->config->auth_ip_addr,
                       (const char *)ctx->config->auth_port_num, &sock);
@@ -387,7 +388,7 @@ session_key_list_t *send_session_key_req_via_TCP(ctx_t *ctx) {
     }
 }
 
-session_key_list_t *send_session_key_req_via_UDP(ctx_t *ctx) {
+session_key_list_t *send_session_key_req_via_UDP(SST_ctx_t *ctx) {
     session_key_list_t *s_key;
     return s_key;
     // TODO(Dongha Kim): Implemen this function.
@@ -443,6 +444,7 @@ int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
 
 void add_session_key_to_list(session_key_t *s_key,
                              session_key_list_t *existing_s_key_list) {
+                                //TODO: circular array or cleanup function. - 
     existing_s_key_list->num_key++;
     existing_s_key_list->s_key =
         realloc(existing_s_key_list->s_key,

@@ -5,8 +5,8 @@ extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
 extern long int st_time;
 
-ctx_t *init_SST(char *config_path) {
-    ctx_t *ctx = malloc(sizeof(ctx_t));
+SST_ctx_t *init_SST(char *config_path) {
+    SST_ctx_t *ctx = malloc(sizeof(SST_ctx_t));
     ctx->config = load_config(config_path);
     ctx->pub_key = load_auth_public_key(ctx->config->auth_pubkey_path);
     ctx->priv_key = load_entity_private_key(ctx->config->entity_privkey_path);
@@ -14,7 +14,7 @@ ctx_t *init_SST(char *config_path) {
 }  // key load.
 
 session_key_list_t *get_session_key(
-    ctx_t *ctx) {  // TODO: struct ctx - distribution_key, config_t,
+    SST_ctx_t *ctx) {  // TODO: struct ctx - distribution_key, config_t,
                    // pubkey, privkey
     if (strcmp((const char *)ctx->config->network_protocol, "TCP") == 0) {
         return send_session_key_req_via_TCP(ctx);
@@ -25,7 +25,7 @@ session_key_list_t *get_session_key(
     return 0;
 }
 
-int secure_connect_to_server(session_key_t *s_key, ctx_t *ctx) {
+int secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx) {
     int sock;
     connect_as_client((const char *)ctx->config->entity_server_ip_addr,
                       (const char *)ctx->config->entity_server_port_num, &sock);
@@ -74,7 +74,7 @@ int secure_connect_to_server(session_key_t *s_key, ctx_t *ctx) {
 }
 
 session_key_t *server_secure_comm_setup(
-    ctx_t *ctx, int clnt_sock, session_key_list_t *existing_s_key_list) {
+    SST_ctx_t *ctx, int clnt_sock, session_key_list_t *existing_s_key_list) {
     entity_server_state = IDLE;
     unsigned char server_nonce[HS_NONCE_SIZE];
 

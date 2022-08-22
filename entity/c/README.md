@@ -11,11 +11,11 @@ c_common -> c_crypto -> c_secure_comm -> c_api -> entity_client, entity_server
 
 # C API
 
-**ctx_t \*init_SST()**
+**SST_ctx_t \*init_SST()**
 
 -   `init_SST()` is a function to load the config file, public and private keys, and store the distribution key.
 -   It initializes important settings, at once.
--   Return struct ctx_t
+-   Return struct SST_ctx_t
 
 **session_key_t \* get_session_key()**
 

@@ -31,7 +31,7 @@ typedef struct {
     config_t *config;
     EVP_PKEY *pub_key;
     EVP_PKEY *priv_key;
-} ctx_t;
+} SST_ctx_t; //TODO: SST_SST_ctx_t
 
 #define INIT_SESSION_KEY_LIST(X)          \
     session_key_list_t X = {.num_key = 0, \
@@ -61,7 +61,7 @@ unsigned char *auth_hello_reply_message(
 // @param message message with encrypted message and signature
 // @param message_length length of message
 unsigned char *encrypt_and_sign(unsigned char *buf, unsigned int buf_len,
-                                ctx_t *ctx, unsigned int *message_length);
+                                SST_ctx_t *ctx, unsigned int *message_length);
 
 // Separate the message received from Auth and
 // store the distribution key in the distribution key struct
@@ -149,19 +149,19 @@ int check_validity(int seq_n, unsigned char *rel_validity,
 // @param target_key_id id of session key
 // @return session key struct according to key id
 session_key_list_t *send_session_key_request_check_protocol(
-    ctx_t *ctx, unsigned char *target_key_id);
+    SST_ctx_t *ctx, unsigned char *target_key_id);
 
 // Request the session key to Auth according to session key id via TCP
 // connection
 // @param config_info config struct for the entity information
 // @return session_key_t struct according to key id
-session_key_list_t *send_session_key_req_via_TCP(ctx_t *ctx);
+session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx);
 
 // Request the session key to Auth according to session key id via UDP
 // connection.
 // @param
 // @return session key struct according to key id
-session_key_list_t *send_session_key_req_via_UDP(ctx_t *ctx);
+session_key_list_t *send_session_key_req_via_UDP(SST_ctx_t *ctx);
 
 // Check the nonce obtained in decryption with own nonce and
 // make the encrypted message with other entity's nonce.

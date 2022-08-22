@@ -42,11 +42,12 @@ int main(int argc, char *argv[]) {
     }
 
     char *config_path = argv[1];
-    ctx_t *ctx = init_SST(config_path);
+    SST_ctx_t *ctx = init_SST(config_path);
 
     INIT_SESSION_KEY_LIST(s_key_list);
     session_key_t *s_key =
         server_secure_comm_setup(ctx, clnt_sock, &s_key_list);
+        //TODO: return SST_session_ctx. - sock, s_key, r_seq_num, sent_seq_num
 
     pthread_t thread;
     arg_struct_t args = {.sock = &clnt_sock, .s_key = s_key};
