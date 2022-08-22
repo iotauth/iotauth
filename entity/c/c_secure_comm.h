@@ -103,7 +103,7 @@ unsigned int parse_session_key(session_key_t *ret, unsigned char *buf,
 // @param session_key_list session key list struct
 void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
                                 unsigned char *reply_nonce,
-                                session_key_t *session_key_list);
+                                session_key_list_t *session_key_list);
 
 // Parses the handshake1 buffer to send.
 // First generates the entity client's nonce to send to entity server,
@@ -194,5 +194,13 @@ int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
 
 void add_session_key_to_list(session_key_t *s_key,
                              session_key_list_t *existing_s_key_list);
+
+void append_session_key_list(session_key_list_t *dest, session_key_list_t *src);
+
+void free_session_key_t(session_key_t *session_key);
+
+void free_session_key_list_t(session_key_list_t *session_key_list);
+
+void free_SST();
 
 #endif  // C_SECURE_COMM_H

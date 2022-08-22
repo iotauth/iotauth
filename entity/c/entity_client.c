@@ -5,7 +5,7 @@ int main(int argc, char *argv[]) {
 
     SST_ctx_t *ctx = init_SST(config_path);
 
-    session_key_list_t *s_key_list = get_session_key(ctx);
+    session_key_list_t *s_key_list = get_session_key(ctx, NULL);
     SST_session_ctx_t *session_ctx = secure_connect_to_server(&s_key_list->s_key[0], ctx);
     printf("finished\n");
     pthread_t thread;
@@ -17,11 +17,17 @@ int main(int argc, char *argv[]) {
     send_secure_message("Hello Dongha", strlen("Hello Dongha"),
                         session_ctx);
     sleep(1);
-    // session_key_list_t *s_key_list = get_session_key(ctx);
 
-    // session_key_list_t *s_key_list = get_session_key(ctx);
+    // session_key_t *ss;
+    // ss = malloc(sizeof(session_key_t));
+    // ss->cipher_key = malloc(sizeof(32));
+    // ss->mac_key = malloc(sizeof(64));
 
-    // session_key_list_t *s_key_list = get_session_key(ctx);
+    s_key_list = get_session_key(ctx, s_key_list);
+
+    s_key_list = get_session_key(ctx, s_key_list);
+
+    s_key_list = get_session_key(ctx, s_key_list);
 
     sleep(60);
 }

@@ -1,6 +1,5 @@
 #include "c_api.h"
 
-extern int sent_seq_num;
 extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
 extern long int st_time;
@@ -8,21 +7,35 @@ extern long int st_time;
 SST_ctx_t *init_SST(char *config_path) {
     SST_ctx_t *ctx = malloc(sizeof(SST_ctx_t));
     ctx->config = load_config(config_path);
+    int numkey = ctx->config->numkey;
+    if(numkey > MAX_SESSION_KEY){
+        printf("Too much requests of session keys. The max number of requestable session keys are %d", MAX_SESSION_KEY);
+    }
     ctx->pub_key = load_auth_public_key(ctx->config->auth_pubkey_path);
     ctx->priv_key = load_entity_private_key(ctx->config->entity_privkey_path);
     ctx->dist_key = malloc(sizeof(distribution_key_t));
+
 }  // key load.
 
 session_key_list_t *get_session_key(
-    SST_ctx_t *ctx) {  // TODO: struct ctx - distribution_key, config_t,
-                   // pubkey, privkey
+    SST_ctx_t *ctx, session_key_list_t *existing_s_key_list) {
+                   
+    session_key_list_t * earned_s_key_list;
     if (strcmp((const char *)ctx->config->network_protocol, "TCP") == 0) {
-        return send_session_key_req_via_TCP(ctx);
+        earned_s_key_list = send_session_key_req_via_TCP(ctx);
     } else if (strcmp((const char *)ctx->config->network_protocol, "UDP") ==
                0) {
-        return send_session_key_req_via_UDP(ctx);
+        earned_s_key_list = send_session_key_req_via_UDP(ctx);
     }
-    return 0;
+
+    if (existing_s_key_list == NULL){
+        return earned_s_key_list;
+    }
+    else {
+        append_session_key_list(existing_s_key_list, earned_s_key_list);
+        // free_session_key_list_t(earned_s_key_list); // aborts
+        return existing_s_key_list;
+    }
 }
 
 SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx) {

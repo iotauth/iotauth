@@ -109,7 +109,7 @@ unsigned int parse_session_key(session_key_t *ret, unsigned char *buf,
 
 void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
                                 unsigned char *reply_nonce,
-                                session_key_t *session_key_list) {
+                                session_key_list_t *session_key_list) {
     memcpy(reply_nonce, buf, NONCE_SIZE);
     unsigned int buf_idx = NONCE_SIZE;
     unsigned int ret_length;
@@ -121,11 +121,14 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
     buf_idx += ret_length;  // 48
     unsigned int session_key_list_length =
         read_unsigned_int_BE(&buf[buf_idx], 4);
+    
     buf_idx += 4;
     for (int i = 0; i < session_key_list_length; i++) {
         buf = buf + buf_idx;
-        buf_idx = parse_session_key(&session_key_list[i], buf, buf_length);
+        buf_idx = parse_session_key(&session_key_list->s_key[i], buf, buf_length);
     }
+    session_key_list->num_key = (int) session_key_list_length;
+    session_key_list->rear_idx = session_key_list->num_key % MAX_SESSION_KEY;
 }
 
 unsigned char *parse_handshake_1(session_key_t *s_key,
@@ -282,9 +285,10 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
 
     session_key_list_t *session_key_list = malloc(sizeof(session_key_list_t));
 
-    session_key_list->num_key = ctx->config->numkey;
+    
     session_key_list->s_key =
-        malloc(sizeof(session_key_t) * ctx->config->numkey);
+        malloc(sizeof(session_key_t) * MAX_SESSION_KEY);
+    // session_key_list->rear_idx = 1;
 
     unsigned char entity_nonce[NONCE_SIZE];
     while (1) {
@@ -311,7 +315,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             // }
             unsigned int serialized_length;
             unsigned char *serialized = auth_hello_reply_message(
-                entity_nonce, auth_nonce, session_key_list->num_key,
+                entity_nonce, auth_nonce, ctx->config->numkey,
                 ctx->config->name, strlen((const char *)ctx->config->name),
                 ctx->config->purpose,
                 strlen((const char *)ctx->config->purpose), &serialized_length);
@@ -373,7 +377,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             unsigned char reply_nonce[NONCE_SIZE];
             parse_session_key_response(decrypted_session_key_response,
                                        decrypted_session_key_response_length,
-                                       reply_nonce, session_key_list->s_key);
+                                       reply_nonce, session_key_list);
 
             printf("reply_nonce in sessionKeyResp: ");
             print_buf(reply_nonce, NONCE_SIZE);
@@ -391,8 +395,8 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
 }
 
 session_key_list_t *send_session_key_req_via_UDP(SST_ctx_t *ctx) {
-    session_key_list_t *s_key;
-    return s_key;
+    session_key_list_t *s_key_list;
+    return s_key_list;
     // TODO(Dongha Kim): Implemen this function.
     error_handling("This function is not implemented yet.");
 }
@@ -450,7 +454,9 @@ void add_session_key_to_list(session_key_t *s_key,
     existing_s_key_list->num_key++;
     if(existing_s_key_list->num_key > MAX_SESSION_KEY){
         printf("Session_key_list is full. Deleting oldest key, and adding new key.");
+        existing_s_key_list->num_key = MAX_SESSION_KEY;
     }
+     //TODO: need to check.
     memcpy(&existing_s_key_list->s_key[existing_s_key_list->rear_idx], s_key, sizeof(session_key_t));
     existing_s_key_list->rear_idx = (existing_s_key_list->rear_idx +1) %MAX_SESSION_KEY;
 
@@ -464,3 +470,28 @@ void add_session_key_to_list(session_key_t *s_key,
     // memcpy(&existing_s_key_list->s_key[existing_s_key_list->num_key - 1], s_key,
     //        sizeof(session_key_t));
 }
+
+void append_session_key_list(session_key_list_t *dest, session_key_list_t *src){
+    // dest->num_key = dest->num_key + src->num_key;
+    for(int i = 0; i < src->num_key; i++){
+        add_session_key_to_list(&src->s_key[(i + src->rear_idx) %MAX_SESSION_KEY], dest);
+    }
+}
+
+void free_session_key_t(session_key_t *session_key){
+    free(session_key->mac_key);
+    free(session_key->cipher_key);
+    free(session_key);
+}
+
+void free_session_key_list_t(session_key_list_t *session_key_list){
+    for(int i = 0; i < session_key_list->num_key; i++){
+        free(&session_key_list->s_key[(i + session_key_list->rear_idx -1) %MAX_SESSION_KEY]);
+    }
+    free(session_key_list);
+}
+
+void free_SST(){
+
+}
+

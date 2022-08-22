@@ -17,35 +17,23 @@ c_common -> c_crypto -> c_secure_comm -> c_api -> entity_client, entity_server
 -   It initializes important settings, at once.
 -   Return struct SST_ctx_t
 
-**session_key_t \* get_session_key()**
+**session_key_list_t \* get_session_key()**
 
 -   `get_session_key()` is a function to get secure session key from Auth.
--   Input is the struct config returned from the load_config function.
+-   Input is the struct config returned from the `init_SST()`, and the existing session key list. It can be NULL, if there were no list.
 -   Return struct session_key
 
-**int secure_connect_to_server()**
+**SST_session_ctx_t secure_connect_to_server()**
 
 -   `secure_connect_to_server()` is a function that establishes a secure connection with the entity server in the struct config.
 -   Input is the session key received from `get_session_key()` and struct config returned from `load_config()`.
--   Return secure socket
+-   Return session ctx struct
 
-**session_key_t \* server_secure_comm_setup()**
+**SST_session_ctx_t \* server_secure_comm_setup()**
 
 -   `server_secure_comm_setup()` is a function that the server continues to wait for the entity client and, if the client tries to connect, proceeds with a secure connection.
 -   Input is the struct config
--   Return struct session_key
-
-**void send_secure_message()**
-
--   Send `secure message()` is a function that enables secure communication with the server by encrypting it with the session key.
--   Input includes session key, secure socket, message
--   Return sequence number
-
-**void send_secure_message()**
-
--   Send `secure message()` is a function that enables secure communication with the server by encrypting it with the session key.
--   Input includes session key, secure socket, message
--   Return sequence number
+-   Return session ctx struct
 
 **void \*receive_thread()**
 
@@ -54,15 +42,17 @@ c_common -> c_crypto -> c_secure_comm -> c_api -> entity_client, entity_server
 
 ```
 pthread_t thread;
-SST_session_ctx_t args = {
-.sock = sock,
-.s_key = &session_key_list[0]};
-pthread_create(&thread, NULL, &receive_thread, (void \*)&args);
+pthread_create(&thread, NULL, &receive_thread, (void \*)session_ctx);
 ```
 
 **void receive_message()**
 
 -   Enables receiving messages
+
+**void send_secure_message()**
+
+-   Send `secure message()` is a function that send a message with secure communication to the server by encrypting it with the session key.
+-   Input includes message, session_ctx struct.
 
 # Compile
 
