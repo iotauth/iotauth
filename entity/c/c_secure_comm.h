@@ -15,9 +15,11 @@
 
 // This struct is used in receive_thread()
 typedef struct {
-    int *sock;
+    int sock;
     session_key_t *s_key;
-} arg_struct_t;
+    int sent_seq_num;
+    int received_seq_num;
+} SST_session_ctx_t;
 
 typedef struct {
     int num_key;
@@ -31,7 +33,7 @@ typedef struct {
     config_t *config;
     EVP_PKEY *pub_key;
     EVP_PKEY *priv_key;
-} SST_ctx_t; //TODO: SST_SST_ctx_t
+} SST_ctx_t;
 
 #define INIT_SESSION_KEY_LIST(X)          \
     session_key_list_t X = {.num_key = 0, \
@@ -130,9 +132,9 @@ unsigned char *check_handshake_2_send_handshake_3(unsigned char *data_buf,
 // session key.
 // @param data input data buffer
 // @param data_length length of data buffer
-// @param s_key session key struct
+// @param SST_session_ctx_t session ctx struct
 void print_recevied_message(unsigned char *data, unsigned int data_length,
-                            session_key_t *s_key);
+                            SST_session_ctx_t *session_ctx);
 
 // Check the validity of session key by calculating relative time and absolute
 // time.

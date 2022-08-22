@@ -1,7 +1,5 @@
 #include "c_api.h"
 
-extern int sent_seq_num;
-
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         error_handling("Enter config path");
@@ -45,44 +43,37 @@ int main(int argc, char *argv[]) {
     SST_ctx_t *ctx = init_SST(config_path);
 
     INIT_SESSION_KEY_LIST(s_key_list);
-    session_key_t *s_key =
+    SST_session_ctx_t * session_ctx =
         server_secure_comm_setup(ctx, clnt_sock, &s_key_list);
-        //TODO: return SST_session_ctx. - sock, s_key, r_seq_num, sent_seq_num
 
     pthread_t thread;
-    arg_struct_t args = {.sock = &clnt_sock, .s_key = s_key};
-    pthread_create(&thread, NULL, &receive_thread, (void *)&args);
+    pthread_create(&thread, NULL, &receive_thread, (void *)session_ctx);
     sleep(1);
 
-    send_secure_message("Hello World", strlen("Hello World"), s_key, clnt_sock);
+    send_secure_message("Hello World", strlen("Hello World"), session_ctx);
     sleep(1);
-    send_secure_message("Hello Dongha", strlen("Hello Dongha"), s_key,
-                        clnt_sock);
-    sleep(1);
+    send_secure_message("Hello Dongha", strlen("Hello Dongha"), session_ctx);
+    sleep(5);
     close(clnt_sock);
     pthread_cancel(thread);
     printf("Finished first communication\n");
 
     // Second connection. session_key_list caches the session key.
-    sent_seq_num = 0;  // TODO: temporarily resets sent_seq_num;
     clnt_sock2 =
         accept(serv_sock, (struct sockaddr *)&clnt_addr, &clnt_addr_size);
     if (clnt_sock2 == -1) {
         error_handling("accept() error");
     }
-    session_key_t *s_key2 =
+    SST_session_ctx_t * session_ctx2 =
         server_secure_comm_setup(ctx, clnt_sock2, &s_key_list);
 
     pthread_t thread2;
-    arg_struct_t args2 = {.sock = &clnt_sock2, .s_key = s_key2};
-    pthread_create(&thread2, NULL, &receive_thread, (void *)&args2);
+    pthread_create(&thread2, NULL, &receive_thread, (void *)session_ctx2);
     sleep(1);
 
-    send_secure_message("Hello World", strlen("Hello World"), s_key2,
-                        clnt_sock2);
+    send_secure_message("Hello World", strlen("Hello World"), session_ctx2);
     sleep(1);
-    send_secure_message("Hello Dongha", strlen("Hello Dongha"), s_key2,
-                        clnt_sock2);
+    send_secure_message("Hello Dongha", strlen("Hello Dongha"), session_ctx2);
     sleep(1);
 
     sleep(100);

@@ -54,7 +54,7 @@ c_common -> c_crypto -> c_secure_comm -> c_api -> entity_client, entity_server
 
 ```
 pthread_t thread;
-arg_struct_t args = {
+SST_session_ctx_t args = {
 .sock = sock,
 .s_key = &session_key_list[0]};
 pthread_create(&thread, NULL, &receive_thread, (void \*)&args);

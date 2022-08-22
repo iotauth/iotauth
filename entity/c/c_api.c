@@ -25,7 +25,13 @@ session_key_list_t *get_session_key(
     return 0;
 }
 
-int secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx) {
+SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx) {
+    //Initialize SST_session_ctx_t    
+    SST_session_ctx_t * session_ctx = malloc(sizeof(SST_session_ctx_t));
+    session_ctx->received_seq_num, session_ctx->sent_seq_num = 0;
+    session_ctx->s_key = malloc(sizeof(session_key_t));
+    memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
+    
     int sock;
     connect_as_client((const char *)ctx->config->entity_server_ip_addr,
                       (const char *)ctx->config->entity_server_port_num, &sock);
@@ -67,14 +73,20 @@ int secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx) {
         printf("switching to IN_COMM\n");
         entity_client_state = IN_COMM;
     }
-    sent_seq_num = 0;
     st_time = 0;
     printf("wait\n");
-    return sock;
+    session_ctx->sock = sock;
+    return session_ctx;
 }
 
-session_key_t *server_secure_comm_setup(
+SST_session_ctx_t *server_secure_comm_setup(
     SST_ctx_t *ctx, int clnt_sock, session_key_list_t *existing_s_key_list) {
+    //Initialize SST_session_ctx_t
+    SST_session_ctx_t * session_ctx = malloc(sizeof(SST_session_ctx_t));
+    session_ctx->s_key = malloc(sizeof(session_key_t));
+    session_ctx->received_seq_num, session_ctx->sent_seq_num = 0;
+    session_ctx->sock = clnt_sock;
+
     entity_server_state = IDLE;
     unsigned char server_nonce[HS_NONCE_SIZE];
 
@@ -170,55 +182,56 @@ session_key_t *server_secure_comm_setup(
             }
             printf("switching to IN_COMM\n");
             entity_server_state = IN_COMM;
-            return s_key;
+            memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
+            return session_ctx;
         }
     }
 }
 
-void *receive_thread(void *arguments) {
-    arg_struct_t *args = (arg_struct_t *)arguments;
+void *receive_thread(void *SST_session_ctx) {
+    SST_session_ctx_t *session_ctx = (SST_session_ctx_t *)SST_session_ctx;
     unsigned char received_buf[1024];
     unsigned int received_buf_length = 0;
     while (1) {
         received_buf_length =
-            read(*args->sock, received_buf, sizeof(received_buf));
+            read(session_ctx->sock, received_buf, sizeof(received_buf));
         if (received_buf_length == -1) {
             pthread_exit(NULL);
         }
-        receive_message(received_buf, received_buf_length, args->s_key);
+        receive_message(received_buf, received_buf_length, session_ctx);
     }
 }
 
 void receive_message(unsigned char *received_buf,
-                     unsigned int received_buf_length, session_key_t *s_key) {
+                     unsigned int received_buf_length, SST_session_ctx_t *session_ctx ) {
     unsigned char message_type;
     unsigned int data_buf_length;
     unsigned char *data_buf = parse_received_message(
         received_buf, received_buf_length, &message_type, &data_buf_length);
     if (message_type == SECURE_COMM_MSG) {
-        print_recevied_message(data_buf, data_buf_length, s_key);
+        print_recevied_message(data_buf, data_buf_length, session_ctx);
     }
 }
 
 void send_secure_message(char *msg, unsigned int msg_length,
-                         session_key_t *s_key, int sock) {
-    if (!check_validity(sent_seq_num, s_key->rel_validity, s_key->abs_validity,
+                         SST_session_ctx_t *session_ctx) {
+    if (!check_validity(session_ctx->sent_seq_num, session_ctx->s_key->rel_validity, session_ctx->s_key->abs_validity,
                         &st_time)) {
         error_handling("Session key expired!\n");
     }
     unsigned char *buf = (unsigned char *)malloc(SEQ_NUM_SIZE + msg_length);
     memset(buf, 0, SEQ_NUM_SIZE + msg_length);
-    write_in_n_bytes(sent_seq_num, SEQ_NUM_SIZE, buf);
+    write_in_n_bytes(session_ctx->sent_seq_num, SEQ_NUM_SIZE, buf);
     memcpy(buf + SEQ_NUM_SIZE, (unsigned char *)msg, msg_length);
 
     // encrypt
     unsigned int encrypted_length;
     unsigned char *encrypted = symmetric_encrypt_authenticate(
-        buf, SEQ_NUM_SIZE + msg_length, s_key->mac_key, MAC_KEY_SIZE,
-        s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE,
+        buf, SEQ_NUM_SIZE + msg_length, session_ctx->s_key->mac_key, MAC_KEY_SIZE,
+        session_ctx->s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE,
         &encrypted_length);
     free(buf);
-    sent_seq_num++;
+    session_ctx->sent_seq_num++;
     unsigned char sender_buf[1024];  // TODO: Currently the send message does
                                      // not support dynamic sizes, the max
                                      // length is shorter than 1024. Must need
@@ -227,5 +240,5 @@ void send_secure_message(char *msg, unsigned int msg_length,
     make_sender_buf(encrypted, encrypted_length, SECURE_COMM_MSG, sender_buf,
                     &sender_buf_length);
     free(encrypted);
-    write(sock, sender_buf, sender_buf_length);
+    write(session_ctx->sock, sender_buf, sender_buf_length);
 }

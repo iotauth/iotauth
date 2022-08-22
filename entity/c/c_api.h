@@ -20,36 +20,35 @@ session_key_list_t *get_session_key(SST_ctx_t *ctx);
 // Connect with other entity such as entity servers using secure session key.
 // @param s_key session key struct received by Auth
 // @return secure socket number
-int secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx);
+SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx);
 
 // Wait the entity client to get the session key and
 // make a secure connection using session key.
 // @param config config struct for information
 // @param clnt_sock entity client socket number
 // @return session key struct
-session_key_t *server_secure_comm_setup(
+SST_session_ctx_t *server_secure_comm_setup(
     SST_ctx_t *ctx, int clnt_sock, session_key_list_t *existing_s_key_list);
 
 // Creates a thread to receive messages.
 // Max buffer length is 1000 bytes currently.
 // Use function receive_message() below for longer read buffer.
 // @param arguments struct including session key and socket number
-void *receive_thread(void *arguments);
+void *receive_thread(void *SST_session_ctx);
 
 // Receive the message and print the message after decrypting with session key.
 // @param received_buf received message buffer
 // @param received_buf_length length of received_buf
-// @param s_key session key struct
+// @param SST_session_ctx_t session ctx struct
 void receive_message(unsigned char *received_buf,
-                     unsigned int received_buf_length, session_key_t *s_key);
+                     unsigned int received_buf_length, SST_session_ctx_t *session_ctx);
 
 // Encrypt the message with session key and send the encrypted message to the
 // socket.
 // @param msg message to send
 // @param msg_length length of message
-// @param s_key session key struct
-// @param sock socket number
+// @param SST_session_ctx_t session ctx struct
 void send_secure_message(char *msg, unsigned int msg_length,
-                         session_key_t *s_key, int sock);
+                         SST_session_ctx_t *session_ctx);
 
 #endif  // C_API_H

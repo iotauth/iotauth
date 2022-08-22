@@ -1,6 +1,5 @@
 #include "c_secure_comm.h"
 
-int sent_seq_num;
 unsigned char entity_client_state;
 unsigned char entity_server_state;
 long int st_time;
@@ -191,19 +190,22 @@ unsigned char *check_handshake_2_send_handshake_3(unsigned char *data_buf,
 }
 
 void print_recevied_message(unsigned char *data, unsigned int data_length,
-                            session_key_t *s_key) {
+                            SST_session_ctx_t *session_ctx) {
+    
     unsigned int decrypted_length;
     unsigned char *decrypted = symmetric_decrypt_authenticate(
-        data, data_length, s_key->mac_key, MAC_KEY_SIZE, s_key->cipher_key,
+        data, data_length, session_ctx->s_key->mac_key, MAC_KEY_SIZE, session_ctx->s_key->cipher_key,
         CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
     unsigned int received_seq_num =
         read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
-        //TODO: need to check the recieved seq_num matches the tracked seq_num
-    if (!check_validity(received_seq_num, s_key->rel_validity,
-                        s_key->abs_validity, &st_time)) {
+    if(received_seq_num != session_ctx->received_seq_num){
+        error_handling("Wrong sequence number expected.");
+    }
+    if (!check_validity(received_seq_num, session_ctx->s_key->rel_validity,
+                        session_ctx->s_key->abs_validity, &st_time)) {
         error_handling("Session key expired!\n");
     }
-
+    session_ctx->received_seq_num ++;
     printf("Received seq_num: %d\n", received_seq_num);
     printf("%s\n", decrypted + SEQ_NUM_SIZE);
 }
