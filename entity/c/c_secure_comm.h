@@ -199,7 +199,7 @@ void append_session_key_list(session_key_list_t *dest, session_key_list_t *src);
 
 void free_session_key_t(session_key_t *session_key);
 
-void free_session_key_list_t(session_key_list_t *session_key_list);
+
 
 void free_SST();
 

@@ -51,4 +51,12 @@ void receive_message(unsigned char *received_buf,
 void send_secure_message(char *msg, unsigned int msg_length,
                          SST_session_ctx_t *session_ctx);
 
+// Frees memory used in session_key_list recursively.
+// @param session_key_list_t session_key_list to free
+void free_session_key_list_t(session_key_list_t *session_key_list);
+
+// Free memory used in SST_ctx recursively.
+// @param SST_ctx_t loaded SST_ctx_t to free
+void free_SST_ctx(SST_ctx_t *ctx);
+
 #endif  // C_API_H

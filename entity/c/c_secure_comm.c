@@ -450,46 +450,27 @@ int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
 
 void add_session_key_to_list(session_key_t *s_key,
                              session_key_list_t *existing_s_key_list) {
-                                //TODO: circular array or cleanup function. - 
     existing_s_key_list->num_key++;
     if(existing_s_key_list->num_key > MAX_SESSION_KEY){
-        printf("Session_key_list is full. Deleting oldest key, and adding new key.");
+        printf("Session_key_list is full. Deleting oldest key, and adding new key.\n");
         existing_s_key_list->num_key = MAX_SESSION_KEY;
     }
-     //TODO: need to check.
     memcpy(&existing_s_key_list->s_key[existing_s_key_list->rear_idx], s_key, sizeof(session_key_t));
     existing_s_key_list->rear_idx = (existing_s_key_list->rear_idx +1) %MAX_SESSION_KEY;
-
-
-    // existing_s_key_list->s_key =
-    //     realloc(existing_s_key_list->s_key,
-    //             sizeof(session_key_t) * existing_s_key_list->num_key);
-    // if (existing_s_key_list->s_key == NULL) {
-    //     return error_handling("Failed to realloc memory");
-    // }
-    // memcpy(&existing_s_key_list->s_key[existing_s_key_list->num_key - 1], s_key,
-    //        sizeof(session_key_t));
 }
 
 void append_session_key_list(session_key_list_t *dest, session_key_list_t *src){
-    // dest->num_key = dest->num_key + src->num_key;
     for(int i = 0; i < src->num_key; i++){
-        add_session_key_to_list(&src->s_key[(i + src->rear_idx) %MAX_SESSION_KEY], dest);
+        add_session_key_to_list(&src->s_key[mod((i + src->rear_idx - src->num_key), MAX_SESSION_KEY)], dest);
     }
 }
 
 void free_session_key_t(session_key_t *session_key){
     free(session_key->mac_key);
     free(session_key->cipher_key);
-    free(session_key);
 }
 
-void free_session_key_list_t(session_key_list_t *session_key_list){
-    for(int i = 0; i < session_key_list->num_key; i++){
-        free(&session_key_list->s_key[(i + session_key_list->rear_idx -1) %MAX_SESSION_KEY]);
-    }
-    free(session_key_list);
-}
+
 
 void free_SST(){
 

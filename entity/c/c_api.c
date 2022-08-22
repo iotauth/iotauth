@@ -255,3 +255,20 @@ void send_secure_message(char *msg, unsigned int msg_length,
     free(encrypted);
     write(session_ctx->sock, sender_buf, sender_buf_length);
 }
+
+void free_session_key_list_t(session_key_list_t *session_key_list){
+    for(int i = 0; i < session_key_list->num_key; i++){
+        free_session_key_t(&session_key_list->s_key[(i + session_key_list->rear_idx) %MAX_SESSION_KEY]);
+    }
+    free(session_key_list->s_key);
+    free(session_key_list);
+}
+
+void free_SST_ctx(SST_ctx_t *ctx){
+    free(ctx->dist_key->mac_key);
+    free(ctx->dist_key->cipher_key);
+    OPENSSL_free(ctx->priv_key);
+    OPENSSL_free(ctx->pub_key);
+    free(ctx->config->auth_pubkey_path);
+    free(ctx->config->entity_privkey_path);
+}

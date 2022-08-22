@@ -189,4 +189,6 @@ void serialize_handshake(unsigned char *nonce, unsigned char *reply_nonce,
  */
 void parse_handshake(unsigned char *buf, HS_nonce_t *ret);
 
+int mod(int a, int b);
+
 #endif  // C_COMMON_H

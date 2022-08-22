@@ -26,7 +26,7 @@ EVP_PKEY *load_auth_public_key(const char *path) {
     if (id != EVP_PKEY_RSA) {
         print_last_error("is not RSA Encryption file");
     }
-    free(cert);
+    OPENSSL_free(cert);
     return pub_key;
 }
 
@@ -66,7 +66,7 @@ unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
     if (EVP_PKEY_encrypt(ctx, out, ret_len, data, data_len) <= 0) {
         print_last_error("EVP_PKEY_encrypt failed");
     }
-    free(ctx);
+    OPENSSL_free(ctx);
     /** Encrypted data is outlen bytes written to buffer out */
     return out;
 }

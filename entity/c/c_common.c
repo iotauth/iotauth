@@ -153,3 +153,8 @@ void parse_handshake(unsigned char *buf, HS_nonce_t *ret) {
         memcpy(ret->dhParam, buf + 1 + HS_NONCE_SIZE * 2, HS_NONCE_SIZE);
     }
 }
+
+int mod(int a, int b){
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
