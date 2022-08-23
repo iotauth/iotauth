@@ -377,23 +377,6 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             }
             close(sock);
             return session_key_list;
-            // else if (helperOptions.msgType == msgType.SESSION_KEY_RESP) {
-            //     var decBuf =
-            //     common.symmetricDecryptAuthenticate(helperOptions.payload,
-            //     options.distributionKey, options.distributionCryptoSpec);
-
-            //     var sessionKeyResp = parseSessionKeyResp(decBuf);
-            //     console.log('replyNonce in sessionKeyResp: ' +
-            //     util.inspect(sessionKeyResp.replyNonce)); if
-            //     (!helperOptions.myNonce.equals(sessionKeyResp.replyNonce)) {
-            //         return {success: false, error: 'auth nonce NOT
-            //         verified'};
-            //     }
-            //     console.log('auth nonce verified');
-
-            //     sessionKeyRespHandler(sessionKeyResp.sessionKeyList, null,
-            //     callbackParams); helperEventHandlers.onEnd();
-            // }
 
         } else if (message_type == SESSION_KEY_RESP_WITH_DIST_KEY) {
             signed_data_t signed_data;
