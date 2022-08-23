@@ -8,16 +8,16 @@ SST_ctx_t *init_SST(char *config_path) {
     SST_ctx_t *ctx = malloc(sizeof(SST_ctx_t));
     ctx->config = load_config(config_path);
     int numkey = ctx->config->numkey;
+
+    ctx->pub_key = load_auth_public_key(ctx->config->auth_pubkey_path);
+    ctx->priv_key = load_entity_private_key(ctx->config->entity_privkey_path);
     if (numkey > MAX_SESSION_KEY) {
         printf(
             "Too much requests of session keys. The max number of requestable "
             "session keys are %d",
             MAX_SESSION_KEY);
     }
-    ctx->pub_key = load_auth_public_key(ctx->config->auth_pubkey_path);
-    ctx->priv_key = load_entity_private_key(ctx->config->entity_privkey_path);
     ctx->dist_key = malloc(sizeof(distribution_key_t));
-
 }  // key load.
 
 session_key_list_t *get_session_key(SST_ctx_t *ctx,
@@ -240,7 +240,7 @@ void receive_message(unsigned char *received_buf,
 
 void send_secure_message(char *msg, unsigned int msg_length,
                          SST_session_ctx_t *session_ctx) {
-    if (check_validity(session_ctx->s_key)) {
+    if (check_session_key_validity(session_ctx->s_key)) {
         error_handling("Session key expired!\n");
     }
     unsigned char *buf = (unsigned char *)malloc(SEQ_NUM_SIZE + msg_length);

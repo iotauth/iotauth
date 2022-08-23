@@ -106,6 +106,22 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
                                 unsigned char *reply_nonce,
                                 session_key_list_t *session_key_list);
 
+// Serializes the session_key request.
+// Symmetric encrypt authenticates the auth_hello_reply_message with the
+// distribution key. Serializes the sender_length, sender_name, and encrypted
+// message above.
+// @param serialized return buffer of auth_hello_reply_message
+// @param serialized_length buffer length of return of auth_hello_reply_message
+// buffer
+// @param dist_key key to symmetric encrypt & authenticate
+// @param name entity_sender name.
+// @param ret_length
+// @return unsigned char * return buffer
+unsigned char *serialize_session_key_req_with_distribution_key(
+    unsigned char *serialized, unsigned int serialized_length,
+    distribution_key_t *dist_key, unsigned char *name,
+    unsigned int *ret_length);
+
 // Parses the handshake1 buffer to send.
 // First generates the entity client's nonce to send to entity server,
 // encrypts the nonce with session key, and
@@ -144,7 +160,12 @@ void print_recevied_message(unsigned char *data, unsigned int data_length,
 // Check the validity of session key by checking abs_validity
 // @param session_key_t session_key to check validity
 // @return 1 when expired, 0 when valid
-int check_validity(session_key_t *session_key);
+int check_session_key_validity(session_key_t *session_key);
+
+// Check the validity of the buffer.
+// @param validity unsigned char buffer to check.
+// @return 1 when expired, 0 when valid
+int check_validity(unsigned char *validity);
 
 // Check if entity has session key and if not, request the session key to Auth.
 // @param ctx ctx struct
@@ -205,10 +226,8 @@ void append_session_key_list(session_key_list_t *dest, session_key_list_t *src);
 // @param session_key_t session_key to free
 void free_session_key_t(session_key_t *session_key);
 
-void free_SST();
-
 // Updates the validity of session key with the rel_validity.
-// Makes the absvalidity to add the current time, and rel_validity.
+// Makes the abs_validity to add the current time, and rel_validity.
 // @param session_key_t the session_key to update.
 void update_validity(session_key_t *session_key);
 

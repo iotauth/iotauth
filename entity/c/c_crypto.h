@@ -41,8 +41,7 @@ typedef struct {
     unsigned int mac_key_size;
     unsigned char *cipher_key;
     unsigned int cipher_key_size;
-    unsigned char absvalidity[DIST_KEY_EXPIRATION_TIME_SIZE];
-    long int start_time;
+    unsigned char abs_validity[DIST_KEY_EXPIRATION_TIME_SIZE];
 } distribution_key_t;
 
 // Must free mac key & cipher key

@@ -47,6 +47,8 @@ unsigned char *encrypt_and_sign(unsigned char *buf, unsigned int buf_len,
 
 void parse_distribution_key(distribution_key_t *parsed_distribution_key,
                             unsigned char *buf, unsigned int buf_length) {
+    memcpy(parsed_distribution_key->abs_validity, buf,
+           DIST_KEY_EXPIRATION_TIME_SIZE);
     unsigned int cur_index = DIST_KEY_EXPIRATION_TIME_SIZE;
     unsigned int cipher_key_size = buf[cur_index];
     parsed_distribution_key->cipher_key_size = cipher_key_size;
@@ -132,6 +134,26 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
     session_key_list->rear_idx = session_key_list->num_key % MAX_SESSION_KEY;
 }
 
+unsigned char *serialize_session_key_req_with_distribution_key(
+    unsigned char *serialized, unsigned int serialized_length,
+    distribution_key_t *dist_key, unsigned char *name,
+    unsigned int *ret_length) {
+    unsigned int temp_length;
+    unsigned char *temp = symmetric_encrypt_authenticate(
+        serialized, serialized_length, dist_key->mac_key,
+        dist_key->mac_key_size, dist_key->cipher_key, dist_key->cipher_key_size,
+        AES_CBC_128_IV_SIZE, &temp_length);
+
+    unsigned char length_buf[] = {strlen(name) - 1};
+    unsigned char *ret = malloc(1 + strlen(name) - 1 + temp_length);
+    memcpy(ret, length_buf, 1);
+    memcpy(ret + 1, name, strlen(name) - 1);
+    memcpy(ret + strlen(name), temp, temp_length);
+    free(temp);
+    *ret_length = strlen(name) + temp_length;
+    return ret;
+}
+
 unsigned char *parse_handshake_1(session_key_t *s_key,
                                  unsigned char *entity_nonce,
                                  unsigned int *ret_length) {
@@ -205,7 +227,7 @@ void print_recevied_message(unsigned char *data, unsigned int data_length,
     if (received_seq_num != session_ctx->received_seq_num) {
         error_handling("Wrong sequence number expected.");
     }
-    if (check_validity(session_ctx->s_key)) {
+    if (check_session_key_validity(session_ctx->s_key)) {
         error_handling("Session key expired!\n");
     }
     session_ctx->received_seq_num++;
@@ -213,10 +235,13 @@ void print_recevied_message(unsigned char *data, unsigned int data_length,
     printf("%s\n", decrypted + SEQ_NUM_SIZE);
 }
 
-int check_validity(session_key_t *session_key) {
-    if (time(NULL) > read_unsigned_long_int_BE(session_key->abs_validity,
-                                               KEY_EXPIRATION_TIME_SIZE) /
-                         1000) {
+int check_session_key_validity(session_key_t *session_key) {
+    return check_validity(session_key->abs_validity);
+}
+
+int check_validity(unsigned char *validity) {
+    if (time(NULL) >
+        read_unsigned_long_int_BE(validity, KEY_EXPIRATION_TIME_SIZE) / 1000) {
         return 1;
     } else {
         return 0;
@@ -291,33 +316,85 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             memcpy(auth_nonce, data_buf + AUTH_ID_LEN, NONCE_SIZE);
             RAND_bytes(entity_nonce, NONCE_SIZE);
 
-            // TODO: (Dongha Kim)check distribution_key validity
-            // if (options.distributionKey == null ||
-            // options.distributionKey.absValidity < new Date()) {
-            //     if (options.distributionKey != null) {
-            //         console.log('current distribution key expired, '
-            //             + 'requesting new distribution key as well...');
-            //     }
-            // }
             unsigned int serialized_length;
             unsigned char *serialized = auth_hello_reply_message(
                 entity_nonce, auth_nonce, ctx->config->numkey,
                 ctx->config->name, strlen((const char *)ctx->config->name),
                 ctx->config->purpose,
                 strlen((const char *)ctx->config->purpose), &serialized_length);
+            if (check_validity(
+                    ctx->dist_key->abs_validity)) {  // when dist_key expired
+                printf(
+                    "Current distribution key expired, requesting new "
+                    "distribution key as well...\n");
 
-            // TODO: when distribution key exists.
-            unsigned int enc_length;
-            unsigned char *enc = encrypt_and_sign(serialized, serialized_length,
-                                                  ctx, &enc_length);
-            free(serialized);
+                // TODO: when distribution key exists.
+                unsigned int enc_length;
+                unsigned char *enc = encrypt_and_sign(
+                    serialized, serialized_length, ctx, &enc_length);
+                free(serialized);
+                unsigned char message[1024];
+                unsigned int message_length;
+                make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC,
+                                message, &message_length);
+                write(sock, message, message_length);
+                free(enc);
+            } else {
+                unsigned int enc_length;
+                unsigned char *enc =
+                    serialize_session_key_req_with_distribution_key(
+                        serialized, serialized_length, ctx->dist_key,
+                        ctx->config->name, &enc_length);
+                unsigned char message[1024];
+                unsigned int message_length;
+                make_sender_buf(enc, enc_length, SESSION_KEY_REQ, message,
+                                &message_length);
+                write(sock, message, message_length);
+                free(enc);
+            }
+        } else if (message_type == SESSION_KEY_RESP) {
+            printf(
+                "Received session key response encrypted with distribution "
+                "key\n");
+            unsigned int decrypted_length;
+            unsigned char *decrypted = symmetric_decrypt_authenticate(
+                data_buf, data_buf_length, ctx->dist_key->mac_key,
+                ctx->dist_key->mac_key_size, ctx->dist_key->cipher_key,
+                ctx->dist_key->cipher_key_size, AES_CBC_128_IV_SIZE,
+                &decrypted_length);
+            unsigned char reply_nonce[NONCE_SIZE];
+            parse_session_key_response(decrypted, decrypted_length, reply_nonce,
+                                       session_key_list);
 
-            unsigned char message[1024];
-            unsigned int message_length;
-            make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC,
-                            message, &message_length);
-            write(sock, message, message_length);
-            free(enc);
+            printf("reply_nonce in sessionKeyResp: ");
+            print_buf(reply_nonce, NONCE_SIZE);
+            if (strncmp((const char *)reply_nonce, (const char *)entity_nonce,
+                        NONCE_SIZE) != 0) {  // compare generated entity's nonce
+                                             // & received entity's nonce.
+                error_handling("auth nonce NOT verified");
+            } else {
+                printf("auth nonce verified!\n");
+            }
+            close(sock);
+            return session_key_list;
+            // else if (helperOptions.msgType == msgType.SESSION_KEY_RESP) {
+            //     var decBuf =
+            //     common.symmetricDecryptAuthenticate(helperOptions.payload,
+            //     options.distributionKey, options.distributionCryptoSpec);
+
+            //     var sessionKeyResp = parseSessionKeyResp(decBuf);
+            //     console.log('replyNonce in sessionKeyResp: ' +
+            //     util.inspect(sessionKeyResp.replyNonce)); if
+            //     (!helperOptions.myNonce.equals(sessionKeyResp.replyNonce)) {
+            //         return {success: false, error: 'auth nonce NOT
+            //         verified'};
+            //     }
+            //     console.log('auth nonce verified');
+
+            //     sessionKeyRespHandler(sessionKeyResp.sessionKeyList, null,
+            //     callbackParams); helperEventHandlers.onEnd();
+            // }
+
         } else if (message_type == SESSION_KEY_RESP_WITH_DIST_KEY) {
             signed_data_t signed_data;
             size_t key_size = RSA_KEY_SIZE;
@@ -338,17 +415,17 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             printf("auth signature verified\n");
 
             // decrypt encrypted_distribution_key
-            size_t decrypted_distribution_key_length;
-            unsigned char *decrypted_distribution_key = private_decrypt(
-                signed_data.data, key_size, RSA_PKCS1_PADDING, ctx->priv_key,
-                &decrypted_distribution_key_length);
+            size_t decrypted_dist_key_buf_length;
+            unsigned char *decrypted_dist_key_buf =
+                private_decrypt(signed_data.data, key_size, RSA_PKCS1_PADDING,
+                                ctx->priv_key, &decrypted_dist_key_buf_length);
 
-            // parse decrypted_distribution_key to mac_key & cipher_key
-            parse_distribution_key(ctx->dist_key, decrypted_distribution_key,
-                                   decrypted_distribution_key_length);
-            free(decrypted_distribution_key);
+            // parse decrypted_dist_key_buf to mac_key & cipher_key
+            parse_distribution_key(ctx->dist_key, decrypted_dist_key_buf,
+                                   decrypted_dist_key_buf_length);
+            free(decrypted_dist_key_buf);
 
-            // decrypt session_key with decrypted_distribution_key
+            // decrypt session_key with decrypted_dist_key_buf
             unsigned int decrypted_session_key_response_length;
             unsigned char *decrypted_session_key_response =
                 symmetric_decrypt_authenticate(
@@ -472,8 +549,6 @@ void free_session_key_t(session_key_t *session_key) {
     free(session_key->cipher_key);
 }
 
-void free_SST() {}
-
 void update_validity(session_key_t *session_key) {
     write_in_n_bytes(
         (time(NULL) + read_unsigned_long_int_BE(session_key->rel_validity,
@@ -489,7 +564,7 @@ int check_session_key_list_addable(int num_key,
         // Checks (num_key) number from the oldest session_keys.
         int temp = 1;  // invalid
         for (int i = 0; i < num_key; i++) {
-            temp = temp && check_validity(&s_ley_list->s_key[mod(
+            temp = temp && check_session_key_validity(&s_ley_list->s_key[mod(
                                (i + s_ley_list->rear_idx - s_ley_list->num_key),
                                MAX_SESSION_KEY)]);
         }
