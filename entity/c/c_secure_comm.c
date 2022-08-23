@@ -121,13 +121,14 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
     buf_idx += ret_length;  // 48
     unsigned int session_key_list_length =
         read_unsigned_int_BE(&buf[buf_idx], 4);
-    
+
     buf_idx += 4;
     for (int i = 0; i < session_key_list_length; i++) {
         buf = buf + buf_idx;
-        buf_idx = parse_session_key(&session_key_list->s_key[i], buf, buf_length);
+        buf_idx =
+            parse_session_key(&session_key_list->s_key[i], buf, buf_length);
     }
-    session_key_list->num_key = (int) session_key_list_length;
+    session_key_list->num_key = (int)session_key_list_length;
     session_key_list->rear_idx = session_key_list->num_key % MAX_SESSION_KEY;
 }
 
@@ -194,45 +195,31 @@ unsigned char *check_handshake_2_send_handshake_3(unsigned char *data_buf,
 
 void print_recevied_message(unsigned char *data, unsigned int data_length,
                             SST_session_ctx_t *session_ctx) {
-    
     unsigned int decrypted_length;
     unsigned char *decrypted = symmetric_decrypt_authenticate(
-        data, data_length, session_ctx->s_key->mac_key, MAC_KEY_SIZE, session_ctx->s_key->cipher_key,
-        CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE, &decrypted_length);
+        data, data_length, session_ctx->s_key->mac_key, MAC_KEY_SIZE,
+        session_ctx->s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE,
+        &decrypted_length);
     unsigned int received_seq_num =
         read_unsigned_int_BE(decrypted, SEQ_NUM_SIZE);
-    if(received_seq_num != session_ctx->received_seq_num){
+    if (received_seq_num != session_ctx->received_seq_num) {
         error_handling("Wrong sequence number expected.");
     }
-    if (!check_validity(received_seq_num, session_ctx->s_key->rel_validity,
-                        session_ctx->s_key->abs_validity, &st_time)) {
+    if (check_validity(session_ctx->s_key)) {
         error_handling("Session key expired!\n");
     }
-    session_ctx->received_seq_num ++;
+    session_ctx->received_seq_num++;
     printf("Received seq_num: %d\n", received_seq_num);
     printf("%s\n", decrypted + SEQ_NUM_SIZE);
 }
 
-int check_validity(int seq_n, unsigned char *rel_validity,
-                   unsigned char *abs_validity, long int *st_time) {
-    if (seq_n == 0 && *st_time == 0) {
-        *st_time = time(NULL);
-    }
-    unsigned long int num_valid = 1LU;
-    for (int i = 0; i < SESSION_KEY_EXPIRATION_TIME_SIZE; i++) {
-        unsigned long int num =
-            1LU << 8 * (SESSION_KEY_EXPIRATION_TIME_SIZE - 1 - i);
-        num_valid |= num * abs_validity[i];
-    }
-    // printf("abs_valid : %ld\n", num_valid);
-    num_valid = num_valid / 1000;
-    long int relvalidity =
-        read_unsigned_int_BE(rel_validity, SESSION_KEY_EXPIRATION_TIME_SIZE) /
-        1000;
-    if (time(NULL) > num_valid || time(NULL) - *st_time > relvalidity) {
-        return 0;
-    } else {
+int check_validity(session_key_t *session_key) {
+    if (time(NULL) > read_unsigned_long_int_BE(session_key->abs_validity,
+                                               KEY_EXPIRATION_TIME_SIZE) /
+                         1000) {
         return 1;
+    } else {
+        return 0;
     }
 }
 
@@ -285,9 +272,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
 
     session_key_list_t *session_key_list = malloc(sizeof(session_key_list_t));
 
-    
-    session_key_list->s_key =
-        malloc(sizeof(session_key_t) * MAX_SESSION_KEY);
+    session_key_list->s_key = malloc(sizeof(session_key_t) * MAX_SESSION_KEY);
     // session_key_list->rear_idx = 1;
 
     unsigned char entity_nonce[NONCE_SIZE];
@@ -307,7 +292,8 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             RAND_bytes(entity_nonce, NONCE_SIZE);
 
             // TODO: (Dongha Kim)check distribution_key validity
-            // if (options.distributionKey == null || options.distributionKey.absValidity < new Date()) {
+            // if (options.distributionKey == null ||
+            // options.distributionKey.absValidity < new Date()) {
             //     if (options.distributionKey != null) {
             //         console.log('current distribution key expired, '
             //             + 'requesting new distribution key as well...');
@@ -451,28 +437,64 @@ int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
 void add_session_key_to_list(session_key_t *s_key,
                              session_key_list_t *existing_s_key_list) {
     existing_s_key_list->num_key++;
-    if(existing_s_key_list->num_key > MAX_SESSION_KEY){
-        printf("Session_key_list is full. Deleting oldest key, and adding new key.\n");
+    if (existing_s_key_list->num_key > MAX_SESSION_KEY) {
+        printf(
+            "Warning: Session_key_list is full. Deleting oldest key, and "
+            "adding new "
+            "key.\n");
         existing_s_key_list->num_key = MAX_SESSION_KEY;
     }
-    memcpy(&existing_s_key_list->s_key[existing_s_key_list->rear_idx], s_key, sizeof(session_key_t));
-    existing_s_key_list->rear_idx = (existing_s_key_list->rear_idx +1) %MAX_SESSION_KEY;
+    memcpy(&existing_s_key_list->s_key[existing_s_key_list->rear_idx], s_key,
+           sizeof(session_key_t));
+    existing_s_key_list->rear_idx =
+        (existing_s_key_list->rear_idx + 1) % MAX_SESSION_KEY;
 }
 
-void append_session_key_list(session_key_list_t *dest, session_key_list_t *src){
-    for(int i = 0; i < src->num_key; i++){
-        add_session_key_to_list(&src->s_key[mod((i + src->rear_idx - src->num_key), MAX_SESSION_KEY)], dest);
+void append_session_key_list(session_key_list_t *dest,
+                             session_key_list_t *src) {
+    if (dest->num_key + src->num_key > MAX_SESSION_KEY) {
+        int temp = dest->num_key + src->num_key - MAX_SESSION_KEY;
+        printf(
+            "Warning: Losing %d keys from original list. Overwriting %d more "
+            "keys.\n",
+            temp, temp);
+    }
+    for (int i = 0; i < src->num_key; i++) {
+        add_session_key_to_list(
+            &src->s_key[mod((i + src->rear_idx - src->num_key),
+                            MAX_SESSION_KEY)],
+            dest);
     }
 }
 
-void free_session_key_t(session_key_t *session_key){
+void free_session_key_t(session_key_t *session_key) {
     free(session_key->mac_key);
     free(session_key->cipher_key);
 }
 
+void free_SST() {}
 
-
-void free_SST(){
-
+void update_validity(session_key_t *session_key) {
+    write_in_n_bytes(
+        (time(NULL) + read_unsigned_long_int_BE(session_key->rel_validity,
+                                                KEY_EXPIRATION_TIME_SIZE) /
+                          1000) *
+            1000,
+        KEY_EXPIRATION_TIME_SIZE, session_key->abs_validity);
 }
 
+int check_session_key_list_addable(int num_key,
+                                   session_key_list_t *s_ley_list) {
+    if (MAX_SESSION_KEY - s_ley_list->num_key < num_key) {
+        // Checks (num_key) number from the oldest session_keys.
+        int temp = 1;  // invalid
+        for (int i = 0; i < num_key; i++) {
+            temp = temp && check_validity(&s_ley_list->s_key[mod(
+                               (i + s_ley_list->rear_idx - s_ley_list->num_key),
+                               MAX_SESSION_KEY)]);
+        }
+        return !temp;
+    } else {
+        return 0;
+    }
+}

@@ -38,10 +38,11 @@ typedef struct {
     EVP_PKEY *priv_key;
 } SST_ctx_t;
 
-#define INIT_SESSION_KEY_LIST(X)          \
-    session_key_list_t X = {.num_key = 0, \
-                            .s_key = malloc(sizeof(session_key_t) * MAX_SESSION_KEY), \
-                            .rear_idx = 0}
+#define INIT_SESSION_KEY_LIST(X)                                  \
+    session_key_list_t X = {                                      \
+        .num_key = 0,                                             \
+        .s_key = malloc(sizeof(session_key_t) * MAX_SESSION_KEY), \
+        .rear_idx = 0}
 
 // Parses the the reply message sending to Auth.
 // Concat entity, auth nonce and information such as sender
@@ -140,15 +141,10 @@ unsigned char *check_handshake_2_send_handshake_3(unsigned char *data_buf,
 void print_recevied_message(unsigned char *data, unsigned int data_length,
                             SST_session_ctx_t *session_ctx);
 
-// Check the validity of session key by calculating relative time and absolute
-// time.
-// @param seq_n sequence number of received message
-// @param rel_validity relative validity time of session key
-// @param abs_validity absolute validity time of session key
-// @param st_time time of first use of session key
-// @return 1 or 0 depending on validity
-int check_validity(int seq_n, unsigned char *rel_validity,
-                   unsigned char *abs_validity, long int *st_time);
+// Check the validity of session key by checking abs_validity
+// @param session_key_t session_key to check validity
+// @return 1 when expired, 0 when valid
+int check_validity(session_key_t *session_key);
 
 // Check if entity has session key and if not, request the session key to Auth.
 // @param ctx ctx struct
@@ -192,15 +188,35 @@ unsigned char *check_handshake1_send_handshake2(
 int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
                       int idx);
 
+// Adds session key to the list.
+// Appends at the destination list's rear_idx.
+// @param s_key Session key to add
+// @param existing_s_key_list Destination session_key_list
 void add_session_key_to_list(session_key_t *s_key,
                              session_key_list_t *existing_s_key_list);
 
+// Appends src list to dest list.
+// Appends at the destination list's rear_idx.
+// @param dest Destination session_key_list
+// @param src Source session_key_list
 void append_session_key_list(session_key_list_t *dest, session_key_list_t *src);
 
+// Frees the session_key's mac_key, cipher_key, and itself.
+// @param session_key_t session_key to free
 void free_session_key_t(session_key_t *session_key);
 
-
-
 void free_SST();
+
+// Updates the validity of session key with the rel_validity.
+// Makes the absvalidity to add the current time, and rel_validity.
+// @param session_key_t the session_key to update.
+void update_validity(session_key_t *session_key);
+
+// Checks the session_key_list's left space to add new keys, and if full, checks
+// if the keys are valid.
+// @param num_key the number of keys to add.
+// @param session_key_list_t session_key list to check left space for list, and
+// @return 1 when unaddable, 0 when addable
+int check_session_key_list_addable(int num_key, session_key_list_t *s_ley_list);
 
 #endif  // C_SECURE_COMM_H

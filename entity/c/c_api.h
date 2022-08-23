@@ -7,20 +7,22 @@
 // Also loads public and private key in EVP_PKEY struct.
 // Stores the distribution_key.
 // @param path config file path
-// @return SST_ctx_t struct stores config, public and private keys, and distribution
-// key.
+// @return SST_ctx_t struct stores config, public and private keys, and
+// distribution key.
 SST_ctx_t *init_SST(char *config_path);
 
 // Request and get session key from Auth according to secure connection
 // by using OpenSSL which provides the cryptography, MAC, and Block cipher etc..
 // @param config_info config struct obtained from load_config()
 // @return secure session key
-session_key_list_t *get_session_key(SST_ctx_t *ctx, session_key_list_t *existing_s_key_list);
+session_key_list_t *get_session_key(SST_ctx_t *ctx,
+                                    session_key_list_t *existing_s_key_list);
 
 // Connect with other entity such as entity servers using secure session key.
 // @param s_key session key struct received by Auth
 // @return secure socket number
-SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx);
+SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
+                                            SST_ctx_t *ctx);
 
 // Wait the entity client to get the session key and
 // make a secure connection using session key.
@@ -41,7 +43,8 @@ void *receive_thread(void *SST_session_ctx);
 // @param received_buf_length length of received_buf
 // @param SST_session_ctx_t session ctx struct
 void receive_message(unsigned char *received_buf,
-                     unsigned int received_buf_length, SST_session_ctx_t *session_ctx);
+                     unsigned int received_buf_length,
+                     SST_session_ctx_t *session_ctx);
 
 // Encrypt the message with session key and send the encrypted message to the
 // socket.

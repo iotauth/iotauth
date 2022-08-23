@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     SST_ctx_t *ctx = init_SST(config_path);
 
     INIT_SESSION_KEY_LIST(s_key_list);
-    SST_session_ctx_t * session_ctx =
+    SST_session_ctx_t *session_ctx =
         server_secure_comm_setup(ctx, clnt_sock, &s_key_list);
 
     pthread_t thread;
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     if (clnt_sock2 == -1) {
         error_handling("accept() error");
     }
-    SST_session_ctx_t * session_ctx2 =
+    SST_session_ctx_t *session_ctx2 =
         server_secure_comm_setup(ctx, clnt_sock2, &s_key_list);
 
     pthread_t thread2;

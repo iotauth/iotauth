@@ -8,8 +8,11 @@ SST_ctx_t *init_SST(char *config_path) {
     SST_ctx_t *ctx = malloc(sizeof(SST_ctx_t));
     ctx->config = load_config(config_path);
     int numkey = ctx->config->numkey;
-    if(numkey > MAX_SESSION_KEY){
-        printf("Too much requests of session keys. The max number of requestable session keys are %d", MAX_SESSION_KEY);
+    if (numkey > MAX_SESSION_KEY) {
+        printf(
+            "Too much requests of session keys. The max number of requestable "
+            "session keys are %d",
+            MAX_SESSION_KEY);
     }
     ctx->pub_key = load_auth_public_key(ctx->config->auth_pubkey_path);
     ctx->priv_key = load_entity_private_key(ctx->config->entity_privkey_path);
@@ -17,10 +20,16 @@ SST_ctx_t *init_SST(char *config_path) {
 
 }  // key load.
 
-session_key_list_t *get_session_key(
-    SST_ctx_t *ctx, session_key_list_t *existing_s_key_list) {
-                   
-    session_key_list_t * earned_s_key_list;
+session_key_list_t *get_session_key(SST_ctx_t *ctx,
+                                    session_key_list_t *existing_s_key_list) {
+    if (existing_s_key_list != NULL) {
+        if (check_session_key_list_addable(ctx->config->numkey,
+                                           existing_s_key_list)) {
+            printf("Unable to get_session_key().\n");
+            return existing_s_key_list;
+        }
+    }
+    session_key_list_t *earned_s_key_list;
     if (strcmp((const char *)ctx->config->network_protocol, "TCP") == 0) {
         earned_s_key_list = send_session_key_req_via_TCP(ctx);
     } else if (strcmp((const char *)ctx->config->network_protocol, "UDP") ==
@@ -28,23 +37,22 @@ session_key_list_t *get_session_key(
         earned_s_key_list = send_session_key_req_via_UDP(ctx);
     }
 
-    if (existing_s_key_list == NULL){
+    if (existing_s_key_list == NULL) {
         return earned_s_key_list;
-    }
-    else {
+    } else {
         append_session_key_list(existing_s_key_list, earned_s_key_list);
-        // free_session_key_list_t(earned_s_key_list); // aborts
+        free_session_key_list_t(earned_s_key_list);
         return existing_s_key_list;
     }
 }
 
-SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx) {
-    //Initialize SST_session_ctx_t    
-    SST_session_ctx_t * session_ctx = malloc(sizeof(SST_session_ctx_t));
+SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
+                                            SST_ctx_t *ctx) {
+    // Initialize SST_session_ctx_t
+    SST_session_ctx_t *session_ctx = malloc(sizeof(SST_session_ctx_t));
     session_ctx->received_seq_num, session_ctx->sent_seq_num = 0;
     session_ctx->s_key = malloc(sizeof(session_key_t));
-    memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
-    
+
     int sock;
     connect_as_client((const char *)ctx->config->entity_server_ip_addr,
                       (const char *)ctx->config->entity_server_port_num, &sock);
@@ -83,19 +91,21 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key, SST_ctx_t *ctx
                         sender_HS_2, &sender_HS_2_length);
         write(sock, sender_HS_2, sender_HS_2_length);
         free(parsed_buf);
+        update_validity(s_key);
         printf("switching to IN_COMM\n");
         entity_client_state = IN_COMM;
     }
     st_time = 0;
     printf("wait\n");
+    memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
     session_ctx->sock = sock;
     return session_ctx;
 }
 
 SST_session_ctx_t *server_secure_comm_setup(
     SST_ctx_t *ctx, int clnt_sock, session_key_list_t *existing_s_key_list) {
-    //Initialize SST_session_ctx_t
-    SST_session_ctx_t * session_ctx = malloc(sizeof(SST_session_ctx_t));
+    // Initialize SST_session_ctx_t
+    SST_session_ctx_t *session_ctx = malloc(sizeof(SST_session_ctx_t));
     session_ctx->s_key = malloc(sizeof(session_key_t));
     session_ctx->received_seq_num, session_ctx->sent_seq_num = 0;
     session_ctx->sock = clnt_sock;
@@ -193,6 +203,7 @@ SST_session_ctx_t *server_secure_comm_setup(
             } else {
                 printf("server authenticated/authorized by solving nonce!\n");
             }
+            update_validity(s_key);
             printf("switching to IN_COMM\n");
             entity_server_state = IN_COMM;
             memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
@@ -216,7 +227,8 @@ void *receive_thread(void *SST_session_ctx) {
 }
 
 void receive_message(unsigned char *received_buf,
-                     unsigned int received_buf_length, SST_session_ctx_t *session_ctx ) {
+                     unsigned int received_buf_length,
+                     SST_session_ctx_t *session_ctx) {
     unsigned char message_type;
     unsigned int data_buf_length;
     unsigned char *data_buf = parse_received_message(
@@ -228,8 +240,7 @@ void receive_message(unsigned char *received_buf,
 
 void send_secure_message(char *msg, unsigned int msg_length,
                          SST_session_ctx_t *session_ctx) {
-    if (!check_validity(session_ctx->sent_seq_num, session_ctx->s_key->rel_validity, session_ctx->s_key->abs_validity,
-                        &st_time)) {
+    if (check_validity(session_ctx->s_key)) {
         error_handling("Session key expired!\n");
     }
     unsigned char *buf = (unsigned char *)malloc(SEQ_NUM_SIZE + msg_length);
@@ -240,9 +251,9 @@ void send_secure_message(char *msg, unsigned int msg_length,
     // encrypt
     unsigned int encrypted_length;
     unsigned char *encrypted = symmetric_encrypt_authenticate(
-        buf, SEQ_NUM_SIZE + msg_length, session_ctx->s_key->mac_key, MAC_KEY_SIZE,
-        session_ctx->s_key->cipher_key, CIPHER_KEY_SIZE, AES_CBC_128_IV_SIZE,
-        &encrypted_length);
+        buf, SEQ_NUM_SIZE + msg_length, session_ctx->s_key->mac_key,
+        MAC_KEY_SIZE, session_ctx->s_key->cipher_key, CIPHER_KEY_SIZE,
+        AES_CBC_128_IV_SIZE, &encrypted_length);
     free(buf);
     session_ctx->sent_seq_num++;
     unsigned char sender_buf[1024];  // TODO: Currently the send message does
@@ -256,15 +267,17 @@ void send_secure_message(char *msg, unsigned int msg_length,
     write(session_ctx->sock, sender_buf, sender_buf_length);
 }
 
-void free_session_key_list_t(session_key_list_t *session_key_list){
-    for(int i = 0; i < session_key_list->num_key; i++){
-        free_session_key_t(&session_key_list->s_key[(i + session_key_list->rear_idx) %MAX_SESSION_KEY]);
+void free_session_key_list_t(session_key_list_t *session_key_list) {
+    for (int i = 0; i < session_key_list->num_key; i++) {
+        free_session_key_t(
+            &session_key_list
+                 ->s_key[(i + session_key_list->rear_idx) % MAX_SESSION_KEY]);
     }
     free(session_key_list->s_key);
     free(session_key_list);
 }
 
-void free_SST_ctx(SST_ctx_t *ctx){
+void free_SST_ctx(SST_ctx_t *ctx) {
     free(ctx->dist_key->mac_key);
     free(ctx->dist_key->cipher_key);
     OPENSSL_free(ctx->priv_key);

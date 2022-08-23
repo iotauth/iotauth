@@ -2,6 +2,7 @@
 #define C_COMMON_H
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <math.h>
 #include <netinet/in.h>
 #include <openssl/rand.h>
@@ -16,7 +17,6 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <errno.h>
 
 // Message Type //
 #define AUTH_HELLO 0
@@ -85,13 +85,16 @@ void generate_nonce(int length, unsigned char *buf);
 // @param num number to write in buffer
 // @param n buffer size
 // @param buf output buffer
-void write_in_n_bytes(int num, int n, unsigned char *buf);
+void write_in_n_bytes(uint64_t num, int n, unsigned char *buf);
 
 // Make the total int number in big endian buffer.
 // @param buf input buffer
 // @param byte_length buffer length to make the total number
 // @return total number of input buffer
 unsigned int read_unsigned_int_BE(unsigned char *buf, int byte_length);
+
+unsigned long int read_unsigned_long_int_BE(unsigned char *buf,
+                                            int byte_length);
 
 // Splits received but to variable_length_buf + data_buf
 // When

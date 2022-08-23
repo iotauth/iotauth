@@ -19,15 +19,9 @@ void generate_nonce(int length, unsigned char *buf) {
     }
 }
 
-void write_in_n_bytes(int num, int n, unsigned char *buf) {
-    if (n < 8) {
-        for (int i = 0; i < n; i++) {
-            buf[i] |= num >> 8 * (n - 1 - i);
-        }
-    } else if (n >= 8) {
-        for (int i = 0; i < n; i++) {
-            buf[i] |= (uint64_t)num >> (uint64_t)8 * (n - 1 - i);
-        }
+void write_in_n_bytes(uint64_t num, int n, unsigned char *buf) {
+    for (int i = 0; i < n; i++) {
+        buf[i] |= num >> 8 * (n - 1 - i);
     }
 }
 
@@ -37,6 +31,16 @@ unsigned int read_unsigned_int_BE(unsigned char *buf, int byte_length) {
         num |= buf[i] << 8 * (byte_length - 1 - i);
     }
     return num;
+}
+
+unsigned long int read_unsigned_long_int_BE(unsigned char *buf,
+                                            int byte_length) {
+    unsigned long int num_valid = 1LU;
+    for (int i = 0; i < byte_length; i++) {
+        unsigned long int num = 1LU << 8 * (byte_length - 1 - i);
+        num_valid |= num * buf[i];
+    }
+    return num_valid;
 }
 
 void var_length_int_to_num(unsigned char *buf, unsigned int buf_length,
@@ -154,7 +158,7 @@ void parse_handshake(unsigned char *buf, HS_nonce_t *ret) {
     }
 }
 
-int mod(int a, int b){
+int mod(int a, int b) {
     int r = a % b;
     return r < 0 ? r + b : r;
 }
