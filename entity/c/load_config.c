@@ -55,12 +55,12 @@ config_t *load_config(char *path) {
                 case ENTITY_INFO_NAME:
                     ptr = strtok(NULL, " ");
                     printf("name: %s", ptr);
-                    memcpy(c->name, ptr, sizeof(c->name));
+                    strcpy(c->name, ptr);
                     break;
                 case ENTITY_INFO_PURPOSE:
                     ptr = strtok(NULL, " ");
                     printf("purpose: %s", ptr);
-                    memcpy(c->purpose, ptr, sizeof(c->purpose));
+                    strcpy(c->purpose, ptr);
                     break;
                 case ENTITY_INFO_NUMKEY:
                     ptr = strtok(NULL, " ");
@@ -82,30 +82,27 @@ config_t *load_config(char *path) {
                 case AUTH_INFO_IP_ADDRESS:
                     ptr = strtok(NULL, " ");
                     printf("IP address of Auth: %s", ptr);
-                    memcpy(c->auth_ip_addr, ptr, sizeof(c->auth_ip_addr));
+                    strcpy(c->auth_ip_addr, ptr);
                     break;
                 case AUTH_INFO_PORT:
                     ptr = strtok(NULL, " ");
                     printf("Port number of Auth: %s", ptr);
-                    memcpy(c->auth_port_num, ptr, sizeof(c->auth_port_num));
+                    strcpy(c->auth_port_num, ptr);
                     break;
                 case ENTITY_SERVER_INFO_IP_ADDRESS:
                     ptr = strtok(NULL, " ");
                     printf("IP address of entity server: %s", ptr);
-                    memcpy(c->entity_server_ip_addr, ptr,
-                           sizeof(c->entity_server_ip_addr));
+                    strcpy(c->entity_server_ip_addr, ptr);
                     break;
                 case ENTITY_SERVER_INFO_PORT_NUMBER:
                     ptr = strtok(NULL, " ");
                     printf("Port number of entity server: %s", ptr);
-                    memcpy(c->entity_server_port_num, ptr,
-                           sizeof(c->entity_server_port_num));
+                    strcpy(c->entity_server_port_num, ptr);
                     break;
                 case NETWORK_PROTOCOL:
                     ptr = strtok(NULL, " ");
                     printf("Network Protocol: %s\n", ptr);
-                    memcpy(c->network_protocol, ptr,
-                           sizeof(c->network_protocol));
+                    strcpy(c->network_protocol, ptr);
                     break;
             }
             break;
