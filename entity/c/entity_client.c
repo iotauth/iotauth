@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
     SST_session_ctx_t *session_ctx =
         secure_connect_to_server(&s_key_list->s_key[0], ctx);
     printf("finished\n");
-    sleep(1);  // TODO: If erase this comment, MAC error happens at HS_3
+    // sleep(1);  // TODO: If erase this comment, MAC error happens at HS_3
     pthread_t thread;
     pthread_create(&thread, NULL, &receive_thread, (void *)session_ctx);
     send_secure_message("Hello World", strlen("Hello World"), session_ctx);
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 
     free_session_key_list_t(s_key_list);
 
-    free_SST(ctx);
+    free_SST_ctx(ctx);
 
     sleep(60);
 }

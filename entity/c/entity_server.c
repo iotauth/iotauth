@@ -80,4 +80,5 @@ int main(int argc, char *argv[]) {
     close(clnt_sock2);
     pthread_cancel(thread2);
     close(serv_sock);
+    free_SST_ctx(ctx);
 }
