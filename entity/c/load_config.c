@@ -44,6 +44,7 @@ config_t *load_config(char *path) {
         0,
     };
     char *pline;
+    static const char delimiters[] = " \n";
 
     printf("--config--\n");
     while (!feof(fp)) {
@@ -53,54 +54,53 @@ config_t *load_config(char *path) {
         while (ptr != NULL) {
             switch (get_key_value(ptr)) {
                 case ENTITY_INFO_NAME:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("name: %s", ptr);
                     strcpy(c->name, ptr);
                     break;
                 case ENTITY_INFO_PURPOSE:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("purpose: %s", ptr);
                     strcpy(c->purpose, ptr);
                     break;
                 case ENTITY_INFO_NUMKEY:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("Numkey: %s", ptr);
                     c->numkey = atoi((const char *)ptr);
                     break;
                 case AUTH_INFO_PUBKEY_PATH:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("Pubkey path of Auth: %s", ptr);
                     c->auth_pubkey_path = malloc(strlen(ptr) - 1);
                     memcpy(c->auth_pubkey_path, ptr, strlen(ptr) - 1);
                     break;
                 case ENTITY_INFO_PRIVKEY_PATH:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("Privkey path of Entity: %s", ptr);
                     c->entity_privkey_path = malloc(strlen(ptr) - 1);
                     memcpy(c->entity_privkey_path, ptr, strlen(ptr) - 1);
                     break;
                 case AUTH_INFO_IP_ADDRESS:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("IP address of Auth: %s", ptr);
                     strcpy(c->auth_ip_addr, ptr);
                     break;
                 case AUTH_INFO_PORT:
-                    ptr = strtok(NULL, " ");
-                    printf("Port number of Auth: %s", ptr);
+                    ptr = strtok(NULL, delimiters);
                     strcpy(c->auth_port_num, ptr);
                     break;
                 case ENTITY_SERVER_INFO_IP_ADDRESS:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("IP address of entity server: %s", ptr);
                     strcpy(c->entity_server_ip_addr, ptr);
                     break;
                 case ENTITY_SERVER_INFO_PORT_NUMBER:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("Port number of entity server: %s", ptr);
                     strcpy(c->entity_server_port_num, ptr);
                     break;
                 case NETWORK_PROTOCOL:
-                    ptr = strtok(NULL, " ");
+                    ptr = strtok(NULL, delimiters);
                     printf("Network Protocol: %s\n", ptr);
                     strcpy(c->network_protocol, ptr);
                     break;
