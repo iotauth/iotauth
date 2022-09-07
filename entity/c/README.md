@@ -20,39 +20,39 @@ c_common -> c_crypto -> c_secure_comm -> c_api -> entity_client, entity_server
 
 -   `init_SST()` is a function to load the config file, public and private keys, and store the distribution key.
 -   It initializes important settings, at once.
--   Return struct SST_ctx_t
+-   Returns struct SST_ctx_t
 
 **session_key_list_t \* get_session_key()**
 
 -   `get_session_key()` is a function to get secure session key from Auth.
 -   Input is the struct config returned from the `init_SST()`, and the existing session key list. It can be NULL, if there were no list.
--   Return struct session_key
+-   Returns struct session_key_list_t.
 
 **SST_session_ctx_t secure_connect_to_server()**
 
 -   `secure_connect_to_server()` is a function that establishes a secure connection with the entity server in the struct config.
 -   Input is the session key received from `get_session_key()` and struct config returned from `load_config()`.
--   Return session ctx struct
+-   Returns struct SST_session_ctx_t
 
 **SST_session_ctx_t \* server_secure_comm_setup()**
 
 -   `server_secure_comm_setup()` is a function that the server continues to wait for the entity client and, if the client tries to connect, proceeds with a secure connection.
--   Input is the struct config
--   Return session ctx struct
+-   Input is the struct config.
+-   Returns struct SST_session_ctx_t
 
 **void \*receive_thread()**
 
--   Creates a receive_thread
+-   Creates a receive_thread.
 -   Usage:
 
-```
+``` 
 pthread_t thread;
 pthread_create(&thread, NULL, &receive_thread, (void \*)session_ctx);
 ```
 
 **void receive_message()**
 
--   Enables receiving messages
+-   Enables receiving messages.
 
 **void send_secure_message()**
 
