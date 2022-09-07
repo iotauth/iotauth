@@ -108,6 +108,6 @@ config_t *load_config(char *path) {
             break;
         }
     }
-    fclose(fp);  // close file pointer.
+    fclose(fp);
     return c;
 }

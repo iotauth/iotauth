@@ -67,7 +67,7 @@ unsigned char *parse_received_message(unsigned char *received_buf,
     var_length_int_to_num(received_buf + MESSAGE_TYPE_SIZE, received_buf_length,
                           data_buf_length, &payload_buf_length);
     return received_buf + MESSAGE_TYPE_SIZE +
-           payload_buf_length;  // msgtype+payload_buf_length;
+           payload_buf_length;
 }
 
 void num_to_var_length_int(unsigned int data_length, unsigned char *payload_buf,

@@ -86,7 +86,6 @@ unsigned int parse_session_key(session_key_t *ret, unsigned char *buf,
                                unsigned int buf_length) {
     memcpy(ret->key_id, buf, SESSION_KEY_ID_SIZE);
     unsigned int cur_idx = SESSION_KEY_ID_SIZE;
-    // TODO: abs_validity. iotAuthService.js 203
     memcpy(ret->abs_validity, buf + cur_idx, ABS_VALIDITY_SIZE);
     cur_idx += ABS_VALIDITY_SIZE;
     memcpy(ret->rel_validity, buf + cur_idx, REL_VALIDITY_SIZE);
@@ -120,7 +119,7 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
     // TODO: need to apply cryptoSpec?
     //~~use ret~~
     free(ret);
-    buf_idx += ret_length;  // 48
+    buf_idx += ret_length; 
     unsigned int session_key_list_length =
         read_unsigned_int_BE(&buf[buf_idx], 4);
 
@@ -157,8 +156,6 @@ unsigned char *serialize_session_key_req_with_distribution_key(
 unsigned char *parse_handshake_1(session_key_t *s_key,
                                  unsigned char *entity_nonce,
                                  unsigned int *ret_length) {
-    // keyId8 + iv16 +data32 + hmac32
-
     RAND_bytes(entity_nonce, HS_NONCE_SIZE);
     unsigned char indicator_entity_nonce[1 + HS_NONCE_SIZE];
     memcpy(indicator_entity_nonce + 1, entity_nonce, HS_NONCE_SIZE);
@@ -266,8 +263,7 @@ session_key_list_t *send_session_key_request_check_protocol(
         //  if(){} //TODO: migration
         //  if(){} //TODO: check received_dist_key null;
         //  if(strncmp(callback_params.target_session_key_cache, "Clients",
-        //  callback_params.target_session_key_cache_length) == 0){} //TODO:
-        //  check.
+        //  callback_params.target_session_key_cache_length) == 0){}
         if (strncmp((const char *)target_session_key_cache, "none",
                     target_session_key_cache_length) == 0) {
             // check received (keyId from auth == keyId from entity_client)
@@ -275,7 +271,6 @@ session_key_list_t *send_session_key_request_check_protocol(
                         (const char *)target_key_id,
                         SESSION_KEY_ID_SIZE) != 0) {
                 error_handling("Session key id is NOT as expected\n");
-                // SecureCommServer.js sendHandshake2Callback
             } else {
                 printf("Session key id is as expected\n");
             }
@@ -327,8 +322,6 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                 printf(
                     "Current distribution key expired, requesting new "
                     "distribution key as well...\n");
-
-                // TODO: when distribution key exists.
                 unsigned int enc_length;
                 unsigned char *enc = encrypt_and_sign(
                     serialized, serialized_length, ctx, &enc_length);
@@ -369,8 +362,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             printf("reply_nonce in sessionKeyResp: ");
             print_buf(reply_nonce, NONCE_SIZE);
             if (strncmp((const char *)reply_nonce, (const char *)entity_nonce,
-                        NONCE_SIZE) != 0) {  // compare generated entity's nonce
-                                             // & received entity's nonce.
+                        NONCE_SIZE) != 0) {
                 error_handling("auth nonce NOT verified");
             } else {
                 printf("auth nonce verified!\n");
@@ -443,7 +435,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
 session_key_list_t *send_session_key_req_via_UDP(SST_ctx_t *ctx) {
     session_key_list_t *s_key_list;
     return s_key_list;
-    // TODO(Dongha Kim): Implemen this function.
+    // TODO:(Dongha Kim) Implement this function.
     error_handling("This function is not implemented yet.");
 }
 
@@ -462,7 +454,7 @@ unsigned char *check_handshake1_send_handshake2(
     parse_handshake(decrypted, &hs);
     free(decrypted);
 
-    printf("client's nonce: ");  // client's nonce,, received nonce
+    printf("client's nonce: "); 
     print_buf(hs.nonce, HS_NONCE_SIZE);
 
     RAND_bytes(server_nonce, HS_NONCE_SIZE);
@@ -483,7 +475,6 @@ unsigned char *check_handshake1_send_handshake2(
 
 int check_session_key(unsigned int key_id, session_key_list_t *s_key_list,
                       int idx) {
-    // print("%s", *key_id);
     unsigned int list_key_id = read_unsigned_int_BE(
         s_key_list->s_key[idx].key_id, SESSION_KEY_ID_SIZE);
 
@@ -545,7 +536,7 @@ int check_session_key_list_addable(int num_key,
                                    session_key_list_t *s_ley_list) {
     if (MAX_SESSION_KEY - s_ley_list->num_key < num_key) {
         // Checks (num_key) number from the oldest session_keys.
-        int temp = 1;  // invalid
+        int temp = 1; 
         for (int i = 0; i < num_key; i++) {
             temp = temp && check_session_key_validity(&s_ley_list->s_key[mod(
                                (i + s_ley_list->rear_idx - s_ley_list->num_key),

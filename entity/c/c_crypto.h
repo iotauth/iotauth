@@ -59,7 +59,12 @@ typedef struct {
 // @param msg message to print the error
 void print_last_error(char *msg);
 
+// Loads auth's public key from path
+// @param path path of auth's public key
 EVP_PKEY *load_auth_public_key(const char *path);
+
+// Loads entity's private key from path
+// @param path path of entity's private key
 EVP_PKEY *load_entity_private_key(const char *path);
 
 // Encrypt the message with public key using public key encryption from OpenSSL.

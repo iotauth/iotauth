@@ -38,9 +38,6 @@ EVP_PKEY *load_entity_private_key(const char *path) {
 
 unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
                               EVP_PKEY *pub_key, size_t *ret_len) {
-    /**openssl 3.0 -> do not change to RSA.
-    directly use EVP_PKEY
-    */
     EVP_PKEY_CTX *ctx;
     unsigned char *out;
 
@@ -54,7 +51,6 @@ unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
     if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0) {
         print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
     }
-    /** Determine buffer length */
     if (EVP_PKEY_encrypt(ctx, NULL, ret_len, data, data_len) <= 0) {
         print_last_error("EVP_PKEY_encrypt failed");
     }
@@ -67,7 +63,6 @@ unsigned char *public_encrypt(unsigned char *data, size_t data_len, int padding,
         print_last_error("EVP_PKEY_encrypt failed");
     }
     OPENSSL_free(ctx);
-    /** Encrypted data is outlen bytes written to buffer out */
     return out;
 }
 
@@ -86,7 +81,6 @@ unsigned char *private_decrypt(unsigned char *enc_data, size_t enc_data_len,
     if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0) {
         print_last_error("EVP_PKEY_CTX_set_rsa_padding failed");
     }
-    /** Determine buffer length */
     if (EVP_PKEY_decrypt(ctx, NULL, ret_len, enc_data, enc_data_len) <= 0) {
         print_last_error("EVP_PKEY_decrypt failed");
     }
@@ -121,8 +115,6 @@ unsigned char *SHA256_sign(unsigned char *encrypted,
     if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0) {
         print_last_error("EVP_PKEY_CTX_set_signature_md failed");
     }
-
-    /** Determine buffer length */
     if (EVP_PKEY_sign(ctx, NULL, sig_length, md, md_length) <= 0) {
         print_last_error("EVP_PKEY_sign failed");
     }
@@ -158,7 +150,6 @@ void SHA256_verify(unsigned char *data, unsigned int data_length,
     if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0) {
         print_last_error("EVP_PKEY_CTX_set_signature_md failed");
     }
-    /** Perform operation */
     if (EVP_PKEY_verify(ctx, sig, sig_length, md, md_length) != 1) {
         print_last_error("EVP_PKEY_verify failed");
     }

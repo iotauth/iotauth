@@ -24,10 +24,9 @@
 #define AUTH_SESSION_KEY_REQ 10
 #define AUTH_SESSION_KEY_RESP 11
 #define SESSION_KEY_REQ_IN_PUB_ENC 20
-#define SESSION_KEY_RESP_WITH_DIST_KEY \
-    21                       // Includes distribution message (session keys)
-#define SESSION_KEY_REQ 22   // Distribution message
-#define SESSION_KEY_RESP 23  // Distribution message
+#define SESSION_KEY_RESP_WITH_DIST_KEY 21
+#define SESSION_KEY_REQ 22
+#define SESSION_KEY_RESP 23
 #define SKEY_HANDSHAKE_1 30
 #define SKEY_HANDSHAKE_2 31
 #define SKEY_HANDSHAKE_3 32
