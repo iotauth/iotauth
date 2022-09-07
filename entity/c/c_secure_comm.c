@@ -293,11 +293,10 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
     session_key_list_t *session_key_list = malloc(sizeof(session_key_list_t));
 
     session_key_list->s_key = malloc(sizeof(session_key_t) * MAX_SESSION_KEY);
-    // session_key_list->rear_idx = 1;
 
     unsigned char entity_nonce[NONCE_SIZE];
     while (1) {
-        unsigned char received_buf[1000];
+        unsigned char received_buf[MAX_AUTH_COMM_LENGTH];
         unsigned int received_buf_length =
             read(sock, received_buf, sizeof(received_buf));
         unsigned char message_type;
@@ -326,7 +325,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                 unsigned char *enc = encrypt_and_sign(
                     serialized, serialized_length, ctx, &enc_length);
                 free(serialized);
-                unsigned char message[1024];
+                unsigned char message[MAX_AUTH_COMM_LENGTH];
                 unsigned int message_length;
                 make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC,
                                 message, &message_length);
@@ -338,7 +337,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                     serialize_session_key_req_with_distribution_key(
                         serialized, serialized_length, ctx->dist_key,
                         ctx->config->name, &enc_length);
-                unsigned char message[1024];
+                unsigned char message[MAX_AUTH_COMM_LENGTH];
                 unsigned int message_length;
                 make_sender_buf(enc, enc_length, SESSION_KEY_REQ, message,
                                 &message_length);

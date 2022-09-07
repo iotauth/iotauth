@@ -61,7 +61,8 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
     unsigned int parsed_buf_length;
     unsigned char *parsed_buf =
         parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
-    unsigned char sender_HS_1[128];  // TODO: actually only needs 19 bytes.
+    unsigned char
+        sender_HS_1[MAX_HS_BUF_LENGTH];  // TODO: actually only needs 19 bytes.
     unsigned int sender_HS_1_length;
     make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_1,
                     sender_HS_1, &sender_HS_1_length);
@@ -70,7 +71,7 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
     entity_client_state = HANDSHAKE_1_SENT;
 
     // received handshake 2
-    unsigned char received_buf[1000];
+    unsigned char received_buf[MAX_HS_BUF_LENGTH];
     unsigned int received_buf_length =
         read(sock, received_buf, sizeof(received_buf));
     unsigned char message_type;
@@ -86,7 +87,7 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
         unsigned int parsed_buf_length;
         unsigned char *parsed_buf = check_handshake_2_send_handshake_3(
             data_buf, data_buf_length, entity_nonce, s_key, &parsed_buf_length);
-        unsigned char sender_HS_2[256];
+        unsigned char sender_HS_2[MAX_HS_BUF_LENGTH];
         unsigned int sender_HS_2_length;
         make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_3,
                         sender_HS_2, &sender_HS_2_length);
@@ -116,7 +117,7 @@ SST_session_ctx_t *server_secure_comm_setup(
 
     session_key_t *s_key;
     while (1) {
-        unsigned char received_buf[1024];
+        unsigned char received_buf[MAX_HS_BUF_LENGTH];
         int received_buf_length =
             read(clnt_sock, received_buf, sizeof(received_buf));
         unsigned char message_type;
@@ -171,7 +172,7 @@ SST_session_ctx_t *server_secure_comm_setup(
                 data_buf, data_buf_length, server_nonce, s_key,
                 &parsed_buf_length);
 
-            unsigned char sender[256];
+            unsigned char sender[MAX_HS_BUF_LENGTH];
             unsigned int sender_length;
             make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_2,
                             sender, &sender_length);
@@ -215,7 +216,7 @@ SST_session_ctx_t *server_secure_comm_setup(
 
 void *receive_thread(void *SST_session_ctx) {
     SST_session_ctx_t *session_ctx = (SST_session_ctx_t *)SST_session_ctx;
-    unsigned char received_buf[1024];
+    unsigned char received_buf[MAX_PAYLOAD_LENGTH];
     unsigned int received_buf_length = 0;
     while (1) {
         received_buf_length =
@@ -257,10 +258,12 @@ void send_secure_message(char *msg, unsigned int msg_length,
         AES_CBC_128_IV_SIZE, &encrypted_length);
     free(buf);
     session_ctx->sent_seq_num++;
-    unsigned char sender_buf[1024];  // TODO: Currently the send message does
-                                     // not support dynamic sizes, the max
-                                     // length is shorter than 1024. Must need
-                                     // to decide static or dynamic buffer size.
+    unsigned char
+        sender_buf[MAX_PAYLOAD_LENGTH];  // TODO: Currently the send message
+                                         // does not support dynamic sizes, the
+                                         // max length is shorter than 1024.
+                                         // Must need to decide static or
+                                         // dynamic buffer size.
     unsigned int sender_buf_length;
     make_sender_buf(encrypted, encrypted_length, SECURE_COMM_MSG, sender_buf,
                     &sender_buf_length);
