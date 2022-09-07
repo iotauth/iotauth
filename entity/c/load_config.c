@@ -71,14 +71,14 @@ config_t *load_config(char *path) {
                 case AUTH_INFO_PUBKEY_PATH:
                     ptr = strtok(NULL, delimiters);
                     printf("Pubkey path of Auth: %s", ptr);
-                    c->auth_pubkey_path = malloc(strlen(ptr) - 1);
-                    memcpy(c->auth_pubkey_path, ptr, strlen(ptr) - 1);
+                    c->auth_pubkey_path = malloc(strlen(ptr) + 1);
+                    strcpy(c->auth_pubkey_path, ptr);
                     break;
                 case ENTITY_INFO_PRIVKEY_PATH:
                     ptr = strtok(NULL, delimiters);
                     printf("Privkey path of Entity: %s", ptr);
-                    c->entity_privkey_path = malloc(strlen(ptr) - 1);
-                    memcpy(c->entity_privkey_path, ptr, strlen(ptr) - 1);
+                    c->entity_privkey_path = malloc(strlen(ptr) + 1);
+                    strcpy(c->entity_privkey_path, ptr);
                     break;
                 case AUTH_INFO_IP_ADDRESS:
                     ptr = strtok(NULL, delimiters);
