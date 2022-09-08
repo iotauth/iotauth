@@ -60,8 +60,8 @@ typedef struct {
 // @return concated total buffer
 unsigned char *auth_hello_reply_message(
     unsigned char *entity_nonce, unsigned char *auth_nonce, int num_key,
-    unsigned char *sender, unsigned int sender_length, unsigned char *purpose,
-    unsigned int purpose_length, unsigned int *ret_length);
+    char *sender, char *purpose,
+    unsigned int *ret_length);
 
 // Encrypt the message and sign the encrypted message.
 // @param buf input buffer

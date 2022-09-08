@@ -136,7 +136,7 @@ unsigned char *parse_received_message(unsigned char *received_buf,
 // @param payload_buf payload buffer in terms of input data length
 // @param payload_buf_length  length of payload buffer
 void num_to_var_length_int(unsigned int data_length, unsigned char *payload_buf,
-                           unsigned char *payload_buf_length);
+                           unsigned int *payload_buf_length);
 
 // Make the header buffer including the message type and payload buffer.
 // @param data_length input data buffer length

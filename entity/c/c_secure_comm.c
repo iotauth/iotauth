@@ -6,24 +6,45 @@ long int st_time;
 
 unsigned char *auth_hello_reply_message(
     unsigned char *entity_nonce, unsigned char *auth_nonce, int num_key,
-    unsigned char *sender, unsigned int sender_length, unsigned char *purpose,
-    unsigned int purpose_length, unsigned int *ret_length) {
+    char *sender, char *purpose,
+    unsigned int *ret_length) {
+    size_t sender_length = strlen(sender);
+    size_t purpose_length = strlen(purpose);
+
     unsigned char *ret = (unsigned char *)malloc(
-        NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + purpose_length);
+        NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + purpose_length + 8 /* +8 for two var length ints */);
     unsigned char num_key_buf[NUMKEY_SIZE];
     memset(num_key_buf, 0, NUMKEY_SIZE);
     write_in_n_bytes(num_key, NUMKEY_SIZE, num_key_buf);
-    unsigned char temp[] = {sender_length - 1};
-    unsigned char temp2[] = {purpose_length - 1};
-    memcpy(ret, entity_nonce, NONCE_SIZE);
-    memcpy(ret + NONCE_SIZE, auth_nonce, NONCE_SIZE);
-    memcpy(ret + NONCE_SIZE * 2, num_key_buf, NUMKEY_SIZE);
-    memcpy(ret + NONCE_SIZE * 2 + NUMKEY_SIZE, temp, 1);
-    memcpy(ret + NONCE_SIZE * 2 + NUMKEY_SIZE + 1, sender, sender_length - 1);
-    memcpy(ret + NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length, temp2, 1);
-    memcpy(ret + NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + 1, purpose,
-           purpose_length - 1);
-    *ret_length = NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + purpose_length;
+
+    size_t offset = 0;
+    memcpy(ret + offset, entity_nonce, NONCE_SIZE);
+    offset += NONCE_SIZE;
+
+    memcpy(ret + offset, auth_nonce, NONCE_SIZE);
+    offset += NONCE_SIZE;
+
+    memcpy(ret + offset, num_key_buf, NUMKEY_SIZE);
+    offset += NUMKEY_SIZE;
+
+    unsigned char var_length_int_buf[4];
+    unsigned int var_length_int_len;
+
+    num_to_var_length_int(sender_length, var_length_int_buf, &var_length_int_len);
+    memcpy(ret + offset, var_length_int_buf, var_length_int_len);
+    offset += var_length_int_len;
+
+    memcpy(ret + offset, sender, sender_length);
+    offset += sender_length;
+
+    num_to_var_length_int(purpose_length, var_length_int_buf, &var_length_int_len);
+    memcpy(ret + offset, var_length_int_buf, var_length_int_len);
+    offset += var_length_int_len;
+
+    memcpy(ret + offset, purpose, purpose_length);
+    offset += purpose_length;
+
+    *ret_length = offset;
 
     return ret;
 }
@@ -313,11 +334,11 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             unsigned int serialized_length;
             unsigned char *serialized = auth_hello_reply_message(
                 entity_nonce, auth_nonce, ctx->config->numkey,
-                ctx->config->name, strlen((const char *)ctx->config->name),
-                ctx->config->purpose,
-                strlen((const char *)ctx->config->purpose), &serialized_length);
+                ctx->config->name,
+                ctx->config->purpose, &serialized_length);
             if (check_validity(
                     ctx->dist_key->abs_validity)) {  // when dist_key expired
+                    printf("Hokeun! 1 serialized_length: %d\n", serialized_length);
                 printf(
                     "Current distribution key expired, requesting new "
                     "distribution key as well...\n");
@@ -325,12 +346,16 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                 unsigned char *enc = encrypt_and_sign(
                     serialized, serialized_length, ctx, &enc_length);
                 free(serialized);
+                    printf("Hokeun! 2\n");
                 unsigned char message[MAX_AUTH_COMM_LENGTH];
                 unsigned int message_length;
                 make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC,
                                 message, &message_length);
+                    printf("Hokeun! 3\n");
                 write(sock, message, message_length);
+                    printf("Hokeun! 4\n");
                 free(enc);
+                    printf("Hokeun! 5\n");
             } else {
                 unsigned int enc_length;
                 unsigned char *enc =

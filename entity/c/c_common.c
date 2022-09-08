@@ -71,7 +71,7 @@ unsigned char *parse_received_message(unsigned char *received_buf,
 }
 
 void num_to_var_length_int(unsigned int data_length, unsigned char *payload_buf,
-                           unsigned char *payload_buf_length) {
+                           unsigned int *payload_buf_length) {
     *payload_buf_length = 1;
     while (data_length > 127) {
         payload_buf[*payload_buf_length - 1] = 128 | data_length & 127;
@@ -84,7 +84,7 @@ void num_to_var_length_int(unsigned int data_length, unsigned char *payload_buf,
 void make_buffer_header(unsigned int data_length, unsigned char MESSAGE_TYPE,
                         unsigned char *header, unsigned int *header_length) {
     unsigned char payload_buf[MAX_PAYLOAD_BUF_SIZE];
-    unsigned char payload_buf_len;
+    unsigned int payload_buf_len;
     num_to_var_length_int(data_length, payload_buf, &payload_buf_len);
     *header_length = MESSAGE_TYPE_SIZE + payload_buf_len;
     header[0] = MESSAGE_TYPE;
