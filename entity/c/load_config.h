@@ -18,16 +18,16 @@
 #define NETWORK_PROTOCOL 10
 
 typedef struct {
-    unsigned char name[32];
-    unsigned char purpose[32];
+    char name[32];
+    char purpose[32];
     int numkey;
-    unsigned char *auth_pubkey_path;
-    unsigned char *entity_privkey_path;
-    unsigned char auth_ip_addr[17];
-    unsigned char auth_port_num[6];
-    unsigned char entity_server_ip_addr[17];
-    unsigned char entity_server_port_num[6];
-    unsigned char network_protocol[4];
+    char *auth_pubkey_path;
+    char *entity_privkey_path;
+    char auth_ip_addr[17];
+    char auth_port_num[6];
+    char entity_server_ip_addr[17];
+    char entity_server_port_num[6];
+    char network_protocol[4];
 } config_t;
 
 // Get a value by comparing a string of conditional statement with a variable.
