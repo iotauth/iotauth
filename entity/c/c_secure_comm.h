@@ -125,7 +125,7 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
 // @return unsigned char * return buffer
 unsigned char *serialize_session_key_req_with_distribution_key(
     unsigned char *serialized, unsigned int serialized_length,
-    distribution_key_t *dist_key, unsigned char *name,
+    distribution_key_t *dist_key, char *name,
     unsigned int *ret_length);
 
 // Parses the handshake1 buffer to send.

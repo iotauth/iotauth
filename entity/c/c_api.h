@@ -58,8 +58,15 @@ void send_secure_message(char *msg, unsigned int msg_length,
 // @param session_key_list_t session_key_list to free
 void free_session_key_list_t(session_key_list_t *session_key_list);
 
-// Free memory used in SST_ctx recursively. This includes freeing config_t key
-// paths.
+// Free memory used in config_t.
+// @param config struct config_t to be freed.
+void free_config_t(config_t *config);
+
+// Free memory used in distribution_key_t.
+// @param dist_key struct distribution_key_t to be freed.
+void free_distribution_key_t(distribution_key_t *dist_key);
+
+// Free memory used in SST_ctx recursively.
 // @param SST_ctx_t loaded SST_ctx_t to free
 void free_SST_ctx(SST_ctx_t *ctx);
 

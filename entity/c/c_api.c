@@ -283,11 +283,19 @@ void free_session_key_list_t(session_key_list_t *session_key_list) {
     free(session_key_list);
 }
 
+void free_config_t(config_t *config) {
+    free(config->auth_pubkey_path);
+    free(config->entity_privkey_path);
+}
+
+void free_distribution_key_t(distribution_key_t *dist_key) {
+    free(dist_key->mac_key);
+    free(dist_key->cipher_key);
+}
+
 void free_SST_ctx(SST_ctx_t *ctx) {
-    free(ctx->dist_key->mac_key);
-    free(ctx->dist_key->cipher_key);
+    free_distribution_key_t(ctx->dist_key);
     OPENSSL_free(ctx->priv_key);
     OPENSSL_free(ctx->pub_key);
-    free(ctx->config->auth_pubkey_path);
-    free(ctx->config->entity_privkey_path);
+    free_config_t(ctx->config);
 }
