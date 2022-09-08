@@ -25,6 +25,10 @@ typedef struct {
     int received_seq_num;
 } SST_session_ctx_t;
 
+// This struct is a session_key_list. It can be easily initialized with macro
+// INIT_SESSION_KEY_LIST(X)
+// rear_idx is a indicator that points the next position to add to the list.
+// The session_key_list as a circular array.
 typedef struct {
     int num_key;
     session_key_t *s_key;
@@ -58,10 +62,10 @@ typedef struct {
 // @param purpose_length length of purpose
 // @param ret_length length of return buffer
 // @return concated total buffer
-unsigned char *auth_hello_reply_message(
-    unsigned char *entity_nonce, unsigned char *auth_nonce, int num_key,
-    char *sender, char *purpose,
-    unsigned int *ret_length);
+unsigned char *auth_hello_reply_message(unsigned char *entity_nonce,
+                                        unsigned char *auth_nonce, int num_key,
+                                        char *sender, char *purpose,
+                                        unsigned int *ret_length);
 
 // Encrypt the message and sign the encrypted message.
 // @param buf input buffer

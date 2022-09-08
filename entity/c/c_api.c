@@ -51,7 +51,8 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
                                             SST_ctx_t *ctx) {
     // Initialize SST_session_ctx_t
     SST_session_ctx_t *session_ctx = malloc(sizeof(SST_session_ctx_t));
-    session_ctx->received_seq_num, session_ctx->sent_seq_num = 0;
+    session_ctx->received_seq_num = 0;
+    session_ctx->sent_seq_num = 0;
     session_ctx->s_key = malloc(sizeof(session_key_t));
 
     int sock;
@@ -109,7 +110,8 @@ SST_session_ctx_t *server_secure_comm_setup(
     // Initialize SST_session_ctx_t
     SST_session_ctx_t *session_ctx = malloc(sizeof(SST_session_ctx_t));
     session_ctx->s_key = malloc(sizeof(session_key_t));
-    session_ctx->received_seq_num, session_ctx->sent_seq_num = 0;
+    session_ctx->received_seq_num = 0;
+    session_ctx->sent_seq_num = 0;
     session_ctx->sock = clnt_sock;
 
     entity_server_state = IDLE;

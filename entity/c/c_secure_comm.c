@@ -4,15 +4,16 @@ unsigned char entity_client_state;
 unsigned char entity_server_state;
 long int st_time;
 
-unsigned char *auth_hello_reply_message(
-    unsigned char *entity_nonce, unsigned char *auth_nonce, int num_key,
-    char *sender, char *purpose,
-    unsigned int *ret_length) {
+unsigned char *auth_hello_reply_message(unsigned char *entity_nonce,
+                                        unsigned char *auth_nonce, int num_key,
+                                        char *sender, char *purpose,
+                                        unsigned int *ret_length) {
     size_t sender_length = strlen(sender);
     size_t purpose_length = strlen(purpose);
 
     unsigned char *ret = (unsigned char *)malloc(
-        NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + purpose_length + 8 /* +8 for two var length ints */);
+        NONCE_SIZE * 2 + NUMKEY_SIZE + sender_length + purpose_length +
+        8 /* +8 for two var length ints */);
     unsigned char num_key_buf[NUMKEY_SIZE];
     memset(num_key_buf, 0, NUMKEY_SIZE);
     write_in_n_bytes(num_key, NUMKEY_SIZE, num_key_buf);
@@ -30,14 +31,16 @@ unsigned char *auth_hello_reply_message(
     unsigned char var_length_int_buf[4];
     unsigned int var_length_int_len;
 
-    num_to_var_length_int(sender_length, var_length_int_buf, &var_length_int_len);
+    num_to_var_length_int(sender_length, var_length_int_buf,
+                          &var_length_int_len);
     memcpy(ret + offset, var_length_int_buf, var_length_int_len);
     offset += var_length_int_len;
 
     memcpy(ret + offset, sender, sender_length);
     offset += sender_length;
 
-    num_to_var_length_int(purpose_length, var_length_int_buf, &var_length_int_len);
+    num_to_var_length_int(purpose_length, var_length_int_buf,
+                          &var_length_int_len);
     memcpy(ret + offset, var_length_int_buf, var_length_int_len);
     offset += var_length_int_len;
 
@@ -140,7 +143,7 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
     // TODO: need to apply cryptoSpec?
     //~~use ret~~
     free(ret);
-    buf_idx += ret_length; 
+    buf_idx += ret_length;
     unsigned int session_key_list_length =
         read_unsigned_int_BE(&buf[buf_idx], 4);
 
@@ -163,14 +166,17 @@ unsigned char *serialize_session_key_req_with_distribution_key(
         serialized, serialized_length, dist_key->mac_key,
         dist_key->mac_key_size, dist_key->cipher_key, dist_key->cipher_key_size,
         AES_CBC_128_IV_SIZE, &temp_length);
-
-    unsigned char length_buf[] = {strlen(name) - 1};
-    unsigned char *ret = malloc(1 + strlen(name) - 1 + temp_length);
+    unsigned int name_length = strlen(name);
+    unsigned char length_buf[] = {name_length};
+    unsigned char *ret = malloc(1 + name_length + temp_length);
+    unsigned int offset = 0;
     memcpy(ret, length_buf, 1);
-    memcpy(ret + 1, name, strlen(name) - 1);
-    memcpy(ret + strlen(name), temp, temp_length);
+    offset += 1;
+    strcpy(ret + offset, name);
+    offset += name_length;
+    memcpy(ret + offset, temp, temp_length);
     free(temp);
-    *ret_length = strlen(name) + temp_length;
+    *ret_length = 1 + strlen(name) + temp_length;
     return ret;
 }
 
@@ -334,11 +340,9 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             unsigned int serialized_length;
             unsigned char *serialized = auth_hello_reply_message(
                 entity_nonce, auth_nonce, ctx->config->numkey,
-                ctx->config->name,
-                ctx->config->purpose, &serialized_length);
+                ctx->config->name, ctx->config->purpose, &serialized_length);
             if (check_validity(
                     ctx->dist_key->abs_validity)) {  // when dist_key expired
-                    printf("Hokeun! 1 serialized_length: %d\n", serialized_length);
                 printf(
                     "Current distribution key expired, requesting new "
                     "distribution key as well...\n");
@@ -346,16 +350,12 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                 unsigned char *enc = encrypt_and_sign(
                     serialized, serialized_length, ctx, &enc_length);
                 free(serialized);
-                    printf("Hokeun! 2\n");
                 unsigned char message[MAX_AUTH_COMM_LENGTH];
                 unsigned int message_length;
                 make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC,
                                 message, &message_length);
-                    printf("Hokeun! 3\n");
                 write(sock, message, message_length);
-                    printf("Hokeun! 4\n");
                 free(enc);
-                    printf("Hokeun! 5\n");
             } else {
                 unsigned int enc_length;
                 unsigned char *enc =
@@ -478,7 +478,7 @@ unsigned char *check_handshake1_send_handshake2(
     parse_handshake(decrypted, &hs);
     free(decrypted);
 
-    printf("client's nonce: "); 
+    printf("client's nonce: ");
     print_buf(hs.nonce, HS_NONCE_SIZE);
 
     RAND_bytes(server_nonce, HS_NONCE_SIZE);
@@ -560,7 +560,7 @@ int check_session_key_list_addable(int num_key,
                                    session_key_list_t *s_ley_list) {
     if (MAX_SESSION_KEY - s_ley_list->num_key < num_key) {
         // Checks (num_key) number from the oldest session_keys.
-        int temp = 1; 
+        int temp = 1;
         for (int i = 0; i < num_key; i++) {
             temp = temp && check_session_key_validity(&s_ley_list->s_key[mod(
                                (i + s_ley_list->rear_idx - s_ley_list->num_key),

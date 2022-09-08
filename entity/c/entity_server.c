@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     send_secure_message("Hello World", strlen("Hello World"), session_ctx);
     sleep(1);
     send_secure_message("Hello Dongha", strlen("Hello Dongha"), session_ctx);
-    sleep(5);
+    sleep(2);
     close(clnt_sock);
     pthread_cancel(thread);
     printf("Finished first communication\n");
