@@ -55,34 +55,34 @@ config_t *load_config(char *path) {
             switch (get_key_value(ptr)) {
                 case ENTITY_INFO_NAME:
                     ptr = strtok(NULL, delimiters);
-                    printf("name: %s", ptr);
+                    printf("name: %s\n", ptr);
                     strcpy(c->name, ptr);
                     break;
                 case ENTITY_INFO_PURPOSE:
                     ptr = strtok(NULL, delimiters);
-                    printf("purpose: %s", ptr);
+                    printf("purpose: %s\n", ptr);
                     strcpy(c->purpose, ptr);
                     break;
                 case ENTITY_INFO_NUMKEY:
                     ptr = strtok(NULL, delimiters);
-                    printf("Numkey: %s", ptr);
+                    printf("Numkey: %s\n", ptr);
                     c->numkey = atoi((const char *)ptr);
                     break;
                 case AUTH_INFO_PUBKEY_PATH:
                     ptr = strtok(NULL, delimiters);
-                    printf("Pubkey path of Auth: %s", ptr);
+                    printf("Pubkey path of Auth: %s\n", ptr);
                     c->auth_pubkey_path = malloc(strlen(ptr) + 1);
                     strcpy(c->auth_pubkey_path, ptr);
                     break;
                 case ENTITY_INFO_PRIVKEY_PATH:
                     ptr = strtok(NULL, delimiters);
-                    printf("Privkey path of Entity: %s", ptr);
+                    printf("Privkey path of Entity: %s\n", ptr);
                     c->entity_privkey_path = malloc(strlen(ptr) + 1);
                     strcpy(c->entity_privkey_path, ptr);
                     break;
                 case AUTH_INFO_IP_ADDRESS:
                     ptr = strtok(NULL, delimiters);
-                    printf("IP address of Auth: %s", ptr);
+                    printf("IP address of Auth: %s\n", ptr);
                     strcpy(c->auth_ip_addr, ptr);
                     break;
                 case AUTH_INFO_PORT:
@@ -91,12 +91,12 @@ config_t *load_config(char *path) {
                     break;
                 case ENTITY_SERVER_INFO_IP_ADDRESS:
                     ptr = strtok(NULL, delimiters);
-                    printf("IP address of entity server: %s", ptr);
+                    printf("IP address of entity server: %s\n", ptr);
                     strcpy(c->entity_server_ip_addr, ptr);
                     break;
                 case ENTITY_SERVER_INFO_PORT_NUMBER:
                     ptr = strtok(NULL, delimiters);
-                    printf("Port number of entity server: %s", ptr);
+                    printf("Port number of entity server: %s\n", ptr);
                     strcpy(c->entity_server_port_num, ptr);
                     break;
                 case NETWORK_PROTOCOL:
