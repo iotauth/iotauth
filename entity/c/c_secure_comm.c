@@ -171,7 +171,7 @@ unsigned char *serialize_session_key_req_with_distribution_key(
     unsigned int offset = 0;
     memcpy(ret, length_buf, 1);
     offset += 1;
-    strcpy(ret + offset, name);
+    memcpy(ret + offset, name, name_length);
     offset += name_length;
     memcpy(ret + offset, temp, temp_length);
     free(temp);
