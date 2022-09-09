@@ -1,20 +1,6 @@
 #include "c_api.h"
 
 int main(int argc, char *argv[]) {
-
-    printf("-3 mod 10 = %d\n", mod(-3, 10));
-    printf("-2 mod 10 = %d\n", mod(-2, 10));
-    printf("-1 mod 10 = %d\n", mod(-1, 10));
-    printf("0 mod 3 = %d\n", mod(0, 3));
-    printf("1 mod 3 = %d\n", mod(1, 3));
-    printf("2 mod 3 = %d\n", mod(2, 3));
-    printf("3 mod 3 = %d\n", mod(3, 3));
-    printf("4 mod 3 = %d\n", mod(4, 3));
-
-
-
-
-
     char *config_path = argv[1];
     SST_ctx_t *ctx = init_SST(config_path);
 
