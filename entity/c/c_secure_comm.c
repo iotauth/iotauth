@@ -354,8 +354,8 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                 unsigned int message_length;
                 make_sender_buf(enc, enc_length, SESSION_KEY_REQ_IN_PUB_ENC,
                                 message, &message_length);
-                free(enc);
                 write(sock, message, message_length);
+                free(enc);
             } else {
                 unsigned int enc_length;
                 unsigned char *enc =
