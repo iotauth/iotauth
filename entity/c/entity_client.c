@@ -22,6 +22,8 @@ int main(int argc, char *argv[]) {
 
     s_key_list = get_session_key(ctx, s_key_list);
 
+    sleep(30);
+
     free_session_key_list_t(s_key_list);
 
     free_SST_ctx(ctx);
