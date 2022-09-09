@@ -162,3 +162,11 @@ int mod(int a, int b) {
     int r = a % b;
     return r < 0 ? r + b : r;
 }
+
+void print_usigned_char_array(unsigned char* buf, size_t buf_len) {
+    char hex[buf_len * 2 + 1];
+    for(int i = 0; i < buf_len; i++) {
+        sprintf(hex + 2 * i, "%.2x", buf[i]);
+    }
+    printf("Hex: %s\n", hex);
+}

@@ -194,4 +194,9 @@ void parse_handshake(unsigned char *buf, HS_nonce_t *ret);
 
 int mod(int a, int b);
 
+// Utility function for printing unsigned char array in hex string.
+// @param buf port given buffer of unsigned chars.
+// @param buf_len length of the given buffer.
+void print_usigned_char_array(unsigned char* buf, size_t buf_len);
+
 #endif  // C_COMMON_H
