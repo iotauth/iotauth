@@ -16,13 +16,13 @@ endif
 entity_client: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o
 	gcc ${CPPFLAGS} ${LDFLAGS} -o entity_client c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_client.o -lcrypto -pthread
 
-entity_client.o: c_common.o c_crypto.o c_secure_comm.o load_config.o
+entity_client.o: entity_client.c c_common.o c_crypto.o c_secure_comm.o load_config.o
 	gcc ${CPPFLAGS} -c -o entity_client.o entity_client.c
 
 entity_server: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_server.o
 	gcc ${CPPFLAGS} ${LDFLAGS} -o entity_server c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entity_server.o -lcrypto -pthread
 
-entity_server.o: c_common.o c_crypto.o c_secure_comm.o load_config.o
+entity_server.o: entity_server.c c_common.o c_crypto.o c_secure_comm.o load_config.o
 	gcc ${CPPFLAGS} -c -o entity_server.o entity_server.c
 
 c_common.o: c_common.h c_common.c
