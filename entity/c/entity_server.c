@@ -50,9 +50,9 @@ int main(int argc, char *argv[]) {
     pthread_create(&thread, NULL, &receive_thread, (void *)session_ctx);
     sleep(1);
 
-    send_secure_message("Hello World", strlen("Hello World"), session_ctx);
+    send_secure_message("Hello client", strlen("Hello client"), session_ctx);
     sleep(1);
-    send_secure_message("Hello Dongha", strlen("Hello Dongha"), session_ctx);
+    send_secure_message("Hello client - second message", strlen("Hello client - second message"), session_ctx);
     sleep(2);
     close(clnt_sock);
     pthread_cancel(thread);
@@ -71,12 +71,12 @@ int main(int argc, char *argv[]) {
     pthread_create(&thread2, NULL, &receive_thread, (void *)session_ctx2);
     sleep(1);
 
-    send_secure_message("Hello World", strlen("Hello World"), session_ctx2);
+    send_secure_message("Hello client 2", strlen("Hello client 2"), session_ctx2);
     sleep(1);
-    send_secure_message("Hello Dongha", strlen("Hello Dongha"), session_ctx2);
+    send_secure_message("Hello client 2 - second message", strlen("Hello client 2 - second message"), session_ctx2);
     sleep(1);
 
-    sleep(100);
+    sleep(3);
     close(clnt_sock2);
     pthread_cancel(thread2);
     close(serv_sock);

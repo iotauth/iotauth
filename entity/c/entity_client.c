@@ -11,10 +11,12 @@ int main(int argc, char *argv[]) {
     sleep(1);  // TODO: If erase this comment, MAC error happens at HS_3
     pthread_t thread;
     pthread_create(&thread, NULL, &receive_thread, (void *)session_ctx);
-    send_secure_message("Hello World", strlen("Hello World"), session_ctx);
+    send_secure_message("Hello server", strlen("Hello server"), session_ctx);
     sleep(1);
-    send_secure_message("Hello Dongha", strlen("Hello Dongha"), session_ctx);
+    send_secure_message("Hello server - second message", strlen("Hello server - second message"), session_ctx);
     sleep(1);
+    pthread_join(thread, NULL);
+    free(session_ctx);
 
     s_key_list = get_session_key(ctx, s_key_list);
 
@@ -22,7 +24,17 @@ int main(int argc, char *argv[]) {
 
     s_key_list = get_session_key(ctx, s_key_list);
 
-    sleep(30);
+    sleep(3);
+
+    session_ctx =
+        secure_connect_to_server(&s_key_list->s_key[1], ctx);
+    pthread_create(&thread, NULL, &receive_thread, (void *)session_ctx);
+    send_secure_message("Hello server 2", strlen("Hello server 2"), session_ctx);
+    sleep(1);
+    send_secure_message("Hello server 2 - second message", strlen("Hello server 2 - second message"), session_ctx);
+    sleep(1);
+    pthread_join(thread, NULL);
+    free(session_ctx);
 
     free_session_key_list_t(s_key_list);
 
