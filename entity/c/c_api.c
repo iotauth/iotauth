@@ -152,9 +152,8 @@ SST_session_ctx_t *server_secure_comm_setup(
             if (session_key_found >= 0) {
                 s_key = &existing_s_key_list->s_key[session_key_found];
             } else if (session_key_found == -1) {
-                unsigned char temp_buf[SESSION_KEY_ID_SIZE];
-                sprintf((char *)temp_buf, "%d", expected_key_id_int);
-                memcpy(ctx->config->purpose + 9, temp_buf, SESSION_KEY_ID_SIZE);
+                // WARNING: The following line overwrites the purpose.
+                sprintf(ctx->config->purpose, "{\"keyId\":%d}", expected_key_id_int);
 
                 session_key_list_t *s_key_list;
                 s_key_list = send_session_key_request_check_protocol(
