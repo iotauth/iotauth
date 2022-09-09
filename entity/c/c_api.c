@@ -223,8 +223,13 @@ void *receive_thread(void *SST_session_ctx) {
     while (1) {
         received_buf_length =
             read(session_ctx->sock, received_buf, sizeof(received_buf));
-        if (received_buf_length == -1) {
-            pthread_exit(NULL);
+        if (received_buf_length == 0) {
+            printf("Socket closed!\n");
+            close(session_ctx->sock);
+            return 0;
+        } if (received_buf_length == -1) {
+            printf("Connection error!\n");
+            return 0;
         }
         receive_message(received_buf, received_buf_length, session_ctx);
     }
