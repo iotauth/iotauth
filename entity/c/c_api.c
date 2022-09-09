@@ -153,7 +153,8 @@ SST_session_ctx_t *server_secure_comm_setup(
                 s_key = &existing_s_key_list->s_key[session_key_found];
             } else if (session_key_found == -1) {
                 // WARNING: The following line overwrites the purpose.
-                sprintf(ctx->config->purpose, "{\"keyId\":%d}", expected_key_id_int);
+                sprintf(ctx->config->purpose, "{\"keyId\":%d}",
+                        expected_key_id_int);
 
                 session_key_list_t *s_key_list;
                 s_key_list = send_session_key_request_check_protocol(
@@ -273,10 +274,11 @@ void send_secure_message(char *msg, unsigned int msg_length,
 }
 
 void free_session_key_list_t(session_key_list_t *session_key_list) {
+    int temp;
     for (int i = 0; i < session_key_list->num_key; i++) {
-        free_session_key_t(
-            &session_key_list
-                 ->s_key[(i + session_key_list->rear_idx) % MAX_SESSION_KEY]);
+        temp = mod(session_key_list->rear_idx - session_key_list->num_key + i,
+                   MAX_SESSION_KEY);
+        free_session_key_t(&session_key_list->s_key[temp]);
     }
     free(session_key_list->s_key);
     free(session_key_list);

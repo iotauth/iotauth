@@ -159,8 +159,7 @@ void parse_session_key_response(unsigned char *buf, unsigned int buf_length,
 
 unsigned char *serialize_session_key_req_with_distribution_key(
     unsigned char *serialized, unsigned int serialized_length,
-    distribution_key_t *dist_key, char *name,
-    unsigned int *ret_length) {
+    distribution_key_t *dist_key, char *name, unsigned int *ret_length) {
     unsigned int temp_length;
     unsigned char *temp = symmetric_encrypt_authenticate(
         serialized, serialized_length, dist_key->mac_key,
@@ -519,10 +518,18 @@ void add_session_key_to_list(session_key_t *s_key,
             "key.\n");
         existing_s_key_list->num_key = MAX_SESSION_KEY;
     }
-    memcpy(&existing_s_key_list->s_key[existing_s_key_list->rear_idx], s_key,
-           sizeof(session_key_t));
+    copy_session_key(&existing_s_key_list->s_key[existing_s_key_list->rear_idx],
+                     s_key);
     existing_s_key_list->rear_idx =
         (existing_s_key_list->rear_idx + 1) % MAX_SESSION_KEY;
+}
+
+void copy_session_key(session_key_t *dest, session_key_t *src) {
+    memcpy(dest, src, sizeof(session_key_t));
+    dest->mac_key = malloc(src->mac_key_size);
+    dest->cipher_key = malloc(src->mac_key_size);
+    memcpy(dest->mac_key, src->mac_key, src->mac_key_size);
+    memcpy(dest->cipher_key, src->cipher_key, src->cipher_key_size);
 }
 
 void append_session_key_list(session_key_list_t *dest,
@@ -556,17 +563,24 @@ void update_validity(session_key_t *session_key) {
         KEY_EXPIRATION_TIME_SIZE, session_key->abs_validity);
 }
 
-int check_session_key_list_addable(int num_key,
+int check_session_key_list_addable(int requested_num_key,
                                    session_key_list_t *s_ley_list) {
-    if (MAX_SESSION_KEY - s_ley_list->num_key < num_key) {
+    if (MAX_SESSION_KEY - s_ley_list->num_key < requested_num_key) {
         // Checks (num_key) number from the oldest session_keys.
-        int temp = 1;
-        for (int i = 0; i < num_key; i++) {
-            temp = temp && check_session_key_validity(&s_ley_list->s_key[mod(
-                               (i + s_ley_list->rear_idx - s_ley_list->num_key),
-                               MAX_SESSION_KEY)]);
+        int ret = 1;
+        int expired;
+        int temp;
+        for (int i = 0; i < requested_num_key; i++) {
+            temp = mod((i + s_ley_list->rear_idx - s_ley_list->num_key),
+                       MAX_SESSION_KEY);
+            expired = check_session_key_validity(&s_ley_list->s_key[temp]);
+            if (expired) {
+                free_session_key_t(&s_ley_list->s_key[temp]);
+                s_ley_list->num_key -= 1;
+            }
+            ret = ret && expired;
         }
-        return !temp;
+        return !ret;
     } else {
         return 0;
     }
