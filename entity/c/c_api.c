@@ -2,7 +2,6 @@
 
 extern unsigned char entity_client_state;
 extern unsigned char entity_server_state;
-extern long int st_time;
 
 SST_ctx_t *init_SST(char *config_path) {
     SST_ctx_t *ctx = malloc(sizeof(SST_ctx_t));
@@ -98,7 +97,6 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
         printf("switching to IN_COMM\n");
         entity_client_state = IN_COMM;
     }
-    st_time = 0;
     printf("wait\n");
     memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
     session_ctx->sock = sock;

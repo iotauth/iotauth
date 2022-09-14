@@ -2,7 +2,6 @@
 
 unsigned char entity_client_state;
 unsigned char entity_server_state;
-long int st_time;
 
 unsigned char *auth_hello_reply_message(unsigned char *entity_nonce,
                                         unsigned char *auth_nonce, int num_key,
