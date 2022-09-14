@@ -177,6 +177,10 @@ function commandInterpreter() {
             secureCommServer.migrateToTrustedAuth();
 
         }
+        else if (command == 'finComm' || command == 'f') {
+            console.log('finComm command');
+            secureCommServer.provideInput('toSend', null);
+        }
         else {
             console.log('unrecognized command: ' + command);
         }
