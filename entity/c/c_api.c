@@ -250,7 +250,7 @@ void send_secure_message(char *msg, unsigned int msg_length,
     if (check_session_key_validity(session_ctx->s_key)) {
         error_handling("Session key expired!\n");
     }
-    unsigned char *buf = (unsigned char *)malloc(SEQ_NUM_SIZE + msg_length);
+    unsigned char buf[SEQ_NUM_SIZE + msg_length];
     memset(buf, 0, SEQ_NUM_SIZE + msg_length);
     write_in_n_bytes(session_ctx->sent_seq_num, SEQ_NUM_SIZE, buf);
     memcpy(buf + SEQ_NUM_SIZE, (unsigned char *)msg, msg_length);
@@ -261,7 +261,7 @@ void send_secure_message(char *msg, unsigned int msg_length,
         buf, SEQ_NUM_SIZE + msg_length, session_ctx->s_key->mac_key,
         MAC_KEY_SIZE, session_ctx->s_key->cipher_key, CIPHER_KEY_SIZE,
         AES_CBC_128_IV_SIZE, &encrypted_length);
-    free(buf);
+        
     session_ctx->sent_seq_num++;
     unsigned char
         sender_buf[MAX_PAYLOAD_LENGTH];  // TODO: Currently the send message

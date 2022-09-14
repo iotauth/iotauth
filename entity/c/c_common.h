@@ -47,6 +47,7 @@
 #define SEQ_NUM_SIZE 8
 #define MAX_PAYLOAD_LENGTH 1024
 #define MAX_HS_BUF_LENGTH 256
+#define MAX_ERROR_MESSAGE_LENGTH 128
 
 // Auth Hello //
 #define AUTH_ID_LEN 4

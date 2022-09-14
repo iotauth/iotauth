@@ -1,12 +1,11 @@
 #include "c_crypto.h"
 
 void print_last_error(char *msg) {
-    char *err = malloc(130);
+    char err[MAX_ERROR_MESSAGE_LENGTH];
 
     ERR_load_crypto_strings();
     ERR_error_string(ERR_get_error(), err);
     printf("%s ERROR: %s\n", msg, err);
-    free(err);
     exit(1);
 }
 
@@ -226,19 +225,19 @@ unsigned char *symmetric_encrypt_authenticate(
     unsigned int mac_key_size, unsigned char *cipher_key,
     unsigned int cipher_key_size, unsigned int iv_size,
     unsigned int *ret_length) {
-    unsigned char *iv = (unsigned char *)malloc(iv_size);
+    unsigned char iv[iv_size];
     generate_nonce(iv_size, iv);
     unsigned int encrypted_length = ((buf_length / iv_size) + 1) * iv_size;
-    unsigned char *encrypted = (unsigned char *)malloc(encrypted_length);
+    unsigned char encrypted[encrypted_length];
     AES_CBC_128_encrypt(buf, buf_length, cipher_key, cipher_key_size, iv,
                         iv_size, encrypted, &encrypted_length);
 
     unsigned int temp_length = ((buf_length / iv_size) + 1) * iv_size + iv_size;
-    unsigned char *temp = (unsigned char *)malloc(temp_length);
+    unsigned char temp[temp_length];
     memcpy(temp, iv, iv_size);
     memcpy(temp + iv_size, encrypted, encrypted_length);
     temp_length = iv_size + encrypted_length;
-    unsigned char *hmac_tag = (unsigned char *)malloc(mac_key_size);
+    unsigned char hmac_tag[mac_key_size];
     HMAC(EVP_sha256(), mac_key, mac_key_size, temp, temp_length, hmac_tag,
          &mac_key_size);
 
@@ -246,10 +245,6 @@ unsigned char *symmetric_encrypt_authenticate(
     unsigned char *ret = (unsigned char *)malloc(*ret_length);
     memcpy(ret, temp, temp_length);
     memcpy(ret + temp_length, hmac_tag, mac_key_size);
-    free(encrypted);
-    free(temp);
-    free(iv);
-    free(hmac_tag);
     return ret;
 }
 
@@ -259,11 +254,11 @@ unsigned char *symmetric_decrypt_authenticate(
     unsigned int cipher_key_size, unsigned int iv_size,
     unsigned int *ret_length) {
     unsigned int encrypted_length = buf_length - mac_key_size;
-    unsigned char *encrypted = (unsigned char *)malloc(encrypted_length);
+    unsigned char encrypted[encrypted_length];
     memcpy(encrypted, buf, encrypted_length);
-    unsigned char *received_tag = (unsigned char *)malloc(mac_key_size);
+    unsigned char received_tag[mac_key_size];
     memcpy(received_tag, buf + encrypted_length, mac_key_size);
-    unsigned char *hmac_tag = (unsigned char *)malloc(mac_key_size);
+    unsigned char hmac_tag[mac_key_size];
     HMAC(EVP_sha256(), mac_key, mac_key_size, encrypted, encrypted_length,
          hmac_tag, &mac_key_size);
     if (memcmp(received_tag, hmac_tag, mac_key_size) != 0) {
@@ -275,21 +270,16 @@ unsigned char *symmetric_decrypt_authenticate(
     } else {
         printf("MAC verified!\n");
     }
-    unsigned char *iv = (unsigned char *)malloc(iv_size);
+    unsigned char iv[iv_size];
     memcpy(iv, encrypted, iv_size);
 
     unsigned int temp_length = encrypted_length - iv_size;
-    unsigned char *temp = (unsigned char *)malloc(temp_length);
+    unsigned char temp[temp_length];
     memcpy(temp, encrypted + iv_size, temp_length);
     *ret_length = ((temp_length) + iv_size) / iv_size * iv_size;
     unsigned char *ret = (unsigned char *)malloc(*ret_length);
     memset(ret, 0, *ret_length);
     AES_CBC_128_decrypt(temp, temp_length, cipher_key, cipher_key_size, iv,
                         iv_size, ret, ret_length);
-    free(encrypted);
-    free(received_tag);
-    free(hmac_tag);
-    free(iv);
-    free(temp);
     return ret;
 }

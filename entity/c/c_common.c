@@ -9,9 +9,9 @@ void error_handling(char *message) {
 void print_buf(unsigned char *buf, size_t size) {
     char hex[size * 3 + 1];
     for(size_t i = 0; i < size; i++) {
-        sprintf(hex + 3 * i, "%.2x ", buf[i]);
+        sprintf(hex + 3 * i, " %.2x", buf[i]);
     }
-    printf("Hex: %s\n", hex);
+    printf("Hex:%s\n", hex);
 }
 
 void generate_nonce(int length, unsigned char *buf) {

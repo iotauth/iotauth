@@ -38,5 +38,5 @@ int main(int argc, char *argv[]) {
 
     free_SST_ctx(ctx);
 
-    sleep(60);
+    sleep(3);
 }
