@@ -244,7 +244,18 @@ function onData(data, socketID) {
 */
 function toSendInputHandler(toSend) {
 	console.log('toSend: ' + util.inspect(toSend));
-	if (toSend.id != null) {
+    if (toSend == null) {
+        console.log('toSend is null, closing all connected clients.');
+	    for (var i = 0; i < connectedClients.length; i++) {
+	        if (connectedClients[i] == null) {
+	            continue;
+	        }
+            console.log('Closing client id: ' + i)
+            connectedClients[i].close();
+            connectedClients[i] = null;
+        }
+    }
+	else if (toSend.id != null) {
         console.log('specified socketID: ' + toSend.id);
 		if (connectedClients[toSend.id] == null) {
 			console.log('client does not exist!');
