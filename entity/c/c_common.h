@@ -71,14 +71,14 @@ typedef struct {
 // @param message input message
 void error_handling(char *message);
 
-// Print the buffer which you want
-// @param buf input buffer to print
-// @param size buffer size to print
-void print_buf(unsigned char *buf, int n);
+// Utility function for printing unsigned char buffer in hex string.
+// @param buf given buffer of unsigned chars.
+// @param size length of the given buffer.
+void print_buf(unsigned char *buf, size_t size);
 
 // Generate secure random nonce using OpenSSL.
-// @param length length to generate the nonce
-// @param buf buffer to save the generated nonce
+// @param length length to generate the nonce.
+// @param buf buffer to save the generated nonce.
 void generate_nonce(int length, unsigned char *buf);
 
 // Write number num in buffer size of n.
@@ -193,10 +193,5 @@ void serialize_handshake(unsigned char *nonce, unsigned char *reply_nonce,
 void parse_handshake(unsigned char *buf, HS_nonce_t *ret);
 
 int mod(int a, int b);
-
-// Utility function for printing unsigned char array in hex string.
-// @param buf port given buffer of unsigned chars.
-// @param buf_len length of the given buffer.
-void print_usigned_char_array(unsigned char* buf, size_t buf_len);
 
 #endif  // C_COMMON_H

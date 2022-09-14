@@ -269,10 +269,8 @@ unsigned char *symmetric_decrypt_authenticate(
     if (memcmp(received_tag, hmac_tag, mac_key_size) != 0) {
         printf("Received tag: ");
         print_buf(received_tag, mac_key_size);
-        // print_usigned_char_array(received_tag, mac_key_size);
         printf("Hmac tag: ");
         print_buf(hmac_tag, mac_key_size);
-        // print_usigned_char_array(hmac_tag, mac_key_size);
         error_handling("Invalid MAC error!");
     } else {
         printf("MAC verified!\n");

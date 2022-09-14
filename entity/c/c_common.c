@@ -6,9 +6,12 @@ void error_handling(char *message) {
     exit(1);
 }
 
-void print_buf(unsigned char *buf, int size) {
-    for (int i = 0; i < size; i++) printf("%x ", buf[i]);
-    printf("\n");
+void print_buf(unsigned char *buf, size_t size) {
+    char hex[size * 3 + 1];
+    for(size_t i = 0; i < size; i++) {
+        sprintf(hex + 3 * i, "%.2x ", buf[i]);
+    }
+    printf("Hex: %s\n", hex);
 }
 
 void generate_nonce(int length, unsigned char *buf) {
@@ -161,12 +164,4 @@ void parse_handshake(unsigned char *buf, HS_nonce_t *ret) {
 int mod(int a, int b) {
     int r = a % b;
     return r < 0 ? r + b : r;
-}
-
-void print_usigned_char_array(unsigned char* buf, size_t buf_len) {
-    char hex[buf_len * 2 + 1];
-    for(int i = 0; i < buf_len; i++) {
-        sprintf(hex + 2 * i, "%.2x", buf[i]);
-    }
-    printf("Hex: %s\n", hex);
 }
