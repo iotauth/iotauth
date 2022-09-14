@@ -62,7 +62,7 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
     unsigned char *parsed_buf =
         parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
     unsigned char
-        sender_HS_1[MAX_HS_BUF_LENGTH];  // TODO: actually only needs 19 bytes.
+        sender_HS_1[MAX_HS_BUF_LENGTH];
     unsigned int sender_HS_1_length;
     make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_1,
                     sender_HS_1, &sender_HS_1_length);
