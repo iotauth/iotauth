@@ -19,10 +19,8 @@ int main(int argc, char *argv[]) {
     free(session_ctx);
 
     s_key_list = get_session_key(ctx, s_key_list);
-
     s_key_list = get_session_key(ctx, s_key_list);
-
-    s_key_list = get_session_key(ctx, s_key_list);
+    s_key_list = get_session_key(ctx, s_key_list); //Intended to fail. 
 
     sleep(3);
 

@@ -97,7 +97,6 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
         printf("switching to IN_COMM\n");
         entity_client_state = IN_COMM;
     }
-    printf("wait\n");
     memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
     session_ctx->sock = sock;
     return session_ctx;
@@ -225,7 +224,8 @@ void *receive_thread(void *SST_session_ctx) {
             printf("Socket closed!\n");
             close(session_ctx->sock);
             return 0;
-        } if (received_buf_length == -1) {
+        }
+        if (received_buf_length == -1) {
             printf("Connection error!\n");
             return 0;
         }
