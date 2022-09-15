@@ -233,10 +233,6 @@ void copy_session_key(session_key_t *dest, session_key_t *src);
 // @param src Source session_key_list
 void append_session_key_list(session_key_list_t *dest, session_key_list_t *src);
 
-// Frees the session_key's mac_key, cipher_key, and itself.
-// @param session_key_t session_key to free
-void free_session_key_t(session_key_t *session_key);
-
 // Updates the validity of session key with the rel_validity.
 // Makes the abs_validity to add the current time, and rel_validity.
 // @param session_key_t the session_key to update.

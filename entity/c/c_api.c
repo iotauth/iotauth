@@ -61,8 +61,7 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
     unsigned int parsed_buf_length;
     unsigned char *parsed_buf =
         parse_handshake_1(s_key, entity_nonce, &parsed_buf_length);
-    unsigned char
-        sender_HS_1[MAX_HS_BUF_LENGTH];
+    unsigned char sender_HS_1[MAX_HS_BUF_LENGTH];
     unsigned int sender_HS_1_length;
     make_sender_buf(parsed_buf, parsed_buf_length, SKEY_HANDSHAKE_1,
                     sender_HS_1, &sender_HS_1_length);
@@ -261,7 +260,7 @@ void send_secure_message(char *msg, unsigned int msg_length,
         buf, SEQ_NUM_SIZE + msg_length, session_ctx->s_key->mac_key,
         MAC_KEY_SIZE, session_ctx->s_key->cipher_key, CIPHER_KEY_SIZE,
         AES_CBC_128_IV_SIZE, &encrypted_length);
-        
+
     session_ctx->sent_seq_num++;
     unsigned char
         sender_buf[MAX_PAYLOAD_LENGTH];  // TODO: Currently the send message
@@ -277,12 +276,6 @@ void send_secure_message(char *msg, unsigned int msg_length,
 }
 
 void free_session_key_list_t(session_key_list_t *session_key_list) {
-    int temp;
-    for (int i = 0; i < session_key_list->num_key; i++) {
-        temp = mod(session_key_list->rear_idx - session_key_list->num_key + i,
-                   MAX_SESSION_KEY);
-        free_session_key_t(&session_key_list->s_key[temp]);
-    }
     free(session_key_list->s_key);
     free(session_key_list);
 }
@@ -292,13 +285,7 @@ void free_config_t(config_t *config) {
     free(config->entity_privkey_path);
 }
 
-void free_distribution_key_t(distribution_key_t *dist_key) {
-    free(dist_key->mac_key);
-    free(dist_key->cipher_key);
-}
-
 void free_SST_ctx(SST_ctx_t *ctx) {
-    free_distribution_key_t(ctx->dist_key);
     OPENSSL_free(ctx->priv_key);
     OPENSSL_free(ctx->pub_key);
     free_config_t(ctx->config);

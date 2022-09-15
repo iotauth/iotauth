@@ -75,15 +75,12 @@ void parse_distribution_key(distribution_key_t *parsed_distribution_key,
     unsigned int cur_index = DIST_KEY_EXPIRATION_TIME_SIZE;
     unsigned int cipher_key_size = buf[cur_index];
     parsed_distribution_key->cipher_key_size = cipher_key_size;
-    parsed_distribution_key->cipher_key =
-        (unsigned char *)malloc(cipher_key_size);
     cur_index += 1;
     memcpy(parsed_distribution_key->cipher_key, buf + cur_index,
            cipher_key_size);
     cur_index += cipher_key_size;
     unsigned int mac_key_size = buf[cur_index];
     parsed_distribution_key->mac_key_size = mac_key_size;
-    parsed_distribution_key->mac_key = (unsigned char *)malloc(mac_key_size);
     cur_index += 1;
     memcpy(parsed_distribution_key->mac_key, buf + cur_index, mac_key_size);
 }
@@ -116,14 +113,12 @@ unsigned int parse_session_key(session_key_t *ret, unsigned char *buf,
 
     // copy cipher_key
     ret->cipher_key_size = buf[cur_idx];
-    ret->cipher_key = (unsigned char *)malloc(ret->cipher_key_size);
     cur_idx += 1;
     memcpy(ret->cipher_key, buf + cur_idx, ret->cipher_key_size);
     cur_idx += ret->cipher_key_size;
 
     // copy mac_key
     ret->mac_key_size = buf[cur_idx];
-    ret->mac_key = (unsigned char *)malloc(ret->mac_key_size);
     cur_idx += 1;
     memcpy(ret->mac_key, buf + cur_idx, ret->mac_key_size);
     cur_idx += ret->mac_key_size;
@@ -525,8 +520,6 @@ void add_session_key_to_list(session_key_t *s_key,
 
 void copy_session_key(session_key_t *dest, session_key_t *src) {
     memcpy(dest, src, sizeof(session_key_t));
-    dest->mac_key = malloc(src->mac_key_size);
-    dest->cipher_key = malloc(src->mac_key_size);
     memcpy(dest->mac_key, src->mac_key, src->mac_key_size);
     memcpy(dest->cipher_key, src->cipher_key, src->cipher_key_size);
 }
@@ -546,11 +539,6 @@ void append_session_key_list(session_key_list_t *dest,
                             MAX_SESSION_KEY)],
             dest);
     }
-}
-
-void free_session_key_t(session_key_t *session_key) {
-    free(session_key->mac_key);
-    free(session_key->cipher_key);
 }
 
 void update_validity(session_key_t *session_key) {
@@ -574,7 +562,6 @@ int check_session_key_list_addable(int requested_num_key,
                        MAX_SESSION_KEY);
             expired = check_session_key_validity(&s_ley_list->s_key[temp]);
             if (expired) {
-                free_session_key_t(&s_ley_list->s_key[temp]);
                 s_ley_list->num_key -= 1;
             }
             ret = ret && expired;
