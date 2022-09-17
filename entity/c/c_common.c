@@ -47,18 +47,28 @@ unsigned long int read_unsigned_long_int_BE(unsigned char *buf,
 }
 
 void var_length_int_to_num(unsigned char *buf, unsigned int buf_length,
-                           unsigned int *payload_length,
-                           unsigned int *payload_buf_length) {
-    unsigned int num = 0;
-    *payload_buf_length = 0;
+                           unsigned int *num,
+                           unsigned int *var_len_int_buf_size) {
+    *num = 0;
+    *var_len_int_buf_size = 0;
     for (int i = 0; i < buf_length; i++) {
-        num |= (buf[i] & 127) << (7 * i);
+        *num |= (buf[i] & 127) << (7 * i);
         if ((buf[i] & 128) == 0) {
-            *payload_length = num;
-            *payload_buf_length = i + 1;
+            *var_len_int_buf_size = i + 1;
             break;
         }
     }
+}
+
+void num_to_var_length_int(unsigned int num, unsigned char *var_len_int_buf,
+                           unsigned int *var_len_int_buf_size) {
+    *var_len_int_buf_size = 1;
+    while (num > 127) {
+        var_len_int_buf[*var_len_int_buf_size - 1] = 128 | num & 127;
+        *var_len_int_buf_size += 1;
+        num >>= 7;
+    }
+    var_len_int_buf[*var_len_int_buf_size - 1] = num;
 }
 
 unsigned char *parse_received_message(unsigned char *received_buf,
@@ -71,17 +81,6 @@ unsigned char *parse_received_message(unsigned char *received_buf,
                           data_buf_length, &payload_buf_length);
     return received_buf + MESSAGE_TYPE_SIZE +
            payload_buf_length;
-}
-
-void num_to_var_length_int(unsigned int data_length, unsigned char *payload_buf,
-                           unsigned int *payload_buf_length) {
-    *payload_buf_length = 1;
-    while (data_length > 127) {
-        payload_buf[*payload_buf_length - 1] = 128 | data_length & 127;
-        *payload_buf_length += 1;
-        data_length >>= 7;
-    }
-    payload_buf[*payload_buf_length - 1] = data_length;
 }
 
 void make_buffer_header(unsigned int data_length, unsigned char MESSAGE_TYPE,

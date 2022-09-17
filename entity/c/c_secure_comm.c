@@ -88,17 +88,14 @@ void parse_distribution_key(distribution_key_t *parsed_distribution_key,
 unsigned char *parse_string_param(unsigned char *buf, unsigned int buf_length,
                                   int offset, unsigned int *return_to_length) {
     unsigned int num;
-    unsigned int payload_buf_length;
-    var_length_int_to_num(buf + offset, buf_length, &num, &payload_buf_length);
-    if (payload_buf_length == 0) {
-        *return_to_length = 1;
-        unsigned char *return_to = (unsigned char *)malloc(*return_to_length);
-        memset(return_to, 0, *return_to_length);
-        return return_to;
+    unsigned int var_len_int_buf_size;
+    var_length_int_to_num(buf + offset, buf_length, &num, &var_len_int_buf_size);
+    if (var_len_int_buf_size == 0) {
+        error_handling("Buffer size of the variable length integer cannot be 0.");
     }
-    *return_to_length = num + payload_buf_length;
+    *return_to_length = num + var_len_int_buf_size;
     unsigned char *return_to = (unsigned char *)malloc(*return_to_length);
-    memcpy(return_to, buf + offset + payload_buf_length, num);
+    memcpy(return_to, buf + offset + var_len_int_buf_size, num);
     return return_to;
 }
 

@@ -97,20 +97,28 @@ unsigned int read_unsigned_int_BE(unsigned char *buf, int byte_length);
 unsigned long int read_unsigned_long_int_BE(unsigned char *buf,
                                             int byte_length);
 
-// Splits received but to variable_length_buf + data_buf
+// Extracts number value of variable length integer from given buffer.
 // When
 //     buf = (variable_length_buf) + (data_buf)
 //     reads (variable_length_buf) to unsigned int (payload_length)
 //     reads (variable_length_buf)'s buf_length to unsigned int
 //     (payload_buf_length)
-//  *@param buf input buffer
-//  *@param buf_length length of input buffer
-//  *@param payload_length length of information
-//  *@param payload_buf_length length of payload buffer to use this length as
-//  index
+//  @param buf input buffer
+//  @param buf_length length of input buffer
+//  @param num number value of the variable length integer.
+//  @param var_len_int_buf_size size of the buffer containing the variable
+//  length integer
 void var_length_int_to_num(unsigned char *buf, unsigned int buf_length,
-                           unsigned int *payload_length,
-                           unsigned int *payload_buf_length);
+                           unsigned int *num,
+                           unsigned int *var_len_int_buf_size);
+
+// Make the data_length to a variable length.
+// @param num number to be converted into variable length integer.
+// @param var_len_int_buf buffer to contain the variable length integer.
+// @param var_len_int_buf_size size of the buffer containing the variable
+// length integer.
+void num_to_var_length_int(unsigned int num, unsigned char *var_len_int_buf,
+                           unsigned int *var_len_int_buf_size);
 
 // Parses received message into 'message_type',
 // and data after msg_type+payload_buf to 'data_buf'.
@@ -131,13 +139,6 @@ unsigned char *parse_received_message(unsigned char *received_buf,
 // concat_buffer_header_and_payload(), make_sender_buf()
 // parses a header to the the data to send.
 // Actual usage only needs make_sender_buf()
-
-// Make the data_length to a variable length.
-// @param data_length input data length
-// @param payload_buf payload buffer in terms of input data length
-// @param payload_buf_length  length of payload buffer
-void num_to_var_length_int(unsigned int data_length, unsigned char *payload_buf,
-                           unsigned int *payload_buf_length);
 
 // Make the header buffer including the message type and payload buffer.
 // @param data_length input data buffer length
@@ -185,12 +186,10 @@ void connect_as_client(const char *ip_addr, const char *port_num, int *sock);
 void serialize_handshake(unsigned char *nonce, unsigned char *reply_nonce,
                          unsigned char *ret);
 
-/**
- *Parses the received buffer to struct HS_nonce_t
- *See parse_handshake() for details.
- *@param buf input buffer incluing nonce.
- *@param ret return buffer
- */
+// Parses the received buffer to struct HS_nonce_t
+// See parse_handshake() for details.
+// @param buf input buffer incluing nonce.
+// @param ret return buffer
 void parse_handshake(unsigned char *buf, HS_nonce_t *ret);
 
 int mod(int a, int b);
