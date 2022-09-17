@@ -394,8 +394,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             // parse data
             unsigned int encrypted_session_key_length =
                 data_buf_length - (key_size * 2);
-            unsigned char *encrypted_session_key =
-                (unsigned char *)malloc(encrypted_session_key_length);
+            unsigned char encrypted_session_key[encrypted_session_key_length];
             memcpy(signed_data.data, data_buf, key_size);
             memcpy(signed_data.sign, data_buf + key_size, key_size);
             memcpy(encrypted_session_key, data_buf + key_size * 2,
@@ -425,7 +424,6 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                     ctx->dist_key->mac_key, ctx->dist_key->mac_key_size,
                     ctx->dist_key->cipher_key, ctx->dist_key->cipher_key_size,
                     IV_SIZE, &decrypted_session_key_response_length);
-            free(encrypted_session_key);
 
             // parse decrypted_session_key_response for nonce comparison &
             // session_key.
