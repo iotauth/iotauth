@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
     SST_session_ctx_t *session_ctx =
         secure_connect_to_server(&s_key_list->s_key[0], ctx);
     printf("finished\n");
-    sleep(1);  // TODO: If erase this comment, MAC error happens at HS_3
+    sleep(1); 
     pthread_t thread;
     pthread_create(&thread, NULL, &receive_thread, (void *)session_ctx);
     send_secure_message("Hello server", strlen("Hello server"), session_ctx);
