@@ -184,7 +184,7 @@ void AES_CBC_128_encrypt(unsigned char *plaintext,
                          unsigned int iv_length, unsigned char *ret,
                          unsigned int *ret_length) {
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit_ex2(ctx, EVP_aes_128_cbc(), key, iv, NULL);
+    EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
     if (!EVP_EncryptUpdate(ctx, ret, (int *)ret_length, plaintext,
                            plaintext_length)) {
         EVP_CIPHER_CTX_free(ctx);
@@ -205,7 +205,7 @@ void AES_CBC_128_decrypt(unsigned char *encrypted,
                          unsigned int iv_length, unsigned char *ret,
                          unsigned int *ret_length) {
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit_ex2(ctx, EVP_aes_128_cbc(), key, iv, NULL);
+    EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
     if (!EVP_DecryptUpdate(ctx, ret, (int *)ret_length, encrypted,
                            encrypted_length)) {
         EVP_CIPHER_CTX_free(ctx);
