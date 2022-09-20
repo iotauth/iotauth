@@ -89,9 +89,11 @@ unsigned char *parse_string_param(unsigned char *buf, unsigned int buf_length,
                                   int offset, unsigned int *return_to_length) {
     unsigned int num;
     unsigned int var_len_int_buf_size;
-    var_length_int_to_num(buf + offset, buf_length, &num, &var_len_int_buf_size);
+    var_length_int_to_num(buf + offset, buf_length, &num,
+                          &var_len_int_buf_size);
     if (var_len_int_buf_size == 0) {
-        error_handling("Buffer size of the variable length integer cannot be 0.");
+        error_handling(
+            "Buffer size of the variable length integer cannot be 0.");
     }
     *return_to_length = num + var_len_int_buf_size;
     unsigned char *return_to = (unsigned char *)malloc(*return_to_length);

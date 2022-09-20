@@ -94,7 +94,7 @@ void write_in_n_bytes(uint64_t num, int n, unsigned char *buf);
 // @return total number of input buffer
 unsigned int read_unsigned_int_BE(unsigned char *buf, int byte_length);
 
-unsigned long int read_unsigned_long_int_BE(unsigned char *buf,
+uint64_t read_unsigned_long_int_BE(unsigned char *buf,
                                             int byte_length);
 
 // Extracts number value of variable length integer from given buffer.

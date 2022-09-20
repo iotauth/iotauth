@@ -36,11 +36,11 @@ unsigned int read_unsigned_int_BE(unsigned char *buf, int byte_length) {
     return num;
 }
 
-unsigned long int read_unsigned_long_int_BE(unsigned char *buf,
+uint64_t read_unsigned_long_int_BE(unsigned char *buf,
                                             int byte_length) {
-    unsigned long int num_valid = 1LU;
+    uint64_t num_valid = 1ULL;
     for (int i = 0; i < byte_length; i++) {
-        unsigned long int num = 1LU << 8 * (byte_length - 1 - i);
+        uint64_t num = 1ULL << 8 * (byte_length - 1 - i);
         num_valid |= num * buf[i];
     }
     return num_valid;
