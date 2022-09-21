@@ -20,7 +20,7 @@
 // This struct is used in receive_thread()
 typedef struct {
     int sock;
-    session_key_t *s_key;
+    session_key_t s_key;
     int sent_seq_num;
     int received_seq_num;
 } SST_session_ctx_t;

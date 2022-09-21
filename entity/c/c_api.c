@@ -52,7 +52,6 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
     SST_session_ctx_t *session_ctx = malloc(sizeof(SST_session_ctx_t));
     session_ctx->received_seq_num = 0;
     session_ctx->sent_seq_num = 0;
-    session_ctx->s_key = malloc(sizeof(session_key_t));
 
     int sock;
     connect_as_client((const char *)ctx->config->entity_server_ip_addr,
@@ -96,7 +95,7 @@ SST_session_ctx_t *secure_connect_to_server(session_key_t *s_key,
         printf("switching to IN_COMM\n");
         entity_client_state = IN_COMM;
     }
-    memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
+    memcpy(&session_ctx->s_key, s_key, sizeof(session_key_t));
     session_ctx->sock = sock;
     return session_ctx;
 }
@@ -105,7 +104,7 @@ SST_session_ctx_t *server_secure_comm_setup(
     SST_ctx_t *ctx, int clnt_sock, session_key_list_t *existing_s_key_list) {
     // Initialize SST_session_ctx_t
     SST_session_ctx_t *session_ctx = malloc(sizeof(SST_session_ctx_t));
-    session_ctx->s_key = malloc(sizeof(session_key_t));
+
     session_ctx->received_seq_num = 0;
     session_ctx->sent_seq_num = 0;
     session_ctx->sock = clnt_sock;
@@ -206,7 +205,7 @@ SST_session_ctx_t *server_secure_comm_setup(
             update_validity(s_key);
             printf("switching to IN_COMM\n");
             entity_server_state = IN_COMM;
-            memcpy(session_ctx->s_key, s_key, sizeof(session_key_t));
+            memcpy(&session_ctx->s_key, s_key, sizeof(session_key_t));
             return session_ctx;
         }
     }
@@ -246,7 +245,7 @@ void receive_message(unsigned char *received_buf,
 
 void send_secure_message(char *msg, unsigned int msg_length,
                          SST_session_ctx_t *session_ctx) {
-    if (check_session_key_validity(session_ctx->s_key)) {
+    if (check_session_key_validity(&session_ctx->s_key)) {
         error_handling("Session key expired!\n");
     }
     unsigned char buf[SEQ_NUM_SIZE + msg_length];
@@ -257,8 +256,8 @@ void send_secure_message(char *msg, unsigned int msg_length,
     // encrypt
     unsigned int encrypted_length;
     unsigned char *encrypted = symmetric_encrypt_authenticate(
-        buf, SEQ_NUM_SIZE + msg_length, session_ctx->s_key->mac_key,
-        MAC_KEY_SIZE, session_ctx->s_key->cipher_key, CIPHER_KEY_SIZE,
+        buf, SEQ_NUM_SIZE + msg_length, session_ctx->s_key.mac_key,
+        MAC_KEY_SIZE, session_ctx->s_key.cipher_key, CIPHER_KEY_SIZE,
         AES_CBC_128_IV_SIZE, &encrypted_length);
 
     session_ctx->sent_seq_num++;
