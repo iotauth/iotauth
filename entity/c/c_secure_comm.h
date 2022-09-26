@@ -38,7 +38,7 @@ typedef struct {
 // This struct contains distribution_key, loaded config, public and private
 // keys.
 typedef struct {
-    distribution_key_t *dist_key;
+    distribution_key_t dist_key;
     config_t *config;
     EVP_PKEY *pub_key;
     EVP_PKEY *priv_key;

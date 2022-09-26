@@ -16,7 +16,6 @@ SST_ctx_t *init_SST(char *config_path) {
             "session keys are %d",
             MAX_SESSION_KEY);
     }
-    ctx->dist_key = malloc(sizeof(distribution_key_t));
     return ctx;
 }
 

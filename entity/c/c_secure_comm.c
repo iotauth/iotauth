@@ -334,7 +334,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                 entity_nonce, auth_nonce, ctx->config->numkey,
                 ctx->config->name, ctx->config->purpose, &serialized_length);
             if (check_validity(
-                    ctx->dist_key->abs_validity)) {  // when dist_key expired
+                    ctx->dist_key.abs_validity)) {  // when dist_key expired
                 printf(
                     "Current distribution key expired, requesting new "
                     "distribution key as well...\n");
@@ -352,7 +352,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                 unsigned int enc_length;
                 unsigned char *enc =
                     serialize_session_key_req_with_distribution_key(
-                        serialized, serialized_length, ctx->dist_key,
+                        serialized, serialized_length, &ctx->dist_key,
                         ctx->config->name, &enc_length);
                 unsigned char message[MAX_AUTH_COMM_LENGTH];
                 unsigned int message_length;
@@ -367,9 +367,9 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                 "key\n");
             unsigned int decrypted_length;
             unsigned char *decrypted = symmetric_decrypt_authenticate(
-                data_buf, data_buf_length, ctx->dist_key->mac_key,
-                ctx->dist_key->mac_key_size, ctx->dist_key->cipher_key,
-                ctx->dist_key->cipher_key_size, AES_CBC_128_IV_SIZE,
+                data_buf, data_buf_length, ctx->dist_key.mac_key,
+                ctx->dist_key.mac_key_size, ctx->dist_key.cipher_key,
+                ctx->dist_key.cipher_key_size, AES_CBC_128_IV_SIZE,
                 &decrypted_length);
             unsigned char reply_nonce[NONCE_SIZE];
             parse_session_key_response(decrypted, decrypted_length, reply_nonce,
@@ -411,7 +411,7 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
                                 ctx->priv_key, &decrypted_dist_key_buf_length);
 
             // parse decrypted_dist_key_buf to mac_key & cipher_key
-            parse_distribution_key(ctx->dist_key, decrypted_dist_key_buf,
+            parse_distribution_key(&ctx->dist_key, decrypted_dist_key_buf,
                                    decrypted_dist_key_buf_length);
             free(decrypted_dist_key_buf);
 
@@ -420,8 +420,8 @@ session_key_list_t *send_session_key_req_via_TCP(SST_ctx_t *ctx) {
             unsigned char *decrypted_session_key_response =
                 symmetric_decrypt_authenticate(
                     encrypted_session_key, encrypted_session_key_length,
-                    ctx->dist_key->mac_key, ctx->dist_key->mac_key_size,
-                    ctx->dist_key->cipher_key, ctx->dist_key->cipher_key_size,
+                    ctx->dist_key.mac_key, ctx->dist_key.mac_key_size,
+                    ctx->dist_key.cipher_key, ctx->dist_key.cipher_key_size,
                     IV_SIZE, &decrypted_session_key_response_length);
 
             // parse decrypted_session_key_response for nonce comparison &
