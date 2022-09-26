@@ -49,4 +49,4 @@ This project is still in its infancy and currently intended for academic and res
 ---
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP) a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 
-*Last updated on January 12, 2022*
+*Last updated on September 26, 2022*
