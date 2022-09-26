@@ -1,9 +1,15 @@
 .idea/libraries/*
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/gradle.xml
-.idea/uiDesigner.xml
-.idea/kotlinc.xml
+
+# Ignore all xml files in .idea except for a few.
+.idea/*.xml
+!.idea/compiler.xml
+!.idea/encodings.xml
+!.idea/misc.xml
+!.idea/modules.xml
+
+auth-server/package-lock.json
+package-lock.json
+
 *.class
 auth-server/target/*.jar
 example-auth-db-generator/target/*.jar

@@ -20,17 +20,22 @@ For the following instructions, we use $ROOT to indicate the root directory of t
 
 * First, open project ($Root/auth) from IntelliJ IDEA
 
+* To configure JDK (When you get `No JDK specified` error)
+  * Select File -> Project Structure.
+  * Choose SDK (e.g., openjdk-11 or openjdk-17)
+  * Choose Language level (11 or above).
+
 * To import Maven dependencies,
   * Right click on pom.xml
-  * Select Maven -> Reimport
+  * Select Maven -> Reload Project (or something similar)
 
-* To enable Maven projects auto-import,
+* To enable Maven projects auto-import (*optional*),
   * On menu, click on
-    * File | Other Settings | Default Settings
+    * IntelliJ IDEA | Preferences
   * In the pop-up window, select 
     * Build, Execution, Deployment -> Build Tools -> Maven -> Importing
-  * Check
-    * Import Maven projects automatically
+  * Check under `Automatically download`
+    * Sources, Documentation, Annotations (whichever you prefer)
 
 * To build jar
   * In maven project tab, inside auth-server -> lifecycle 
@@ -40,7 +45,7 @@ For the following instructions, we use $ROOT to indicate the root directory of t
   * See the [this](https://github.com/iotauth/iotauth/blob/master/auth/auth-server/README.md) (the README file of auth-server module.)
 
 * To generate JavaDoc
-  * In IntelliJ IDEA, Tools -> Generate JavaDoc, set output directory $ROOT/auth/doc and click OK. The directory will be created automatically.
+  * In menu bar, select Tools -> Generate JavaDoc, set output directory $ROOT/auth/doc and click OK. The directory will be created automatically.
 
 * Run -> Run/Debug configurations
   * Check "single instance only"
