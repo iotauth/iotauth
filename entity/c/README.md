@@ -1,12 +1,12 @@
 # Prerequisites
 
 -   OpenSSL:
-    SST uses the APIs from OpenSSL for encryption and decryption. OpenSSL 3.0 above is required to run SST. 
-    - On Max OS X, OpenSSL can be installed using `brew install openssl`. 
-    - Following environment variables need to be set before running `make`. The exact variable values can be found from the output of `brew install openssl`. 
-    - add two lines below by using `vi ~/.zshrc`
-      - `export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"`
-      - `export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"`
+    SST uses the APIs from OpenSSL for encryption and decryption. OpenSSL 3.0 above is required to run SST.
+    -   On Max OS X, OpenSSL can be installed using `brew install openssl`.
+    -   Following environment variables need to be set before running `make`. The exact variable values can be found from the output of `brew install openssl`.
+    -   add two lines below by using `vi ~/.zshrc`
+        -   `export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"`
+        -   `export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"`
 
 # Code Hiearchy
 
@@ -16,7 +16,7 @@ c_common -> c_crypto -> c_secure_comm -> c_api -> entity_client, entity_server
 
 # C API
 
-**SST_ctx_t \*init_SST()**
+**SST_ctx_t \* init_SST()**
 
 -   `init_SST()` is a function to load the config file, public and private keys, and store the distribution key.
 -   It initializes important settings, at once.
@@ -45,7 +45,7 @@ c_common -> c_crypto -> c_secure_comm -> c_api -> entity_client, entity_server
 -   Creates a receive_thread.
 -   Usage:
 
-``` 
+```
 pthread_t thread;
 pthread_create(&thread, NULL, &receive_thread, (void \*)session_ctx);
 ```
@@ -61,7 +61,11 @@ pthread_create(&thread, NULL, &receive_thread, (void \*)session_ctx);
 
 **void free_session_key_list_t()**
 
--   `free_session_key_list_t()` is a function that frees the memory assigned to the session_key_list. It recursively frees the memory assigned by the session keys.
+-   `free_session_key_list_t()` is a function that frees the memory assigned to the config_t. It frees the memory assigned by the asymmetric key paths.
+
+**void free_config_t()**
+
+-   `free_config_t()` is a function that frees the memory assigned to the session_key_list. It recursively frees the memory assigned by the session keys.
 
 **void free_SST_ctx()**
 
