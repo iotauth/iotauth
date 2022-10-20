@@ -278,11 +278,6 @@ void free_session_key_list_t(session_key_list_t *session_key_list) {
     free(session_key_list);
 }
 
-void free_config_t(config_t *config) {
-    free(config->auth_pubkey_path);
-    free(config->entity_privkey_path);
-}
-
 void free_SST_ctx(SST_ctx_t *ctx) {
     OPENSSL_free(ctx->priv_key);
     OPENSSL_free(ctx->pub_key);
