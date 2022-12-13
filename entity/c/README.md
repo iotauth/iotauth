@@ -63,9 +63,9 @@ pthread_create(&thread, NULL, &receive_thread, (void \*)session_ctx);
 
 -   `free_session_key_list_t()` is a function that frees the memory assigned to the config_t. It frees the memory assigned by the asymmetric key paths.
 
-**void free_SST_ctx()**
+**void free_SST_ctx_t()**
 
--   `free_SST_ctx()` is a function that frees the memory assigned to the loaded SST_ctx. It recursively frees the memory assigned by SST_ctx.
+-   `free_SST_ctx_t()` is a function that frees the memory assigned to the loaded SST_ctx. It recursively frees the memory assigned by SST_ctx.
 
 # Compile
 

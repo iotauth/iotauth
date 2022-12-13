@@ -278,7 +278,7 @@ void free_session_key_list_t(session_key_list_t *session_key_list) {
     free(session_key_list);
 }
 
-void free_SST_ctx(SST_ctx_t *ctx) {
+void free_SST_ctx_t(SST_ctx_t *ctx) {
     OPENSSL_free(ctx->priv_key);
     OPENSSL_free(ctx->pub_key);
     free_config_t(ctx->config);

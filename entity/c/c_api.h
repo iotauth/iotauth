@@ -60,6 +60,6 @@ void free_session_key_list_t(session_key_list_t *session_key_list);
 
 // Free memory used in SST_ctx recursively.
 // @param SST_ctx_t loaded SST_ctx_t to free
-void free_SST_ctx(SST_ctx_t *ctx);
+void free_SST_ctx_t(SST_ctx_t *ctx);
 
 #endif  // C_API_H
