@@ -56,7 +56,7 @@ pthread_create(&thread, NULL, &receive_thread, (void \*)session_ctx);
 
 **void send_secure_message()**
 
--   `secure message()` is a function that send a message with secure communication to the server by encrypting it with the session key.
+-   `secure send_secure_message()` is a function that send a message with secure communication to the server by encrypting it with the session key.
 -   Input includes message, session_ctx struct.
 
 **void free_session_key_list_t()**
