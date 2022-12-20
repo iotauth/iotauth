@@ -40,4 +40,8 @@ int get_key_value(char *ptr);
 // @return config struct to use when connecting to Auth
 config_t *load_config(char *path);
 
+// Free memory used in config_t.
+// @param config struct config_t to be freed.
+void free_config_t(config_t *config);
+
 #endif  // LOAD_CONFIG_H

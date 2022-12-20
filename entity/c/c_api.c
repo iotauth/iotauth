@@ -270,10 +270,10 @@ void send_secure_message(char *msg, unsigned int msg_length,
     session_ctx->sent_seq_num++;
     unsigned char
         sender_buf[MAX_PAYLOAD_LENGTH];  // TODO: Currently the send message
-                                         // does not support dynamic sizes, the
-                                         // max length is shorter than 1024.
-                                         // Must need to decide static or
-                                         // dynamic buffer size.
+                                         // does not support dynamic sizes,
+                                         // the max length is shorter than
+                                         // 1024. Must need to decide static
+                                         // or dynamic buffer size.
     unsigned int sender_buf_length;
     make_sender_buf(encrypted, encrypted_length, SECURE_COMM_MSG, sender_buf,
                     &sender_buf_length);
@@ -286,12 +286,7 @@ void free_session_key_list_t(session_key_list_t *session_key_list) {
     free(session_key_list);
 }
 
-void free_config_t(config_t *config) {
-    free(config->auth_pubkey_path);
-    free(config->entity_privkey_path);
-}
-
-void free_SST_ctx(SST_ctx_t *ctx) {
+void free_SST_ctx_t(SST_ctx_t *ctx) {
     OPENSSL_free(ctx->priv_key);
     OPENSSL_free(ctx->pub_key);
     free_config_t(ctx->config);

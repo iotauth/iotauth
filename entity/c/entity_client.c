@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 
     free_session_key_list_t(s_key_list);
 
-    free_SST_ctx(ctx);
+    free_SST_ctx_t(ctx);
 
     sleep(3);
 }
