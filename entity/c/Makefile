@@ -1,4 +1,4 @@
-all: entity_client entity_server
+all: entity_client entity_server c s
 
 UNAME := $(shell uname)
 
@@ -24,6 +24,18 @@ entity_server: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o entit
 
 entity_server.o: entity_server.c c_common.o c_crypto.o c_secure_comm.o load_config.o
 	gcc ${CPPFLAGS} -c -o entity_server.o entity_server.c
+
+c: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o c.o
+	gcc ${CPPFLAGS} ${LDFLAGS} -o c c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o c.o -lcrypto -pthread
+
+c.o: c.c c_common.o c_crypto.o c_secure_comm.o load_config.o
+	gcc ${CPPFLAGS} -c -o c.o c.c
+
+s: c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o s.o
+	gcc ${CPPFLAGS} ${LDFLAGS} -o s c_common.o c_crypto.o c_secure_comm.o load_config.o c_api.o s.o -lcrypto -pthread
+
+s.o: entity_server.c c_common.o c_crypto.o c_secure_comm.o load_config.o
+	gcc ${CPPFLAGS} -c -o s.o s.c
 
 c_common.o: c_common.h c_common.c
 	gcc ${CPPFLAGS} -c -o c_common.o c_common.c

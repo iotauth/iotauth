@@ -112,10 +112,10 @@ SST_session_ctx_t *server_secure_comm_setup(
     unsigned char server_nonce[HS_NONCE_SIZE];
 
     session_key_t *s_key;
-    while (1) {
+
+    if (entity_server_state == IDLE) {
         unsigned char received_buf[MAX_HS_BUF_LENGTH];
-        int received_buf_length =
-            read(clnt_sock, received_buf, sizeof(received_buf));
+        int received_buf_length = read(clnt_sock, received_buf, 74);
         unsigned char message_type;
         unsigned int data_buf_length;
         unsigned char *data_buf = parse_received_message(
@@ -176,8 +176,16 @@ SST_session_ctx_t *server_secure_comm_setup(
             free(parsed_buf);
             printf("switching to HANDSHAKE_2_SENT\n");
             entity_server_state = HANDSHAKE_2_SENT;
-
-        } else if (message_type == SKEY_HANDSHAKE_3) {
+        }
+    }
+    if (entity_server_state == HANDSHAKE_2_SENT) {
+        unsigned char received_buf[MAX_HS_BUF_LENGTH];
+        int received_buf_length = read(clnt_sock, received_buf, 82);
+        unsigned char message_type;
+        unsigned int data_buf_length;
+        unsigned char *data_buf = parse_received_message(
+            received_buf, received_buf_length, &message_type, &data_buf_length);
+        if (message_type == SKEY_HANDSHAKE_3) {
             printf("received session key handshake3!\n");
             if (entity_server_state != HANDSHAKE_2_SENT) {
                 error_handling(
