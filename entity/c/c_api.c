@@ -115,7 +115,7 @@ SST_session_ctx_t *server_secure_comm_setup(
 
     if (entity_server_state == IDLE) {
         unsigned char received_buf[MAX_HS_BUF_LENGTH];
-        int received_buf_length = read(clnt_sock, received_buf, 74);
+        int received_buf_length = read(clnt_sock, received_buf, HANDSHAKE_1_LENGTH);
         unsigned char message_type;
         unsigned int data_buf_length;
         unsigned char *data_buf = parse_received_message(
@@ -180,7 +180,7 @@ SST_session_ctx_t *server_secure_comm_setup(
     }
     if (entity_server_state == HANDSHAKE_2_SENT) {
         unsigned char received_buf[MAX_HS_BUF_LENGTH];
-        int received_buf_length = read(clnt_sock, received_buf, 82);
+        int received_buf_length = read(clnt_sock, received_buf, HANDSHAKE_3_LENGTH);
         unsigned char message_type;
         unsigned int data_buf_length;
         unsigned char *data_buf = parse_received_message(
