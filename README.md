@@ -1,6 +1,6 @@
 # Overview
 ---
-This is a repository for an open-source project of the local authentication and authorization entity, Auth, for security of the Internet of Things (IoT). Auth is a local point of authorization, whose main roles are 1) providing authentication/authorization for its locally registered entities or devices, and 2) working as a bridge of authorization between its local entities and the Internet. 
+This is a repository for an open-source project of **SST (Secure Swarm Toolkit)** and the local authentication and authorization entity, **Auth**, for security of the Internet of Things (IoT). Auth is a local point of authorization, whose main roles are 1) providing authentication/authorization for its locally registered entities or devices, and 2) working as a bridge of authorization between its local entities and the Internet. 
 
 Our conference papers [[IoTDI '17](https://dl.acm.org/citation.cfm?id=3054980)], [[FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)] describe a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity). The architecture provides security guarantees while addressing IoT-related issues including resource constraints and intermittent connectivity. The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our journal article [[IT Professional '17'](https://ieeexplore.ieee.org/document/8057722/)]. Our recent journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/3375837)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
 
@@ -17,9 +17,9 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 
 # Directory structure
 ---
-- **android**: Directory for Auth and entities for Android platform (*currently under development*)
+- **android**: Directory for SST's Auth and entities for Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
-- **entity**: Directory for entities in the IoT, to be authenticated/authorized by Auth, also includes [a directory](https://github.com/iotauth/iotauth/tree/master/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
+- **entity**: Directory for SST's C and JavaScript APIs and example IoT entities using SST to be authenticated/authorized by Auth. This direcotry also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/master/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
 - **examples**: Directory for scripts and descriptions to run example Auths and entities.
 
 # Quick start with example Auths and entities
