@@ -9,6 +9,8 @@ This directory includes entities in the IoT, to be authenticated/authorized by A
 
 - **c**: API in C language and example entities implemented using the C API.
 
+- **cpp**: C++ API (work in progress).
+
 - **credentials**: Directory for certificates and keys for entities (including example entities)
 
 - **node**: API in JavaScript on Node.js and entities implemented using JavaScript on Node.js
