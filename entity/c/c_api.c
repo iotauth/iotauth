@@ -112,10 +112,10 @@ SST_session_ctx_t *server_secure_comm_setup(
     unsigned char server_nonce[HS_NONCE_SIZE];
 
     session_key_t *s_key;
-    while (1) {
+
+    if (entity_server_state == IDLE) {
         unsigned char received_buf[MAX_HS_BUF_LENGTH];
-        int received_buf_length =
-            read(clnt_sock, received_buf, sizeof(received_buf));
+        int received_buf_length = read(clnt_sock, received_buf, HANDSHAKE_1_LENGTH);
         unsigned char message_type;
         unsigned int data_buf_length;
         unsigned char *data_buf = parse_received_message(
@@ -176,8 +176,16 @@ SST_session_ctx_t *server_secure_comm_setup(
             free(parsed_buf);
             printf("switching to HANDSHAKE_2_SENT\n");
             entity_server_state = HANDSHAKE_2_SENT;
-
-        } else if (message_type == SKEY_HANDSHAKE_3) {
+        }
+    }
+    if (entity_server_state == HANDSHAKE_2_SENT) {
+        unsigned char received_buf[MAX_HS_BUF_LENGTH];
+        int received_buf_length = read(clnt_sock, received_buf, HANDSHAKE_3_LENGTH);
+        unsigned char message_type;
+        unsigned int data_buf_length;
+        unsigned char *data_buf = parse_received_message(
+            received_buf, received_buf_length, &message_type, &data_buf_length);
+        if (message_type == SKEY_HANDSHAKE_3) {
             printf("received session key handshake3!\n");
             if (entity_server_state != HANDSHAKE_2_SENT) {
                 error_handling(
@@ -262,10 +270,10 @@ void send_secure_message(char *msg, unsigned int msg_length,
     session_ctx->sent_seq_num++;
     unsigned char
         sender_buf[MAX_PAYLOAD_LENGTH];  // TODO: Currently the send message
-                                         // does not support dynamic sizes, the
-                                         // max length is shorter than 1024.
-                                         // Must need to decide static or
-                                         // dynamic buffer size.
+                                         // does not support dynamic sizes,
+                                         // the max length is shorter than
+                                         // 1024. Must need to decide static
+                                         // or dynamic buffer size.
     unsigned int sender_buf_length;
     make_sender_buf(encrypted, encrypted_length, SECURE_COMM_MSG, sender_buf,
                     &sender_buf_length);
@@ -278,12 +286,7 @@ void free_session_key_list_t(session_key_list_t *session_key_list) {
     free(session_key_list);
 }
 
-void free_config_t(config_t *config) {
-    free(config->auth_pubkey_path);
-    free(config->entity_privkey_path);
-}
-
-void free_SST_ctx(SST_ctx_t *ctx) {
+void free_SST_ctx_t(SST_ctx_t *ctx) {
     OPENSSL_free(ctx->priv_key);
     OPENSSL_free(ctx->pub_key);
     free_config_t(ctx->config);
