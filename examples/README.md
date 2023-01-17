@@ -15,7 +15,7 @@ Each Auth has its own public keys (or certificates) and keystores in the directo
 
 Each Auth stores public keys of its registered entities, and each entity stores its Auth's public key. The script (generateExampleAuthsEntities.sh) also exchanges the public keys between each Auth and its entities by copying them. The Auths store the public keys of their entities as part of their databases, specifically, in the directories, *auth/databases/auth101/certs/* and *auth/databases/auth102/certs/*. For entities, the public keys of Auths are stored in the directory, *entity/auth_certs/*.
 
-Database tables for storing authorization information should be initialized for each eaxample Auth. The script (generateExampleAuthsEntities.sh) does this database initialization as the last step of the script. The initialized databases are created for *Auth101* and *Auth102* in the directorories, *auth/databases/auth101* and *auth/databases/auth101*, respectively, with the file name *auth.db*. Currently, we use SQLite for Auth databases.
+Database tables for storing authorization information should be initialized for each example Auth. The script (generateExampleAuthsEntities.sh) does this database initialization as the last step of the script. The initialized databases are created for *Auth101* and *Auth102* in the directorories, *auth/databases/auth101* and *auth/databases/auth101*, respectively, with the file name *auth.db*. Currently, we use SQLite for Auth databases.
 
 # Script details
 ---
