@@ -7,7 +7,11 @@ This directory includes entities in the IoT, to be authenticated/authorized by A
 
 - **auth_certs**: Certificates of Auth, to be created after running the script for generating and copying example Auth/entity credentials.
 
-- **c**: API in C language and example entities implemented using the C API.
+- **c**: API in C language and example entities implemented using the C API. It is implemented in [this repository](https://github.com/iotauth/sst-c-api). For usage, initialize and update submodule as below.
+	```
+	git submodule init
+	git submodule update
+	``` 
 
 - **cpp**: C++ API (work in progress).
 
