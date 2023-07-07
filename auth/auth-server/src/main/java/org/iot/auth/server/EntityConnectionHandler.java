@@ -361,44 +361,61 @@ public abstract class EntityConnectionHandler {
 
     /**
      * When an entity requests a session key with a session key ID, this method checks if the session key is valid for
-     * the communication policy of the requesting entity.
+     * the communication policy of the requesting entity. This check includes target group, purpose, and maximum number
+     * of session key owners.
      * @param requestingEntity The entity who sent a session key request based on a session key ID.
      * @param sessionKey The session key found from the session key ID.
      * @return If the check is successful.
      */
     private boolean checkSessionKeyCommunicationPolicy(RegisteredEntity requestingEntity, SessionKey sessionKey) {
-        // reqPurpose
-        String purpose = sessionKey.getPurpose();
-        getLogger().info("Hokeun test: purpose: {}", purpose);
-        String[] purposeTokens = purpose.split(":");
+        String[] purposeTokens = sessionKey.getPurpose().split(":");
         if (purposeTokens.length != 2) {
             throw new RuntimeException("Wrong session key purpose format. Format must be \"TargetType:Target\"");
         }
-        CommunicationTargetType targetType = CommunicationTargetType.fromStringValue(purposeTokens[0]);
+        String targetType = purposeTokens[0];
         String target = purposeTokens[1];
+        CommunicationPolicy communicationPolicy;
         switch (targetType) {
-            case TARGET_GROUP:
-                if (target.equals(requestingEntity.getGroup())) {
-                    getLogger().info("Requesting entity's target group matches session key communication policy.");
-                    return true;
-                } else {
-                    getLogger().error("Requesting entity's target group does not match session key communication policy.");
+            case "Group":
+                if (!target.equals(requestingEntity.getGroup())) {
+                    getLogger().error("Requesting entity ({})'s target group does not match session key communication policy.",
+                            requestingEntity.getName());
                     return false;
                 }
-            case PUBLISH_TOPIC:
-                throw new UnsupportedOperationException("Session key communication policy target type check for " +
-                        "PUBLISH_TOPIC is not yet implemented.");
-            case SUBSCRIBE_TOPIC:
-                throw new UnsupportedOperationException("Session key communication policy target type check for " +
-                        "SUBSCRIBE_TOPIC is not yet implemented.");
-            case UNKNOWN:
-                throw new RuntimeException("Unknown session key target type.");
-            case SESSION_KEY_ID:
-            case CACHED_SESSION_KEYS:
-                throw new RuntimeException("Session key target type must not be session key id nor cached session keys.");
+                getLogger().info("Requesting entity ({})'s target group matches session key communication policy.",
+                        requestingEntity.getName());
+                communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
+                        CommunicationTargetType.TARGET_GROUP, target);
+                if (communicationPolicy == null) {
+                    getLogger().error("Communication policy is not found for {}.", requestingEntity.getName());
+                    return false;
+                }
+                if (sessionKey.getOwners().length >= communicationPolicy.getMaxNumSessionKeyOwners()) {
+                    getLogger().error("The maximum of session key owners has already reached.",
+                            requestingEntity.getName(), target);
+                    return false;
+                }
+                return true;
+            case "PubSub":
+                // Requesting entity's group must be allowed to subscribe to the topic.
+                communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
+                        CommunicationTargetType.SUBSCRIBE_TOPIC, target);
+                if (communicationPolicy == null) {
+                    getLogger().error("Requesting entity ({}) is not allowed to subscribe topic: {}",
+                            requestingEntity.getName(), target);
+                    return false;
+                }
+                getLogger().info("Requesting entity ({}) is allowed to subscribe topic: {}",
+                        requestingEntity.getName(), target);
+                if (sessionKey.getOwners().length >= communicationPolicy.getMaxNumSessionKeyOwners()) {
+                    getLogger().error("The maximum of session key owners has already reached.",
+                            requestingEntity.getName(), target);
+                    return false;
+                }
+                return true;
+            default:
+                throw new RuntimeException("Invalid session key target type: " + targetType);
         }
-        getLogger().error("Failed to check session key communication policy for the requesting entity.");
-        return false;
     }
 
     /**
