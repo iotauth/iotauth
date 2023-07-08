@@ -37,7 +37,6 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 - [Hokeun Kim](https://hokeun.github.io/) (Assistant Professor at Hanyang University IoT Lab)
 - [Dongha Kim](https://github.com/Jakio815) (M.S./Ph.D. Student at Hanyang University IoT Lab)
 - [Yeongbin Jo](https://github.com/yeongbin7) (M.S. Student at Hanyang University IoT Lab)
-- [Hanyang University IoT Lab](https://hyu-iot.github.io/)
 
 ## Former Contributors
 - [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
