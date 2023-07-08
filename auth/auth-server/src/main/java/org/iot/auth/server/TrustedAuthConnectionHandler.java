@@ -156,6 +156,11 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
                 logger.error("SQLException | ClassNotFoundException {}", ExceptionToString.convertExceptionToStackTrace(e));
                 throw new RuntimeException("Session key for ID " + authSessionKeyReqMessage.getSessionKeyID() + " cannot be found!");
             }
+            if (!CommunicationPolicyChecker.checkSessionKeyCommunicationPolicy(server,
+                    authSessionKeyReqMessage.getRequestingEntityGroup(),
+                    authSessionKeyReqMessage.getRequestingEntityName(), sessionKey)) {
+                throw new RuntimeException("Session key communication policy check failed.");
+            }
 
             try {
                 server.addSessionKeyOwner(authSessionKeyReqMessage.getSessionKeyID(), authSessionKeyReqMessage.getRequestingEntityName());

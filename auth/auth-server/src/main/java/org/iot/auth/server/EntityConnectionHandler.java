@@ -49,7 +49,7 @@ public abstract class EntityConnectionHandler {
 
     private class SessionKeysAndSpec {
         private List<SessionKey> sessionKeys;
-        private SymmetricKeyCryptoSpec spec;
+        private final SymmetricKeyCryptoSpec spec;
         public SessionKeysAndSpec(List<SessionKey> sessionKeys, SymmetricKeyCryptoSpec spec) {
             this.sessionKeys = sessionKeys;
             this.spec = spec;
@@ -178,7 +178,7 @@ public abstract class EntityConnectionHandler {
 
             Buffer encPayload = payload.slice(bufferedString.length());
 
-            Buffer decPayload = null;
+            Buffer decPayload;
             try {
                 decPayload = requestingEntity.getDistributionKey().decryptVerify(encPayload);
             } catch (InvalidMacException | MessageIntegrityException e) {
@@ -211,7 +211,7 @@ public abstract class EntityConnectionHandler {
             if (requestingEntity == null) {
                 throw new UnrecognizedEntityException("Error in MIGRATION_REQ_WITH_SIGN: Migration requester is not found!");
             }
-            getLogger().info("requestingEntity: " + requestingEntity.toString());
+            getLogger().info("requestingEntity: " + requestingEntity);
             // checking signature
             try {
                 if (!server.getCrypto().verifySignedData(decPayload, signature, requestingEntity.getPublicKey())) {
@@ -248,7 +248,7 @@ public abstract class EntityConnectionHandler {
             if (requestingEntity == null) {
                 throw new UnrecognizedEntityException("Error in MIGRATION_REQ_WITH_MAC: Migration requester is not found!");
             }
-            getLogger().info("requestingEntity: " + requestingEntity.toString());
+            getLogger().info("requestingEntity: " + requestingEntity);
             // check MAC
             MigrationToken migrationToken = requestingEntity.getMigrationToken();
             DistributionKey currentDistributionMacKey = migrationToken.getCurrentDistributionMacKey();
@@ -300,31 +300,26 @@ public abstract class EntityConnectionHandler {
             getLogger().info("InvalidSessionKeyTargetException: " + e.getMessage());
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
             close();
-            return;
         }
         catch (UseOfExpiredKeyException e) {
             getLogger().info("UseOfExpiredKeyException: " + e.getMessage());
             sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
             close();
-            return;
         }
         catch (NoAvailableDistributionKeyException e) {
             getLogger().info("NoAvailableDistributionKeyException: " + e.getMessage());
             sendAuthAlert(AuthAlertCode.INVALID_DISTRIBUTION_KEY);
             close();
-            return;
         }
         catch (TooManySessionKeysRequestedException e) {
             getLogger().info("TooManySessionKeysRequestedException: " + e.getMessage());
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
             close();
-            return;
         }
         catch (UnrecognizedEntityException e) {
             getLogger().info("UnrecognizedEntityException: " + e.getMessage());
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
             close();
-            return;
         }
     }
 
@@ -408,8 +403,7 @@ public abstract class EntityConnectionHandler {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 if (communicationPolicy == null) {
-                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: "
-                            + purpose.toString());
+                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
                 }
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
@@ -425,8 +419,7 @@ public abstract class EntityConnectionHandler {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 if (communicationPolicy == null) {
-                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: "
-                            + purpose.toString());
+                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
                 }
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 SessionKeyPurpose sessionKeyPurpose =
@@ -440,7 +433,6 @@ public abstract class EntityConnectionHandler {
             // If a session key id is specified, derive the keys from DB
             case SESSION_KEY_ID: {
                 Object objTarget = reqPurpose.getTarget();
-                SessionKey sessionKey = null;
                 getLogger().debug("objTarget class: {}", objTarget.getClass());
                 long sessionKeyID = -1;
                 if (objTarget.getClass() == Integer.class) {
@@ -456,8 +448,14 @@ public abstract class EntityConnectionHandler {
                 getLogger().info("ID of Auth that generated this key: {}", authID);
 
                 if (authID == server.getAuthID()) {
-                    getLogger().info("This session key was generated by me");
-                    sessionKey = server.getSessionKeyByID(sessionKeyID);
+                    getLogger().info("This session key was generated by me.");
+                    SessionKey sessionKey = server.getSessionKeyByID(sessionKeyID);
+
+                    // Checks if session key ID meets the communication policy.
+                    if (!CommunicationPolicyChecker.checkSessionKeyCommunicationPolicy(
+                            server, requestingEntity.getGroup(), requestingEntity.getName(), sessionKey)) {
+                        throw new RuntimeException("Session key communication policy check failed.");
+                    }
 
                     sessionKeyList = new LinkedList<>();
                     sessionKeyList.add(sessionKey);
@@ -528,7 +526,7 @@ public abstract class EntityConnectionHandler {
      * @throws ParseException If JSON parsing fails.
      */
     private SessionKeysAndSpec sendAuthSessionKeyReq(
-            int trustedAuthID, AuthSessionKeyReqMessage authSessionKeyReqMessage) throws IOException, ParseException
+            int trustedAuthID, AuthSessionKeyReqMessage authSessionKeyReqMessage) throws ParseException
     {
         getLogger().info("Sending auth session key req to Auth {}", trustedAuthID);
 
@@ -544,9 +542,9 @@ public abstract class EntityConnectionHandler {
 
         AuthSessionKeyRespMessage authSessionKeyRespMessage = AuthSessionKeyRespMessage.fromHttpResponse(contentResponse);
 
-        getLogger().info("Received AuthSessionKeyRespMessage: {}", authSessionKeyRespMessage.toString());
+        getLogger().info("Received AuthSessionKeyRespMessage: {}", authSessionKeyRespMessage);
         List<SessionKey> sessionKeyList = authSessionKeyRespMessage.getSessionKeyList();
-        SymmetricKeyCryptoSpec sessionCryptoSpec = null;
+        SymmetricKeyCryptoSpec sessionCryptoSpec;
         if (sessionKeyList.size() > 0) {
             sessionCryptoSpec = sessionKeyList.get(0).getCryptoSpec();
         }
