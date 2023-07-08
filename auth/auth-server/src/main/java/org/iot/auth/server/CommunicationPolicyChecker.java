@@ -39,7 +39,8 @@ public class CommunicationPolicyChecker {
      */
     public static boolean checkSessionKeyCommunicationPolicy(
             AuthServer server,
-            RegisteredEntity requestingEntity,
+            String requestingEntityGroup,
+            String requestingEntityName,
             SessionKey sessionKey) {
         String[] purposeTokens = sessionKey.getPurpose().split(":");
         if (purposeTokens.length != 2) {
@@ -49,31 +50,31 @@ public class CommunicationPolicyChecker {
         String target = purposeTokens[1];
         switch (targetType) {
             case "Group":
-                if (!target.equals(requestingEntity.getGroup())) {
+                if (!target.equals(requestingEntityGroup)) {
                     logger.error("Requesting entity ({})'s target group does not match session key communication policy.",
-                            requestingEntity.getName());
+                            requestingEntityName);
                     return false;
                 }
                 if (sessionKey.getOwners().length >= sessionKey.getMaxNumOwners()) {
-                    logger.error("The maximum of session key owners has already reached.",
-                            requestingEntity.getName(), target);
+                    logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",
+                            requestingEntityName, target);
                     return false;
                 }
                 return true;
             case "PubSub":
                 // Requesting entity's group must be allowed to subscribe to the topic.
-                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
+                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntityGroup,
                         CommunicationTargetType.SUBSCRIBE_TOPIC, target);
                 if (communicationPolicy == null) {
                     logger.error("Requesting entity ({}) is not allowed to subscribe topic: {}",
-                            requestingEntity.getName(), target);
+                            requestingEntityName, target);
                     return false;
                 }
                 logger.info("Requesting entity ({}) is allowed to subscribe topic: {}",
-                        requestingEntity.getName(), target);
+                        requestingEntityName, target);
                 if (sessionKey.getOwners().length >= communicationPolicy.getMaxNumSessionKeyOwners()) {
-                    logger.error("The maximum of session key owners has already reached.",
-                            requestingEntity.getName(), target);
+                    logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",
+                            requestingEntityName, target);
                     return false;
                 }
                 return true;

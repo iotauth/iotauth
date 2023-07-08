@@ -453,7 +453,7 @@ public abstract class EntityConnectionHandler {
 
                     // Checks if session key ID meets the communication policy.
                     if (!CommunicationPolicyChecker.checkSessionKeyCommunicationPolicy(
-                            server, requestingEntity, sessionKey)) {
+                            server, requestingEntity.getGroup(), requestingEntity.getName(), sessionKey)) {
                         throw new RuntimeException("Session key communication policy check failed.");
                     }
 
