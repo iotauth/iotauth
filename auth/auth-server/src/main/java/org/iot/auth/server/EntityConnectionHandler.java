@@ -360,65 +360,6 @@ public abstract class EntityConnectionHandler {
     }
 
     /**
-     * When an entity requests a session key with a session key ID, this method checks if the session key is valid for
-     * the communication policy of the requesting entity. This check includes target group, purpose, and maximum number
-     * of session key owners.
-     * @param requestingEntity The entity who sent a session key request based on a session key ID.
-     * @param sessionKey The session key found from the session key ID.
-     * @return If the check is successful.
-     */
-    private boolean checkSessionKeyCommunicationPolicy(RegisteredEntity requestingEntity, SessionKey sessionKey) {
-        String[] purposeTokens = sessionKey.getPurpose().split(":");
-        if (purposeTokens.length != 2) {
-            throw new RuntimeException("Wrong session key purpose format. Format must be \"TargetType:Target\"");
-        }
-        String targetType = purposeTokens[0];
-        String target = purposeTokens[1];
-        CommunicationPolicy communicationPolicy;
-        switch (targetType) {
-            case "Group":
-                if (!target.equals(requestingEntity.getGroup())) {
-                    getLogger().error("Requesting entity ({})'s target group does not match session key communication policy.",
-                            requestingEntity.getName());
-                    return false;
-                }
-                getLogger().info("Requesting entity ({})'s target group matches session key communication policy.",
-                        requestingEntity.getName());
-                communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
-                        CommunicationTargetType.TARGET_GROUP, target);
-                if (communicationPolicy == null) {
-                    getLogger().error("Communication policy is not found for {}.", requestingEntity.getName());
-                    return false;
-                }
-                if (sessionKey.getOwners().length >= communicationPolicy.getMaxNumSessionKeyOwners()) {
-                    getLogger().error("The maximum of session key owners has already reached.",
-                            requestingEntity.getName(), target);
-                    return false;
-                }
-                return true;
-            case "PubSub":
-                // Requesting entity's group must be allowed to subscribe to the topic.
-                communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
-                        CommunicationTargetType.SUBSCRIBE_TOPIC, target);
-                if (communicationPolicy == null) {
-                    getLogger().error("Requesting entity ({}) is not allowed to subscribe topic: {}",
-                            requestingEntity.getName(), target);
-                    return false;
-                }
-                getLogger().info("Requesting entity ({}) is allowed to subscribe topic: {}",
-                        requestingEntity.getName(), target);
-                if (sessionKey.getOwners().length >= communicationPolicy.getMaxNumSessionKeyOwners()) {
-                    getLogger().error("The maximum of session key owners has already reached.",
-                            requestingEntity.getName(), target);
-                    return false;
-                }
-                return true;
-            default:
-                throw new RuntimeException("Invalid session key target type: " + targetType);
-        }
-    }
-
-    /**
      * Interpret a session key request from the entity, and process it. The process includes communication policy
      * checking, session key generation, and communicating with a trusted Auth to get the session key.
      * @param requestingEntity The entity who sent the session key request.
@@ -511,7 +452,8 @@ public abstract class EntityConnectionHandler {
                     SessionKey sessionKey = server.getSessionKeyByID(sessionKeyID);
 
                     // Checks if session key ID meets the communication policy.
-                    if (!checkSessionKeyCommunicationPolicy(requestingEntity, sessionKey)) {
+                    if (!CommunicationPolicyChecker.checkSessionKeyCommunicationPolicy(
+                            server, requestingEntity, sessionKey)) {
                         throw new RuntimeException("Session key communication policy check failed.");
                     }
 
