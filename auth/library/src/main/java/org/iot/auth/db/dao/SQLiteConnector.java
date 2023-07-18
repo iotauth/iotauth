@@ -291,12 +291,27 @@ public class SQLiteConnector {
         sql = "CREATE TABLE IF NOT EXISTS " + MetaDataTable.T_META_DATA + "(";
         sql += MetaDataTable.c.Key.name() + " INT NOT NULL PRIMARY KEY,";
         sql += MetaDataTable.c.Value.name() + " TEXT NOT NULL)";
+
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", MetaDataTable.T_META_DATA);
         else
             logger.info("Table {} already exists", MetaDataTable.T_META_DATA);
         closeStatement();
+
+
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + FileSharingTable.T_File_Sharing + "(";
+        sql += FileSharingTable.c.Owner.name() + " TEXT NOT NULL,";
+        sql += FileSharingTable.c.Name.name() + " TEXT NOT NULL)";
+
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", FileSharingTable.T_File_Sharing);
+        else
+            logger.info("Table {} already exists", FileSharingTable.T_File_Sharing);
+        closeStatement();
+
 
         closeConnection();
     }
@@ -585,6 +600,24 @@ public class SQLiteConnector {
         return result;
     }
 
+    public boolean insertRecords(FileSharingTable filsharing) throws SQLException, ClassNotFoundException {
+        //setConnection();
+        String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
+        sql += FileSharingTable.c.Owner.name() + ",";
+        sql += FileSharingTable.c.Name.name() + ")";
+        sql += " VALUES (?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setString(index++,filsharing.getOwner());
+        preparedStatement.setString(index++,filsharing.getName());
+        logger.info("{} {}", filsharing.getOwner(),filsharing.getName() );
+        if (DEBUG) logger.info("{}",preparedStatement);
+        boolean result = preparedStatement.execute();
+        preparedStatement.close();
+        closeConnection();
+        return result;
+    }
+
     /**
      * Selects all policies record from the table communication policy.
      * @return a list of all policies stored in the database
@@ -765,6 +798,32 @@ public class SQLiteConnector {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
             if (DEBUG) logger.info(cachedSessionKey.toJSONObject().toJSONString());
             result.add(decryptRecords(cachedSessionKey));
+        }
+        return result;
+    }
+
+    public ArrayList <String> selectFileSharingInfoByOwner(String fileOwner){
+        //setConnection();
+        String sql = "SELECT Name FROM " + FileSharingTable.T_File_Sharing;
+        sql += " WHERE " + FileSharingTable.c.Owner.name() + "=" + "'" + fileOwner + "'";
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = null;
+        try {
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        ArrayList <String>  result = new ArrayList <String>();
+        try{
+            while(resultSet.next()){
+            result.add(resultSet.getString("name"));
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
         }
         return result;
     }

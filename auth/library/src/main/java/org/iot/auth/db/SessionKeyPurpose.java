@@ -28,6 +28,9 @@ public class SessionKeyPurpose {
                 targetType == CommunicationTargetType.SUBSCRIBE_TOPIC) {
             this.targetType = "PubSub";
         }
+        else if (targetType == CommunicationTargetType.FILE_SHARING) {
+            this.targetType = "FileSharing";
+        }
         else {
             throw new RuntimeException("Unrecognized communication target type for SessionKeyPurpose");
         }

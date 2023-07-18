@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
  * A class for describing the purpose of session key requests, solely used by EntityConnectionHandler.
  * @author Hokeun Kim
  */
+// Add filesharing content
 public class SessionKeyReqPurpose {
     public SessionKeyReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
         // purpose keys
@@ -33,6 +34,7 @@ public class SessionKeyReqPurpose {
         final String subTopic = "subTopic";
         final String keyId = "keyId";
         final String cachedKeys = "cachedKeys";
+        final String fileSharing = "FileSharing";
 
         // TODO: match JSON string (group, pubTopic, subTopic) and CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
         Object objTarget = null;
@@ -59,16 +61,21 @@ public class SessionKeyReqPurpose {
             if (objTarget.getClass() == Integer.class || objTarget.getClass() == Long.class) {
                 this.targetType = CommunicationTargetType.SESSION_KEY_ID;
             }
-        }else if (purpose.containsKey(cachedKeys)) {
+        } else if (purpose.containsKey(cachedKeys)) {
             objTarget = purpose.get(cachedKeys);
             logger.info("{}", objTarget.getClass());
             if (objTarget.getClass() == Integer.class || objTarget.getClass() == Long.class) {
                 this.targetType = CommunicationTargetType.CACHED_SESSION_KEYS;
             }
+        } else if (purpose.containsKey(fileSharing)) {
+            objTarget = purpose.get(fileSharing);
+            if (objTarget.getClass() == String.class) {
+                this.targetType = CommunicationTargetType.FILE_SHARING;
+            }
         }
 
         if (this.targetType == CommunicationTargetType.UNKNOWN) {
-            throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
+            throw new InvalidSessionKeyTargetException("Unrecognized purpose:" + purpose);
         }
         this.target = objTarget;
     }

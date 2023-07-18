@@ -32,7 +32,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.util.*;
-
 /**
  * A main class for Auth database, which include tables for registered entities, communication policies, trusted Auths,
  *
@@ -229,6 +228,11 @@ public class AuthDB {
             result.add(cachedSessionKey.toSessionKey());
         }
         return result;
+    }
+
+    public ArrayList<String> getFileSharingInfoByOwner(String fileOwner) {
+        // List <String> FileSharingInfo = sqLiteConnector.selectFileSharingInfoByOwner(owner);
+        return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
     }
 
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {

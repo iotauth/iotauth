@@ -16,3 +16,6 @@
 
 	node defaultGraphGenerator.js -b -a -n 3 -o default_three_auths_backup_to_all.graph
 	
+* For generating **default_filesharing.graph**
+
+	node defaultGraphGenerator.js -b -o default_filesharing.graph

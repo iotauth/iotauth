@@ -374,6 +374,7 @@ public abstract class EntityConnectionHandler {
      * @throws InvalidSessionKeyTargetException If the target of session key request is not valid.
      * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
      */
+    // 여기 잘 봐야함
     private SessionKeysAndSpec processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
@@ -396,9 +397,11 @@ public abstract class EntityConnectionHandler {
 
         SymmetricKeyCryptoSpec cryptoSpec = null;
         List<SessionKey> sessionKeyList = null;
+        // Add filesharing case
         switch (reqPurpose.getTargetType()) {
             // If a target or publish-topic is specified, generate new keys
             case TARGET_GROUP:
+            case FILE_SHARING:
             case PUBLISH_TOPIC: {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
@@ -452,6 +455,7 @@ public abstract class EntityConnectionHandler {
                     SessionKey sessionKey = server.getSessionKeyByID(sessionKeyID);
 
                     // Checks if session key ID meets the communication policy.
+                    // getLogger().info("Checker content: {} {} {}",requestingEntity.getGroup(),requestingEntity.getName(),sessionKey);
                     if (!CommunicationPolicyChecker.checkSessionKeyCommunicationPolicy(
                             server, requestingEntity.getGroup(), requestingEntity.getName(), sessionKey)) {
                         throw new RuntimeException("Session key communication policy check failed.");

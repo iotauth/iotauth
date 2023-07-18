@@ -27,7 +27,8 @@ public enum CommunicationTargetType {
     PUBLISH_TOPIC(20),
     SUBSCRIBE_TOPIC(21),
     SESSION_KEY_ID(30),
-    CACHED_SESSION_KEYS(40);
+    CACHED_SESSION_KEYS(40),
+    FILE_SHARING(60);
 
     public int getValue() {
         return value;
@@ -36,7 +37,6 @@ public enum CommunicationTargetType {
     CommunicationTargetType(int value) {
         this.value = value;
     }
-
     public static CommunicationTargetType fromStringValue(String value) {
         switch (value) {
             case "Group":
@@ -45,6 +45,8 @@ public enum CommunicationTargetType {
                 return PUBLISH_TOPIC;
             case "SubTopic":
                 return SUBSCRIBE_TOPIC;
+            case "FileSharing":
+                return FILE_SHARING;
             default:
                 return UNKNOWN;
         }

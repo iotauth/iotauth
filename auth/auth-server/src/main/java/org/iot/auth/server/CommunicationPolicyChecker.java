@@ -15,14 +15,16 @@
 
 package org.iot.auth.server;
 
-import org.iot.auth.AuthServer;
 import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.CommunicationPolicy;
 import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import java.sql.SQLException;
+import java.util.ArrayList;
+import org.iot.auth.db.AuthDB;
+import org.iot.auth.AuthServer;
 /**
  * A utility class for checking communication policy.
  * @author Hokeun Kim
@@ -36,6 +38,8 @@ public class CommunicationPolicyChecker {
      * @param requestingEntity The entity who sent a session key request based on a session key ID.
      * @param sessionKey The session key found from the session key ID.
      * @return If the check is successful.
+     * @throws SQLException
+     * @throws ClassNotFoundException
      */
     public static boolean checkSessionKeyCommunicationPolicy(
             AuthServer server,
@@ -73,6 +77,30 @@ public class CommunicationPolicyChecker {
                 logger.info("Requesting entity ({}) is allowed to subscribe topic: {}",
                         requestingEntityName, target);
                 if (sessionKey.getOwners().length >= communicationPolicy.getMaxNumSessionKeyOwners()) {
+                    logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",
+                            requestingEntityName, target);
+                    return false;
+                }
+                return true;
+            case "FileSharing":
+                if (!target.equals(requestingEntityGroup)) {
+                    logger.error("Requesting entity ({})'s target group does not match session key communication policy.",
+                            requestingEntityName);
+                    return false;
+                }
+                else {
+                    String[] SessionkeyOwner = sessionKey.getOwners();
+                    RegisteredEntity ownerEntity = server.getRegisteredEntity(SessionkeyOwner[0]);
+                    ArrayList <String> list = server.getFileSharingInfo(ownerEntity.getGroup());
+                    logger.info("File Sharing List of {}: {}",ownerEntity.getGroup(), list);
+                    if (!list.contains(requestingEntityName))
+                    {
+                        logger.error("Requesting entity ({})'s target group does not match session key communication policy.",
+                            requestingEntityName); 
+                        return false;  
+                    }
+                }
+                if (sessionKey.getOwners().length >= sessionKey.getMaxNumOwners()) {
                     logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",
                             requestingEntityName, target);
                     return false;

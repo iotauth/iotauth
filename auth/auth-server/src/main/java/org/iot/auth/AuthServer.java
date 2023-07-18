@@ -80,8 +80,6 @@ import java.util.concurrent.*;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.BluetoothStateException;
 import javax.swing.*;
-
-
 /**
  * A main class for Auth, a local authentication/authorization entity for locally
  * registered entities.
@@ -224,7 +222,6 @@ public class AuthServer {
     public AuthCrypto getCrypto() {
         return crypto;
     }
-
     /**
      * Main method of Auth server, which is executed at the very beginning
      * @param args Command line arguments
@@ -488,6 +485,10 @@ public class AuthServer {
      */
     public int getTrustedAuthIDByCertificate(X509Certificate cert) {
         return db.getTrustedAuthIDByCertificate(cert);
+    }
+
+    public ArrayList <String> getFileSharingInfo(String fileOwner) {
+        return db.getFileSharingInfoByOwner(fileOwner);
     }
 
     /**
