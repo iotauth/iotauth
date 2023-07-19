@@ -113,7 +113,6 @@ public class GenerateExampleAuthDB {
                 authDatabaseDir + "configs/Auth" + authID + "CommunicationPolicyTable.config");
         initTrustedAuthTable(sqLiteConnector, authDatabaseDir,
                 authDatabaseDir + "configs/Auth" + authID + "TrustedAuthTable.config");
-        // filesharinginfoTable
         initFileSharingInfoTable(sqLiteConnector, 
                 authDatabaseDir + "configs/Auth" + authID + "FileSharingInfoTable.config");
         sqLiteConnector.close();
@@ -291,9 +290,6 @@ public class GenerateExampleAuthDB {
         catch (ParseException e) {
             logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
         }
-        // catch (InvalidDBDataTypeException e) {
-        //     logger.error("InvalidDBDataTypeException {}", ExceptionToString.convertExceptionToStackTrace(e));
-        // }
     }
 
     private static void initTrustedAuthTable(SQLiteConnector sqLiteConnector, String authDatabaseDir, String tableConfigFilePath)

@@ -29,9 +29,11 @@ For this section, we use *$ROOT* for the root directory of this repository.
 ### To run example Auths (in command line)
 See README.md under *examples/*.
 ### To run example data management entity
-1. Change directories to *$ROOT/examples/filesharing_examples/*.
+1. Run 'git submodule update --remote' to move the ipfs submodule for filesharing.
 
-2. Run 'python3 DataManageEntity.py' to execute data management entity.
+2. Change directories to *$ROOT/examples/filesharing_examples/*.
+
+3. Run 'python3 DataManageEntity.py' to execute data management entity.
 
 ### To run example entities written in C language.
-See README.md under *entity/sst-c-api/*.
+See README.md under *entity/c/*.

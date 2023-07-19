@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
  * A class for describing the purpose of session key requests, solely used by EntityConnectionHandler.
  * @author Hokeun Kim
  */
-// Add filesharing content
 public class SessionKeyReqPurpose {
     public SessionKeyReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
         // purpose keys
@@ -75,7 +74,7 @@ public class SessionKeyReqPurpose {
         }
 
         if (this.targetType == CommunicationTargetType.UNKNOWN) {
-            throw new InvalidSessionKeyTargetException("Unrecognized purpose:" + purpose);
+            throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
         }
         this.target = objTarget;
     }

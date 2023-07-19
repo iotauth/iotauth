@@ -15,16 +15,15 @@
 
 package org.iot.auth.server;
 
+import org.iot.auth.AuthServer;
 import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.CommunicationPolicy;
 import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import org.iot.auth.db.AuthDB;
-import org.iot.auth.AuthServer;
+
 /**
  * A utility class for checking communication policy.
  * @author Hokeun Kim
@@ -38,8 +37,6 @@ public class CommunicationPolicyChecker {
      * @param requestingEntity The entity who sent a session key request based on a session key ID.
      * @param sessionKey The session key found from the session key ID.
      * @return If the check is successful.
-     * @throws SQLException
-     * @throws ClassNotFoundException
      */
     public static boolean checkSessionKeyCommunicationPolicy(
             AuthServer server,

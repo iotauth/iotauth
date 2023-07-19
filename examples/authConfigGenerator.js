@@ -98,6 +98,8 @@
          fs.writeFileSync(configFilePath, JSON2.stringify(registeredEntityTables[auth.id], null, '\t'), 'utf8');
      }
  }
+
+  // generate filesharing info table
  function getFilesharingInfo(entity) {
      var filesharingInfo = {
          Name: entity.name,
@@ -105,7 +107,6 @@
      }
      return filesharingInfo;
  }
- 
  function generateFileSharingInfoTables() {
      var filesharingInfoTables = {};
      for (var i = 0; i < authList.length; i++) {
@@ -125,6 +126,7 @@
          fs.writeFileSync(configFilePath, JSON2.stringify(filesharingInfoTables[auth.id], null, '\t'), 'utf8');
      }
  }
+
  // generate client policy tables
  function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
      list.push({

@@ -291,14 +291,12 @@ public class SQLiteConnector {
         sql = "CREATE TABLE IF NOT EXISTS " + MetaDataTable.T_META_DATA + "(";
         sql += MetaDataTable.c.Key.name() + " INT NOT NULL PRIMARY KEY,";
         sql += MetaDataTable.c.Value.name() + " TEXT NOT NULL)";
-
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", MetaDataTable.T_META_DATA);
         else
             logger.info("Table {} already exists", MetaDataTable.T_META_DATA);
         closeStatement();
-
 
         statement = connection.createStatement();
         sql = "CREATE TABLE IF NOT EXISTS " + FileSharingTable.T_File_Sharing + "(";
@@ -311,7 +309,6 @@ public class SQLiteConnector {
         else
             logger.info("Table {} already exists", FileSharingTable.T_File_Sharing);
         closeStatement();
-
 
         closeConnection();
     }
@@ -571,7 +568,7 @@ public class SQLiteConnector {
     }
 
     /**
-     * Inserts the meta data information int the table meta data.
+     * Inserts the meta data information into the table meta data.
      *
      * @param metaData the object container of the information in meta data table
      * @return <code>true</code> if the insertion has been successful
@@ -600,6 +597,18 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Inserts the filesharing information into the filesharing table.
+     *
+     * @param filsharing the object container of the information in filesharing table
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     * @see FileSharingTable
+     */
     public boolean insertRecords(FileSharingTable filsharing) throws SQLException, ClassNotFoundException {
         //setConnection();
         String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
@@ -802,6 +811,15 @@ public class SQLiteConnector {
         return result;
     }
 
+    /**
+     * Select name group registered by file owner
+     * @param fileOwner the fileOwner to select registered name
+     * @return returns the list of name group
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
     public ArrayList <String> selectFileSharingInfoByOwner(String fileOwner){
         //setConnection();
         String sql = "SELECT Name FROM " + FileSharingTable.T_File_Sharing;

@@ -206,7 +206,7 @@
  var outputFile = 'default.graph';
  var backupEnabled = false;
  var backupToAll = false;
- var contextualCallbackEnabled = false;
+ var contextualCallbackEnabled = true;
  if (program.numAuths != null) {
 	 numAuths = program.numAuths;
  }
