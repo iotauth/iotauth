@@ -41,7 +41,7 @@ const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
 const AUTH_PROPERTIES_DIR = PROJ_ROOT_DIR + 'auth/properties/';
 
 function getAuthConfigDir(authId) {
-    return AUTH_DATABASES_DIR + 'auth' + authId + '/configs/';
+        return AUTH_DATABASES_DIR + 'auth' + authId + '/configs/';
 }
 var authList = graph.authList;
 function createConfigDirs() {
@@ -53,50 +53,50 @@ function createConfigDirs() {
 
 // generate registered entity tables
 function getRegisteredEntity(entity) {
-    var registeredEntity = {
-        Name: entity.name,
-        Group: entity.group,
-        DistProtocol: entity.distProtocol,
-        UsePermanentDistKey: entity.usePermanentDistKey,
-        MaxSessionKeysPerRequest: entity.maxSessionKeysPerRequest,
-        DistKeyValidityPeriod: entity.distKeyValidityPeriod,
-        DistCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
-        Active: true,
-        BackupToAuthIDs: entity.backupToAuthIds,
-        BackupFromAuthID: -1
+        var registeredEntity = {
+            Name: entity.name,
+            Group: entity.group,
+            DistProtocol: entity.distProtocol,
+            UsePermanentDistKey: entity.usePermanentDistKey,
+            MaxSessionKeysPerRequest: entity.maxSessionKeysPerRequest,
+            DistKeyValidityPeriod: entity.distKeyValidityPeriod,
+            DistCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
+            Active: true,
+            BackupToAuthIDs: entity.backupToAuthIds,
+            BackupFromAuthID: -1
     }
 
-    if (entity.usePermanentDistKey == true) {
-        registeredEntity.DistCipherKeyFilePath = 'entity_keys/'+ entity.credentialPrefix + 'CipherKey.key';
-        registeredEntity.DistMacKeyFilePath = 'entity_keys/' + entity.credentialPrefix + 'MacKey.key';
-    }
-    else {
-        registeredEntity.PublicKeyCryptoSpec = common.DEFAULT_SIGN;
-        if (entity.diffieHellman != null) {
-            registeredEntity.PublicKeyCryptoSpec += (':DH-' + entity.diffieHellman);
+        if (entity.usePermanentDistKey == true) {
+            registeredEntity.DistCipherKeyFilePath = 'entity_keys/'+ entity.credentialPrefix + 'CipherKey.key';
+            registeredEntity.DistMacKeyFilePath = 'entity_keys/' + entity.credentialPrefix + 'MacKey.key';
         }
-        registeredEntity.PublicKeyFile = 'entity_certs/' + entity.credentialPrefix + 'Cert.pem';
-    }
-    return registeredEntity;
+        else {
+            registeredEntity.PublicKeyCryptoSpec = common.DEFAULT_SIGN;
+            if (entity.diffieHellman != null) {
+                registeredEntity.PublicKeyCryptoSpec += (':DH-' + entity.diffieHellman);
+            }
+            registeredEntity.PublicKeyFile = 'entity_certs/' + entity.credentialPrefix + 'Cert.pem';
+        }
+        return registeredEntity;
 }
 function generateRegisteredEntityTables() {
-    var registeredEntityTables = {};
-    for (var i = 0; i < authList.length; i++) {
-        var auth = authList[i];
-        registeredEntityTables[auth.id] = [];
-    }
-    var assignments = graph.assignments;
-    var entityList = graph.entityList;
-    for (var i = 0; i < entityList.length; i++) {
-        var entity = entityList[i];
-        registeredEntityTables[assignments[entity.name]].push(getRegisteredEntity(entity));
-    }
-    for (var i = 0; i < authList.length; i++) {
-        var auth = authList[i];
+        var registeredEntityTables = {};
+        for (var i = 0; i < authList.length; i++) {
+            var auth = authList[i];
+            registeredEntityTables[auth.id] = [];
+        }
+        var assignments = graph.assignments;
+        var entityList = graph.entityList;
+        for (var i = 0; i < entityList.length; i++) {
+            var entity = entityList[i];
+            registeredEntityTables[assignments[entity.name]].push(getRegisteredEntity(entity));
+        }
+        for (var i = 0; i < authList.length; i++) {
+                var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'RegisteredEntityTable.config';
         console.log('Writing Auth config to ' + configFilePath + ' ...');
-        fs.writeFileSync(configFilePath, JSON2.stringify(registeredEntityTables[auth.id], null, '\t'), 'utf8');
-    }
+                fs.writeFileSync(configFilePath, JSON2.stringify(registeredEntityTables[auth.id], null, '\t'), 'utf8');
+        }
 }
 
 // generate filesharing info table
@@ -190,40 +190,40 @@ function generateCommunicationPolicyTables() {
 
 // generate trusted Auth tables
 function getTrustedAuth(auth) {
-    return {
-        ID: auth.id, Host: auth.authHost, EntityHost: auth.entityHost, Port: auth.authPort,
-        InternetCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'InternetCert.pem',
-        EntityCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'EntityCert.pem',
-        HeartbeatPeriod: -1,
-        FailureThreshold: -1
-    }
+        return {
+            ID: auth.id, Host: auth.authHost, EntityHost: auth.entityHost, Port: auth.authPort,
+            InternetCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'InternetCert.pem',
+            EntityCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'EntityCert.pem',
+            HeartbeatPeriod: -1,
+            FailureThreshold: -1
+        }
 }
 function generateTrustedAuthTables() {
-    var trustedAuthTables = {};
-    var auths = {};
-    var authTrusts = graph.authTrusts;
-    for (var i = 0; i < authList.length; i++) {
-        var auth = authList[i];
-        trustedAuthTables[auth.id] = [];
-        auths[auth.id] = auth;
-    }
-    for (var i = 0; i < authTrusts.length; i++) {
-        var authTrust = authTrusts[i];
-        trustedAuthTables[authTrust.id1].push(getTrustedAuth(auths[authTrust.id2]));
-        trustedAuthTables[authTrust.id2].push(getTrustedAuth(auths[authTrust.id1]));
-    }
-    for (var i = 0; i < authList.length; i++) {
-        var auth = authList[i];
+        var trustedAuthTables = {};
+        var auths = {};
+        var authTrusts = graph.authTrusts;
+        for (var i = 0; i < authList.length; i++) {
+                var auth = authList[i];
+                trustedAuthTables[auth.id] = [];
+                auths[auth.id] = auth;
+        }
+        for (var i = 0; i < authTrusts.length; i++) {
+                var authTrust = authTrusts[i];
+                trustedAuthTables[authTrust.id1].push(getTrustedAuth(auths[authTrust.id2]));
+                trustedAuthTables[authTrust.id2].push(getTrustedAuth(auths[authTrust.id1]));
+        }
+        for (var i = 0; i < authList.length; i++) {
+                var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'TrustedAuthTable.config';
         console.log('Writing Auth config to ' + configFilePath + ' ...');
-        fs.writeFileSync(configFilePath, JSON2.stringify(trustedAuthTables[auth.id], null, '\t'), 'utf8');
-    }
+                fs.writeFileSync(configFilePath, JSON2.stringify(trustedAuthTables[auth.id], null, '\t'), 'utf8');
+        }
 }
 
 // generate properties files
 function generatePropertiesFiles() {
-    for (var i = 0; i < authList.length; i++) {
-        var auth = authList[i];
+        for (var i = 0; i < authList.length; i++) {
+                var auth = authList[i];
         var authDBDir = '../databases/auth' + auth.id;
         var authKeystorePrefix = authDBDir + '/my_keystores/Auth' + auth.id;
         var properties = {

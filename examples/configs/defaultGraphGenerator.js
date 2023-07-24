@@ -24,7 +24,7 @@ var fs = require('fs');
 var JSON2 = require('JSON2');
 
 function cloneJson(a) {
-return JSON.parse(JSON.stringify(a));
+	return JSON.parse(JSON.stringify(a));
 }
 function capitalizeFirstLetter(str) {
 	return str.charAt(0).toUpperCase() + str.slice(1);
@@ -106,7 +106,7 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
 	var assignments = {};
 	var filesharingLists = [];
 	/*
-		dbProtectionMethod: values
+			dbProtectionMethod: values
 		DEBUG(0),
 		ENCRYPT_CREDENTIALS(1),
 		ENCRYPT_ENTIRE_DB(2);
@@ -187,17 +187,17 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
 
 var program = require('commander');
 program
-.version('0.1.0')
-.option('-n, --num-auths <n>', 'Nmber of Auths', parseInt)
-.option('-o, --out-file [value]', 'Output file name')
-.option('-b, --enable-backup', 'Enable backup (boolean), defaults to false')
-.option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
-.option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
-.option('-f, --filesharing-enabled', 'Enable filesharing (boolean), defaults to false')
-.parse(process.argv);
+	.version('0.1.0')
+	.option('-n, --num-auths <n>', 'Nmber of Auths', parseInt)
+	.option('-o, --out-file [value]', 'Output file name')
+	.option('-b, --enable-backup', 'Enable backup (boolean), defaults to false')
+	.option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
+	.option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
+	.option('-f, --filesharing-enabled', 'Enable filesharing (boolean), defaults to false')
+	.parse(process.argv);
 
 /*
-	dbProtectionMethod: values
+		dbProtectionMethod: values
 	DEBUG(0),
 	ENCRYPT_CREDENTIALS(1),
 	ENCRYPT_ENTIRE_DB(2);
