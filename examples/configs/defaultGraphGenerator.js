@@ -27,20 +27,20 @@ function cloneJson(a) {
 	return JSON.parse(JSON.stringify(a));
 }
 function capitalizeFirstLetter(str) {
-	return str.charAt(0).toUpperCase() + str.slice(1);
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function getNetPortBase(netId) {
 	return 20000 + netId * 1000;
 }
 function getAuthPortBase(netId) {
-	return getNetPortBase(netId) + 900;
+    return getNetPortBase(netId) + 900;
 }
 function getAuthId(netId) {
-	return 100 + netId;
+    return 100 + netId;
 }
 function getNetId(authId) {
-	return authId - 100;
+    return authId - 100;
 }
 
 function populateDefaultEntityList() {
@@ -107,9 +107,9 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
 	var filesharingLists = [];
 	/*
 			dbProtectionMethod: values
-		DEBUG(0),
-		ENCRYPT_CREDENTIALS(1),
-		ENCRYPT_ENTIRE_DB(2);
+	    DEBUG(0),
+	    ENCRYPT_CREDENTIALS(1),
+	    ENCRYPT_ENTIRE_DB(2);
 	*/
 	const AUTH_UDP_PORT_OFFSET = 2;
 	const TRUSTED_AUTH_PORT_OFFSET = 1;
@@ -187,14 +187,13 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
 
 var program = require('commander');
 program
-	.version('0.1.0')
-	.option('-n, --num-auths <n>', 'Nmber of Auths', parseInt)
-	.option('-o, --out-file [value]', 'Output file name')
-	.option('-b, --enable-backup', 'Enable backup (boolean), defaults to false')
-	.option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
-	.option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
-	.option('-f, --filesharing-enabled', 'Enable filesharing (boolean), defaults to false')
-	.parse(process.argv);
+  .version('0.1.0')
+  .option('-n, --num-auths <n>', 'Nmber of Auths', parseInt)
+  .option('-o, --out-file [value]', 'Output file name')
+  .option('-b, --enable-backup', 'Enable backup (boolean), defaults to false')
+  .option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
+  .option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
+  .parse(process.argv);
 
 /*
 		dbProtectionMethod: values

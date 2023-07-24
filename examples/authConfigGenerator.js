@@ -54,21 +54,21 @@ function createConfigDirs() {
 // generate registered entity tables
 function getRegisteredEntity(entity) {
         var registeredEntity = {
-            Name: entity.name,
-            Group: entity.group,
-            DistProtocol: entity.distProtocol,
-            UsePermanentDistKey: entity.usePermanentDistKey,
-            MaxSessionKeysPerRequest: entity.maxSessionKeysPerRequest,
-            DistKeyValidityPeriod: entity.distKeyValidityPeriod,
-            DistCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
-            Active: true,
-            BackupToAuthIDs: entity.backupToAuthIds,
-            BackupFromAuthID: -1
+                Name: entity.name,
+                Group: entity.group,
+                DistProtocol: entity.distProtocol,
+                UsePermanentDistKey: entity.usePermanentDistKey,
+                MaxSessionKeysPerRequest: entity.maxSessionKeysPerRequest,
+                DistKeyValidityPeriod: entity.distKeyValidityPeriod,
+                DistCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
+                Active: true,
+                BackupToAuthIDs: entity.backupToAuthIds,
+                BackupFromAuthID: -1
     }
 
         if (entity.usePermanentDistKey == true) {
-            registeredEntity.DistCipherKeyFilePath = 'entity_keys/'+ entity.credentialPrefix + 'CipherKey.key';
-            registeredEntity.DistMacKeyFilePath = 'entity_keys/' + entity.credentialPrefix + 'MacKey.key';
+                registeredEntity.DistCipherKeyFilePath = 'entity_keys/'+ entity.credentialPrefix + 'CipherKey.key';
+                registeredEntity.DistMacKeyFilePath = 'entity_keys/' + entity.credentialPrefix + 'MacKey.key';
         }
         else {
             registeredEntity.PublicKeyCryptoSpec = common.DEFAULT_SIGN;
@@ -82,14 +82,14 @@ function getRegisteredEntity(entity) {
 function generateRegisteredEntityTables() {
         var registeredEntityTables = {};
         for (var i = 0; i < authList.length; i++) {
-            var auth = authList[i];
-            registeredEntityTables[auth.id] = [];
+                var auth = authList[i];
+                registeredEntityTables[auth.id] = [];
         }
         var assignments = graph.assignments;
         var entityList = graph.entityList;
         for (var i = 0; i < entityList.length; i++) {
-            var entity = entityList[i];
-            registeredEntityTables[assignments[entity.name]].push(getRegisteredEntity(entity));
+                var entity = entityList[i];
+                registeredEntityTables[assignments[entity.name]].push(getRegisteredEntity(entity));
         }
         for (var i = 0; i < authList.length; i++) {
                 var auth = authList[i];
@@ -191,11 +191,11 @@ function generateCommunicationPolicyTables() {
 // generate trusted Auth tables
 function getTrustedAuth(auth) {
         return {
-            ID: auth.id, Host: auth.authHost, EntityHost: auth.entityHost, Port: auth.authPort,
-            InternetCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'InternetCert.pem',
-            EntityCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'EntityCert.pem',
-            HeartbeatPeriod: -1,
-            FailureThreshold: -1
+                ID: auth.id, Host: auth.authHost, EntityHost: auth.entityHost, Port: auth.authPort,
+                InternetCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'InternetCert.pem',
+                EntityCertificatePath: 'trusted_auth_certs/Auth' + auth.id + 'EntityCert.pem',
+                HeartbeatPeriod: -1,
+                FailureThreshold: -1
         }
 }
 function generateTrustedAuthTables() {
