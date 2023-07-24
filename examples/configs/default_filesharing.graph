@@ -10,7 +10,7 @@
 			"callbackPort": 21903,
 			"dbProtectionMethod": 1,
 			"backupEnabled": false,
-			"contextualCallbackEnabled": true
+			"contextualCallbackEnabled": false
 		},
 		{
 			"id": 102,
@@ -22,7 +22,7 @@
 			"callbackPort": 22903,
 			"dbProtectionMethod": 1,
 			"backupEnabled": false,
-			"contextualCallbackEnabled": true
+			"contextualCallbackEnabled": false
 		}
 	],
 	"authTrusts": [

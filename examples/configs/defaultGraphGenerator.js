@@ -193,6 +193,7 @@ program
   .option('-b, --enable-backup', 'Enable backup (boolean), defaults to false')
   .option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
   .option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
+  .option('-f, --filesharing-enabled', 'Enable filesharing (boolean), defaults to false')
   .parse(process.argv);
 
 /*
@@ -208,23 +209,23 @@ var backupEnabled = false;
 var backupToAll = false;
 var contextualCallbackEnabled = false;
 var filesharingEnabled = false;
-if (program.numAuths != null) {
-	numAuths = program.numAuths;
+if (program.opts().numAuths != null) {
+	numAuths = program.opts().numAuths;
 }
-if (program.outFile != null) {
-	outputFile = program.outFile;
+if (program.opts().outFile != null) {
+	outputFile = program.opts().outFile;
 }
-if (program.enableBackup != null) {
-	backupEnabled = program.enableBackup;
+if (program.opts().enableBackup != null) {
+	backupEnabled = program.opts().enableBackup;
 }
-if (program.backupToAll != null) {
-	backupToAll = program.backupToAll;
+if (program.opts().backupToAll != null) {
+	backupToAll = program.opts().backupToAll;
 }
-if (program.enableContextualCallback != null) {
-	contextualCallbackEnabled = program.enableContextualCallback;
+if (program.opts().enableContextualCallback != null) {
+	contextualCallbackEnabled = program.opts().enableContextualCallback;
 }
-if (program.filesharingEnabled != null) {
-	filesharingEnabled = filesharingEnabled;
+if (program.opts().filesharingEnabled != null) {
+	filesharingEnabled = program.opts().filesharingEnabled;
 }
 
 console.log('Number of Auths: ' + numAuths);
