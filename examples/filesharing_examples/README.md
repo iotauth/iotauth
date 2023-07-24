@@ -23,17 +23,45 @@ Data management entity is an entity that manages detailed information about file
 ---
 For this section, we use *$ROOT* for the root directory of this repository.
 
+### To generate credentials for example Auths and entities, and to create example Auth databases
+
+1. Change directory to *$ROOT/examples*.
+
+2. Run the script *generateAll.sh*, by entering './generateAll.sh'.
+
+3. You will be prompted to enter password for keystores of Auths. Enter you password to proceed.
+
+4. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanAll.sh*, with the command './cleanAll.sh'.
 ### To run IPFS (in command line)
 1. Run 'ipfs daemon' to activate an IPFS environment. (IPFS command line tools should be installed a priori. If it is not installed, then you can install it easily by reading [IPFS install](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions)).
 
 ### To run example Auths (in command line)
-See README.md under *examples/*.
+See README.md under *examples/* to know specific process.
+1. Change directories $ROOT/auth/auth-server/.
+
+2. Run 'mvn clean install' to build an executable jar file.
+
+3. Run the jar file with the properties file for Auth101, with 'java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties'.
+
 ### To run example data management entity
-1. Run 'git submodule update --remote' to move the ipfs submodule for filesharing.
 
-2. Change directories to *$ROOT/examples/filesharing_examples/*.
+1. Change directories to *$ROOT/examples/filesharing_examples/*.
 
-3. Run 'python3 DataManageEntity.py' to execute data management entity.
+2. Run 'python3 DataManageEntity.py' to execute data management entity.
 
 ### To run example entities written in C language.
-See README.md under *entity/c/*.
+See README.md under *entity/c/* to know specific process.
+
+1. Run 'git submodule update --remote' to move the ipfs submodule for filesharing.
+
+2. Change directories to *$ROOT/entity/c/ipfs_examples/*
+
+3. Run 'mkdir build && cd build'
+
+4. Run 'cmake ../' to make the Makefile for build.
+
+5. Run 'make' 
+
+6. Run './entity_client ../c_client.config', to execute net1.uploader.
+
+7. Run './entity_server ../c_server.config' in a separate terminal, to execute net1.downloader.

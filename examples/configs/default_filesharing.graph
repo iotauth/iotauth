@@ -10,7 +10,7 @@
 			"callbackPort": 21903,
 			"dbProtectionMethod": 1,
 			"backupEnabled": false,
-			"contextualCallbackEnabled": false
+			"contextualCallbackEnabled": true
 		},
 		{
 			"id": 102,
@@ -22,7 +22,7 @@
 			"callbackPort": 22903,
 			"dbProtectionMethod": 1,
 			"backupEnabled": false,
-			"contextualCallbackEnabled": false
+			"contextualCallbackEnabled": true
 		}
 	],
 	"authTrusts": [
@@ -581,5 +581,36 @@
 			]
 		}
 	],
-	"filesharingLists": []
+	"filesharingLists": [
+		{
+			"group": "FST",
+			"name": "net1.downloader",
+			"owner": "TeamA"
+		},
+		{
+			"group": "FST",
+			"name": "net1.Alice",
+			"owner": "TeamB"
+		},
+		{
+			"group": "FST",
+			"name": "net1.Bob",
+			"owner": "TeamA"
+		},
+		{
+			"group": "FST",
+			"name": "net2.downloader",
+			"owner": "TeamA"
+		},
+		{
+			"group": "FST",
+			"name": "net2.Alice",
+			"owner": "TeamB"
+		},
+		{
+			"group": "FST",
+			"name": "net2.Bob",
+			"owner": "TeamA"
+		}
+	]
 }

@@ -18,222 +18,227 @@
  * @author Hokeun Kim
  */
 
- "use strict";
+"use strict";
 
- var fs = require('fs');
- var JSON2 = require('JSON2');
- 
- function cloneJson(a) {
-	return JSON.parse(JSON.stringify(a));
- }
- function capitalizeFirstLetter(str) {
-	 return str.charAt(0).toUpperCase() + str.slice(1);
- }
- 
- function getNetPortBase(netId) {
-	 return 20000 + netId * 1000;
- }
- function getAuthPortBase(netId) {
-	 return getNetPortBase(netId) + 900;
- }
- function getAuthId(netId) {
-	 return 100 + netId;
- }
- function getNetId(authId) {
-	 return authId - 100;
- }
- 
- function populateDefaultEntityList() {
-	 var DEFAULT_ENTITY_LIST = [
-		 { group: 'Clients',		name: 'client' },
-		 { group: 'Clients',		name: 'rcClient' },
-		 { group: 'Clients',		name: 'udpClient' },
-		 { group: 'Clients',	 	name: 'rcUdpClient' },
-		 { group: 'Clients',	 	name: 'safetyCriticalClient' },
- 
-		 { group: 'Servers',		name: 'server', port: 100 },
-		 { group: 'Servers',		name: 'rcServer', port: 300 },
-		 { group: 'Servers',		name: 'udpServer', port: 400 },
-		 { group: 'Servers',		name: 'safetyCriticalServer', port: 500 },
-		 { group: 'Servers',		name: 'rcUdpServer', port: 600 },
- 
-		 { group: 'PtClients',	name: 'ptClient' },
-		 { group: 'PtServers',	name: 'ptServer', port: 200 },
-		 { group: 'PtPublishers',name: 'ptPublisher' },
-		 { group: 'PtSubscribers',name: 'ptSubscriber' },
-		 { group: 'TeamA', 		name: 'uploader'},
-		 { group: 'FST', 		name: 'downloader',			owner: 'TeamA'},
-		 { group: 'FST', 		name: 'Alice',				owner: 'TeamB'},
-		 { group: 'FST', 		name: 'Bob',				owner: 'TeamA'}
- 
-	 ];
-	 for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
-		 var entity = DEFAULT_ENTITY_LIST[i];
-		 entity.distProtocol = entity.name.toLowerCase().includes('udp') ? 'UDP' : 'TCP';
-		 entity.usePermanentDistKey = entity.name.toLowerCase().includes('rc') ? true : false;
-		 if (entity.name.toLowerCase().includes('pt')) {
-			 entity.inDerFormat = true;
-			 entity.distKeyValidityPeriod = '3*sec';
-		 }
-		 else if (entity.usePermanentDistKey == true) {
-			 entity.distKeyValidityPeriod = '365*day';
-		 }
-		 else {
-			 entity.distKeyValidityPeriod = '1*hour';
-		 }
-		 if (entity.group.toLowerCase().includes('servers')) {
-			 entity.maxSessionKeysPerRequest = 1;
-		 }
-		 else if (entity.usePermanentDistKey == true) {
-			 entity.maxSessionKeysPerRequest = 30;
-		 }
-		 else {
-			 entity.maxSessionKeysPerRequest = 5;
-		 }
-		 if (entity.name.toLowerCase().includes('safetycritical')) {
-			 // generates 384-bit (48-byte) secret, 128 bit for cipher, 256 bit for MAC
-			 const DEFAULT_DH = 'secp384r1';
-			 entity.diffieHellman = DEFAULT_DH;
-		 }
-	 }
-	 return DEFAULT_ENTITY_LIST;
- }
- 
- function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled) {
-	 var authList = [];
-	 var entityList = [];
-	 var authTrusts = [];
-	 var assignments = {};
-	 var filesharingLists = [];
-	 /*
-		 dbProtectionMethod: values
-		 DEBUG(0),
-		 ENCRYPT_CREDENTIALS(1),
-		 ENCRYPT_ENTIRE_DB(2);
-	 */
-	 const AUTH_UDP_PORT_OFFSET = 2;
-	 const TRUSTED_AUTH_PORT_OFFSET = 1;
-	 const CONTEXTUAL_CALLBACK_PORT_OFFSET = 3;
-	 for (var netId = 1; netId <= numAuths; netId++) {
-		 var authId = getAuthId(netId);
-		 var authInfo = {
-			 id: authId,
-			 entityHost: 'localhost',
-			 authHost: 'localhost',
-			 tcpPort: getAuthPortBase(netId),
-			 udpPort: getAuthPortBase(netId) + AUTH_UDP_PORT_OFFSET,
-			 authPort: getAuthPortBase(netId) + TRUSTED_AUTH_PORT_OFFSET,
-			 callbackPort: getAuthPortBase(netId) + CONTEXTUAL_CALLBACK_PORT_OFFSET,
-			 dbProtectionMethod: dbProtectionMethod,
-			 backupEnabled: backupEnabled,
-			 contextualCallbackEnabled: contextualCallbackEnabled
-		 };
-		 authList.push(authInfo);
-		 for (var otherNetId = netId + 1; otherNetId <= numAuths; otherNetId++) {
-			 var otherAuthId = getAuthId(otherNetId);
-			 var authTrust = {
-				 id1: authId,
-				 id2: otherAuthId
-			 };
-			 authTrusts.push(authTrust)
-		 }
-		 var netEntityList = cloneJson(defaultEntityList);
-		 for (var i = 0; i < netEntityList.length; i++) {
-			 var entity = netEntityList[i];
-			 entity.netName = 'net' + netId;
-			 entity.credentialPrefix = 'Net' + netId + '.' + capitalizeFirstLetter(entity.name);
-			 entity.name = 'net' + netId + '.' + entity.name;
-			 if (entity.port != null) {
-				 entity.port = getNetPortBase(netId) + entity.port;
-				 entity.host = 'localhost';
-			 }
-			 var backupToAuthList = [];
-			 if (backupToAll) {
-				 var k = netId;
-				 for (var j = 1; j <= numAuths; j++,k++) {
-					 if (k != netId) {
-						 // to make sure next AuthID shows up first and circulates
-						 backupToAuthList.push(getAuthId((k-1) % numAuths) + 1);
-					 }
-				 }
-			 }
-			 else {
-				 backupToAuthList.push(getAuthId((netId % numAuths) + 1));
-			 }
-			 entity.backupToAuthIds = backupToAuthList;
-			 assignments[entity.name] = authId;
-			 entityList.push(entity);
-			 if(entity.owner != null) {
-				 var fileSharingList = {
-					 group: entity.group,
-					 name: entity.name,
-					 owner: entity.owner
-				 };
-				 filesharingLists.push(fileSharingList);
-			 }
-			 
-		 }
-	 }
- 
-	 var graph = {
-		 authList: authList,
-		 authTrusts: authTrusts,
-		 assignments: assignments,
-		 entityList: entityList,
-		 filesharingLists: filesharingLists
-	 };
-	 return graph;
- }
- 
- var program = require('commander');
- program
-   .version('0.1.0')
-   .option('-n, --num-auths <n>', 'Nmber of Auths', parseInt)
-   .option('-o, --out-file [value]', 'Output file name')
-   .option('-b, --enable-backup', 'Enable backup (boolean), defaults to false')
-   .option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
-   .option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
-   .parse(process.argv);
- 
- /*
-	 dbProtectionMethod: values
-	 DEBUG(0),
-	 ENCRYPT_CREDENTIALS(1),
-	 ENCRYPT_ENTIRE_DB(2);
- */
- var numAuths = 2;
- var dbProtectionMethod = 1;
- var outputFile = 'default.graph';
- var backupEnabled = false;
- var backupToAll = false;
- var contextualCallbackEnabled = true;
- if (program.numAuths != null) {
-	 numAuths = program.numAuths;
- }
- if (program.outFile != null) {
-	 outputFile = program.outFile;
- }
- if (program.enableBackup != null) {
-	 backupEnabled = program.enableBackup;
- }
- if (program.backupToAll != null) {
-	 backupToAll = program.backupToAll;
- }
- if (program.enableContextualCallback != null) {
-	 contextualCallbackEnabled = program.enableContextualCallback;
- }
- 
- console.log('Number of Auths: ' + numAuths);
- console.log('Output file name: ' + outputFile);
- console.log('Backup enabled?: ' + backupEnabled);
- console.log('Backup to all Auths?: ' + backupToAll);
- console.log('Contextual callback enabled?: ' + contextualCallbackEnabled);
- 
- var defaultEntityList = populateDefaultEntityList();
- var graph = generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled);
- 
- fs.writeFileSync(outputFile, 
-	 JSON2.stringify(graph, null, '\t'),
-	 'utf8'
- );
- 
+var fs = require('fs');
+var JSON2 = require('JSON2');
+
+function cloneJson(a) {
+return JSON.parse(JSON.stringify(a));
+}
+function capitalizeFirstLetter(str) {
+	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function getNetPortBase(netId) {
+	return 20000 + netId * 1000;
+}
+function getAuthPortBase(netId) {
+	return getNetPortBase(netId) + 900;
+}
+function getAuthId(netId) {
+	return 100 + netId;
+}
+function getNetId(authId) {
+	return authId - 100;
+}
+
+function populateDefaultEntityList() {
+	var DEFAULT_ENTITY_LIST = [
+		{ group: 'Clients',		name: 'client' },
+		{ group: 'Clients',		name: 'rcClient' },
+		{ group: 'Clients',		name: 'udpClient' },
+		{ group: 'Clients',	 	name: 'rcUdpClient' },
+		{ group: 'Clients',	 	name: 'safetyCriticalClient' },
+
+		{ group: 'Servers',		name: 'server', port: 100 },
+		{ group: 'Servers',		name: 'rcServer', port: 300 },
+		{ group: 'Servers',		name: 'udpServer', port: 400 },
+		{ group: 'Servers',		name: 'safetyCriticalServer', port: 500 },
+		{ group: 'Servers',		name: 'rcUdpServer', port: 600 },
+
+		{ group: 'PtClients',	name: 'ptClient' },
+		{ group: 'PtServers',	name: 'ptServer', port: 200 },
+		{ group: 'PtPublishers',name: 'ptPublisher' },
+		{ group: 'PtSubscribers',name: 'ptSubscriber' },
+		{ group: 'TeamA', 		name: 'uploader'},
+		{ group: 'FST', 		name: 'downloader',			owner: 'TeamA'},
+		{ group: 'FST', 		name: 'Alice',				owner: 'TeamB'},
+		{ group: 'FST', 		name: 'Bob',				owner: 'TeamA'}
+
+	];
+	for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
+		var entity = DEFAULT_ENTITY_LIST[i];
+		entity.distProtocol = entity.name.toLowerCase().includes('udp') ? 'UDP' : 'TCP';
+		entity.usePermanentDistKey = entity.name.toLowerCase().includes('rc') ? true : false;
+		if (entity.name.toLowerCase().includes('pt')) {
+			entity.inDerFormat = true;
+			entity.distKeyValidityPeriod = '3*sec';
+		}
+		else if (entity.usePermanentDistKey == true) {
+			entity.distKeyValidityPeriod = '365*day';
+		}
+		else {
+			entity.distKeyValidityPeriod = '1*hour';
+		}
+		if (entity.group.toLowerCase().includes('servers')) {
+			entity.maxSessionKeysPerRequest = 1;
+		}
+		else if (entity.usePermanentDistKey == true) {
+			entity.maxSessionKeysPerRequest = 30;
+		}
+		else {
+			entity.maxSessionKeysPerRequest = 5;
+		}
+		if (entity.name.toLowerCase().includes('safetycritical')) {
+			// generates 384-bit (48-byte) secret, 128 bit for cipher, 256 bit for MAC
+			const DEFAULT_DH = 'secp384r1';
+			entity.diffieHellman = DEFAULT_DH;
+		}
+	}
+	return DEFAULT_ENTITY_LIST;
+}
+
+function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled, filesharingEnabled) {
+	var authList = [];
+	var entityList = [];
+	var authTrusts = [];
+	var assignments = {};
+	var filesharingLists = [];
+	/*
+		dbProtectionMethod: values
+		DEBUG(0),
+		ENCRYPT_CREDENTIALS(1),
+		ENCRYPT_ENTIRE_DB(2);
+	*/
+	const AUTH_UDP_PORT_OFFSET = 2;
+	const TRUSTED_AUTH_PORT_OFFSET = 1;
+	const CONTEXTUAL_CALLBACK_PORT_OFFSET = 3;
+	for (var netId = 1; netId <= numAuths; netId++) {
+		var authId = getAuthId(netId);
+		var authInfo = {
+			id: authId,
+			entityHost: 'localhost',
+			authHost: 'localhost',
+			tcpPort: getAuthPortBase(netId),
+			udpPort: getAuthPortBase(netId) + AUTH_UDP_PORT_OFFSET,
+			authPort: getAuthPortBase(netId) + TRUSTED_AUTH_PORT_OFFSET,
+			callbackPort: getAuthPortBase(netId) + CONTEXTUAL_CALLBACK_PORT_OFFSET,
+			dbProtectionMethod: dbProtectionMethod,
+			backupEnabled: backupEnabled,
+			contextualCallbackEnabled: contextualCallbackEnabled
+		};
+		authList.push(authInfo);
+		for (var otherNetId = netId + 1; otherNetId <= numAuths; otherNetId++) {
+			var otherAuthId = getAuthId(otherNetId);
+			var authTrust = {
+				id1: authId,
+				id2: otherAuthId
+			};
+			authTrusts.push(authTrust)
+		}
+		var netEntityList = cloneJson(defaultEntityList);
+		for (var i = 0; i < netEntityList.length; i++) {
+			var entity = netEntityList[i];
+			entity.netName = 'net' + netId;
+			entity.credentialPrefix = 'Net' + netId + '.' + capitalizeFirstLetter(entity.name);
+			entity.name = 'net' + netId + '.' + entity.name;
+			if (entity.port != null) {
+				entity.port = getNetPortBase(netId) + entity.port;
+				entity.host = 'localhost';
+			}
+			var backupToAuthList = [];
+			if (backupToAll) {
+				var k = netId;
+				for (var j = 1; j <= numAuths; j++,k++) {
+					if (k != netId) {
+						// to make sure next AuthID shows up first and circulates
+						backupToAuthList.push(getAuthId((k-1) % numAuths) + 1);
+					}
+				}
+			}
+			else {
+				backupToAuthList.push(getAuthId((netId % numAuths) + 1));
+			}
+			entity.backupToAuthIds = backupToAuthList;
+			assignments[entity.name] = authId;
+			entityList.push(entity);
+			if(entity.owner != null & filesharingEnabled == true) {
+				var fileSharingList = {
+					group: entity.group,
+					name: entity.name,
+					owner: entity.owner
+				};
+				filesharingLists.push(fileSharingList);
+			}
+			
+		}
+	}
+
+	var graph = {
+		authList: authList,
+		authTrusts: authTrusts,
+		assignments: assignments,
+		entityList: entityList,
+		filesharingLists: filesharingLists
+	};
+	return graph;
+}
+
+var program = require('commander');
+program
+.version('0.1.0')
+.option('-n, --num-auths <n>', 'Nmber of Auths', parseInt)
+.option('-o, --out-file [value]', 'Output file name')
+.option('-b, --enable-backup', 'Enable backup (boolean), defaults to false')
+.option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
+.option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
+.option('-f, --filesharing-enabled', 'Enable filesharing (boolean), defaults to false')
+.parse(process.argv);
+
+/*
+	dbProtectionMethod: values
+	DEBUG(0),
+	ENCRYPT_CREDENTIALS(1),
+	ENCRYPT_ENTIRE_DB(2);
+*/
+var numAuths = 2;
+var dbProtectionMethod = 1;
+var outputFile = 'default.graph';
+var backupEnabled = false;
+var backupToAll = false;
+var contextualCallbackEnabled = false;
+var filesharingEnabled = false;
+if (program.numAuths != null) {
+	numAuths = program.numAuths;
+}
+if (program.outFile != null) {
+	outputFile = program.outFile;
+}
+if (program.enableBackup != null) {
+	backupEnabled = program.enableBackup;
+}
+if (program.backupToAll != null) {
+	backupToAll = program.backupToAll;
+}
+if (program.enableContextualCallback != null) {
+	contextualCallbackEnabled = program.enableContextualCallback;
+}
+if (program.filesharingEnabled != null) {
+	filesharingEnabled = filesharingEnabled;
+}
+
+console.log('Number of Auths: ' + numAuths);
+console.log('Output file name: ' + outputFile);
+console.log('Backup enabled?: ' + backupEnabled);
+console.log('Backup to all Auths?: ' + backupToAll);
+console.log('Contextual callback enabled?: ' + contextualCallbackEnabled);
+console.log('Filesharing enabled?: ' + filesharingEnabled);
+
+var defaultEntityList = populateDefaultEntityList();
+var graph = generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled, filesharingEnabled);
+
+fs.writeFileSync(outputFile, 
+	JSON2.stringify(graph, null, '\t'),
+	'utf8'
+);

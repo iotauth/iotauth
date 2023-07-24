@@ -18,4 +18,4 @@
 	
 * For generating **default_filesharing.graph**
 
-	node defaultGraphGenerator.js -b -o default_filesharing.graph
+	node defaultGraphGenerator.js -f -o default_filesharing.graph
