@@ -24,23 +24,22 @@ var fs = require('fs');
 var JSON2 = require('JSON2');
 
 function cloneJson(a) {
-	return JSON.parse(JSON.stringify(a));
-}
+   return JSON.parse(JSON.stringify(a));}
 function capitalizeFirstLetter(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+	return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function getNetPortBase(netId) {
 	return 20000 + netId * 1000;
 }
 function getAuthPortBase(netId) {
-    return getNetPortBase(netId) + 900;
+	return getNetPortBase(netId) + 900;
 }
 function getAuthId(netId) {
-    return 100 + netId;
+	return 100 + netId;
 }
 function getNetId(authId) {
-    return authId - 100;
+	return authId - 100;
 }
 
 function populateDefaultEntityList() {
@@ -106,10 +105,10 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
 	var assignments = {};
 	var filesharingLists = [];
 	/*
-			dbProtectionMethod: values
-	    DEBUG(0),
-	    ENCRYPT_CREDENTIALS(1),
-	    ENCRYPT_ENTIRE_DB(2);
+		dbProtectionMethod: values
+		DEBUG(0),
+		ENCRYPT_CREDENTIALS(1),
+		ENCRYPT_ENTIRE_DB(2);
 	*/
 	const AUTH_UDP_PORT_OFFSET = 2;
 	const TRUSTED_AUTH_PORT_OFFSET = 1;
@@ -197,7 +196,7 @@ program
   .parse(process.argv);
 
 /*
-		dbProtectionMethod: values
+	dbProtectionMethod: values
 	DEBUG(0),
 	ENCRYPT_CREDENTIALS(1),
 	ENCRYPT_ENTIRE_DB(2);
