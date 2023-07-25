@@ -7,7 +7,7 @@ echo "*SCRIPT- generateAll.sh: For generating example Auths and entities"
 
 # followings are default parameters
 # file for host and port assignment of Auth and entities
-GRAPH_FILE="configs/default_filesharing.graph"
+GRAPH_FILE="configs/default.graph"
 # Whether to show help
 SHOW_HELP=false
 # Generate credentials and configs

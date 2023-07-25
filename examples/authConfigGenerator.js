@@ -186,6 +186,7 @@ function generateCommunicationPolicyTables() {
         fs.writeFileSync(configFilePath, JSON2.stringify(policyList, null, '\t'), 'utf8');
     }
 }
+
 // generate trusted Auth tables
 function getTrustedAuth(auth) {
 	return {

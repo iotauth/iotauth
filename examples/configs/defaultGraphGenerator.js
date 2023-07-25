@@ -44,7 +44,7 @@ function getNetId(authId) {
 }
 
 
-function populateDefaultEntityList() {
+function populateDefaultEntityList(filesharingEnabled) {
 	var DEFAULT_ENTITY_LIST = [
 		{ group: 'Clients',		name: 'client' },
 		{ group: 'Clients',		name: 'rcClient' },
@@ -61,13 +61,19 @@ function populateDefaultEntityList() {
 		{ group: 'PtClients',	name: 'ptClient' },
 		{ group: 'PtServers',	name: 'ptServer', port: 200 },
 		{ group: 'PtPublishers',name: 'ptPublisher' },
-		{ group: 'PtSubscribers',name: 'ptSubscriber' },
+		{ group: 'PtSubscribers',name: 'ptSubscriber' }
+
+	];
+	var FILESHARING_ENTITY_LIST = [
 		{ group: 'TeamA', 		name: 'uploader'},
 		{ group: 'FST', 		name: 'downloader',			owner: 'TeamA'},
 		{ group: 'FST', 		name: 'Alice',				owner: 'TeamB'},
 		{ group: 'FST', 		name: 'Bob',				owner: 'TeamA'}
-
+	
 	];
+	if (filesharingEnabled == true){
+		DEFAULT_ENTITY_LIST.push(...FILESHARING_ENTITY_LIST);
+	}
 	for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
 		var entity = DEFAULT_ENTITY_LIST[i];
 		entity.distProtocol = entity.name.toLowerCase().includes('udp') ? 'UDP' : 'TCP';
@@ -236,7 +242,7 @@ console.log('Backup to all Auths?: ' + backupToAll);
 console.log('Contextual callback enabled?: ' + contextualCallbackEnabled);
 console.log('Filesharing enabled?: ' + filesharingEnabled);
 
-var defaultEntityList = populateDefaultEntityList();
+var defaultEntityList = populateDefaultEntityList(filesharingEnabled);
 var graph = generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled, filesharingEnabled);
 
 fs.writeFileSync(outputFile, 
