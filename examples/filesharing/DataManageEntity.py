@@ -13,6 +13,19 @@ DATA_DOWNLOAD_REQ = 1
 DATA_RESP = 2
 sel = selectors.DefaultSelector()
 
+def put_data(recv_data, data_center):
+    name_size = recv_data[1]
+    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    data_center["name"].append(name)
+    keyid_size = recv_data[2+name_size]
+    keyid = recv_data[3+name_size:3+name_size+keyid_size]
+    data_center["keyid"].append(keyid)
+    hash_value_size = recv_data[3+name_size+keyid_size]
+    hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
+    data_center["hash_value"].append(hash_value)
+
+def put_data2(recv_data, data_center):
+    
 def accept_wrapper(sock):
     conn, addr = sock.accept()  
     print(f"Accepted connection from {addr}")
@@ -21,7 +34,7 @@ def accept_wrapper(sock):
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
 
-key_center = {"name":[] , "purpose":[], "keyid" : [], "hash_value" : []}
+data_center = {"name":[] , "keyid" : [], "hash_value" : []}
 log_center = {"name":[] , "keyid" : [], "hash_value" : []}
 def service_connection(key, mask):
     sock = key.fileobj
@@ -33,57 +46,27 @@ def service_connection(key, mask):
             total_len = len(recv_data)
             print(recv_data)
             if recv_data[0] == DATA_UPLOAD_REQ:
-                print(recv_data)
-                # name, purpose, keyid, hash value
-                name_size = recv_data[1] 
-                print(type(name_size),name_size)
-                # name = recv_data[2:2+name_size].decode('utf-8').replace("\n","")
-                name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
-                key_center["name"].append(name)
-                purpose_size = recv_data[2+name_size]
-                purpose = recv_data[3+name_size:3+name_size+purpose_size].decode('utf-8').strip("\x00")
-                key_center["purpose"].append(purpose)
-                keyid_size = recv_data[3+name_size+purpose_size]
-                keyid = recv_data[4+name_size+purpose_size:4+name_size+purpose_size+keyid_size]
-                key_center["keyid"].append(keyid)
-                hash_value_size = recv_data[4+name_size+purpose_size+keyid_size]
-                hash_value = recv_data[5+name_size+purpose_size+keyid_size:5+name_size+purpose_size+keyid_size+hash_value_size].decode('utf-8')
-                key_center["hash_value"].append(hash_value)
-
-                print(key_center)
+                put_data(recv_data, data_center)
+                print(data_center)
             elif recv_data[0] == DATA_DOWNLOAD_REQ:
                 name_size = recv_data[1] 
                 name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
-                if name == "net1.downloader":
-                    for i,j in enumerate(key_center["purpose"]):
-                        if j == '{"FileSharing":"FileSharingTeam"}':
-                            res_keyid = key_center["keyid"][i]
-                            res_hashvalue = key_center["hash_value"][i]
-                            command = "ipfs cat $1 > enc_server.txt"
-                            print("command length: ",len(command))
-                            print("hash value: ", len(res_hashvalue))
-                            command = command.replace("$1", res_hashvalue)
-                            print(res_keyid)
-                            print(command)
-                            print("keyid length: ",len(res_keyid))
-                            print("command length: ",len(command))
-                            message = bytearray(3+len(res_keyid)+len(command))
-                            message[0] = int(hex(DATA_RESP),16)
-                            message[1] = int(hex(len(res_keyid)),16)
-                            # message[2:2+len(res_keyid)] = bytes.fromhex(str(res_keyid).encode('utf-8').hex())
-                            message[2:2+len(res_keyid)] = res_keyid
-                            message[2+len(res_keyid)] = int(hex(len(command)),16)
-                            message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
-                            print(message)
-                            print(sock)
-                            data.outb += message
-                            
-                            sent = sock.send(data.outb) 
-                            data.outb = data.outb[sent:]
-                            log_center["name"].append(name)
-                            log_center["hash_value"].append(res_hashvalue)
-                            log_center["keyid"].append(res_keyid)
+                res_keyid = data_center["keyid"][0]
+                res_hashvalue = data_center["hash_value"][0]
+                command = "ipfs cat $1 > enc_server.txt"
+                command = command.replace("$1", res_hashvalue)
+                message = bytearray(3+len(res_keyid)+len(command))
+                message[0] = int(hex(DATA_RESP),16)
+                message[1] = int(hex(len(res_keyid)),16)
+                message[2:2+len(res_keyid)] = res_keyid
+                message[2+len(res_keyid)] = int(hex(len(command)),16)
+                message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
                 
+                data.outb += message
+                sent = sock.send(data.outb) 
+                data.outb = data.outb[sent:]
+                log_center["name"].append(name), log_center["hash_value"].append(res_hashvalue), log_center["keyid"].append(res_keyid)
+                del data_center["hash_value"][0], data_center["keyid"][0], data_center["name"][0]
 
 
         else:
