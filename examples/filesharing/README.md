@@ -27,11 +27,12 @@ For this section, we use *$ROOT* for the root directory of this repository.
 
 1. Change directory to *$ROOT/examples*.
 
-2. Run the script *generateAll.sh*, by entering './generateAll.sh -g configs/default_filesharing.graph'.
+2. Run the script *generateAll.sh*, by entering './generateAll.sh -g configs/filesharing.graph'.
 
 3. You will be prompted to enter password for keystores of Auths. Enter you password to proceed.
 
 4. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanAll.sh*, with the command './cleanAll.sh'.
+
 ### To run IPFS (in command line)
 1. Run 'ipfs daemon' to activate an IPFS environment. (IPFS command line tools should be installed a priori. If it is not installed, then you can install it easily by reading [IPFS install](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions)).
 
@@ -64,6 +65,6 @@ See README.md under *entity/c/* to know specific process.
 
 5. Run 'make' 
 
-6. Run './entity_client ../c_client.config', to execute net1.uploader.
+6. Run './entity_server ../c_server.config', to execute net1.downloader.
 
-7. Run './entity_server ../c_server.config' in a separate terminal, to execute net1.downloader.
+7. Run './entity_client ../c_client.config' in a separate terminal, to execute net1.uploader.

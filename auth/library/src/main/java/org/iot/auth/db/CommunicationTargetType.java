@@ -37,7 +37,7 @@ public enum CommunicationTargetType {
     CommunicationTargetType(int value) {
         this.value = value;
     }
-    
+
     public static CommunicationTargetType fromStringValue(String value) {
         switch (value) {
             case "Group":
