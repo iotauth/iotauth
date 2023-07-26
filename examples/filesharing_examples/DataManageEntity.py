@@ -56,7 +56,7 @@ def service_connection(key, mask):
                 name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
                 if name == "net1.downloader":
                     for i,j in enumerate(key_center["purpose"]):
-                        if j == '{"FileSharing":"FST"}':
+                        if j == '{"FileSharing":"FileSharingTeam"}':
                             res_keyid = key_center["keyid"][i]
                             res_hashvalue = key_center["hash_value"][i]
                             command = "ipfs cat $1 > enc_server.txt"

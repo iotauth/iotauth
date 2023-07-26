@@ -284,7 +284,7 @@
 			]
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net1.downloader",
 			"owner": "TeamA",
 			"distProtocol": "TCP",
@@ -298,7 +298,7 @@
 			]
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net1.Alice",
 			"owner": "TeamB",
 			"distProtocol": "TCP",
@@ -312,7 +312,7 @@
 			]
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net1.Bob",
 			"owner": "TeamA",
 			"distProtocol": "TCP",
@@ -539,7 +539,7 @@
 			]
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net2.downloader",
 			"owner": "TeamA",
 			"distProtocol": "TCP",
@@ -553,7 +553,7 @@
 			]
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net2.Alice",
 			"owner": "TeamB",
 			"distProtocol": "TCP",
@@ -567,7 +567,7 @@
 			]
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net2.Bob",
 			"owner": "TeamA",
 			"distProtocol": "TCP",
@@ -583,32 +583,32 @@
 	],
 	"filesharingLists": [
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net1.downloader",
 			"owner": "TeamA"
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net1.Alice",
 			"owner": "TeamB"
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net1.Bob",
 			"owner": "TeamA"
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net2.downloader",
 			"owner": "TeamA"
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net2.Alice",
 			"owner": "TeamB"
 		},
 		{
-			"group": "FST",
+			"group": "FileSharingTeam",
 			"name": "net2.Bob",
 			"owner": "TeamA"
 		}

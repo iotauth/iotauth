@@ -175,9 +175,9 @@ function generateCommunicationPolicyTables() {
     addPubSubPolicy(policyList, 'Servers', false);
     addPubSubPolicy(policyList, 'PtPublishers', true);
     addPubSubPolicy(policyList, 'PtSubscribers', false);
-    addUplDowlPolicy(policyList,'TeamA','FST');
-    addUplDowlPolicy(policyList,'TeamB','FST');
-    addUplDowlPolicy(policyList,'TeamC','FST');
+    addUplDowlPolicy(policyList,'TeamA','FileSharingTeam');
+    addUplDowlPolicy(policyList,'TeamB','FileSharingTeam');
+    addUplDowlPolicy(policyList,'TeamC','FileSharingTeam');
     addServerClientPolicy(policyList, 'TeamA', 'Servers', '1*day', '2*hour');
     for (var i = 0; i < authList.length; i++) {
     	var auth = authList[i];

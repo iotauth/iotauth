@@ -46,10 +46,6 @@
 		"net1.ptServer": 101,
 		"net1.ptPublisher": 101,
 		"net1.ptSubscriber": 101,
-		"net1.uploader": 101,
-		"net1.downloader": 101,
-		"net1.Alice": 101,
-		"net1.Bob": 101,
 		"net2.client": 102,
 		"net2.rcClient": 102,
 		"net2.udpClient": 102,
@@ -63,11 +59,7 @@
 		"net2.ptClient": 102,
 		"net2.ptServer": 102,
 		"net2.ptPublisher": 102,
-		"net2.ptSubscriber": 102,
-		"net2.uploader": 102,
-		"net2.downloader": 102,
-		"net2.Alice": 102,
-		"net2.Bob": 102
+		"net2.ptSubscriber": 102
 	},
 	"entityList": [
 		{
@@ -271,61 +263,6 @@
 			]
 		},
 		{
-			"group": "TeamA",
-			"name": "net1.uploader",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.Uploader",
-			"backupToAuthIds": [
-				102
-			]
-		},
-		{
-			"group": "FST",
-			"name": "net1.downloader",
-			"owner": "TeamA",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.Downloader",
-			"backupToAuthIds": [
-				102
-			]
-		},
-		{
-			"group": "FST",
-			"name": "net1.Alice",
-			"owner": "TeamB",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.Alice",
-			"backupToAuthIds": [
-				102
-			]
-		},
-		{
-			"group": "FST",
-			"name": "net1.Bob",
-			"owner": "TeamA",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.Bob",
-			"backupToAuthIds": [
-				102
-			]
-		},
-		{
 			"group": "Clients",
 			"name": "net2.client",
 			"distProtocol": "TCP",
@@ -521,61 +458,6 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.PtSubscriber",
-			"backupToAuthIds": [
-				101
-			]
-		},
-		{
-			"group": "TeamA",
-			"name": "net2.uploader",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net2",
-			"credentialPrefix": "Net2.Uploader",
-			"backupToAuthIds": [
-				101
-			]
-		},
-		{
-			"group": "FST",
-			"name": "net2.downloader",
-			"owner": "TeamA",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net2",
-			"credentialPrefix": "Net2.Downloader",
-			"backupToAuthIds": [
-				101
-			]
-		},
-		{
-			"group": "FST",
-			"name": "net2.Alice",
-			"owner": "TeamB",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net2",
-			"credentialPrefix": "Net2.Alice",
-			"backupToAuthIds": [
-				101
-			]
-		},
-		{
-			"group": "FST",
-			"name": "net2.Bob",
-			"owner": "TeamA",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net2",
-			"credentialPrefix": "Net2.Bob",
 			"backupToAuthIds": [
 				101
 			]

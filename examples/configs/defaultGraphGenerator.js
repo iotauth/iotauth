@@ -66,9 +66,9 @@ function populateDefaultEntityList(filesharingEnabled) {
 	];
 	var FILESHARING_ENTITY_LIST = [
 		{ group: 'TeamA', 		name: 'uploader'},
-		{ group: 'FST', 		name: 'downloader',			owner: 'TeamA'},
-		{ group: 'FST', 		name: 'Alice',				owner: 'TeamB'},
-		{ group: 'FST', 		name: 'Bob',				owner: 'TeamA'}
+		{ group: 'FileSharingTeam', 		name: 'downloader',			owner: 'TeamA'},
+		{ group: 'FileSharingTeam', 		name: 'Alice',				owner: 'TeamB'},
+		{ group: 'FileSharingTeam', 		name: 'Bob',				owner: 'TeamA'}
 	
 	];
 	if (filesharingEnabled == true){

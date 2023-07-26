@@ -27,7 +27,7 @@ For this section, we use *$ROOT* for the root directory of this repository.
 
 1. Change directory to *$ROOT/examples*.
 
-2. Run the script *generateAll.sh*, by entering './generateAll.sh'.
+2. Run the script *generateAll.sh*, by entering './generateAll.sh -g configs/default_filesharing.graph'.
 
 3. You will be prompted to enter password for keystores of Auths. Enter you password to proceed.
 
@@ -42,6 +42,8 @@ See README.md under *examples/* to know specific process.
 2. Run 'mvn clean install' to build an executable jar file.
 
 3. Run the jar file with the properties file for Auth101, with 'java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties'.
+
+4. Enter you password to proceed.
 
 ### To run example data management entity
 
