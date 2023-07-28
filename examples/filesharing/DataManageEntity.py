@@ -24,8 +24,6 @@ def put_data(recv_data, data_center):
     hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
     data_center["hash_value"].append(hash_value)
 
-def put_data2(recv_data, data_center):
-    
 def accept_wrapper(sock):
     conn, addr = sock.accept()  
     print(f"Accepted connection from {addr}")

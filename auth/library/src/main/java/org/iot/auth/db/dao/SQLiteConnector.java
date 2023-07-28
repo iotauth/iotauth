@@ -122,7 +122,6 @@ public class SQLiteConnector {
             logger.debug("Key: {}", pkEntry.getPrivateKey());
             databasePrivateKey = pkEntry.getPrivateKey();
         }
-        //setConnection();
         //String value = selectMetaDataValue(MetaDataTable.key.EncryptedDatabaseKey.name());
 
         Buffer encryptedDatabaseKey = new Buffer(AuthCrypto.readBinaryFile(databaseEncryptionKeyPath));
@@ -206,7 +205,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public void createTablesIfNotExists() throws SQLException, ClassNotFoundException {
-        //setConnection();
         String sql = "CREATE TABLE IF NOT EXISTS " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.TargetType.name() + " TEXT NOT NULL,";
@@ -301,7 +299,7 @@ public class SQLiteConnector {
         statement = connection.createStatement();
         sql = "CREATE TABLE IF NOT EXISTS " + FileSharingTable.T_File_Sharing + "(";
         sql += FileSharingTable.c.Owner.name() + " TEXT NOT NULL,";
-        sql += FileSharingTable.c.Name.name() + " TEXT NOT NULL)";
+        sql += FileSharingTable.c.Reader.name() + " TEXT NOT NULL)";
 
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
@@ -326,7 +324,6 @@ public class SQLiteConnector {
      * @see CommunicationPolicyTable
      */
     public boolean insertRecords(CommunicationPolicyTable policy) throws SQLException, ClassNotFoundException {
-        //setConnection();
         String sql = "INSERT INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
@@ -374,7 +371,6 @@ public class SQLiteConnector {
     private boolean insertOrReplaceRecordsHelper(String sqlCommand, RegisteredEntityTable regEntity)
             throws SQLException, ClassNotFoundException
     {
-        //setConnection();
         String sql = sqlCommand + " INTO " + RegisteredEntityTable.T_REGISTERED_ENTITY + "(";
         sql += RegisteredEntityTable.c.Name.name() + ",";
         sql += "'"+ RegisteredEntityTable.c.Group.name() + "',";
@@ -474,7 +470,6 @@ public class SQLiteConnector {
      * @see TrustedAuthTable
      */
     public boolean insertRecords(TrustedAuthTable auth) throws SQLException, ClassNotFoundException, CertificateEncodingException {
-        //setConnection();
         String sql = "INSERT INTO " + TrustedAuthTable.T_TRUSTED_AUTH + "(";
         sql += TrustedAuthTable.c.ID.name() + ",";
         sql += TrustedAuthTable.c.Host.name() + ",";
@@ -539,7 +534,6 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(CachedSessionKeyTable cachedSessionKey) throws SQLException, ClassNotFoundException {
         encryptRecords(cachedSessionKey);
-        //setConnection();
         String sql = "INSERT INTO " + CachedSessionKeyTable.T_CACHED_SESSION_KEY + "(";
         sql += CachedSessionKeyTable.c.ID.name() + ",";
         sql += CachedSessionKeyTable.c.Owners.name() + ",";
@@ -580,7 +574,6 @@ public class SQLiteConnector {
      * @see MetaDataTable
      */
     public boolean insertRecords(MetaDataTable metaData) throws SQLException, ClassNotFoundException {
-        //setConnection();
 
         String sql = "INSERT INTO " + MetaDataTable.T_META_DATA + "(";
         sql += MetaDataTable.c.Key.name() + ",";
@@ -610,16 +603,15 @@ public class SQLiteConnector {
      * @see FileSharingTable
      */
     public boolean insertRecords(FileSharingTable filsharing) throws SQLException, ClassNotFoundException {
-        //setConnection();
         String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
         sql += FileSharingTable.c.Owner.name() + ",";
-        sql += FileSharingTable.c.Name.name() + ")";
+        sql += FileSharingTable.c.Reader.name() + ")";
         sql += " VALUES (?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setString(index++,filsharing.getOwner());
-        preparedStatement.setString(index++,filsharing.getName());
-        logger.info("{} {}", filsharing.getOwner(),filsharing.getName() );
+        preparedStatement.setString(index++,filsharing.getReader());
+        logger.info("{} {}", filsharing.getOwner(),filsharing.getReader() );
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -636,7 +628,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public List<CommunicationPolicyTable> selectAllPolicies() throws SQLException, ClassNotFoundException {
-        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
         if (DEBUG) logger.info(sql);
@@ -662,7 +653,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public List<RegisteredEntityTable> selectAllRegEntities(String authDatabaseDir) throws SQLException, ClassNotFoundException {
-        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         if (DEBUG) logger.info(sql);
@@ -693,7 +683,6 @@ public class SQLiteConnector {
         if (encryptCredentials) {
             distKeyVal = encryptAuthDBData(distKeyVal);
         }
-        //setConnection();
         String sql = "UPDATE " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         sql += " SET " + RegisteredEntityTable.c.DistKeyExpirationTime.name() + " = " + distKeyExpirationTime;
         sql += ", " + RegisteredEntityTable.c.DistKeyValue.name() + " = :DistKeyValue";
@@ -718,7 +707,6 @@ public class SQLiteConnector {
      * @throws CertificateEncodingException If there is a problem in certificate encoding.
      */
     public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, ClassNotFoundException, CertificateEncodingException {
-        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + TrustedAuthTable.T_TRUSTED_AUTH;
         if (DEBUG) logger.info(sql);
@@ -742,7 +730,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public List<CachedSessionKeyTable> selectAllCachedSessionKey() throws SQLException, ClassNotFoundException {
-        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
@@ -766,7 +753,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public CachedSessionKeyTable selectCachedSessionKeyByID(long id) throws SQLException, ClassNotFoundException {
-        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         sql += " WHERE " + CachedSessionKeyTable.c.ID.name() + " = " + id;
@@ -793,7 +779,6 @@ public class SQLiteConnector {
      */
     public List<CachedSessionKeyTable> selectCachedSessionKeysByPurpose(String requestingEntityName, String purpose)
             throws SQLException, ClassNotFoundException {
-        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         sql += " WHERE " + CachedSessionKeyTable.c.Purpose.name() + " = " + "'" + purpose + "'";
@@ -821,9 +806,8 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public ArrayList <String> selectFileSharingInfoByOwner(String fileOwner){
-        //setConnection();
-        String sql = "SELECT Name FROM " + FileSharingTable.T_File_Sharing;
-        sql += " WHERE " + FileSharingTable.c.Owner.name() + "=" + "'" + fileOwner + "'";
+        String sql = "SELECT Reader FROM " + FileSharingTable.T_File_Sharing;
+        sql += " WHERE " + FileSharingTable.c.Owner.name() + " = " + "'" + fileOwner + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = null;
         try {
@@ -836,7 +820,7 @@ public class SQLiteConnector {
         ArrayList <String>  result = new ArrayList <String>();
         try{
             while(resultSet.next()){
-            result.add(resultSet.getString("name"));
+            result.add(resultSet.getString("Reader"));
             }
         }
         catch (Exception e)
@@ -855,7 +839,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public boolean deleteExpiredCahcedSessionKeys() throws SQLException, ClassNotFoundException {
-        //setConnection();
         String sql = "DELETE FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         long currentTime = new java.util.Date().getTime();
         sql += " WHERE " + CachedSessionKeyTable.c.ExpirationTime.name() + " < " + currentTime;
@@ -874,7 +857,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public boolean deleteAllCachedSessionKeys() throws SQLException, ClassNotFoundException {
-        //setConnection();
         String sql = "DELETE FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
@@ -892,7 +874,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public boolean appendSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
-        //setConnection();
         String sql = "UPDATE " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         sql += " SET " + CachedSessionKeyTable.c.Owners.name() + " = ";
         sql += CachedSessionKeyTable.c.Owners.name() + "|| ',' || " + "'" + newOwner + "'";
@@ -915,7 +896,6 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      */
     public String selectMetaDataValue(String key) throws SQLException, ClassNotFoundException {
-        //setConnection();
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + MetaDataTable.T_META_DATA;
         sql += " WHERE " + MetaDataTable.c.Key.name() + " = '" + key + "'";
@@ -942,7 +922,6 @@ public class SQLiteConnector {
      */
     public boolean updateMetaData(String key, String value) throws SQLException, ClassNotFoundException
     {
-        //setConnection();
         String sql = "UPDATE " + MetaDataTable.T_META_DATA;
         sql += " SET " + MetaDataTable.c.Value.name() + " = '" + value + "'";
         sql += " WHERE " + MetaDataTable.c.Key.name() + " = '" + key + "'";
@@ -1008,7 +987,6 @@ public class SQLiteConnector {
     public boolean updateBackupCertificate(int backupFromAuthID, X509Certificate backupCertificate)
             throws SQLException, CertificateEncodingException
     {
-        //setConnection();
         String sql = "UPDATE " + TrustedAuthTable.T_TRUSTED_AUTH;
         sql += " SET " + TrustedAuthTable.c.BackupCertificateValue.name() + " = :BackupCertificateValue";
         sql += " WHERE " + TrustedAuthTable.c.ID.name() + " = '" + backupFromAuthID + "'";

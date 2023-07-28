@@ -283,7 +283,7 @@ public class GenerateExampleAuthDB {
                 FileSharingTable FileSharing = new FileSharingTable();
                 
                 FileSharing.setOwner((String)jsonObject.get(FileSharingTable.c.Owner.name()));
-                FileSharing.setName((String)jsonObject.get(FileSharingTable.c.Name.name()));
+                FileSharing.setReader((String)jsonObject.get(FileSharingTable.c.Reader.name()));
                 sqLiteConnector.insertRecords(FileSharing);
             }
         }

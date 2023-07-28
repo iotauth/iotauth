@@ -11,10 +11,10 @@ public class FileSharingTable {
 
     public enum c {
         Owner,
-        Name
+        Reader
     }
     private String owner;
-    private String name;
+    private String reader;
 
     public String getOwner() {
         return owner;
@@ -23,25 +23,25 @@ public class FileSharingTable {
         this.owner = owner;
     }
 
-    public String getName() {
-        return name;
+    public String getReader() {
+        return reader;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setReader(String reader) {
+        this.reader = reader;
     }
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
         object.put(c.Owner.name(), getOwner());
-        object.put(c.Name.name(), getName());
+        object.put(c.Reader.name(), getReader());
         return object;
     }
     public static FileSharingTable createRecord(ResultSet resultSet) throws SQLException {
         FileSharingTable FileSharing = new FileSharingTable();
         FileSharing.setOwner(resultSet.getString(c.Owner.name()));
-        FileSharing.setName(resultSet.getString(c.Name.name()));
+        FileSharing.setReader(resultSet.getString(c.Reader.name()));
         return FileSharing;
     }
 }

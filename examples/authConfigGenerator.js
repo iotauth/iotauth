@@ -102,7 +102,7 @@ function generateRegisteredEntityTables() {
 // generate filesharing info table
 function getFilesharingInfo(entity) {
 	var filesharingInfo = {
-		Name: entity.name,
+		Reader: entity.reader,
 		Owner: entity.owner
 	}
 	return filesharingInfo;
@@ -117,7 +117,7 @@ function generateFileSharingInfoTables() {
 	var entityList = graph.filesharingLists;
 	for (var i = 0; i < entityList.length; i++) {
 		var entity = entityList[i];
-		filesharingInfoTables[assignments[entity.name]].push(getFilesharingInfo(entity));
+		filesharingInfoTables[assignments[entity.reader]].push(getFilesharingInfo(entity));
 	}
 	for (var i = 0; i < authList.length; i++) {
 		var auth = authList[i];

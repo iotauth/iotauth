@@ -72,7 +72,7 @@ function populateDefaultEntityList(filesharingEnabled) {
 	
 	];
 	if (filesharingEnabled == true){
-		DEFAULT_ENTITY_LIST.push(...FILESHARING_ENTITY_LIST);
+		DEFAULT_ENTITY_LIST = FILESHARING_ENTITY_LIST;
 	}
 	for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
 		var entity = DEFAULT_ENTITY_LIST[i];
@@ -173,7 +173,7 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
 			if(entity.owner != null & filesharingEnabled == true) {
 				var fileSharingList = {
 					group: entity.group,
-					name: entity.name,
+					reader: entity.name,
 					owner: entity.owner
 				};
 				filesharingLists.push(fileSharingList);

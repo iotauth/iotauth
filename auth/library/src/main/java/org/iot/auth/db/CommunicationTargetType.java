@@ -28,7 +28,7 @@ public enum CommunicationTargetType {
     SUBSCRIBE_TOPIC(21),
     SESSION_KEY_ID(30),
     CACHED_SESSION_KEYS(40),
-    FILE_SHARING(60);
+    FILE_SHARING(50);
 
     public int getValue() {
         return value;
