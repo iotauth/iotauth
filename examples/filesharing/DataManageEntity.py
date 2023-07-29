@@ -51,7 +51,7 @@ def service_connection(key, mask):
                 name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
                 res_keyid = data_center["keyid"][0]
                 res_hashvalue = data_center["hash_value"][0]
-                command = "ipfs cat $1 > enc_server.txt"
+                command = "ipfs cat $1 > "
                 command = command.replace("$1", res_hashvalue)
                 message = bytearray(3+len(res_keyid)+len(command))
                 message[0] = int(hex(DATA_RESP),16)
