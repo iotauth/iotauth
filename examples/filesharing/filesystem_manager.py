@@ -13,22 +13,24 @@ DATA_DOWNLOAD_REQ = 1
 DATA_RESP = 2
 sel = selectors.DefaultSelector()
 
-def save_data(recv_data, data_center):
+# Save information such as hash value, sessionkey id, and name received from uploader entity.
+def save_data(recv_data, file_center):
     name_size = recv_data[1]
     name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
-    data_center["name"].append(name)
+    file_center["name"].append(name)
     keyid_size = recv_data[2+name_size]
     keyid = recv_data[3+name_size:3+name_size+keyid_size]
-    data_center["keyid"].append(keyid)
+    file_center["keyid"].append(keyid)
     hash_value_size = recv_data[3+name_size+keyid_size]
     hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
-    data_center["hash_value"].append(hash_value)
+    file_center["hash_value"].append(hash_value)
 
-def put_data(recv_data):
+# Concat data to send the information including hash value, sessionkey id, and name to downloader entity.
+def concat_data(recv_data):
     name_size = recv_data[1] 
     name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
-    res_keyid = data_center["keyid"][0]
-    res_hashvalue = data_center["hash_value"][0]
+    res_keyid = file_center["keyid"][0]
+    res_hashvalue = file_center["hash_value"][0]
     command = "ipfs cat $1 > "
     command = command.replace("$1", res_hashvalue)
     message = bytearray(3+len(res_keyid)+len(command))
@@ -48,7 +50,7 @@ def accept_wrapper(sock):
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
 
-data_center = {"name":[] , "keyid" : [], "hash_value" : []}
+file_center = {"name":[] , "keyid" : [], "hash_value" : []}
 log_center = {"name":[] , "keyid" : [], "hash_value" : []}
 def service_connection(key, mask):
     sock = key.fileobj
@@ -60,14 +62,14 @@ def service_connection(key, mask):
             total_len = len(recv_data)
             print(recv_data)
             if recv_data[0] == DATA_UPLOAD_REQ:
-                save_data(recv_data, data_center)
-                print(data_center)
+                save_data(recv_data, file_center)
+                print(file_center)
             elif recv_data[0] == DATA_DOWNLOAD_REQ:
-                message = put_data(recv_data)
+                message = concat_data(recv_data)
                 data.outb += message
                 sent = sock.send(data.outb) 
                 data.outb = data.outb[sent:]
-                del data_center["hash_value"][0], data_center["keyid"][0], data_center["name"][0]
+                del file_center["hash_value"][0], file_center["keyid"][0], file_center["name"][0]
         else:
             print(f"Closing connection to {data.addr}")
             sel.unregister(sock)
