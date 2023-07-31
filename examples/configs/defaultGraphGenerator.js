@@ -69,11 +69,17 @@ function populateDefaultEntityList(filesharingEnabled) {
         { group: 'FileSharingTeam', 		name: 'Bob',				owner: 'TeamA'}
     
     ];
+    var ENTITY_LIST = [
+
+    ];
     if (filesharingEnabled == true){
-        DEFAULT_ENTITY_LIST = FILESHARING_ENTITY_LIST;
+        ENTITY_LIST = FILESHARING_ENTITY_LIST;
     }
-    for (var i = 0; i < DEFAULT_ENTITY_LIST.length; i++) {
-        var entity = DEFAULT_ENTITY_LIST[i];
+    else {
+        ENTITY_LIST = DEFAULT_ENTITY_LIST;
+    }
+    for (var i = 0; i < ENTITY_LIST.length; i++) {
+        var entity = ENTITY_LIST[i];
         entity.distProtocol = entity.name.toLowerCase().includes('udp') ? 'UDP' : 'TCP';
         entity.usePermanentDistKey = entity.name.toLowerCase().includes('rc') ? true : false;
         if (entity.name.toLowerCase().includes('pt')) {
@@ -101,7 +107,7 @@ function populateDefaultEntityList(filesharingEnabled) {
             entity.diffieHellman = DEFAULT_DH;
         }
     }
-    return DEFAULT_ENTITY_LIST;
+    return ENTITY_LIST;
 }
 
 function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled, filesharingEnabled) {
