@@ -15,7 +15,8 @@ Auth provides the secure session key with net1.uploader and net1.downloader acco
 net1.downloader checks if there is a key that fits the session key ID, and if not, requests the session key from Auth. net1.downloader who received the session key from Auth downloads the encrypted file from IPFS and decrypts the file using the session key.
 
 # Filesystem manager
-Filesystem manager is an entity that manages detailed information about files registered in IPFS. When a file is uploaded to IPFS, the file appears only as a hash value, with no other information. However, when a person wants to give files only to certain people, he or she must use hash values and other information to block access to others. The way to block other people's access can be blocked if Auth does not provide a session key. However, another entity is required to obtain information on the session key. Therefore, Filesystem manager stores session keys and purposes according to hash values together to provide these information when a specific entity requests information.
+Filesystem manager is an entity that manages detailed information about files registered in IPFS. When a file is uploaded to IPFS, the file appears only as a hash value, with no other information. However, when a person wants to give files only to certain people, he or she must use hash values and other information to block access to others. The way to block other people's access can be blocked if Auth does not provide a session key. However, another entity is required to obtain information on the session key. Therefore, Filesystem manager stores session keys and purposes according to hash values together to provide these information when a specific entity requests information. Details are below.
+
 
 
 
