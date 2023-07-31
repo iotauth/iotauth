@@ -797,9 +797,9 @@ public class SQLiteConnector {
     }
 
     /**
-     * Select name group registered by file owner
-     * @param fileOwner the fileOwner to select registered name
-     * @return returns the list of name group
+     * Select a group of readers who can download files from file owner.
+     * @param fileOwner the owner of the file.
+     * @return returns the group of readers
      * @throws SQLException if a database access error occurs;
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
