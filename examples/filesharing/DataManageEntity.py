@@ -13,7 +13,7 @@ DATA_DOWNLOAD_REQ = 1
 DATA_RESP = 2
 sel = selectors.DefaultSelector()
 
-def put_data(recv_data, data_center):
+def save_data(recv_data, data_center):
     name_size = recv_data[1]
     name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
     data_center["name"].append(name)
@@ -23,6 +23,22 @@ def put_data(recv_data, data_center):
     hash_value_size = recv_data[3+name_size+keyid_size]
     hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
     data_center["hash_value"].append(hash_value)
+
+def put_data(recv_data):
+    name_size = recv_data[1] 
+    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    res_keyid = data_center["keyid"][0]
+    res_hashvalue = data_center["hash_value"][0]
+    command = "ipfs cat $1 > "
+    command = command.replace("$1", res_hashvalue)
+    message = bytearray(3+len(res_keyid)+len(command))
+    message[0] = int(hex(DATA_RESP),16)
+    message[1] = int(hex(len(res_keyid)),16)
+    message[2:2+len(res_keyid)] = res_keyid
+    message[2+len(res_keyid)] = int(hex(len(command)),16)
+    message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
+    log_center["name"].append(name), log_center["hash_value"].append(res_hashvalue), log_center["keyid"].append(res_keyid)
+    return message
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()  
@@ -44,29 +60,14 @@ def service_connection(key, mask):
             total_len = len(recv_data)
             print(recv_data)
             if recv_data[0] == DATA_UPLOAD_REQ:
-                put_data(recv_data, data_center)
+                save_data(recv_data, data_center)
                 print(data_center)
             elif recv_data[0] == DATA_DOWNLOAD_REQ:
-                name_size = recv_data[1] 
-                name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
-                res_keyid = data_center["keyid"][0]
-                res_hashvalue = data_center["hash_value"][0]
-                command = "ipfs cat $1 > "
-                command = command.replace("$1", res_hashvalue)
-                message = bytearray(3+len(res_keyid)+len(command))
-                message[0] = int(hex(DATA_RESP),16)
-                message[1] = int(hex(len(res_keyid)),16)
-                message[2:2+len(res_keyid)] = res_keyid
-                message[2+len(res_keyid)] = int(hex(len(command)),16)
-                message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
-                
+                message = put_data(recv_data)
                 data.outb += message
                 sent = sock.send(data.outb) 
                 data.outb = data.outb[sent:]
-                log_center["name"].append(name), log_center["hash_value"].append(res_hashvalue), log_center["keyid"].append(res_keyid)
                 del data_center["hash_value"][0], data_center["keyid"][0], data_center["name"][0]
-
-
         else:
             print(f"Closing connection to {data.addr}")
             sel.unregister(sock)
