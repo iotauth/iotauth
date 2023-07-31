@@ -13,10 +13,10 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-/**
-* Generator configuration files for Auth and entity
-* @author Hokeun Kim
-*/
+ /**
+ * Generator configuration files for Auth and entity
+ * @author Hokeun Kim
+ */
 
 "use strict";
 
@@ -67,7 +67,7 @@ function getRegisteredEntity(entity) {
     }
 
     if (entity.usePermanentDistKey == true) {
-        registeredEntity.DistCipherKeyFilePath = 'entity_keys/' + entity.credentialPrefix + 'CipherKey.key';
+        registeredEntity.DistCipherKeyFilePath = 'entity_keys/'+ entity.credentialPrefix + 'CipherKey.key';
         registeredEntity.DistMacKeyFilePath = 'entity_keys/' + entity.credentialPrefix + 'MacKey.key';
     }
     else {
@@ -150,7 +150,7 @@ function addPubSubPolicy(list, requestingGroup, isPub) {
         RelativeValidity: '3*hour'
     });
 }
-// Add the upload download files policy
+// Add policy for upload and download files
 function addUploadDownloadlPolicy(list, requestingGroup, target) {
     list.push({
         RequestingGroup: requestingGroup,
@@ -160,7 +160,7 @@ function addUploadDownloadlPolicy(list, requestingGroup, target) {
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: '365*day',
         RelativeValidity: '365*day'
-    });
+    });    
 }
 
 function generateCommunicationPolicyTables() {
@@ -175,9 +175,9 @@ function generateCommunicationPolicyTables() {
     addPubSubPolicy(policyList, 'Servers', false);
     addPubSubPolicy(policyList, 'PtPublishers', true);
     addPubSubPolicy(policyList, 'PtSubscribers', false);
-    addUploadDownloadlPolicy(policyList, 'TeamA', 'FileSharingTeam');
-    addUploadDownloadlPolicy(policyList, 'TeamB', 'FileSharingTeam');
-    addUploadDownloadlPolicy(policyList, 'TeamC', 'FileSharingTeam');
+    addUploadDownloadlPolicy(policyList,'TeamA','FileSharingTeam');
+    addUploadDownloadlPolicy(policyList,'TeamB','FileSharingTeam');
+    addUploadDownloadlPolicy(policyList,'TeamC','FileSharingTeam');
     addServerClientPolicy(policyList, 'TeamA', 'Servers', '1*day', '2*hour');
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
@@ -250,7 +250,7 @@ function generatePropertiesFiles() {
             'bluetooth_enabled': false,
             // currently default is false
             'qps_throttling_enabled': auth.capacityQpsLimit == null ? false : true,
-            'qps_limit': auth.capacityQpsLimit == null ? 10 : auth.capacityQpsLimit / 60.0,
+            'qps_limit': auth.capacityQpsLimit == null ? 10 : auth.capacityQpsLimit/60.0,
             'qps_calculation_bucket_size_in_sec': 60
         };
         var strProperties = '';
