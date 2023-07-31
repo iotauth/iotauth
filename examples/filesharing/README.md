@@ -50,7 +50,7 @@ See README.md under *examples/* to know specific process.
 
 1. Change directories to *$ROOT/examples/filesharing_examples/*.
 
-2. Run 'python3 DataManageEntity.py' to execute data management entity.
+2. Run 'python3 filesystem_manager.py' to execute data management entity.
 
 ### To run example entities written in C language.
 See README.md under *entity/c/* to know specific process.
@@ -65,6 +65,6 @@ See README.md under *entity/c/* to know specific process.
 
 5. Run 'make' 
 
-6. Run './entity_server ../c_server.config', to execute net1.downloader.
+6. Run './entity_downloader ../downloader.config', to execute net1.downloader.
 
-7. Run './entity_client ../c_client.config' in a separate terminal, to execute net1.uploader.
+7. Run './entity_uploader ../uploader.config ../plain_text.txt' in a separate terminal, to execute net1.uploader.
