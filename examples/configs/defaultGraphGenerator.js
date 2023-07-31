@@ -43,7 +43,6 @@ function getNetId(authId) {
     return authId - 100;
 }
 
-
 function populateDefaultEntityList(filesharingEnabled) {
 	var DEFAULT_ENTITY_LIST = [
 		{ group: 'Clients',		name: 'client' },
@@ -62,7 +61,6 @@ function populateDefaultEntityList(filesharingEnabled) {
 		{ group: 'PtServers',	name: 'ptServer', port: 200 },
 		{ group: 'PtPublishers',name: 'ptPublisher' },
 		{ group: 'PtSubscribers',name: 'ptSubscriber' }
-
 	];
 	var FILESHARING_ENTITY_LIST = [
 		{ group: 'TeamA', 		name: 'uploader'},
@@ -178,7 +176,6 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
 				};
 				filesharingLists.push(fileSharingList);
 			}
-			
 		}
 	}
 
