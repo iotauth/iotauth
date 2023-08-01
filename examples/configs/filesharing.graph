@@ -1,0 +1,188 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901,
+			"callbackPort": 21903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": false
+		},
+		{
+			"id": 102,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 22900,
+			"udpPort": 22902,
+			"authPort": 22901,
+			"callbackPort": 22903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": false
+		}
+	],
+	"authTrusts": [
+		{
+			"id1": 101,
+			"id2": 102
+		}
+	],
+	"assignments": {
+		"net1.uploader": 101,
+		"net1.downloader": 101,
+		"net1.Alice": 101,
+		"net1.Bob": 101,
+		"net2.uploader": 102,
+		"net2.downloader": 102,
+		"net2.Alice": 102,
+		"net2.Bob": 102
+	},
+	"entityList": [
+		{
+			"group": "TeamA",
+			"name": "net1.uploader",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Uploader",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "FileSharingTeam",
+			"name": "net1.downloader",
+			"owner": "TeamA",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Downloader",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "FileSharingTeam",
+			"name": "net1.Alice",
+			"owner": "TeamB",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Alice",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "FileSharingTeam",
+			"name": "net1.Bob",
+			"owner": "TeamA",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Bob",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "TeamA",
+			"name": "net2.uploader",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.Uploader",
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "FileSharingTeam",
+			"name": "net2.downloader",
+			"owner": "TeamA",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.Downloader",
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "FileSharingTeam",
+			"name": "net2.Alice",
+			"owner": "TeamB",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.Alice",
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "FileSharingTeam",
+			"name": "net2.Bob",
+			"owner": "TeamA",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.Bob",
+			"backupToAuthIds": [
+				101
+			]
+		}
+	],
+	"filesharingLists": [
+		{
+			"group": "FileSharingTeam",
+			"reader": "net1.downloader",
+			"owner": "TeamA"
+		},
+		{
+			"group": "FileSharingTeam",
+			"reader": "net1.Alice",
+			"owner": "TeamB"
+		},
+		{
+			"group": "FileSharingTeam",
+			"reader": "net1.Bob",
+			"owner": "TeamA"
+		},
+		{
+			"group": "FileSharingTeam",
+			"reader": "net2.downloader",
+			"owner": "TeamA"
+		},
+		{
+			"group": "FileSharingTeam",
+			"reader": "net2.Alice",
+			"owner": "TeamB"
+		},
+		{
+			"group": "FileSharingTeam",
+			"reader": "net2.Bob",
+			"owner": "TeamA"
+		}
+	]
+}

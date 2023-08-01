@@ -491,6 +491,15 @@ public class AuthServer {
     }
 
     /**
+     * Method for exposing an AuthDB operation, getFileSharingInfoByOwner
+     * @param fileOwner The owner of file that we search for.
+     * @return List of name registered by fileOwner
+     */
+    public ArrayList <String> getFileSharingInfo(String fileOwner) {
+        return db.getFileSharingInfoByOwner(fileOwner);
+    }
+
+    /**
      * Method for exposing an AuthDB operation, getRegisteredEntity
      * @param entityName The name of entity to be found.
      * @return RegisteredEntity object specified the entityName, or

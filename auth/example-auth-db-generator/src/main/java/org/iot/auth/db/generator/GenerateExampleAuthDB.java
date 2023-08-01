@@ -22,6 +22,7 @@ import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
+import org.iot.auth.db.bean.FileSharingTable;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.exception.InvalidDBDataTypeException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
@@ -112,6 +113,8 @@ public class GenerateExampleAuthDB {
                 authDatabaseDir + "configs/Auth" + authID + "CommunicationPolicyTable.config");
         initTrustedAuthTable(sqLiteConnector, authDatabaseDir,
                 authDatabaseDir + "configs/Auth" + authID + "TrustedAuthTable.config");
+        initFileSharingInfoTable(sqLiteConnector, 
+                authDatabaseDir + "configs/Auth" + authID + "FileSharingInfoTable.config");
         sqLiteConnector.close();
     }
 
@@ -264,6 +267,28 @@ public class GenerateExampleAuthDB {
         }
         catch (InvalidDBDataTypeException e) {
             logger.error("InvalidDBDataTypeException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
+    }
+
+    private static void initFileSharingInfoTable(SQLiteConnector sqLiteConnector,
+                                            String tableConfigFilePath)
+            throws ClassNotFoundException, SQLException, IOException
+    {
+        JSONParser parser = new JSONParser();
+        try {
+            JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
+
+            for (Object objElement : jsonArray) {
+                JSONObject jsonObject =  (JSONObject)objElement;
+                FileSharingTable FileSharing = new FileSharingTable();
+                
+                FileSharing.setOwner((String)jsonObject.get(FileSharingTable.c.Owner.name()));
+                FileSharing.setReader((String)jsonObject.get(FileSharingTable.c.Reader.name()));
+                sqLiteConnector.insertRecords(FileSharing);
+            }
+        }
+        catch (ParseException e) {
+            logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
         }
     }
 

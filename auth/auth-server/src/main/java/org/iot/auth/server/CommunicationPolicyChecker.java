@@ -22,6 +22,7 @@ import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
 
 /**
  * A utility class for checking communication policy.
@@ -73,6 +74,30 @@ public class CommunicationPolicyChecker {
                 logger.info("Requesting entity ({}) is allowed to subscribe topic: {}",
                         requestingEntityName, target);
                 if (sessionKey.getOwners().length >= communicationPolicy.getMaxNumSessionKeyOwners()) {
+                    logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",
+                            requestingEntityName, target);
+                    return false;
+                }
+                return true;
+            case "FileSharing":
+                if (!target.equals(requestingEntityGroup)) {
+                    logger.error("Requesting entity ({})'s target group does not match session key communication policy.",
+                            requestingEntityName);
+                    return false;
+                }
+                else {
+                    String[] SessionkeyOwner = sessionKey.getOwners();
+                    RegisteredEntity ownerEntity = server.getRegisteredEntity(SessionkeyOwner[0]);
+                    ArrayList <String> list = server.getFileSharingInfo(ownerEntity.getGroup());
+                    logger.info("File Sharing List of {}: {}",ownerEntity.getGroup(), list);
+                    if (!list.contains(requestingEntityName))
+                    {
+                        logger.error("Requesting entity ({})'s target group does not match session key communication policy.",
+                            requestingEntityName); 
+                        return false;  
+                    }
+                }
+                if (sessionKey.getOwners().length >= sessionKey.getMaxNumOwners()) {
                     logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",
                             requestingEntityName, target);
                     return false;

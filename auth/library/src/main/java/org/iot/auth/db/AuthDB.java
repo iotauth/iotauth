@@ -231,6 +231,10 @@ public class AuthDB {
         return result;
     }
 
+    public ArrayList<String> getFileSharingInfoByOwner(String fileOwner) {
+        return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
+    }
+
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         return sqLiteConnector.appendSessionKeyOwner(keyID, newOwner);
     }
