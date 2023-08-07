@@ -28,7 +28,8 @@ public enum CommunicationTargetType {
     SUBSCRIBE_TOPIC(21),
     SESSION_KEY_ID(30),
     CACHED_SESSION_KEYS(40),
-    FILE_SHARING(50);
+    FILE_SHARING(50),
+    ADD_READER(60);
 
     public int getValue() {
         return value;
@@ -48,6 +49,8 @@ public enum CommunicationTargetType {
                 return SUBSCRIBE_TOPIC;
             case "FileSharing":
                 return FILE_SHARING;
+            case "AddReader":
+                return ADD_READER;
             default:
                 return UNKNOWN;
         }

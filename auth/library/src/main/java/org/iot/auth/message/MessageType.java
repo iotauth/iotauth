@@ -39,12 +39,17 @@ public enum MessageType {
     SKEY_HANDSHAKE_3((byte)32),
     SECURE_COMM_MSG((byte)33),
     FIN_SECURE_COMM((byte)34),
+    SECURE_PUB((byte)40),
+    /** File sharing reader info **/
+    ADD_READER_REQ_IN_PUB_ENC((byte)41),
+    ADD_READER_RESP_WITH_DIST_KEY((byte)42),
+    ADD_READER_REQ((byte)43),
+    ADD_READER_RESP((byte)44),
     /** For migrating registered entities **/
     MIGRATION_REQ_WITH_SIGN((byte)50),
     MIGRATION_RESP_WITH_SIGN((byte)51),
     MIGRATION_REQ_WITH_MAC((byte)52),
     MIGRATION_RESP_WITH_MAC((byte)53),
-    SECURE_PUB((byte)40),
     AUTH_ALERT((byte)100);
 
     public static MessageType fromByte(byte value) {

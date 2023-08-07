@@ -396,6 +396,9 @@ public class AuthServer {
         return db.addSessionKeyOwner(keyID, newOwner);
     }
 
+    public boolean addFileReader(String groupOwner, String reader) throws SQLException, ClassNotFoundException {
+        return db.addFileReader(groupOwner, reader);
+    }
     public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {
         try {
             db.insertCommunicationPolicy(newCommunicationPolicyTable);

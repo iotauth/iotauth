@@ -886,6 +886,17 @@ public class SQLiteConnector {
         return result;
     }
 
+    public boolean appendFileReader(String groupOwner, String filereader) throws SQLException, ClassNotFoundException {
+        String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
+        sql += FileSharingTable.c.Owner.name() + ",";
+        sql += FileSharingTable.c.Reader.name() + ")";
+        sql += " VALUES ('" + groupOwner + "', '" + filereader + "')";
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        boolean result = preparedStatement.execute();
+        return result;
+    }
+
     /**
      * Select the value of a meta data by its key
      * @param key the key to be selected

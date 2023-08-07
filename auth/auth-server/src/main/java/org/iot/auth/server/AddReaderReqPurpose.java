@@ -25,50 +25,18 @@ import org.slf4j.LoggerFactory;
  * A class for describing the purpose of session key requests, solely used by EntityConnectionHandler.
  * @author Hokeun Kim
  */
-public class SessionKeyReqPurpose {
-    public SessionKeyReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
+public class AddReaderReqPurpose {
+    public AddReaderReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
         // purpose keys
-        final String group = "group";
-        final String pubTopic = "pubTopic";
-        final String subTopic = "subTopic";
-        final String keyId = "keyId";
-        final String cachedKeys = "cachedKeys";
-        final String fileSharing = "FileSharing";
+        final String AddReader = "AddReader";
         // TODO: match JSON string (group, pubTopic, subTopic) and CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
         Object objTarget = null;
         this.targetType = CommunicationTargetType.UNKNOWN;
 
-        if (purpose.containsKey(group)) {
-            objTarget = purpose.get(group);
+        if (purpose.containsKey(AddReader)) {
+            objTarget = purpose.get(AddReader);
             if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.TARGET_GROUP;
-            }
-        } else if (purpose.containsKey(pubTopic)) {
-            objTarget = purpose.get(pubTopic);
-            if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.PUBLISH_TOPIC;
-            }
-        } else if (purpose.containsKey(subTopic)) {
-            objTarget = purpose.get(subTopic);
-            if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.SUBSCRIBE_TOPIC;
-            }
-        } else if (purpose.containsKey(keyId)) {
-            objTarget = purpose.get(keyId);
-            logger.info("{}", objTarget.getClass());
-            if (objTarget.getClass() == Integer.class || objTarget.getClass() == Long.class) {
-                this.targetType = CommunicationTargetType.SESSION_KEY_ID;
-            }
-        } else if (purpose.containsKey(cachedKeys)) {
-            objTarget = purpose.get(cachedKeys);
-            logger.info("{}", objTarget.getClass());
-            if (objTarget.getClass() == Integer.class || objTarget.getClass() == Long.class) {
-                this.targetType = CommunicationTargetType.CACHED_SESSION_KEYS;
-            }
-        } else if (purpose.containsKey(fileSharing)) {
-            objTarget = purpose.get(fileSharing);
-            if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.FILE_SHARING;
+                this.targetType = CommunicationTargetType.ADD_READER;
             }
         }
         if (this.targetType == CommunicationTargetType.UNKNOWN) {

@@ -37,6 +37,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -272,6 +273,100 @@ public abstract class EntityConnectionHandler {
             writeToSocket(migrationResp.serializeAthenticate(currentDistributionMacKey).getRawBytes());
             close();
         }
+        else if (type == MessageType.ADD_READER_REQ_IN_PUB_ENC) {
+            getLogger().info("Received session key request message encrypted with public key!");
+            // parse signed data
+            Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
+            getLogger().debug("Encrypted data ({}): {}", encPayload.length(), encPayload.toHexString());
+            Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
+            Buffer decPayload = server.getCrypto().authPrivateDecrypt(encPayload);
+            getLogger().info("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
+            getLogger().debug("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
+
+            AddReaderReqMessage addReaderReqMessage = new AddReaderReqMessage(type, decPayload);
+
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(addReaderReqMessage.getEntityName());
+
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ_IN_PUB_ENC: Session key requester is not found!");
+            }
+
+            // checking signature
+            try {
+                if (!server.getCrypto().verifySignedData(encPayload, signature, requestingEntity.getPublicKey())) {
+                    throw new InvalidSignatureException("Entity signature verification failed!!");
+                }
+                else {
+                    getLogger().debug("Entity signature is correct!");
+                }
+            }
+            catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+                throw new InvalidSignatureException("Entity signature verification failed!!");
+            }
+            processAddReaderReq(requestingEntity, addReaderReqMessage, authNonce);
+            Buffer distributionKeyInfoBuffer;
+            DistributionKey distributionKey;    // generated or derived distribution key
+            if (requestingEntity.getPublicKeyCryptoSpec().getDiffieHellman() != null) {
+                try {
+                    DistributionDiffieHellman distributionDiffieHellman = new DistributionDiffieHellman(
+                            requestingEntity.getDistCryptoSpec(), "EC", "ECDH",
+                            384, requestingEntity.getDistKeyValidityPeriod());
+                    distributionKeyInfoBuffer = distributionDiffieHellman.getSerializedBuffer();
+                    distributionKey =
+                            distributionDiffieHellman.deriveDistributionKey(addReaderReqMessage.getDiffieHellmanParam());
+                }
+                catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
+                    throw new RuntimeException("Diffie-Hellman failed!" + e.getMessage());
+                }
+            }
+            else {
+                // generate distribution key
+                // Assuming AES-CBC-128
+                distributionKey = new DistributionKey(requestingEntity.getDistCryptoSpec(),
+                                requestingEntity.getDistKeyValidityPeriod());
+                distributionKeyInfoBuffer = distributionKey.serialize();
+            }
+            // update distribution key
+            server.updateDistributionKey(requestingEntity.getName(), distributionKey);
+
+            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfoBuffer,
+                    requestingEntity.getPublicKey());
+            encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
+            sendAddReaderResp(distributionKey, addReaderReqMessage.getEntityNonce(), encryptedDistKey);
+        }
+        else if (type == MessageType.ADD_READER_REQ) {
+            getLogger().info("Received session key request message encrypted with distribution key!");
+            BufferedString bufferedString = payload.getBufferedString(0);
+            String requestingEntityName = bufferedString.getString();
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(requestingEntityName);
+
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ: Session key requester is not found!");
+            }
+            // TODO: check distribution key validity here and if not, refuse request
+            if (requestingEntity.getDistributionKey() == null) {
+                throw new NoAvailableDistributionKeyException("No distribution key is available!");
+            }
+            else if (requestingEntity.getDistributionKey().isExpired()) {
+                throw new UseOfExpiredKeyException("Trying to use an expired distribution key.");
+            }
+
+            Buffer encPayload = payload.slice(bufferedString.length());
+
+            Buffer decPayload;
+            try {
+                decPayload = requestingEntity.getDistributionKey().decryptVerify(encPayload);
+            } catch (InvalidMacException | MessageIntegrityException e) {
+                getLogger().error("InvalidMacException | MessageIntegrityException {}",
+                        ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException("Integrity error occurred during decryptVerify!");
+            }
+            getLogger().info("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
+            AddReaderReqMessage addReaderReqMessage = new AddReaderReqMessage(type, decPayload);
+            processAddReaderReq(requestingEntity, addReaderReqMessage, authNonce);
+
+            
+        }
         else {
             getLogger().info("Received unrecognized message from the entity!");
             close();
@@ -358,6 +453,15 @@ public abstract class EntityConnectionHandler {
         }
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }
+
+    private void sendAddReaderResp(DistributionKey distributionKey, Buffer entityNonce,
+                                    Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException,
+                                    InvalidSymmetricKeyOperationException
+    {
+        AddReaderRespMessage addReaderResp;
+        addReaderResp = new AddReaderRespMessage(encryptedDistKey, entityNonce);
+        writeToSocket(addReaderResp.serializeAndEncrypt(distributionKey).getRawBytes());
+    }    
 
     /**
      * Interpret a session key request from the entity, and process it. The process includes communication policy
@@ -555,9 +659,48 @@ public abstract class EntityConnectionHandler {
         return new SessionKeysAndSpec(authSessionKeyRespMessage.getSessionKeyList(), sessionCryptoSpec);
     }
 
+    /**
+     * Interpret a session key request from the entity, and process it. The process includes communication policy
+     * checking, session key generation, and communicating with a trusted Auth to get the session key.
+     * @param requestingEntity The entity who sent the session key request.
+     * @param sessionKeyReqMessage The session key request message object.
+     * @param authNonce Auth nonce to be checked with the nonce in the session key request message.
+     * @return A pair of resulting session key list and usage (cryptography) specification for the session keys. The
+     * session keys can be either generated or retrieved from a trusted Auth.
+     * @throws IOException If IO fails.
+     * @throws ParseException If JSON parsing fails.
+     * @throws SQLException When there is a problem in SQL
+     * @throws ClassNotFoundException When class is not found.
+     * @throws InvalidSessionKeyTargetException If the target of session key request is not valid.
+     * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
+     */
+    private void processAddReaderReq(
+            RegisteredEntity requestingEntity, AddReaderReqMessage AddReaderReqMessage, Buffer authNonce)
+            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
+            TooManySessionKeysRequestedException, InvalidNonceException {
+        getLogger().debug("Sender entity: {}", AddReaderReqMessage.getEntityName());
+
+        getLogger().debug("Received auth nonce: {}", AddReaderReqMessage.getAuthNonce().toHexString());
+        if (!authNonce.equals(AddReaderReqMessage.getAuthNonce())) {
+            throw new InvalidNonceException("Auth nonce does not match!");
+        }
+        else {
+            getLogger().debug("Auth nonce is correct!");
+        }
+
+        JSONObject purpose = AddReaderReqMessage.getPurpose();
+        AddReaderReqPurpose objPurpose = new AddReaderReqPurpose(purpose);
+        StringTokenizer reqPurpose = new StringTokenizer(objPurpose.getTarget().toString() ,":",false);
+        String ownerGroup = reqPurpose.nextToken();
+        String reader = reqPurpose.nextToken();
+        server.addFileReader(ownerGroup,reader);
+
+    }
+    
     abstract protected Logger getLogger();
     abstract protected void writeToSocket(byte[] bytes) throws IOException;
     abstract protected void close();
     abstract protected String getRemoteAddress();
     private AuthServer server;
 }
+
