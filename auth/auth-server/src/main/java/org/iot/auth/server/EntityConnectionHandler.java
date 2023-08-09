@@ -690,13 +690,12 @@ public abstract class EntityConnectionHandler {
         else {
             getLogger().debug("Auth nonce is correct!");
         }
-
         JSONObject purpose = addReaderReqMessage.getPurpose();
         AddReaderReqPurpose objPurpose = new AddReaderReqPurpose(purpose);
-        StringTokenizer reqPurpose = new StringTokenizer(objPurpose.getTarget().toString() ,":",false);
-        String ownerGroup = reqPurpose.nextToken();
-        String reader = reqPurpose.nextToken();
-        server.addFileReader(ownerGroup,reader);
+        // StringTokenizer reqPurpose = new StringTokenizer(objPurpose.getTarget().toString() ,":",false);
+        // String ownerGroup = reqPurpose.nextToken();
+        // String reader = reqPurpose.nextToken();
+        server.addFileReader(requestingEntity.getGroup(),objPurpose.getTarget().toString());
 
     }
     
