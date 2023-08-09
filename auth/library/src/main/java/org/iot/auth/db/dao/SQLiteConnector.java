@@ -893,7 +893,6 @@ public class SQLiteConnector {
         sql_deduplication += groupOwner + "' AND " + FileSharingTable.c.Reader + "='";
         sql_deduplication += filereader + "'";
         ResultSet resultSet = statement.executeQuery(sql_deduplication);
-        logger.info("What? " + resultSet.getString("Reader"));
         if (resultSet.getString("Reader") != null) {
             logger.info("Already registered reader information!");
             return true;

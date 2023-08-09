@@ -22,14 +22,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class for describing the purpose of session key requests, solely used by EntityConnectionHandler.
+ * A class for describing the purpose of add reader requests, solely used by EntityConnectionHandler.
  * @author Hokeun Kim
  */
 public class AddReaderReqPurpose {
     public AddReaderReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
         // purpose keys
         final String AddReader = "AddReader";
-        // TODO: match JSON string (group, pubTopic, subTopic) and CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
         Object objTarget = null;
         this.targetType = CommunicationTargetType.UNKNOWN;
 
