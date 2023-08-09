@@ -72,7 +72,7 @@ public class SessionKeyReqPurpose {
                 this.targetType = CommunicationTargetType.FILE_SHARING;
             }
         }
-        
+
         if (this.targetType == CommunicationTargetType.UNKNOWN) {
             throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
         }
