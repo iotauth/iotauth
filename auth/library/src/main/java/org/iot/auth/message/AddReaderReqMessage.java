@@ -31,17 +31,16 @@ import org.slf4j.LoggerFactory;
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
  *      nonce: /Buffer/, (AUTH_NONCE_SIZE)
  *      replyNonce:    /Buffer/, (AUTH_NONCE_SIZE)
- *      numKeys: /UInt32BE/,
  *      sender: /string/, (senderLen UInt8)
  *      purpose: JSON,
  *      dhParam: /Buffer/ (optional, Diffie-Hellman parameter)
  * } </pre>
- * @author Hokeun Kim
+ * @author Yeongbin Jo
  */
 public class AddReaderReqMessage extends IoTSPMessage {
     /**
      * Constructor to construct a session key request message from message payload.
-     * @param type Message type of the session key request.
+     * @param type Message type of the add reader request.
      * @param decPayload Payload of the message in Buffer.
      * @throws ParseException When JSON parser fails
      */

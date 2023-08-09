@@ -886,11 +886,21 @@ public class SQLiteConnector {
         return result;
     }
 
-    public boolean appendFileReader(String groupOwner, String filereader) throws SQLException, ClassNotFoundException {
+    /**
+     * Append file reader in database.
+     * @param owner file owner
+     * @param filereader file reader
+     * @return <code>true</code> if the append is successful; otherwise, <code>false</code>
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    public boolean appendFileReader(String owner, String filereader) throws SQLException, ClassNotFoundException {
         statement = connection.createStatement();
         String sql_deduplication = "SELECT * FROM " + FileSharingTable.T_File_Sharing;
         sql_deduplication += " WHERE " + FileSharingTable.c.Owner + "='";
-        sql_deduplication += groupOwner + "' AND " + FileSharingTable.c.Reader + "='";
+        sql_deduplication += owner + "' AND " + FileSharingTable.c.Reader + "='";
         sql_deduplication += filereader + "'";
         ResultSet resultSet = statement.executeQuery(sql_deduplication);
         if (resultSet.getString("Reader") != null) {
@@ -901,7 +911,7 @@ public class SQLiteConnector {
             String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
             sql += FileSharingTable.c.Owner.name() + ",";
             sql += FileSharingTable.c.Reader.name() + ")";
-            sql += " VALUES ('" + groupOwner + "', '" + filereader + "')";
+            sql += " VALUES ('" + owner + "', '" + filereader + "')";
             if (DEBUG) logger.info(sql);
             PreparedStatement preparedStatement  = connection.prepareStatement(sql);
             boolean result = preparedStatement.execute();

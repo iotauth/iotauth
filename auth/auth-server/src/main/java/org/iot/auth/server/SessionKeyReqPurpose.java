@@ -34,6 +34,7 @@ public class SessionKeyReqPurpose {
         final String keyId = "keyId";
         final String cachedKeys = "cachedKeys";
         final String fileSharing = "FileSharing";
+
         // TODO: match JSON string (group, pubTopic, subTopic) and CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
         Object objTarget = null;
         this.targetType = CommunicationTargetType.UNKNOWN;
@@ -71,6 +72,7 @@ public class SessionKeyReqPurpose {
                 this.targetType = CommunicationTargetType.FILE_SHARING;
             }
         }
+        
         if (this.targetType == CommunicationTargetType.UNKNOWN) {
             throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
         }

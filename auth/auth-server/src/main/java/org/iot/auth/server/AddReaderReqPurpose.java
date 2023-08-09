@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A class for describing the purpose of add reader requests, solely used by EntityConnectionHandler.
- * @author Hokeun Kim
+ * @author Yeongbin Jo
  */
 public class AddReaderReqPurpose {
     public AddReaderReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
