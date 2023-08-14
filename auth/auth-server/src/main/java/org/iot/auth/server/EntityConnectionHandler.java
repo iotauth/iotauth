@@ -362,8 +362,7 @@ public abstract class EntityConnectionHandler {
             }
             AddReaderReqMessage addReaderReqMessage = new AddReaderReqMessage(type, decPayload);
             processAddReaderReq(requestingEntity, addReaderReqMessage, authNonce);
-
-            
+            sendAddReaderResp(requestingEntity.getDistributionKey(), addReaderReqMessage.getEntityNonce(), null);
         }
         else {
             getLogger().info("Received unrecognized message from the entity!");
@@ -464,7 +463,12 @@ public abstract class EntityConnectionHandler {
                                     InvalidSymmetricKeyOperationException
     {
         AddReaderRespMessage addReaderResp;
-        addReaderResp = new AddReaderRespMessage(encryptedDistKey, entityNonce);
+        if (encryptedDistKey != null) {
+            addReaderResp = new AddReaderRespMessage(encryptedDistKey, entityNonce);
+        }
+        else {
+            addReaderResp = new AddReaderRespMessage(entityNonce);
+        }
         writeToSocket(addReaderResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }    
 
