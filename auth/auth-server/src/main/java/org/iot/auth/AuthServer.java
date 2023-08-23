@@ -380,7 +380,7 @@ public class AuthServer {
     }
 
     /**
-     * Method to view database information for all trsuted Auths
+     * Method to view database information for all trusted Auths
      * @return String with information of all trusted Auths
      */
     public String trustedAuthsToString() { return db.trustedAuthsToString(); }
@@ -399,8 +399,8 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, addFileReader
-     * @param owner file owner
-     * @param reader file reader
+     * @param owner Owner of the file.
+     * @param reader Reader of the file.
      * @return Whether the operation succeeded.
      * @throws SQLException if database error occurs.
      * @throws ClassNotFoundException if the class cannot be located.

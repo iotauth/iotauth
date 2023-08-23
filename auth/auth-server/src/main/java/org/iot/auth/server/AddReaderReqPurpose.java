@@ -30,31 +30,25 @@ public class AddReaderReqPurpose {
         // purpose keys
         final String AddReader = "AddReader";
         Object objTarget = null;
-        this.targetType = CommunicationTargetType.UNKNOWN;
+        CommunicationTargetType targetType = CommunicationTargetType.UNKNOWN;
 
         if (purpose.containsKey(AddReader)) {
             objTarget = purpose.get(AddReader);
             if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.ADD_READER;
+                targetType = CommunicationTargetType.ADD_READER;
             }
         }
-        if (this.targetType == CommunicationTargetType.UNKNOWN) {
+        if (targetType == CommunicationTargetType.UNKNOWN) {
             throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
         }
         this.target = objTarget;
     }
 
-    public CommunicationTargetType getTargetType() {
-        return targetType;
-    }
-
     public Object getTarget() {
         return target;
     }
-
-    private CommunicationTargetType targetType;
     private Object target;
 
-    private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqPurpose.class);
+    private static final Logger logger = LoggerFactory.getLogger(AddReaderReqPurpose.class);
 
 }
