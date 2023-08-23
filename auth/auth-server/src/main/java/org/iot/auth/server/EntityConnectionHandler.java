@@ -35,10 +35,8 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -156,7 +154,7 @@ public abstract class EntityConnectionHandler {
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
-            DistributionKeyInfo distributionKey = GenerateDistributionkey(requestingEntity, sessionKeyReqMessage.getDiffieHellmanParam());
+            DistributionKeyInfo distributionKey = GenerateDistributionKey(requestingEntity, sessionKeyReqMessage.getDiffieHellmanParam());
 
             Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKey.getDistributionkeyInfoBuffer(),
                     requestingEntity.getPublicKey());
@@ -284,7 +282,7 @@ public abstract class EntityConnectionHandler {
             }
             processAddReaderReq(requestingEntity, addReaderReqMessage, authNonce);
 
-            DistributionKeyInfo distributionKeyInfo = GenerateDistributionkey(requestingEntity, addReaderReqMessage.getDiffieHellmanParam());
+            DistributionKeyInfo distributionKeyInfo = GenerateDistributionKey(requestingEntity, addReaderReqMessage.getDiffieHellmanParam());
             Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfo.getDistributionkeyInfoBuffer(),
                     requestingEntity.getPublicKey());
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
@@ -675,10 +673,10 @@ public abstract class EntityConnectionHandler {
     /**
      * Generate distribution key.
      * @param requestingEntity Entity to request the distribution key.
-     * @param DiffileHellmanParamBuffer Diffile hellman parameter buffer to get distribution key.
-     * @return Distribution key and info buffer.
+     * @param diffieHellmanParamBuffer Diffie-Hellman parameter buffer to get distribution key.
+     * @return DistributionKeyInfo including the distribution key and the info buffer.
      */
-    private DistributionKeyInfo GenerateDistributionkey(RegisteredEntity requestingEntity, Buffer DiffileHellmanParamBuffer) throws ClassNotFoundException, SQLException, IOException
+    private DistributionKeyInfo GenerateDistributionKey(RegisteredEntity requestingEntity, Buffer diffieHellmanParamBuffer) throws ClassNotFoundException, SQLException, IOException
     {
         Buffer distributionKeyInfoBuffer;
         DistributionKey distributionKey;    // generated or derived distribution key
@@ -689,7 +687,7 @@ public abstract class EntityConnectionHandler {
                         384, requestingEntity.getDistKeyValidityPeriod());
                 distributionKeyInfoBuffer = distributionDiffieHellman.getSerializedBuffer();
                 distributionKey =
-                        distributionDiffieHellman.deriveDistributionKey(DiffileHellmanParamBuffer);
+                        distributionDiffieHellman.deriveDistributionKey(diffieHellmanParamBuffer);
             }
             catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
                 throw new RuntimeException("Diffie-Hellman failed!" + e.getMessage());
