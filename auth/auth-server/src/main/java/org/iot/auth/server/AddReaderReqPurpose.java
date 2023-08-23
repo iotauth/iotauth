@@ -13,57 +13,42 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.db;
+package org.iot.auth.server;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.iot.auth.db.CommunicationTargetType;
+import org.iot.auth.exception.InvalidSessionKeyTargetException;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @author Hokeun Kim
+ * A class for describing the purpose of add reader requests, solely used by EntityConnectionHandler.
+ * @author Yeongbin Jo
  */
-public enum CommunicationTargetType {
-    UNKNOWN(0),
-    TARGET_GROUP(1),
-    PUBLISH_TOPIC(20),
-    SUBSCRIBE_TOPIC(21),
-    SESSION_KEY_ID(30),
-    CACHED_SESSION_KEYS(40),
-    FILE_SHARING(50),
-    ADD_READER(60);
+public class AddReaderReqPurpose {
+    public AddReaderReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
+        // purpose keys
+        final String AddReader = "AddReader";
+        Object objTarget = null;
+        CommunicationTargetType targetType = CommunicationTargetType.UNKNOWN;
 
-    public int getValue() {
-        return value;
-    }
-
-    CommunicationTargetType(int value) {
-        this.value = value;
-    }
-
-    public static CommunicationTargetType fromStringValue(String value) {
-        switch (value) {
-            case "Group":
-                return TARGET_GROUP;
-            case "PubTopic":
-                return PUBLISH_TOPIC;
-            case "SubTopic":
-                return SUBSCRIBE_TOPIC;
-            case "FileSharing":
-                return FILE_SHARING;
-            case "AddReader":
-                return ADD_READER;
-            default:
-                return UNKNOWN;
+        if (purpose.containsKey(AddReader)) {
+            objTarget = purpose.get(AddReader);
+            if (objTarget.getClass() == String.class) {
+                targetType = CommunicationTargetType.ADD_READER;
+            }
         }
-    }
-
-    private static final Map<Integer, CommunicationTargetType> typesByValue =
-            new HashMap<>();
-
-    static {
-        for (CommunicationTargetType type : CommunicationTargetType.values()) {
-            typesByValue.put(type.value, type);
+        if (targetType == CommunicationTargetType.UNKNOWN) {
+            throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
         }
+        this.target = objTarget;
     }
 
-    private final int value;
+    public Object getTarget() {
+        return target;
+    }
+    private Object target;
+
+    private static final Logger logger = LoggerFactory.getLogger(AddReaderReqPurpose.class);
+
 }

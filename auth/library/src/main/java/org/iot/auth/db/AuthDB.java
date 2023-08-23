@@ -239,6 +239,10 @@ public class AuthDB {
         return sqLiteConnector.appendSessionKeyOwner(keyID, newOwner);
     }
 
+    public boolean addFileReader(String groupOwner, String reader) throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.appendFileReader(groupOwner, reader);
+    }
+
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
         sqLiteConnector.deleteExpiredCahcedSessionKeys();
     }

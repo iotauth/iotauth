@@ -9,9 +9,9 @@ This directory includes descryptions for fileshairng and filesystem_manager.py t
 
 The figure above illustrates the example with Auths (*Auth*), their example entities and filesystem manager. *Auth* is an authorization entity for network 1 (net1), and it has two registered entities, namely, *net1.uploader* and *net1.downloader*. Filesystem manager manages the information for files.
 
-Auth provides the secure session key with net1.uploader and net1.downloader according to communication policy. If net1.uploader gets the session key from Auth, net1.uploader can encrypt the file with session key. Then, net1.uplodaer uploads the encrypted file to IPFS. IPFS is decentralized distributed file system and everyone can download the file using hash value. when net1.uploader uploads the file, net1.uploader transfer the data including file hash value, sessionkey id, and purpose to filesystem manager.
+Auth provides the secure session key with net1.uploader and net1.downloader according to communication policy. If net1.uploader gets the session key from Auth, net1.uploader can encrypt the file with session key. Then, net1.uplodaer uploads the encrypted file to IPFS. IPFS is decentralized distributed file system and everyone can download the file using hash value. When net1.uploader uploads the file, net1.uploader transfer the data including file hash value, sessionkey id, and purpose to filesystem manager. However, if net1.downloader is not registered in the file_sharing_info table, we can request 'Addreader' to Auth through the 'addReader.txt' file.
 
- net1.downloader requests the file information to filesystem manager. Filesystem manager confirms the net1.downloader and gives the file information. 
+net1.downloader requests the file information to filesystem manager. Filesystem manager confirms the net1.downloader and gives the file information. 
 net1.downloader checks if there is a key that fits the session key ID, and if not, requests the session key from Auth. net1.downloader who received the session key from Auth downloads the encrypted file from IPFS and decrypts the file using the session key.
 
 # Filesystem manager
@@ -69,4 +69,4 @@ See README.md under *entity/c/* to know specific process.
 
 6. Run './entity_downloader ../downloader.config', to execute net1.downloader.
 
-7. Run './entity_uploader ../uploader.config ../plain_text.txt' in a separate terminal, to execute net1.uploader.
+7. Run './entity_uploader ../uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.

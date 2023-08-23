@@ -380,10 +380,11 @@ public class AuthServer {
     }
 
     /**
-     * Method to view database information for all trsuted Auths
+     * Method to view database information for all trusted Auths
      * @return String with information of all trusted Auths
      */
     public String trustedAuthsToString() { return db.trustedAuthsToString(); }
+
     /**
      * Method for exposing an AuthDB operation, addSessionKeyOwner
      * @param keyID ID for specifying the session key to be updated.
@@ -394,6 +395,18 @@ public class AuthServer {
      */
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         return db.addSessionKeyOwner(keyID, newOwner);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, addFileReader
+     * @param owner Owner of the file.
+     * @param reader Reader of the file.
+     * @return Whether the operation succeeded.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
+     */
+    public boolean addFileReader(String owner, String reader) throws SQLException, ClassNotFoundException {
+        return db.addFileReader(owner, reader);
     }
 
     public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {

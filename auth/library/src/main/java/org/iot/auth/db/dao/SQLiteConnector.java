@@ -591,9 +591,9 @@ public class SQLiteConnector {
     }
 
     /**
-     * Inserts the filesharing information into the filesharing table.
+     * Inserts the file-sharing information into the file-sharing table.
      *
-     * @param filsharing the object container of the information in filesharing table
+     * @param fileSharing the object container of the information in file-sharing table
      * @return <code>true</code> if the insertion has been successful
      *         <code>false</code> if the insertion has failed
      * @throws SQLException  if a database access error occurs;
@@ -602,16 +602,16 @@ public class SQLiteConnector {
      * @throws ClassNotFoundException if the class cannot be located
      * @see FileSharingTable
      */
-    public boolean insertRecords(FileSharingTable filsharing) throws SQLException, ClassNotFoundException {
+    public boolean insertRecords(FileSharingTable fileSharing) throws SQLException, ClassNotFoundException {
         String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
         sql += FileSharingTable.c.Owner.name() + ",";
         sql += FileSharingTable.c.Reader.name() + ")";
         sql += " VALUES (?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
-        preparedStatement.setString(index++,filsharing.getOwner());
-        preparedStatement.setString(index++,filsharing.getReader());
-        logger.info("{} {}", filsharing.getOwner(),filsharing.getReader() );
+        preparedStatement.setString(index++,fileSharing.getOwner());
+        preparedStatement.setString(index++,fileSharing.getReader());
+        logger.info("{} {}", fileSharing.getOwner(),fileSharing.getReader() );
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -831,7 +831,7 @@ public class SQLiteConnector {
     }
 
     /**
-     * Deletes exprired cached session keys from the database.
+     * Deletes expired cached session keys from the database.
      * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
      * @throws SQLException  if a database access error occurs;
      * this method is called on a closed <code>PreparedStatement</code>
@@ -864,10 +864,10 @@ public class SQLiteConnector {
     }
 
     /**
-     * Append a owner to a session key.
+     * Append an owner to a session key.
      * @param keyID the id of the session key
      * @param newOwner the owner to the session key
-     * @return <code>true</code> if the append is successful; otherwise, <code>false</code>
+     * @return <code>true</code> if the appending is successful; otherwise, <code>false</code>
      * @throws SQLException  if a database access error occurs;
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
@@ -884,6 +884,39 @@ public class SQLiteConnector {
         // It's in auto-commit mode no need for explicit commit
         //_commit();
         return result;
+    }
+
+    /**
+     * Append a file reader in database.
+     * @param owner owner of the file.
+     * @param fileReader reader of the file.
+     * @return <code>true</code> if the appending is successful; otherwise, <code>false</code>
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    public boolean appendFileReader(String owner, String fileReader) throws SQLException, ClassNotFoundException {
+        statement = connection.createStatement();
+        String sql_deduplication = "SELECT * FROM " + FileSharingTable.T_File_Sharing;
+        sql_deduplication += " WHERE " + FileSharingTable.c.Owner + "='";
+        sql_deduplication += owner + "' AND " + FileSharingTable.c.Reader + "='";
+        sql_deduplication += fileReader + "'";
+        ResultSet resultSet = statement.executeQuery(sql_deduplication);
+        if (resultSet.getString("Reader") != null) {
+            logger.info("Already registered reader information!");
+            return true;
+        }
+        else {
+            String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
+            sql += FileSharingTable.c.Owner.name() + ",";
+            sql += FileSharingTable.c.Reader.name() + ")";
+            sql += " VALUES ('" + owner + "', '" + fileReader + "')";
+            if (DEBUG) logger.info(sql);
+            PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+            boolean result = preparedStatement.execute();
+            return result;
+        }
     }
 
     /**
@@ -957,7 +990,7 @@ public class SQLiteConnector {
 
     /**
      * Delete registered entities except for those originally its own.
-     * @return <code>true</code> if the delete is successful; otherwise, <code>false</code>
+     * @return <code>true</code> if the deleting is successful; otherwise, <code>false</code>
      * @throws SQLException If a database access error occurs
      */
     public boolean deleteBackedUpRegisteredEntities() throws SQLException {

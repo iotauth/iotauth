@@ -62,6 +62,34 @@ public abstract class EntityConnectionHandler {
         }
     }
 
+    private class DecPayloadAndRegisteredEntity {
+        private Buffer payload;
+        private RegisteredEntity registeredEntity;
+        public DecPayloadAndRegisteredEntity(Buffer payload, RegisteredEntity registeredEntity) {
+            this.payload = payload;
+            this.registeredEntity = registeredEntity;
+        }
+        public Buffer getPayload() {
+            return payload;
+        }
+        public RegisteredEntity getRegisteredEntity() {
+            return registeredEntity;
+        }
+    }
+    private class DistributionKeyInfo {
+        private Buffer distributionKeyInfo;
+        private DistributionKey distributionKey;
+        public DistributionKeyInfo(Buffer distributionKeyInfo, DistributionKey distributionKey) {
+            this.distributionKeyInfo = distributionKeyInfo;
+            this.distributionKey = distributionKey;
+        }
+        public Buffer getDistributionKeyInfoBuffer() {
+            return distributionKeyInfo;
+        }
+        public DistributionKey getDistributionKey() {
+            return distributionKey;
+        }
+    }
     protected EntityConnectionHandler(AuthServer server) {
         this.server = server;
     }
@@ -126,75 +154,26 @@ public abstract class EntityConnectionHandler {
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
-            Buffer distributionKeyInfoBuffer;   // either distribution key or DH param to derive distribution key
-            DistributionKey distributionKey;    // generated or derived distribution key
-            if (requestingEntity.getPublicKeyCryptoSpec().getDiffieHellman() != null) {
-                try {
-                    DistributionDiffieHellman distributionDiffieHellman = new DistributionDiffieHellman(
-                            requestingEntity.getDistCryptoSpec(), "EC", "ECDH",
-                            384, requestingEntity.getDistKeyValidityPeriod());
-                    distributionKeyInfoBuffer = distributionDiffieHellman.getSerializedBuffer();
-                    distributionKey =
-                            distributionDiffieHellman.deriveDistributionKey(sessionKeyReqMessage.getDiffieHellmanParam());
-                }
-                catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
-                    throw new RuntimeException("Diffie-Hellman failed!" + e.getMessage());
-                }
-            }
-            else {
-                // generate distribution key
-                // Assuming AES-CBC-128
-                distributionKey = new DistributionKey(requestingEntity.getDistCryptoSpec(),
-                                requestingEntity.getDistKeyValidityPeriod());
-                distributionKeyInfoBuffer = distributionKey.serialize();
-            }
-            // update distribution key
-            server.updateDistributionKey(requestingEntity.getName(), distributionKey);
+            DistributionKeyInfo distributionKey = GenerateDistributionKey(requestingEntity, sessionKeyReqMessage.getDiffieHellmanParam());
 
-            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfoBuffer,
+            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKey.getDistributionKeyInfoBuffer(),
                     requestingEntity.getPublicKey());
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
 
-            sendSessionKeyResp(distributionKey, sessionKeyReqMessage.getEntityNonce(),
+            sendSessionKeyResp(distributionKey.getDistributionKey(), sessionKeyReqMessage.getEntityNonce(),
                     sessionKeyList, sessionCryptoSpec, encryptedDistKey);
             close();
         }
         else if (type == MessageType.SESSION_KEY_REQ) {
-            getLogger().info("Received session key request message encrypted with distribution key!");
-            BufferedString bufferedString = payload.getBufferedString(0);
-            String requestingEntityName = bufferedString.getString();
-            RegisteredEntity requestingEntity = server.getRegisteredEntity(requestingEntityName);
-
-            if (requestingEntity == null) {
-                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ: Session key requester is not found!");
-            }
-            // TODO: check distribution key validity here and if not, refuse request
-            if (requestingEntity.getDistributionKey() == null) {
-                throw new NoAvailableDistributionKeyException("No distribution key is available!");
-            }
-            else if (requestingEntity.getDistributionKey().isExpired()) {
-                throw new UseOfExpiredKeyException("Trying to use an expired distribution key.");
-            }
-
-            Buffer encPayload = payload.slice(bufferedString.length());
-
-            Buffer decPayload;
-            try {
-                decPayload = requestingEntity.getDistributionKey().decryptVerify(encPayload);
-            } catch (InvalidMacException | MessageIntegrityException e) {
-                getLogger().error("InvalidMacException | MessageIntegrityException {}",
-                        ExceptionToString.convertExceptionToStackTrace(e));
-                throw new RuntimeException("Integrity error occurred during decryptVerify!");
-            }
-
-            SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, decPayload);
+            DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
+            SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, dec.getPayload());
 
             SessionKeysAndSpec ret =
-                    processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
+                    processSessionKeyReq(dec.getRegisteredEntity(), sessionKeyReqMessage, authNonce);
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
-            sendSessionKeyResp(requestingEntity.getDistributionKey(), sessionKeyReqMessage.getEntityNonce(),
+            sendSessionKeyResp(dec.getRegisteredEntity().getDistributionKey(), sessionKeyReqMessage.getEntityNonce(),
                     sessionKeyList, sessionCryptoSpec, null);
             close();
         }
@@ -271,6 +250,49 @@ public abstract class EntityConnectionHandler {
                     migrationReq.getEntityNonce(), migrationToken.getEncryptedNewDistributionKey());
             writeToSocket(migrationResp.serializeAthenticate(currentDistributionMacKey).getRawBytes());
             close();
+        }
+        else if (type == MessageType.ADD_READER_REQ_IN_PUB_ENC) {
+            getLogger().info("Received session key request message encrypted with public key!");
+            // parse signed data
+            Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
+            getLogger().debug("Encrypted data ({}): {}", encPayload.length(), encPayload.toHexString());
+            Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
+            Buffer decPayload = server.getCrypto().authPrivateDecrypt(encPayload);
+            getLogger().debug("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
+
+            AddReaderReqMessage addReaderReqMessage = new AddReaderReqMessage(type, decPayload);
+
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(addReaderReqMessage.getEntityName());
+
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ_IN_PUB_ENC: Session key requester is not found!");
+            }
+
+            // checking signature
+            try {
+                if (!server.getCrypto().verifySignedData(encPayload, signature, requestingEntity.getPublicKey())) {
+                    throw new InvalidSignatureException("Entity signature verification failed!!");
+                }
+                else {
+                    getLogger().debug("Entity signature is correct!");
+                }
+            }
+            catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+                throw new InvalidSignatureException("Entity signature verification failed!!");
+            }
+            processAddReaderReq(requestingEntity, addReaderReqMessage, authNonce);
+
+            DistributionKeyInfo distributionKeyInfo = GenerateDistributionKey(requestingEntity, addReaderReqMessage.getDiffieHellmanParam());
+            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfo.getDistributionKeyInfoBuffer(),
+                    requestingEntity.getPublicKey());
+            encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
+            sendAddReaderResp(distributionKeyInfo.getDistributionKey(), addReaderReqMessage.getEntityNonce(), encryptedDistKey);
+        }
+        else if (type == MessageType.ADD_READER_REQ) {
+            DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
+            AddReaderReqMessage addReaderReqMessage = new AddReaderReqMessage(type, dec.getPayload());
+            processAddReaderReq(dec.getRegisteredEntity(), addReaderReqMessage, authNonce);
+            sendAddReaderResp(dec.getRegisteredEntity().getDistributionKey(), addReaderReqMessage.getEntityNonce(), null);
         }
         else {
             getLogger().info("Received unrecognized message from the entity!");
@@ -358,6 +380,27 @@ public abstract class EntityConnectionHandler {
         }
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }
+    /**
+     * Send an add reader response to the requesting entity
+     * @param distributionKey Distribution key used for sending session key response
+     * @param entityNonce Random number generated by the requesting entity, to be included in the response
+     * @param encryptedDistKey it is the distribution key encrypted using public key cryptography.
+     * @throws IOException If TCP socket IO fails.
+     * @throws UseOfExpiredKeyException When an expired key is used.
+     */
+    private void sendAddReaderResp(DistributionKey distributionKey, Buffer entityNonce,
+                                    Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException,
+                                    InvalidSymmetricKeyOperationException
+    {
+        AddReaderRespMessage addReaderResp;
+        if (encryptedDistKey != null) {
+            addReaderResp = new AddReaderRespMessage(encryptedDistKey, entityNonce);
+        }
+        else {
+            addReaderResp = new AddReaderRespMessage(entityNonce);
+        }
+        writeToSocket(addReaderResp.serializeAndEncrypt(distributionKey).getRawBytes());
+    }    
 
     /**
      * Interpret a session key request from the entity, and process it. The process includes communication policy
@@ -510,7 +553,7 @@ public abstract class EntityConnectionHandler {
                 break;
             }
             default: {
-                getLogger().error("Unrecognized target for session key request!");
+                getLogger().error("Unrecognized target for session key request! TargetType: " + reqPurpose.getTargetType().getValue());
                 break;
             }
         }
@@ -555,6 +598,112 @@ public abstract class EntityConnectionHandler {
         return new SessionKeysAndSpec(authSessionKeyRespMessage.getSessionKeyList(), sessionCryptoSpec);
     }
 
+    /**
+     * Interpret an add reader request from the entity, and process it. The process includes nonce checking
+     * and adding a file reader in database for purpose.
+     * @param requestingEntity The entity who sent the session key request.
+     * @param addReaderReqMessage The add reader request message object.
+     * @param authNonce Auth nonce to be checked with the nonce in the add reader request message.
+     * @throws IOException If IO fails.
+     * @throws ParseException If JSON parsing fails.
+     * @throws SQLException When there is a problem in SQL
+     * @throws ClassNotFoundException When class is not found.
+     * @throws InvalidSessionKeyTargetException If the target of add reader request is not valid.
+     * @throws InvalidNonceException If nonce does not match.
+     */
+    private void processAddReaderReq(
+            RegisteredEntity requestingEntity, AddReaderReqMessage addReaderReqMessage, Buffer authNonce)
+            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
+            InvalidNonceException {
+        getLogger().debug("Sender entity: {}", addReaderReqMessage.getEntityName());
+
+        getLogger().debug("Received auth nonce: {}", addReaderReqMessage.getAuthNonce().toHexString());
+        if (!authNonce.equals(addReaderReqMessage.getAuthNonce())) {
+            throw new InvalidNonceException("Auth nonce does not match!");
+        }
+        else {
+            getLogger().debug("Auth nonce is correct!");
+        }
+        JSONObject purpose = addReaderReqMessage.getPurpose();
+        AddReaderReqPurpose objPurpose = new AddReaderReqPurpose(purpose);
+        // StringTokenizer reqPurpose = new StringTokenizer(objPurpose.getTarget().toString() ,":",false);
+        // String ownerGroup = reqPurpose.nextToken();
+        // String reader = reqPurpose.nextToken();
+        server.addFileReader(requestingEntity.getGroup(),objPurpose.getTarget().toString());
+    }
+
+    /**
+     * Decrypt the input buffer with distribution key and get the requesting entity information.
+     * @param payload input buffer to decrypt.
+     * @return Decrypted input buffer and entity information requesting distribution key.
+     */
+    private DecPayloadAndRegisteredEntity decryptPayloadWithDistKey(
+            Buffer payload) throws NoAvailableDistributionKeyException, UseOfExpiredKeyException, UnrecognizedEntityException, InvalidSignatureException, InvalidSymmetricKeyOperationException
+    {
+        getLogger().info("Received session key request message encrypted with distribution key!");
+        BufferedString bufferedString = payload.getBufferedString(0);
+        String requestingEntityName = bufferedString.getString();
+        RegisteredEntity requestingEntity = server.getRegisteredEntity(requestingEntityName);
+
+        if (requestingEntity == null) {
+            throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ: Session key requester is not found!");
+        }
+        // TODO: check distribution key validity here and if not, refuse request
+        if (requestingEntity.getDistributionKey() == null) {
+            throw new NoAvailableDistributionKeyException("No distribution key is available!");
+        }
+        else if (requestingEntity.getDistributionKey().isExpired()) {
+            throw new UseOfExpiredKeyException("Trying to use an expired distribution key.");
+        }
+
+        Buffer encPayload = payload.slice(bufferedString.length());
+
+        Buffer decPayload;
+        try {
+            decPayload = requestingEntity.getDistributionKey().decryptVerify(encPayload);
+        } catch (InvalidMacException | MessageIntegrityException e) {
+            getLogger().error("InvalidMacException | MessageIntegrityException {}",
+                    ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Integrity error occurred during decryptVerify!");
+        }
+
+        return new DecPayloadAndRegisteredEntity(decPayload, requestingEntity);
+    }
+
+    /**
+     * Generate distribution key.
+     * @param requestingEntity Entity to request the distribution key.
+     * @param diffieHellmanParamBuffer Diffie-Hellman parameter buffer to get distribution key.
+     * @return DistributionKeyInfo including the distribution key and the info buffer.
+     */
+    private DistributionKeyInfo GenerateDistributionKey(RegisteredEntity requestingEntity, Buffer diffieHellmanParamBuffer) throws ClassNotFoundException, SQLException, IOException
+    {
+        Buffer distributionKeyInfoBuffer;
+        DistributionKey distributionKey;    // generated or derived distribution key
+        if (requestingEntity.getPublicKeyCryptoSpec().getDiffieHellman() != null) {
+            try {
+                DistributionDiffieHellman distributionDiffieHellman = new DistributionDiffieHellman(
+                        requestingEntity.getDistCryptoSpec(), "EC", "ECDH",
+                        384, requestingEntity.getDistKeyValidityPeriod());
+                distributionKeyInfoBuffer = distributionDiffieHellman.getSerializedBuffer();
+                distributionKey =
+                        distributionDiffieHellman.deriveDistributionKey(diffieHellmanParamBuffer);
+            }
+            catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
+                throw new RuntimeException("Diffie-Hellman failed!" + e.getMessage());
+            }
+        }
+        else {
+            // generate distribution key
+            // Assuming AES-CBC-128
+            distributionKey = new DistributionKey(requestingEntity.getDistCryptoSpec(),
+                            requestingEntity.getDistKeyValidityPeriod());
+            distributionKeyInfoBuffer = distributionKey.serialize();
+        }
+        // update distribution key
+        server.updateDistributionKey(requestingEntity.getName(), distributionKey);
+        return new DistributionKeyInfo(distributionKeyInfoBuffer, distributionKey);
+    }
     abstract protected Logger getLogger();
     abstract protected void writeToSocket(byte[] bytes) throws IOException;
     abstract protected void close();
