@@ -78,10 +78,10 @@ public abstract class EntityConnectionHandler {
             return registeredEntity;
         }
     }
-    private class DistributionkeyInfo {
+    private class DistributionKeyInfo {
         private Buffer distributionkeyInfo;
         private DistributionKey distributionkey;
-        public DistributionkeyInfo(Buffer distributionkeyInfo, DistributionKey distributionkey) {
+        public DistributionKeyInfo(Buffer distributionkeyInfo, DistributionKey distributionkey) {
             this.distributionkeyInfo = distributionkeyInfo;
             this.distributionkey = distributionkey;
         }
@@ -156,7 +156,7 @@ public abstract class EntityConnectionHandler {
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
-            DistributionkeyInfo distributionKey = GenerateDistributionkey(requestingEntity, sessionKeyReqMessage, null);
+            DistributionKeyInfo distributionKey = GenerateDistributionkey(requestingEntity, sessionKeyReqMessage.getDiffieHellmanParam());
 
             Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKey.getDistributionkeyInfoBuffer(),
                     requestingEntity.getPublicKey());
@@ -284,11 +284,11 @@ public abstract class EntityConnectionHandler {
             }
             processAddReaderReq(requestingEntity, addReaderReqMessage, authNonce);
 
-            DistributionkeyInfo distributionKey = GenerateDistributionkey(requestingEntity, null, addReaderReqMessage);
-            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKey.getDistributionkeyInfoBuffer(),
+            DistributionKeyInfo distributionKeyInfo = GenerateDistributionkey(requestingEntity, addReaderReqMessage.getDiffieHellmanParam());
+            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfo.getDistributionkeyInfoBuffer(),
                     requestingEntity.getPublicKey());
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
-            sendAddReaderResp(distributionKey.getDistributionkey(), addReaderReqMessage.getEntityNonce(), encryptedDistKey);
+            sendAddReaderResp(distributionKeyInfo.getDistributionkey(), addReaderReqMessage.getEntityNonce(), encryptedDistKey);
         }
         else if (type == MessageType.ADD_READER_REQ) {
             DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistkey(payload);
@@ -679,7 +679,7 @@ public abstract class EntityConnectionHandler {
      * @param addReaderReqMessage Message for addReader request.
      * @return Distribution key and info buffer.
      */
-    private DistributionkeyInfo GenerateDistributionkey(RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, AddReaderReqMessage addReaderReqMessage) throws ClassNotFoundException, SQLException, IOException
+    private DistributionKeyInfo GenerateDistributionkey(RegisteredEntity requestingEntity, Buffer DiffileHellmanParamBuffer) throws ClassNotFoundException, SQLException, IOException
     {
         Buffer distributionKeyInfoBuffer;
         DistributionKey distributionKey;    // generated or derived distribution key
@@ -689,14 +689,8 @@ public abstract class EntityConnectionHandler {
                         requestingEntity.getDistCryptoSpec(), "EC", "ECDH",
                         384, requestingEntity.getDistKeyValidityPeriod());
                 distributionKeyInfoBuffer = distributionDiffieHellman.getSerializedBuffer();
-                if (sessionKeyReqMessage != null) {
-                    distributionKey =
-                            distributionDiffieHellman.deriveDistributionKey(sessionKeyReqMessage.getDiffieHellmanParam());
-                }
-                else {
-                    distributionKey =
-                            distributionDiffieHellman.deriveDistributionKey(addReaderReqMessage.getDiffieHellmanParam());
-                }
+                distributionKey =
+                        distributionDiffieHellman.deriveDistributionKey(DiffileHellmanParamBuffer);
             }
             catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
                 throw new RuntimeException("Diffie-Hellman failed!" + e.getMessage());
@@ -711,7 +705,7 @@ public abstract class EntityConnectionHandler {
         }
         // update distribution key
         server.updateDistributionKey(requestingEntity.getName(), distributionKey);
-        return new DistributionkeyInfo(distributionKeyInfoBuffer, distributionKey);
+        return new DistributionKeyInfo(distributionKeyInfoBuffer, distributionKey);
     }
     abstract protected Logger getLogger();
     abstract protected void writeToSocket(byte[] bytes) throws IOException;
