@@ -675,8 +675,7 @@ public abstract class EntityConnectionHandler {
     /**
      * Generate distribution key.
      * @param requestingEntity Entity to request the distribution key.
-     * @param sessionKeyReqMessage Message for sessionkey request.
-     * @param addReaderReqMessage Message for addReader request.
+     * @param DiffileHellmanParamBuffer Diffile Hellman Parameter Buffer
      * @return Distribution key and info buffer.
      */
     private DistributionKeyInfo GenerateDistributionkey(RegisteredEntity requestingEntity, Buffer DiffileHellmanParamBuffer) throws ClassNotFoundException, SQLException, IOException
