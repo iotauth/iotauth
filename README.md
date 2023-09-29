@@ -34,15 +34,15 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 # Contributors
 ---
 ## Active Contributors
-- [Hokeun Kim](https://hokeun.github.io/) (Assistant Professor at Hanyang University IoT Lab)
-- [Dongha Kim](https://github.com/Jakio815) (M.S./Ph.D. Student at Hanyang University IoT Lab)
-- [Yeongbin Jo](https://github.com/yeongbin7) (M.S. Student at Hanyang University IoT Lab)
+- [Hokeun Kim](https://hokeun.github.io/) (Assistant Professor at Arizona State University)
+- [Dongha Kim](https://github.com/Jakio815) (Ph.D. Student at Arizona State University)
+- [Yeongbin Jo](https://github.com/yeongbin7) (M.S. Student at Hanyang University)
 
 ## Former Contributors
 - [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
 - [Eunsuk Kang](https://eskang.github.io/) (Assistant Professor at Carnegie Mellon University)
-- [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/) (Postdoctoral researcher at UC Berkeley)
-- [Taekyung Kim](https://github.com/LukeKimm) (M.S. Student at Hanyang University IoT Lab)
+- [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/) (Assistant Researcher at UC Berkeley)
+- [Taekyung Kim](https://github.com/LukeKimm) (M.S. Student at Hanyang University)
 
 # External libraries
 ---
@@ -50,10 +50,10 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 
 # Disclaimer
 ---
-This project is still in its infancy and currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source codes with caution at their own risk when the tools provided in this project are used for commercial or safety-critical purposes.
+This project is currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source codes with caution at their own risk when the tools provided in this project are used for commercial or safety-critical purposes.
 
 # Acknowledgement
 ---
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP), a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 
-*Last updated on July 7, 2023*
+*Last updated on September 18, 2023*
