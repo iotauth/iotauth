@@ -86,8 +86,8 @@ def service_connection(key, mask):
             sel.unregister(sock)
 
     
-port = 7001
-host, port = '0.0.0.0', port
+port = 22100
+host, port = '127.0.0.1', port
 
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 lsock.bind((host, port))
