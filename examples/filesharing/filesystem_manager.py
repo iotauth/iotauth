@@ -44,6 +44,7 @@ def concat_data(recv_data):
     download_list.append(name)
     return message
 
+# Check how many times the entity has downloaded the file.
 def download_num_check(name):
     num = 0
     if len(download_list) == 0:
@@ -80,7 +81,6 @@ def service_connection(key, mask):
                 data.outb += message
                 sent = sock.send(data.outb) 
                 data.outb = data.outb[sent:]
-                # del file_center["hash_value"][0], file_center["keyid"][0], file_center["name"][0]
         else:
             print(f"Closing connection to {data.addr}")
             sel.unregister(sock)
