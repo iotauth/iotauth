@@ -5,11 +5,13 @@ import types
 import subprocess
 import time
 from datetime import datetime
-
+import secrets
+bytes_num = 1024
+from cryptography.hazmat.primitives import serialization
 
 # TODO: Load config
 
-filesystemManager_dir = {"name" : "", "purpose" : "", "number_key":"", "auth_pubkey_path":"", "privkey.path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
+filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey.path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
 
 def load_config(path):
     f = open(path, 'r')
@@ -44,6 +46,25 @@ print(filesystemManager_dir)
 
 sel = selectors.DefaultSelector()
 
+def write_in_n_bytes(num_key, key_size):
+    buffer = bytearray(4)
+    for i in range(key_size):
+        buffer[i] = num_key >> 8*(key_size -1 -i)
+    return buffer
+
+def num_to_var_length_int(num):
+    var_buf_size = 1
+    buffer = bytearray(4)
+    while (num > 127):
+        buffer[var_buf_size] = 128 | num & 127
+        var_buf_size += 1
+        num >>=7
+    buffer[var_buf_size - 1] = num
+    buf = bytearray(var_buf_size)
+    for i in range(var_buf_size):
+        buf[i] = buffer[i]
+    return buf
+
 def accept_wrapper(sock):
     conn, addr = sock.accept()
     print(f"Accepted connection from {addr}")
@@ -60,10 +81,51 @@ def service_connection(key, mask):
         recv_data = sock.recv(bytes_num)  # Should be ready to read
         if recv_data:
             print(recv_data)
+            print(len(recv_data))
         # TODO: Get session key (Handshakes of entity server, OpenSSL 3.0)
-            if recv_data[0] == 0:
+            if recv_data[0] == 30:
                 print("Good")
-            elif recv_data[0] == 1:
+                key_id = recv_data[2:2+8]
+                key_id_int = (int(key_id[5]) << 16) + (int(key_id[6]) << 8) +(int(key_id[7]))
+                
+                print(key_id_int)
+                filesystemManager_dir["purpose"] = filesystemManager_dir["purpose"].replace("00000000", str(key_id_int))
+                print(filesystemManager_dir["purpose"])
+                encrypted_buf = recv_data[10:]
+                print(encrypted_buf)
+                print(len(encrypted_buf))
+                # TODO: Request session key to Auth
+                client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                Host = filesystemManager_dir["auth_ip_address"]
+                Port = int(filesystemManager_dir["auth_port_number"])
+                client_sock.connect((Host, Port))
+                # while(1)
+                
+                recv_data_from_auth = client_sock.recv(1024)
+
+                print(recv_data_from_auth)
+                if recv_data_from_auth[0] == 0:
+                    print("Auth Hello")
+                    nonce_auth = recv_data_from_auth[6:]
+                    print(len(nonce_auth))
+                    nonce_entity = secrets.token_bytes(8)
+                    serialize_message = bytearray(8+8+4+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])+ 8)
+                    serialize_message[:8] = nonce_entity
+                    serialize_message[8:16] = nonce_auth
+                    buffer = write_in_n_bytes(int(filesystemManager_dir["number_key"]), key_size = 4)
+                    serialize_message[16:20] = buffer
+                    print(serialize_message)
+                    buffer_name_len = num_to_var_length_int(len(filesystemManager_dir["name"]))
+                    serialize_message[20:20+len(buffer_name_len)] = buffer_name_len
+                    serialize_message[21:21+len(filesystemManager_dir["name"])] = bytes.fromhex(str(filesystemManager_dir["name"]).encode('utf-8').hex())
+
+                    buffer_purpose_len = num_to_var_length_int(len(filesystemManager_dir["purpose"]))
+                    serialize_message[21+len(filesystemManager_dir["name"]):21+len(filesystemManager_dir["name"])+len(buffer_purpose_len)] = buffer_purpose_len
+                    serialize_message[22+len(filesystemManager_dir["name"]):22+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])] = bytes.fromhex(str(filesystemManager_dir["purpose"]).encode('utf-8').hex())
+                    print(serialize_message)
+                    
+
+            elif recv_data[0] == 32:
                 data.outb += "Hello"
                 sent = sock.send(data.outb) 
                 data.outb = data.outb[sent:]
