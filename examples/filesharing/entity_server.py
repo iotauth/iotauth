@@ -8,10 +8,12 @@ from datetime import datetime
 import secrets
 bytes_num = 1024
 from cryptography.hazmat.primitives import serialization
-
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography import x509
 # TODO: Load config
 
-filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey.path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
+filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
 
 def load_config(path):
     f = open(path, 'r')
@@ -26,8 +28,8 @@ def load_config(path):
             filesystemManager_dir["number_key"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "auth_pubkey_path":
             filesystemManager_dir["auth_pubkey_path"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "privkey.path":
-            filesystemManager_dir["privkey.path"] = line.split("=")[1].strip("\n")
+        elif line.split("=")[0] == "privkey_path":
+            filesystemManager_dir["privkey_path"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "auth_ip_address":
             filesystemManager_dir["auth_ip_address"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "auth_port_number":
@@ -123,11 +125,29 @@ def service_connection(key, mask):
                     serialize_message[21+len(filesystemManager_dir["name"]):21+len(filesystemManager_dir["name"])+len(buffer_purpose_len)] = buffer_purpose_len
                     serialize_message[22+len(filesystemManager_dir["name"]):22+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])] = bytes.fromhex(str(filesystemManager_dir["purpose"]).encode('utf-8').hex())
                     print(serialize_message)
-                    
+                    print("Private key and Public key")
+        #             private_key = rsa.generate_private_key(
+        # public_exponent=65537, key_size=2048, backend=default_backend())
+        #             print(private_key)
+        #             pem = private_key.private_bytes(
+        # encoding=serialization.Encoding.PEM,
+        # format=serialization.PrivateFormat.TraditionalOpenSSL,
+        # encryption_algorithm=serialization.NoEncryption()
+        #             )
+        #             print(pem)
+                    with open(filesystemManager_dir["privkey_path"], 'rb') as pem_in:
+                        pemlines = pem_in.read()
+                    private_key= serialization.load_pem_private_key(pemlines, None)
+                    print(private_key)
 
+                    with open(filesystemManager_dir["auth_pubkey_path"], 'rb') as pem_inn:
+                        pemliness = pem_inn.read()
+                    public_key = (x509.load_pem_x509_certificate(pemliness)).public_key()
+                    print(public_key)
+                    
             elif recv_data[0] == 32:
                 data.outb += "Hello"
-                sent = sock.send(data.outb) 
+                sent = sock.send(data.outb)
                 data.outb = data.outb[sent:]
         else:
             print(f"Closing connection to {data.addr}")
