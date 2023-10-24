@@ -9,9 +9,18 @@ import secrets
 bytes_num = 1024
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends.openssl import rsa
+# from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography import x509
-# TODO: Load config
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import utils
+from cryptography.hazmat.backends.openssl.backend import Backend
+
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5
+from OpenSSL.crypto import load_privatekey, FILETYPE_PEM, sign, load_publickey, verify, X509
+from Crypto.Hash import SHA256 as SHA
 
 filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
 
@@ -58,7 +67,7 @@ def num_to_var_length_int(num):
     var_buf_size = 1
     buffer = bytearray(4)
     while (num > 127):
-        buffer[var_buf_size] = 128 | num & 127
+        buffer[var_buf_size-1] = 128 | num & 127
         var_buf_size += 1
         num >>=7
     buffer[var_buf_size - 1] = num
@@ -102,49 +111,83 @@ def service_connection(key, mask):
                 Port = int(filesystemManager_dir["auth_port_number"])
                 client_sock.connect((Host, Port))
                 # while(1)
-                
-                recv_data_from_auth = client_sock.recv(1024)
-
-                print(recv_data_from_auth)
-                if recv_data_from_auth[0] == 0:
-                    print("Auth Hello")
-                    nonce_auth = recv_data_from_auth[6:]
-                    print(len(nonce_auth))
-                    nonce_entity = secrets.token_bytes(8)
-                    serialize_message = bytearray(8+8+4+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])+ 8)
-                    serialize_message[:8] = nonce_entity
-                    serialize_message[8:16] = nonce_auth
-                    buffer = write_in_n_bytes(int(filesystemManager_dir["number_key"]), key_size = 4)
-                    serialize_message[16:20] = buffer
-                    print(serialize_message)
-                    buffer_name_len = num_to_var_length_int(len(filesystemManager_dir["name"]))
-                    serialize_message[20:20+len(buffer_name_len)] = buffer_name_len
-                    serialize_message[21:21+len(filesystemManager_dir["name"])] = bytes.fromhex(str(filesystemManager_dir["name"]).encode('utf-8').hex())
-
-                    buffer_purpose_len = num_to_var_length_int(len(filesystemManager_dir["purpose"]))
-                    serialize_message[21+len(filesystemManager_dir["name"]):21+len(filesystemManager_dir["name"])+len(buffer_purpose_len)] = buffer_purpose_len
-                    serialize_message[22+len(filesystemManager_dir["name"]):22+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])] = bytes.fromhex(str(filesystemManager_dir["purpose"]).encode('utf-8').hex())
-                    print(serialize_message)
-                    print("Private key and Public key")
-        #             private_key = rsa.generate_private_key(
-        # public_exponent=65537, key_size=2048, backend=default_backend())
-        #             print(private_key)
-        #             pem = private_key.private_bytes(
-        # encoding=serialization.Encoding.PEM,
-        # format=serialization.PrivateFormat.TraditionalOpenSSL,
-        # encryption_algorithm=serialization.NoEncryption()
-        #             )
-        #             print(pem)
-                    with open(filesystemManager_dir["privkey_path"], 'rb') as pem_in:
-                        pemlines = pem_in.read()
-                    private_key= serialization.load_pem_private_key(pemlines, None)
-                    print(private_key)
-
-                    with open(filesystemManager_dir["auth_pubkey_path"], 'rb') as pem_inn:
-                        pemliness = pem_inn.read()
-                    public_key = (x509.load_pem_x509_certificate(pemliness)).public_key()
-                    print(public_key)
+                while(1):
+                    recv_data_from_auth = client_sock.recv(1024)
+                    if len(recv_data_from_auth) == 0:
+                        continue
+                    print(recv_data_from_auth)
                     
+                    if recv_data_from_auth[0] == 0:
+                        print("Auth Hello")
+                        nonce_auth = recv_data_from_auth[6:]
+                        print(len(nonce_auth))
+                        nonce_entity = secrets.token_bytes(8)
+                        serialize_message = bytearray(8+8+4+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])+ 8)
+                        serialize_message[:8] = nonce_entity
+                        serialize_message[8:16] = nonce_auth
+                        buffer = write_in_n_bytes(int(filesystemManager_dir["number_key"]), key_size = 4)
+                        serialize_message[16:20] = buffer
+                        print(serialize_message)
+                        buffer_name_len = num_to_var_length_int(len(filesystemManager_dir["name"]))
+                        serialize_message[20:20+len(buffer_name_len)] = buffer_name_len
+                        serialize_message[21:21+len(filesystemManager_dir["name"])] = bytes.fromhex(str(filesystemManager_dir["name"]).encode('utf-8').hex())
+
+                        buffer_purpose_len = num_to_var_length_int(len(filesystemManager_dir["purpose"]))
+                        serialize_message[21+len(filesystemManager_dir["name"]):21+len(filesystemManager_dir["name"])+len(buffer_purpose_len)] = buffer_purpose_len
+                        serialize_message[22+len(filesystemManager_dir["name"]):22+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])] = bytes.fromhex(str(filesystemManager_dir["purpose"]).encode('utf-8').hex())
+                        print(serialize_message)
+                        print("Private key and Public key")
+            #             private_key = rsa.generate_private_key(
+            # public_exponent=65537, key_size=2048, backend=default_backend())
+            #             print(private_key)
+            #             pem = private_key.private_bytes(
+            # encoding=serialization.Encoding.PEM,
+            # format=serialization.PrivateFormat.TraditionalOpenSSL,
+            # encryption_algorithm=serialization.NoEncryption()
+            #             )
+            #             print(pem)
+                        with open(filesystemManager_dir["auth_pubkey_path"], 'rb') as pem_inn:
+                            public_key = (x509.load_pem_x509_certificate(pem_inn.read(), default_backend)).public_key()
+                        
+                        print(public_key)
+                        print(type(serialize_message))
+                        ciphertext = public_key.encrypt(
+                            bytes(serialize_message),
+                            padding.PKCS1v15()
+                        )
+                        print(len(ciphertext))
+                        print(ciphertext)
+
+                        with open(filesystemManager_dir["privkey_path"], 'rb') as pem_in:
+                            private_key= serialization.load_pem_private_key(pem_in.read(), None)
+                        print(private_key)
+                        
+                        signature = private_key.sign(
+                            ciphertext,
+                            padding.PKCS1v15(),
+                            hashes.SHA256()
+                        )
+                        
+                        private_key.public_key().verify(
+                            signature,
+                            ciphertext,
+                            padding.PKCS1v15(),
+                            hashes.SHA256()
+                        )
+                        
+                        print(len(signature))
+                        print(signature)
+                        num_buffer = num_to_var_length_int(len(ciphertext) + len(signature))
+                        total_buffer = bytearray(len(num_buffer)+1+len(ciphertext) + len(signature))
+                        total_buffer[0] = 20
+                        total_buffer[1:1+len(num_buffer)] = num_buffer
+                        total_buffer[1+len(num_buffer):1+len(num_buffer)+len(ciphertext)] = ciphertext
+                        total_buffer[1+len(num_buffer)+len(ciphertext):1+len(num_buffer)+len(ciphertext)+len(signature)] = signature
+                        client_sock.send(bytes(total_buffer))
+                        
+                    elif recv_data_from_auth[0] == 21:
+                        print(recv_data_from_auth)
+                        print("Success")
             elif recv_data[0] == 32:
                 data.outb += "Hello"
                 sent = sock.send(data.outb)
