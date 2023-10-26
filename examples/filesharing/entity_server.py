@@ -17,7 +17,7 @@ from cryptography.hazmat.backends.openssl.backend import Backend
 from cryptography.hazmat.primitives import hmac
 from cryptography.hazmat.primitives.ciphers.modes import CBC
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-
+from cryptography.hazmat.primitives import padding as pad
 filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
 
 distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
@@ -265,8 +265,45 @@ def service_connection(key, mask):
                         for i in range(number_of_sessionkey):
                             parse_sessionkey(sessionkey[4:])
                         print(len(sessionkey[4:]))
-                        print(session_key)               
-
+                        print(session_key)              
+                        client_sock.close()
+                        # Try the encrypt and sign message. 
+                        message = b'Hello'
+                        
+                        padder = pad.PKCS7(128).padder()
+                        pad_data = padder.update(message)
+                        pad_data += padder.finalize()
+                        print(pad_data)
+                        # message = b'Helloasdvbcsdasd'
+                        iv = secrets.token_bytes(16)
+                        cipher = Cipher(algorithms.AES128(session_key["cipher_key"]),modes.CBC(iv))
+                        encryptor = cipher.encryptor()
+                        encrypted_buf = encryptor.update(pad_data) + encryptor.finalize()
+                        enc_total_buf = bytearray(len(iv) + len(encrypted_buf))
+                        enc_total_buf[:16] = iv
+                        enc_total_buf[16:] = encrypted_buf
+                        h_0 = hmac.HMAC(session_key["mac_key"], hashes.SHA256(), backend=default_backend())
+                        h_0.update(bytes(enc_total_buf))
+                        hmac_tag = h_0.finalize()
+                        
+                        # Try verify and decrypt message
+                        h_1 = hmac.HMAC(session_key["mac_key"], hashes.SHA256(), backend=default_backend())
+                        h_1.update(bytes(enc_total_buf))
+                        hmac_tag_1 = h_1.finalize()
+                        if hmac_tag_1 == hmac_tag:
+                            print("Success for verifying the data")
+                        iv_1 = enc_total_buf[:16]
+                        cipher_1 = Cipher(algorithms.AES128(session_key["cipher_key"]),modes.CBC(bytes(iv_1)))
+                        decryptor_1 = cipher_1.decryptor()
+                        decrypted_buf_1 = decryptor_1.update(bytes(enc_total_buf[16:])) + decryptor_1.finalize()
+                        unpadder = pad.PKCS7(128).unpadder()
+                        data = unpadder.update(decrypted_buf_1)
+                        data += unpadder.finalize()
+                        print(decrypted_buf_1)
+                        print(data)
+                        break
+                        
+                print("Success for receiving the session key.")
 
             elif recv_data[0] == 32:
                 data.outb += "Hello"
