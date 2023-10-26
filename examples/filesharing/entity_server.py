@@ -14,12 +14,14 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import utils
 from cryptography.hazmat.backends.openssl.backend import Backend
-
+from cryptography.hazmat.primitives import hmac
+from cryptography.hazmat.primitives.ciphers.modes import CBC
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
 
-distributionkey = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
-
+distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
+session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 def load_config(path):
     f = open(path, 'r')
     while True:
@@ -72,16 +74,30 @@ def num_to_var_length_int(num):
         buf[i] = buffer[i]
     return buf
 
-def var_to_int_to_num(buffer):
-    message_type = buffer[0]
+def var_length_int_to_num(buffer):
     number = 0
     buffer_num = 0
-    for i in range(len(buffer[1:])):
-        number |= (buffer[1+i] & 127) << 7*i
-        if (buffer[1+i] & 128) == 0:
+    for i in range(len(buffer)):
+        number |= (buffer[i] & 127) << 7*i
+        if (buffer[i] & 128) == 0:
             buffer_num = i + 1
             break
-    return message_type, number, buffer_num
+    return number, buffer_num
+
+def read_unsigned_int_BE(buffer):
+    num = 0
+    for i in range(4):
+       num |= buffer[i] << 8 *(3-i)
+    return num
+
+def parse_sessionkey(buffer):
+    session_key["sessionkey_id"] = buffer[:8] 
+    session_key["abs_validity"] = buffer[8:8+6]
+    session_key["rel_validity"] = buffer[8+6:8+6+6]
+    cipher_key_size = buffer[8+6+6]
+    session_key["cipher_key"] = buffer[8+6+6+1:8+6+6+1+cipher_key_size]
+    mac_key_size = buffer[8+6+6+1+cipher_key_size]
+    session_key["mac_key"] = buffer[8+6+6+1+cipher_key_size+1:8+6+6+1+cipher_key_size+1+mac_key_size]
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()
@@ -122,7 +138,8 @@ def service_connection(key, mask):
                     if len(recv_data_from_auth) == 0:
                         continue
                     print(recv_data_from_auth)
-                    msg_type, length, length_buf = var_to_int_to_num(recv_data_from_auth)
+                    msg_type = recv_data_from_auth[0]
+                    length, length_buf = var_length_int_to_num(recv_data_from_auth[1:])
                     print(msg_type, length, length_buf)
                     if msg_type == 0:
                         print("Auth Hello")
@@ -207,15 +224,48 @@ def service_connection(key, mask):
                         )
                         print(plaintext)
                         print(len(plaintext))
-                        distributionkey["abs_validity"] = plaintext[:6]
-                        distributionkey["cipher_key"] = plaintext[7:7+plaintext[6]]
-                        distributionkey["mac_key"] = plaintext[8+16:]
+                        distribution_key["abs_validity"] = plaintext[:6]
+                        distribution_key["cipher_key"] = plaintext[7:7+plaintext[6]]
+                        distribution_key["mac_key"] = plaintext[8+16:]
                         print(plaintext[6])
-                        print(distributionkey["abs_validity"])
+                        print(distribution_key["abs_validity"])
                         print(plaintext[6+16+1])
 
                         encrytped_sessionkey = recv_data[rsa_key_size*2:]
                         print(len(encrytped_sessionkey))
+                        encrypted_buffer = encrytped_sessionkey[:len(encrytped_sessionkey)-len(distribution_key["mac_key"])]
+                        received_tag = encrytped_sessionkey[len(encrytped_sessionkey)-len(distribution_key["mac_key"]):]
+                        # HMAC
+                        h = hmac.HMAC(distribution_key["mac_key"], hashes.SHA256(), backend=default_backend())
+                        h.update(encrypted_buffer)
+                        hmac_tag = h.finalize()
+                        if hmac_tag != received_tag:
+                            print("Received tag: " )
+                            print(received_tag)
+                            print("HAMC_tag: ")
+                            print(hmac_tag)
+                        else:
+                            print("Mac verified!!")
+                        iv_size = 16
+                        print(encrypted_buffer)
+                        iv = encrypted_buffer[:iv_size]
+                        print(type(iv))
+                        print(iv)
+                        temp = encrypted_buffer[iv_size:]
+                        print(temp)
+                        cipher = Cipher(algorithms.AES128(distribution_key["cipher_key"]), modes.CBC(iv))
+                        decryptor = cipher.decryptor()
+                        decrypted_buf = decryptor.update(temp) + decryptor.finalize()
+                        nonce_entity2 = decrypted_buf[:8]
+                        length_0, buf_length = var_length_int_to_num(decrypted_buf[8:])
+                        print(length_0,buf_length)
+                        sessionkey = decrypted_buf[8+buf_length+length_0:]
+                        print(sessionkey)
+                        number_of_sessionkey = read_unsigned_int_BE(sessionkey)
+                        for i in range(number_of_sessionkey):
+                            parse_sessionkey(sessionkey[4:])
+                        print(len(sessionkey[4:]))
+                        print(session_key)               
 
 
             elif recv_data[0] == 32:
