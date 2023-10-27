@@ -99,21 +99,39 @@ def parse_sessionkey(buffer):
     mac_key_size = buffer[8+6+6+1+cipher_key_size]
     session_key["mac_key"] = buffer[8+6+6+1+cipher_key_size+1:8+6+6+1+cipher_key_size+1+mac_key_size]
 
-def enc_hmac(buffer):
+def enc_hmac(key_dir, buffer):
     padder = pad.PKCS7(128).padder()
     pad_data = padder.update(buffer)
     pad_data += padder.finalize()
     iv = secrets.token_bytes(16)
-    cipher = Cipher(algorithms.AES128(session_key["cipher_key"]),modes.CBC(iv))
+    cipher = Cipher(algorithms.AES128(key_dir["cipher_key"]),modes.CBC(iv))
     encryptor = cipher.encryptor()
     encrypted_buf = encryptor.update(pad_data) + encryptor.finalize()
     enc_total_buf = bytearray(len(iv) + len(encrypted_buf))
     enc_total_buf[:16] = iv
     enc_total_buf[16:] = encrypted_buf
-    h = hmac.HMAC(session_key["mac_key"], hashes.SHA256(), backend=default_backend())
+    h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
     h.update(bytes(enc_total_buf))
     hmac_tag = h.finalize()
     return enc_total_buf, hmac_tag
+
+def dec_hmac(key_dir, enc_buf, hmac_buf):
+    h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
+    h.update(bytes(enc_buf))
+    hmac_tag = h.finalize()
+    if hmac_tag != hmac_buf:
+        print("Failed for verifying the data")
+        exit()
+    else:
+        print("Success for verifying the data")
+    iv = enc_buf[:16]
+    cipher = Cipher(algorithms.AES128(key_dir["cipher_key"]),modes.CBC(bytes(iv)))
+    decryptor = cipher.decryptor()
+    padded_buf = decryptor.update(bytes(enc_buf[16:])) + decryptor.finalize()
+    unpadder = pad.PKCS7(128).unpadder()
+    decrypted_buf = unpadder.update(padded_buf) + unpadder.finalize()
+    return decrypted_buf
+
 def accept_wrapper(sock):
     conn, addr = sock.accept()
     print(f"Accepted connection from {addr}")
@@ -277,31 +295,18 @@ def service_connection(key, mask):
                         sessionkey = decrypted_buf[8+buf_length+length_0:]
                         print(sessionkey)
                         number_of_sessionkey = read_unsigned_int_BE(sessionkey)
-                        for i in range(number_of_sessionkey):
-                            parse_sessionkey(sessionkey[4:])
+                        parse_sessionkey(sessionkey[4:])
                         print(len(sessionkey[4:]))
                         print(session_key)              
                         client_sock.close()
-                        # Try the encrypt and sign message. 
-                        # message = b'Hello'
-                        message = b'Helloasdvbcsdasd'
 
-                        enc_total_buf, hmac_tag = enc_hmac(message)
+                        # Try the encrypt and sign message. 
+                        message = b'Hello'
+                        enc_total_buf, hmac_tag = enc_hmac(session_key, message)
+
                         # Try verify and decrypt message
-                        h_1 = hmac.HMAC(session_key["mac_key"], hashes.SHA256(), backend=default_backend())
-                        h_1.update(bytes(enc_total_buf))
-                        hmac_tag_1 = h_1.finalize()
-                        if hmac_tag_1 == hmac_tag:
-                            print("Success for verifying the data")
-                        iv_1 = enc_total_buf[:16]
-                        cipher_1 = Cipher(algorithms.AES128(session_key["cipher_key"]),modes.CBC(bytes(iv_1)))
-                        decryptor_1 = cipher_1.decryptor()
-                        decrypted_buf_1 = decryptor_1.update(bytes(enc_total_buf[16:])) + decryptor_1.finalize()
-                        unpadder = pad.PKCS7(128).unpadder()
-                        data = unpadder.update(decrypted_buf_1)
-                        data += unpadder.finalize()
-                        print(decrypted_buf_1)
-                        print(data)
+                        decrypted_buf = dec_hmac(session_key, enc_total_buf, hmac_tag)
+                        print(decrypted_buf)
                         break
                         
                 print("Success for receiving the session key.")
