@@ -18,6 +18,7 @@ from cryptography.hazmat.primitives import hmac
 from cryptography.hazmat.primitives.ciphers.modes import CBC
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding as pad
+
 filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
 
 distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
@@ -132,6 +133,23 @@ def dec_hmac(key_dir, enc_buf, hmac_buf):
     decrypted_buf = unpadder.update(padded_buf) + unpadder.finalize()
     return decrypted_buf
 
+def load_pubkey(key_dir):
+    with open(key_dir, 'rb') as pem_inn:
+        public_key = (x509.load_pem_x509_certificate(pem_inn.read(), default_backend)).public_key()
+    return public_key
+
+def load_privkey(key_dir):
+    with open(key_dir, 'rb') as pem_in:
+        private_key= serialization.load_pem_private_key(pem_in.read(), None)
+    return private_key
+
+def asymmetric_encrypt(message, pubkey):
+    ciphertext = pubkey.encrypt(bytes(message),padding.PKCS1v15())
+    return ciphertext
+
+def sha256_sign(message, privkey):
+    signature = privkey.sign(message, padding.PKCS1v15(), hashes.SHA256())
+    return signature
 def accept_wrapper(sock):
     conn, addr = sock.accept()
     print(f"Accepted connection from {addr}")
@@ -197,29 +215,13 @@ def service_connection(key, mask):
 
                         
                         print("Private key and Public key")
-                        with open(filesystemManager_dir["auth_pubkey_path"], 'rb') as pem_inn:
-                            public_key = (x509.load_pem_x509_certificate(pem_inn.read(), default_backend)).public_key()
-                        ciphertext = public_key.encrypt(
-                            bytes(serialize_message),
-                            padding.PKCS1v15()
-                        )
+                        public_key = load_pubkey(filesystemManager_dir["auth_pubkey_path"])
 
-                        with open(filesystemManager_dir["privkey_path"], 'rb') as pem_in:
-                            private_key= serialization.load_pem_private_key(pem_in.read(), None)
-                        print(private_key)
+                        ciphertext = asymmetric_encrypt(serialize_message, public_key)
+
+                        private_key = load_privkey(filesystemManager_dir["privkey_path"])
                         
-                        signature = private_key.sign(
-                            ciphertext,
-                            padding.PKCS1v15(),
-                            hashes.SHA256()
-                        )
-                        
-                        # private_key.public_key().verify(
-                        #     signature,
-                        #     ciphertext,
-                        #     padding.PKCS1v15(),
-                        #     hashes.SHA256()
-                        # )
+                        signature = sha256_sign(ciphertext, private_key)
                         
                         num_buffer = num_to_var_length_int(len(ciphertext) + len(signature))
                         total_buffer = bytearray(len(num_buffer)+1+len(ciphertext) + len(signature))
@@ -227,13 +229,12 @@ def service_connection(key, mask):
                         total_buffer[1:1+len(num_buffer)] = num_buffer
                         total_buffer[1+len(num_buffer):1+len(num_buffer)+len(ciphertext)] = ciphertext
                         total_buffer[1+len(num_buffer)+len(ciphertext):1+len(num_buffer)+len(ciphertext)+len(signature)] = signature
+
                         client_sock.send(bytes(total_buffer))
 
                     elif msg_type == 21:
                         print("Success")
-                        print(len(recv_data_from_auth))
                         recv_data = recv_data_from_auth[1+length_buf:]
-                        print(len(recv_data))
                         rsa_key_size = 256
                         sign_data = recv_data[:rsa_key_size]
                         sign_sign = recv_data[rsa_key_size:rsa_key_size*2]
@@ -255,48 +256,31 @@ def service_connection(key, mask):
                             sign_data,
                             padding.PKCS1v15()
                         )
-                        print(plaintext)
-                        print(len(plaintext))
                         distribution_key["abs_validity"] = plaintext[:6]
                         distribution_key["cipher_key"] = plaintext[7:7+plaintext[6]]
                         distribution_key["mac_key"] = plaintext[8+16:]
-                        print(plaintext[6])
-                        print(distribution_key["abs_validity"])
-                        print(plaintext[6+16+1])
 
                         encrytped_sessionkey = recv_data[rsa_key_size*2:]
-                        print(len(encrytped_sessionkey))
+                        
                         encrypted_buffer = encrytped_sessionkey[:len(encrytped_sessionkey)-len(distribution_key["mac_key"])]
                         received_tag = encrytped_sessionkey[len(encrytped_sessionkey)-len(distribution_key["mac_key"]):]
-                        # HMAC
-                        h = hmac.HMAC(distribution_key["mac_key"], hashes.SHA256(), backend=default_backend())
-                        h.update(encrypted_buffer)
-                        hmac_tag = h.finalize()
-                        if hmac_tag != received_tag:
-                            print("Received tag: " )
-                            print(received_tag)
-                            print("HAMC_tag: ")
-                            print(hmac_tag)
-                        else:
-                            print("Mac verified!!")
-                        iv_size = 16
-                        print(encrypted_buffer)
-                        iv = encrypted_buffer[:iv_size]
-                        print(type(iv))
-                        print(iv)
-                        temp = encrypted_buffer[iv_size:]
-                        print(temp)
-                        cipher = Cipher(algorithms.AES128(distribution_key["cipher_key"]), modes.CBC(iv))
-                        decryptor = cipher.decryptor()
-                        decrypted_buf = decryptor.update(temp) + decryptor.finalize()
-                        nonce_entity2 = decrypted_buf[:8]
-                        length_0, buf_length = var_length_int_to_num(decrypted_buf[8:])
-                        print(length_0,buf_length)
-                        sessionkey = decrypted_buf[8+buf_length+length_0:]
+                        decrypted_buf = dec_hmac(distribution_key, encrypted_buffer, received_tag)
+                        
+                        recv_nonce_entity = decrypted_buf[:8]
+                        if nonce_entity != recv_nonce_entity:
+                            print("Failed for communication with Auth")
+                            exit()
+                        else:    
+                            print("Success for communication with Auth")
+
+                        crypto_buf, crypto_buf_length = var_length_int_to_num(decrypted_buf[8:])
+                        crypto_info = decrypted_buf[8+crypto_buf_length:8+crypto_buf_length+crypto_buf]
+                        print(crypto_info)
+                        sessionkey = decrypted_buf[8+crypto_buf_length+crypto_buf:]
                         print(sessionkey)
                         number_of_sessionkey = read_unsigned_int_BE(sessionkey)
+                        print("Number of session key: ", number_of_sessionkey)
                         parse_sessionkey(sessionkey[4:])
-                        print(len(sessionkey[4:]))
                         print(session_key)              
                         client_sock.close()
 
