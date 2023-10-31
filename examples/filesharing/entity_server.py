@@ -100,7 +100,7 @@ def parse_sessionkey(buffer):
     mac_key_size = buffer[8+6+6+1+cipher_key_size]
     session_key["mac_key"] = buffer[8+6+6+1+cipher_key_size+1:8+6+6+1+cipher_key_size+1+mac_key_size]
 
-def enc_hmac(key_dir, buffer):
+def symmetric_encrypt_hmac(key_dir, buffer):
     padder = pad.PKCS7(128).padder()
     pad_data = padder.update(buffer)
     pad_data += padder.finalize()
@@ -116,7 +116,7 @@ def enc_hmac(key_dir, buffer):
     hmac_tag = h.finalize()
     return enc_total_buf, hmac_tag
 
-def dec_hmac(key_dir, enc_buf, hmac_buf):
+def symmetric_decrypt_hmac(key_dir, enc_buf, hmac_buf):
     h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
     h.update(bytes(enc_buf))
     hmac_tag = h.finalize()
@@ -147,9 +147,71 @@ def asymmetric_encrypt(message, pubkey):
     ciphertext = pubkey.encrypt(bytes(message),padding.PKCS1v15())
     return ciphertext
 
+def asymmetric_decrypt(message, privkey):
+    plaintext = privkey.decrypt(message, padding.PKCS1v15())
+    return plaintext
+
 def sha256_sign(message, privkey):
     signature = privkey.sign(message, padding.PKCS1v15(), hashes.SHA256())
     return signature
+
+def sha256_verify(sign, data, pubkey):
+    pubkey.verify(sign, data, padding.PKCS1v15(), hashes.SHA256())
+    print("auth signature verified\n")
+
+def serialize_message_for_auth(filesystemManager_dir, nonce_auth):
+    nonce_entity = secrets.token_bytes(8)
+    serialize_message = bytearray(8+8+4+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])+ 8)
+    index = 0
+    serialize_message[index:8] = nonce_entity
+    index += 8
+    serialize_message[index:index+8] = nonce_auth
+    index += 8
+    buffer = write_in_n_bytes(int(filesystemManager_dir["number_key"]), key_size = 4)
+    serialize_message[index:index+4] = buffer
+    index += 4
+    buffer_name_len = num_to_var_length_int(len(filesystemManager_dir["name"]))
+    serialize_message[index:index+len(buffer_name_len)] = buffer_name_len
+    index += len(buffer_name_len)
+    serialize_message[index:index+len(filesystemManager_dir["name"])] = bytes.fromhex(str(filesystemManager_dir["name"]).encode('utf-8').hex())
+    index += len(filesystemManager_dir["name"])
+    buffer_purpose_len = num_to_var_length_int(len(filesystemManager_dir["purpose"]))
+    serialize_message[index:+len(buffer_purpose_len)] = buffer_purpose_len
+    index += len(buffer_purpose_len)
+    serialize_message[index:index+len(filesystemManager_dir["purpose"])] = bytes.fromhex(str(filesystemManager_dir["purpose"]).encode('utf-8').hex())
+    print(serialize_message)
+    
+    return serialize_message, nonce_entity     
+
+def send_sessionkey_request(ciphertext, signature):
+    num_buffer = num_to_var_length_int(len(ciphertext) + len(signature))
+
+    total_buffer = bytearray(len(num_buffer)+1+len(ciphertext) + len(signature))
+    index =0
+    total_buffer[index] = 20
+    index += 1
+    total_buffer[index:index+len(num_buffer)] = num_buffer
+    index += len(num_buffer)
+    total_buffer[index:index+len(ciphertext)] = ciphertext
+    index += len(ciphertext)
+    total_buffer[index:index+len(signature)] = signature
+    
+    return total_buffer
+
+def auth_socket_connect(filesystemManager_dir):
+    client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    Host = filesystemManager_dir["auth_ip_address"]
+    Port = int(filesystemManager_dir["auth_port_number"])
+    client_sock.connect((Host, Port))
+    return client_sock
+
+def parse_sessionkey_id(recv, filesystemManager_dir):
+    key_id = recv[2:2+8]
+    key_id_int = (int(key_id[5]) << 16) + (int(key_id[6]) << 8) +(int(key_id[7]))
+    filesystemManager_dir["purpose"] = filesystemManager_dir["purpose"].replace("00000000", str(key_id_int))
+    print(filesystemManager_dir["purpose"])
+    encrypted_buf = recv[10:]
+    return encrypted_buf
 def accept_wrapper(sock):
     conn, addr = sock.accept()
     print(f"Accepted connection from {addr}")
@@ -165,97 +227,36 @@ def service_connection(key, mask):
     if mask & selectors.EVENT_READ:
         recv_data = sock.recv(bytes_num)  # Should be ready to read
         if recv_data:
-            print(recv_data)
-            print(len(recv_data))
-        # TODO: Get session key (Handshakes of entity server, OpenSSL 3.0)
             if recv_data[0] == 30:
-                print("Good")
-                key_id = recv_data[2:2+8]
-                key_id_int = (int(key_id[5]) << 16) + (int(key_id[6]) << 8) +(int(key_id[7]))
-                
-                print(key_id_int)
-                filesystemManager_dir["purpose"] = filesystemManager_dir["purpose"].replace("00000000", str(key_id_int))
-                print(filesystemManager_dir["purpose"])
-                encrypted_buf = recv_data[10:]
-                print(encrypted_buf)
-                print(len(encrypted_buf))
-                # TODO: Request session key to Auth
-                client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                Host = filesystemManager_dir["auth_ip_address"]
-                Port = int(filesystemManager_dir["auth_port_number"])
-                client_sock.connect((Host, Port))
+                encrypted_buf = parse_sessionkey_id(recv_data, filesystemManager_dir)
+                client_sock = auth_socket_connect(filesystemManager_dir)
+                public_key = load_pubkey(filesystemManager_dir["auth_pubkey_path"])
+                private_key = load_privkey(filesystemManager_dir["privkey_path"])
                 while(1):
                     recv_data_from_auth = client_sock.recv(1024)
                     if len(recv_data_from_auth) == 0:
                         continue
-                    print(recv_data_from_auth)
                     msg_type = recv_data_from_auth[0]
                     length, length_buf = var_length_int_to_num(recv_data_from_auth[1:])
-                    print(msg_type, length, length_buf)
                     if msg_type == 0:
-                        print("Auth Hello")
-                        
                         nonce_auth = recv_data_from_auth[4+1+length_buf:]
-                        print(len(nonce_auth))
-                        nonce_entity = secrets.token_bytes(8)
-                        serialize_message = bytearray(8+8+4+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])+ 8)
-                        serialize_message[:8] = nonce_entity
-                        serialize_message[8:16] = nonce_auth
-                        buffer = write_in_n_bytes(int(filesystemManager_dir["number_key"]), key_size = 4)
-                        serialize_message[16:20] = buffer
-                        print(serialize_message)
-                        buffer_name_len = num_to_var_length_int(len(filesystemManager_dir["name"]))
-                        serialize_message[20:20+len(buffer_name_len)] = buffer_name_len
-                        serialize_message[21:21+len(filesystemManager_dir["name"])] = bytes.fromhex(str(filesystemManager_dir["name"]).encode('utf-8').hex())
-
-                        buffer_purpose_len = num_to_var_length_int(len(filesystemManager_dir["purpose"]))
-                        serialize_message[21+len(filesystemManager_dir["name"]):21+len(filesystemManager_dir["name"])+len(buffer_purpose_len)] = buffer_purpose_len
-                        serialize_message[22+len(filesystemManager_dir["name"]):22+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])] = bytes.fromhex(str(filesystemManager_dir["purpose"]).encode('utf-8').hex())
-                        print(serialize_message)
-
+                        serialize_message, nonce_entity = serialize_message_for_auth(filesystemManager_dir, nonce_auth)
                         
-                        print("Private key and Public key")
-                        public_key = load_pubkey(filesystemManager_dir["auth_pubkey_path"])
-
                         ciphertext = asymmetric_encrypt(serialize_message, public_key)
-
-                        private_key = load_privkey(filesystemManager_dir["privkey_path"])
-                        
                         signature = sha256_sign(ciphertext, private_key)
                         
-                        num_buffer = num_to_var_length_int(len(ciphertext) + len(signature))
-                        total_buffer = bytearray(len(num_buffer)+1+len(ciphertext) + len(signature))
-                        total_buffer[0] = 20
-                        total_buffer[1:1+len(num_buffer)] = num_buffer
-                        total_buffer[1+len(num_buffer):1+len(num_buffer)+len(ciphertext)] = ciphertext
-                        total_buffer[1+len(num_buffer)+len(ciphertext):1+len(num_buffer)+len(ciphertext)+len(signature)] = signature
-
+                        total_buffer = send_sessionkey_request(ciphertext, signature)
                         client_sock.send(bytes(total_buffer))
 
                     elif msg_type == 21:
-                        print("Success")
                         recv_data = recv_data_from_auth[1+length_buf:]
                         rsa_key_size = 256
                         sign_data = recv_data[:rsa_key_size]
                         sign_sign = recv_data[rsa_key_size:rsa_key_size*2]
-                        with open(filesystemManager_dir["auth_pubkey_path"], 'rb') as pem_inn:
-                            public_key = (x509.load_pem_x509_certificate(pem_inn.read(), default_backend)).public_key()
 
-                        public_key.verify(
-                            sign_sign,
-                            sign_data,
-                            padding.PKCS1v15(),
-                            hashes.SHA256()
-                        )
-                        print("auth signature verified\n")
+                        sha256_verify(sign_sign, sign_data, public_key)
+                        plaintext = asymmetric_decrypt(sign_data, private_key)
 
-                        with open(filesystemManager_dir["privkey_path"], 'rb') as pem_in:
-                            private_key= serialization.load_pem_private_key(pem_in.read(), None)
-                        
-                        plaintext = private_key.decrypt(
-                            sign_data,
-                            padding.PKCS1v15()
-                        )
                         distribution_key["abs_validity"] = plaintext[:6]
                         distribution_key["cipher_key"] = plaintext[7:7+plaintext[6]]
                         distribution_key["mac_key"] = plaintext[8+16:]
@@ -264,7 +265,8 @@ def service_connection(key, mask):
                         
                         encrypted_buffer = encrytped_sessionkey[:len(encrytped_sessionkey)-len(distribution_key["mac_key"])]
                         received_tag = encrytped_sessionkey[len(encrytped_sessionkey)-len(distribution_key["mac_key"]):]
-                        decrypted_buf = dec_hmac(distribution_key, encrypted_buffer, received_tag)
+
+                        decrypted_buf = symmetric_decrypt_hmac(distribution_key, encrypted_buffer, received_tag)
                         
                         recv_nonce_entity = decrypted_buf[:8]
                         if nonce_entity != recv_nonce_entity:
@@ -275,22 +277,15 @@ def service_connection(key, mask):
 
                         crypto_buf, crypto_buf_length = var_length_int_to_num(decrypted_buf[8:])
                         crypto_info = decrypted_buf[8+crypto_buf_length:8+crypto_buf_length+crypto_buf]
-                        print(crypto_info)
+                        print("Crypto Info: ", crypto_info)
                         sessionkey = decrypted_buf[8+crypto_buf_length+crypto_buf:]
-                        print(sessionkey)
                         number_of_sessionkey = read_unsigned_int_BE(sessionkey)
                         print("Number of session key: ", number_of_sessionkey)
                         parse_sessionkey(sessionkey[4:])
-                        print(session_key)              
                         client_sock.close()
 
-                        # Try the encrypt and sign message. 
-                        message = b'Hello'
-                        enc_total_buf, hmac_tag = enc_hmac(session_key, message)
-
-                        # Try verify and decrypt message
-                        decrypted_buf = dec_hmac(session_key, enc_total_buf, hmac_tag)
-                        print(decrypted_buf)
+                        # first buffer is indicator 1. other buffer is nonce.
+                        dec_buf = symmetric_decrypt_hmac(session_key, encrypted_buf[:32], encrypted_buf[32:])
                         break
                         
                 print("Success for receiving the session key.")
