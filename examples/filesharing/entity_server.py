@@ -6,23 +6,23 @@ import subprocess
 import time
 from datetime import datetime
 import secrets
-bytes_num = 1024
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import utils
-from cryptography.hazmat.backends.openssl.backend import Backend
 from cryptography.hazmat.primitives import hmac
-from cryptography.hazmat.primitives.ciphers.modes import CBC
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding as pad
+
+bytes_num = 1024
+rsa_key_size = 256
 
 filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
 
 distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
 session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
+
 def load_config(path):
     f = open(path, 'r')
     while True:
@@ -51,6 +51,7 @@ def load_config(path):
         else:
             break
     f.close()
+
 load_config(sys.argv[1])
 print(filesystemManager_dir)
 
@@ -212,6 +213,16 @@ def parse_sessionkey_id(recv, filesystemManager_dir):
     print(filesystemManager_dir["purpose"])
     encrypted_buf = recv[10:]
     return encrypted_buf
+
+def parse_distributionkey(buffer, pubkey, privkey):
+    sign_data = buffer[:rsa_key_size]
+    sign_sign = buffer[rsa_key_size:rsa_key_size*2]
+    sha256_verify(sign_sign, sign_data, pubkey)
+    plaintext = asymmetric_decrypt(sign_data, privkey)
+    distribution_key["abs_validity"] = plaintext[:6]
+    distribution_key["cipher_key"] = plaintext[7:7+plaintext[6]]
+    distribution_key["mac_key"] = plaintext[8+16:]
+
 def accept_wrapper(sock):
     conn, addr = sock.accept()
     print(f"Accepted connection from {addr}")
@@ -250,17 +261,8 @@ def service_connection(key, mask):
 
                     elif msg_type == 21:
                         recv_data = recv_data_from_auth[1+length_buf:]
-                        rsa_key_size = 256
-                        sign_data = recv_data[:rsa_key_size]
-                        sign_sign = recv_data[rsa_key_size:rsa_key_size*2]
-
-                        sha256_verify(sign_sign, sign_data, public_key)
-                        plaintext = asymmetric_decrypt(sign_data, private_key)
-
-                        distribution_key["abs_validity"] = plaintext[:6]
-                        distribution_key["cipher_key"] = plaintext[7:7+plaintext[6]]
-                        distribution_key["mac_key"] = plaintext[8+16:]
-
+                        parse_distributionkey(recv_data, public_key, private_key)
+                        
                         encrytped_sessionkey = recv_data[rsa_key_size*2:]
                         
                         encrypted_buffer = encrytped_sessionkey[:len(encrytped_sessionkey)-len(distribution_key["mac_key"])]
