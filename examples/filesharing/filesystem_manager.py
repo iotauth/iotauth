@@ -70,7 +70,7 @@ def service_connection(key, mask):
     data = key.data
     global payload_max_num
     if mask & selectors.EVENT_READ:
-        recv_data = sock.recv(bytes_num)  # Should be ready to read
+        recv_data = sock.recv(bytes_num) # Should be ready to read
         if recv_data:
             print(recv_data)
             if recv_data[0] == DATA_UPLOAD_REQ:
