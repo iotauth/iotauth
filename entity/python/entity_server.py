@@ -9,7 +9,7 @@ import secrets
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -18,51 +18,69 @@ from cryptography.hazmat.primitives import padding as pad
 bytes_num = 1024
 rsa_key_size = 256
 
-# filesystemManager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":""}
+def load_config(path: str, filesystem_manager_dir: dict) -> None:
+    """Loads configuration data from a file into a provided dictionary.
 
-# distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
-# session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
+    Args:
+        path (str): The path to the configuration file.
+        filesystem_manager_dir (dict): A dictionary where the configuration data will be stored.
 
-def load_config(path, filesystemManager_dir):
+    Raises:
+        FileNotFoundError: If the file at the given path does not exist.
+        IOError: If the file is not readable.
+    """
     f = open(path, 'r')
     while True:
         line = f.readline()
         if not line: break
         if line.split("=")[0] == "name":
-            filesystemManager_dir["name"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["name"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "purpose":
-            filesystemManager_dir["purpose"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["purpose"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "number_key":
-            filesystemManager_dir["number_key"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["number_key"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "auth_pubkey_path":
-            filesystemManager_dir["auth_pubkey_path"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["auth_pubkey_path"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "privkey_path":
-            filesystemManager_dir["privkey_path"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["privkey_path"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "auth_ip_address":
-            filesystemManager_dir["auth_ip_address"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["auth_ip_address"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "auth_port_number":
-            filesystemManager_dir["auth_port_number"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["auth_port_number"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "port_number":
-            filesystemManager_dir["port_number"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["port_number"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "ip_address":
-            filesystemManager_dir["ip_address"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["ip_address"] = line.split("=")[1].strip("\n")
         elif line.split("=")[0] == "network_protocol":
-            filesystemManager_dir["network_protocol"] = line.split("=")[1].strip("\n")
+            filesystem_manager_dir["network_protocol"] = line.split("=")[1].strip("\n")
         else:
             break
     f.close()
 
-# load_config(sys.argv[1])
+def write_in_n_bytes(num_key: int, key_size: int) -> bytearray:
+    """Writes an integer into a byte array of specified size.
 
-# sel = selectors.DefaultSelector()
+    Args:
+        num_key (int): The integer to convert.
+        key_size (int): The size of the resulting byte array.
 
-def write_in_n_bytes(num_key, key_size):
+    Returns:
+        bytearray: A byte array representing the integer.
+    """
     buffer = bytearray(4)
     for i in range(key_size):
         buffer[i] = num_key >> 8*(key_size -1 -i)
     return buffer
 
-def num_to_var_length_int(num):
+def num_to_var_length_int(num: int) -> bytearray:
+    """Converts an integer to a variable length byte array.
+
+    Args:
+        num (int): The integer to convert.
+
+    Returns:
+        bytearray: A variable length byte array representing the integer.
+    """
     var_buf_size = 1
     buffer = bytearray(4)
     while (num > 127):
@@ -75,7 +93,15 @@ def num_to_var_length_int(num):
         buf[i] = buffer[i]
     return buf
 
-def var_length_int_to_num(buffer):
+def var_length_int_to_num(buffer: bytearray) -> tuple:
+    """Converts a variable length byte array back to an integer.
+
+    Args:
+        buffer (bytearray): The byte array to convert.
+
+    Returns:
+        tuple: A tuple containing the converted integer and the number of bytes read.
+    """
     number = 0
     buffer_num = 0
     for i in range(len(buffer)):
@@ -85,13 +111,27 @@ def var_length_int_to_num(buffer):
             break
     return number, buffer_num
 
-def read_unsigned_int_BE(buffer):
+def read_unsigned_int_BE(buffer: bytearray) -> int:
+    """Reads an unsigned integer in big-endian format from the given buffer.
+
+    Args:
+        buffer (bytearray): The buffer from which to read.
+
+    Returns:
+        int: The read unsigned integer.
+    """
     num = 0
     for i in range(4):
        num |= buffer[i] << 8 *(3-i)
     return num
 
-def parse_sessionkey(buffer, session_key):
+def parse_sessionkey(buffer: bytearray, session_key: dict) -> None:
+    """Parses session key information from a byte array and stores it in a dictionary.
+
+    Args:
+        buffer (bytearray): The buffer containing the session key information.
+        session_key (dict): A dictionary to store the parsed session key information.
+    """
     session_key["sessionkey_id"] = buffer[:8] 
     session_key["abs_validity"] = buffer[8:8+6]
     session_key["rel_validity"] = buffer[8+6:8+6+6]
@@ -100,7 +140,16 @@ def parse_sessionkey(buffer, session_key):
     mac_key_size = buffer[8+6+6+1+cipher_key_size]
     session_key["mac_key"] = buffer[8+6+6+1+cipher_key_size+1:8+6+6+1+cipher_key_size+1+mac_key_size]
 
-def symmetric_encrypt_hmac(key_dir, buffer):
+def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> tuple:
+    """Encrypts data using AES-CBC and appends an HMAC-SHA256 tag.
+
+    Args:
+        key_dir (dict): A dictionary containing encryption keys.
+        buffer (bytes): The data to be encrypted.
+
+    Returns:
+        tuple: A tuple of (encrypted data, HMAC tag).
+    """
     padder = pad.PKCS7(128).padder()
     pad_data = padder.update(buffer)
     pad_data += padder.finalize()
@@ -116,7 +165,20 @@ def symmetric_encrypt_hmac(key_dir, buffer):
     hmac_tag = h.finalize()
     return enc_total_buf, hmac_tag
 
-def symmetric_decrypt_hmac(key_dir, enc_buf, hmac_buf):
+def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> bytes:
+    """Decrypts AES-CBC encrypted data and verifies HMAC-SHA256 tag.
+
+    Args:
+        key_dir (dict): A dictionary containing decryption keys.
+        enc_buf (bytes): The encrypted data.
+        hmac_buf (bytes): The HMAC tag for verification.
+
+    Returns:
+        bytes: The decrypted data.
+
+    Raises:
+        ValueError: If the HMAC verification fails.
+    """
     h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
     h.update(bytes(enc_buf))
     hmac_tag = h.finalize()
@@ -133,57 +195,125 @@ def symmetric_decrypt_hmac(key_dir, enc_buf, hmac_buf):
     decrypted_buf = unpadder.update(padded_buf) + unpadder.finalize()
     return decrypted_buf
 
-def load_pubkey(key_dir):
+def load_pubkey(key_dir: str) -> rsa.RSAPublicKey:
+    """Loads an RSA public key from a file.
+
+    Args:
+        key_dir (str): The path to the public key file.
+
+    Returns:
+        rsa.RSAPublicKey: The loaded RSA public key.
+    """
     with open(key_dir, 'rb') as pem_inn:
         public_key = (x509.load_pem_x509_certificate(pem_inn.read(), default_backend)).public_key()
     return public_key
 
-def load_privkey(key_dir):
+def load_privkey(key_dir: str) -> rsa.RSAPrivateKey:
+    """Loads an RSA private key from a file.
+
+    Args:
+        key_dir (str): The path to the private key file.
+
+    Returns:
+        rsa.RSAPrivateKey: The loaded RSA private key.
+    """
     with open(key_dir, 'rb') as pem_in:
         private_key= serialization.load_pem_private_key(pem_in.read(), None)
     return private_key
 
-def asymmetric_encrypt(message, pubkey):
+def asymmetric_encrypt(message: bytes, pubkey: rsa.RSAPublicKey) -> bytes:
+    """Encrypts a message using an RSA public key.
+
+    Args:
+        message (bytes): The message to be encrypted.
+        pubkey (rsa.RSAPublicKey): The RSA public key for encryption.
+
+    Returns:
+        bytes: The encrypted message.
+    """
     ciphertext = pubkey.encrypt(bytes(message),padding.PKCS1v15())
     return ciphertext
 
-def asymmetric_decrypt(message, privkey):
+def asymmetric_decrypt(message: bytes, privkey: rsa.RSAPrivateKey) -> bytes:
+    """Decrypts a message using an RSA private key.
+
+    Args:
+        message (bytes): The encrypted message.
+        privkey (rsa.RSAPrivateKey): The RSA private key for decryption.
+
+    Returns:
+        bytes: The decrypted message.
+    """
     plaintext = privkey.decrypt(message, padding.PKCS1v15())
     return plaintext
 
-def sha256_sign(message, privkey):
+def sha256_sign(message: bytes, privkey: rsa.RSAPrivateKey) -> bytes:
+    """Signs a message using SHA256 and an RSA private key.
+
+    Args:
+        message (bytes): The message to be signed.
+        privkey (rsa.RSAPrivateKey): The RSA private key for signing.
+
+    Returns:
+        bytes: The digital signature.
+    """
     signature = privkey.sign(message, padding.PKCS1v15(), hashes.SHA256())
     return signature
 
-def sha256_verify(sign, data, pubkey):
+def sha256_verify(sign: bytes, data: bytes, pubkey: rsa.RSAPublicKey) -> None:
+    """Verifies an SHA256 signature using an RSA public key.
+
+    Args:
+        sign (bytes): The signature to verify.
+        data (bytes): The data that was signed.
+        pubkey (rsa.RSAPublicKey): The RSA public key for verification.
+    """
     pubkey.verify(sign, data, padding.PKCS1v15(), hashes.SHA256())
     print("auth signature verified\n")
 
-def serialize_message_for_auth(filesystemManager_dir, nonce_auth):
+def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes) -> tuple:
+    """Serializes message for authentication using given directory and nonce.
+
+    Args:
+        filesystem_manager_dir (dict): A directory containing filesystem manager data.
+        nonce_auth (bytes): Nonce for authentication.
+
+    Returns:
+        tuple: A tuple containing the serialized message and nonce entity.
+    """
     nonce_entity = secrets.token_bytes(8)
-    serialize_message = bytearray(8+8+4+len(filesystemManager_dir["name"])+len(filesystemManager_dir["purpose"])+ 8)
+    serialize_message = bytearray(8+8+4+len(filesystem_manager_dir["name"])+len(filesystem_manager_dir["purpose"])+ 8)
     index = 0
     serialize_message[index:8] = nonce_entity
     index += 8
     serialize_message[index:index+8] = nonce_auth
     index += 8
-    buffer = write_in_n_bytes(int(filesystemManager_dir["number_key"]), key_size = 4)
+    buffer = write_in_n_bytes(int(filesystem_manager_dir["number_key"]), key_size = 4)
     serialize_message[index:index+4] = buffer
     index += 4
-    buffer_name_len = num_to_var_length_int(len(filesystemManager_dir["name"]))
+    buffer_name_len = num_to_var_length_int(len(filesystem_manager_dir["name"]))
     serialize_message[index:index+len(buffer_name_len)] = buffer_name_len
     index += len(buffer_name_len)
-    serialize_message[index:index+len(filesystemManager_dir["name"])] = bytes.fromhex(str(filesystemManager_dir["name"]).encode('utf-8').hex())
-    index += len(filesystemManager_dir["name"])
-    buffer_purpose_len = num_to_var_length_int(len(filesystemManager_dir["purpose"]))
+    serialize_message[index:index+len(filesystem_manager_dir["name"])] = bytes.fromhex(str(filesystem_manager_dir["name"]).encode('utf-8').hex())
+    index += len(filesystem_manager_dir["name"])
+    buffer_purpose_len = num_to_var_length_int(len(filesystem_manager_dir["purpose"]))
     serialize_message[index:+len(buffer_purpose_len)] = buffer_purpose_len
     index += len(buffer_purpose_len)
-    serialize_message[index:index+len(filesystemManager_dir["purpose"])] = bytes.fromhex(str(filesystemManager_dir["purpose"]).encode('utf-8').hex())
+    serialize_message[index:index+len(filesystem_manager_dir["purpose"])] = bytes.fromhex(str(filesystem_manager_dir["purpose"]).encode('utf-8').hex())
     print(serialize_message)
     
     return serialize_message, nonce_entity     
 
-def send_sessionkey_request(ciphertext, signature):
+def send_sessionkey_request(ciphertext: bytes, signature: bytes) -> bytearray:
+    """Prepares a session key request with the given ciphertext and signature.
+
+    Args:
+        ciphertext (bytes): The encrypted data.
+        signature (bytes): The signature for the data.
+
+    Returns:
+        bytearray: A bytearray containing the session key request.
+    """
     num_buffer = num_to_var_length_int(len(ciphertext) + len(signature))
 
     total_buffer = bytearray(len(num_buffer)+1+len(ciphertext) + len(signature))
@@ -198,22 +328,49 @@ def send_sessionkey_request(ciphertext, signature):
     
     return total_buffer
 
-def auth_socket_connect(filesystemManager_dir):
+def auth_socket_connect(filesystem_manager_dir: dict) -> socket.socket:
+    """Establishes a socket connection for authentication.
+
+    Args:
+        filesystem_manager_dir (dict): A directory containing connection details.
+
+    Returns:
+        socket.socket: The established socket connection.
+    """
     client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    Host = filesystemManager_dir["auth_ip_address"]
-    Port = int(filesystemManager_dir["auth_port_number"])
+    Host = filesystem_manager_dir["auth_ip_address"]
+    Port = int(filesystem_manager_dir["auth_port_number"])
     client_sock.connect((Host, Port))
     return client_sock
 
-def parse_sessionkey_id(recv, filesystemManager_dir):
+def parse_sessionkey_id(recv: bytearray, filesystem_manager_dir: dict) -> bytes:
+    """Parses session key ID from received data and updates filesystem manager directory.
+
+    Args:
+        recv (bytearray): The received data containing the session key ID.
+        filesystem_manager_dir (dict): A directory where the session key ID will be updated.
+
+    Returns:
+        bytes: The remainder of the received data after extracting the session key ID.
+    """
     key_id = recv[2:2+8]
     key_id_int = (int(key_id[5]) << 16) + (int(key_id[6]) << 8) +(int(key_id[7]))
-    filesystemManager_dir["purpose"] = filesystemManager_dir["purpose"].replace("00000000", str(key_id_int))
-    print(filesystemManager_dir["purpose"])
+    filesystem_manager_dir["purpose"] = filesystem_manager_dir["purpose"].replace("00000000", str(key_id_int))
+    print(filesystem_manager_dir["purpose"])
     encrypted_buf = recv[10:]
     return encrypted_buf
 
-def parse_distributionkey(buffer, pubkey, privkey, distribution_key):
+
+
+def parse_distributionkey(buffer: bytearray, pubkey: rsa.RSAPublicKey, privkey: rsa.RSAPrivateKey, distribution_key: dict) -> None:
+    """Parses distribution key from the buffer using public and private keys.
+
+    Args:
+        buffer (bytearray): The buffer containing the distribution key data.
+        pubkey (rsa.RSAPublicKey): The RSA public key for verification.
+        privkey (rsa.RSAPrivateKey): The RSA private key for decryption.
+        distribution_key (dict): A dictionary to store the parsed distribution key data.
+    """
     sign_data = buffer[:rsa_key_size]
     sign_sign = buffer[rsa_key_size:rsa_key_size*2]
     sha256_verify(sign_sign, sign_data, pubkey)
@@ -221,108 +378,3 @@ def parse_distributionkey(buffer, pubkey, privkey, distribution_key):
     distribution_key["abs_validity"] = plaintext[:6]
     distribution_key["cipher_key"] = plaintext[7:7+plaintext[6]]
     distribution_key["mac_key"] = plaintext[8+16:]
-
-# def accept_wrapper(sock):
-#     conn, addr = sock.accept()
-#     print(f"Accepted connection from {addr}")
-#     conn.setblocking(False)
-#     data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
-#     events = selectors.EVENT_READ | selectors.EVENT_WRITE
-#     sel.register(conn, events, data=data)
-
-# def service_connection(key, mask):
-#     sock = key.fileobj
-#     data = key.data
-#     global payload_max_num
-#     if mask & selectors.EVENT_READ:
-#         recv_data = sock.recv(bytes_num)  # Should be ready to read
-#         if recv_data:
-#             if recv_data[0] == 30:
-#                 encrypted_buf = parse_sessionkey_id(recv_data, filesystemManager_dir)
-#                 client_sock = auth_socket_connect(filesystemManager_dir)
-#                 public_key = load_pubkey(filesystemManager_dir["auth_pubkey_path"])
-#                 private_key = load_privkey(filesystemManager_dir["privkey_path"])
-#                 while(1):
-#                     recv_data_from_auth = client_sock.recv(1024)
-#                     if len(recv_data_from_auth) == 0:
-#                         continue
-#                     msg_type = recv_data_from_auth[0]
-#                     length, length_buf = var_length_int_to_num(recv_data_from_auth[1:])
-#                     if msg_type == 0:
-#                         nonce_auth = recv_data_from_auth[4+1+length_buf:]
-#                         serialize_message, nonce_entity = serialize_message_for_auth(filesystemManager_dir, nonce_auth)
-                        
-#                         ciphertext = asymmetric_encrypt(serialize_message, public_key)
-#                         signature = sha256_sign(ciphertext, private_key)
-                        
-#                         total_buffer = send_sessionkey_request(ciphertext, signature)
-#                         client_sock.send(bytes(total_buffer))
-
-#                     elif msg_type == 21:
-#                         recv_data = recv_data_from_auth[1+length_buf:]
-#                         parse_distributionkey(recv_data, public_key, private_key)
-                        
-#                         encrytped_sessionkey = recv_data[rsa_key_size*2:]
-                        
-#                         encrypted_buffer = encrytped_sessionkey[:len(encrytped_sessionkey)-len(distribution_key["mac_key"])]
-#                         received_tag = encrytped_sessionkey[len(encrytped_sessionkey)-len(distribution_key["mac_key"]):]
-
-#                         decrypted_buf = symmetric_decrypt_hmac(distribution_key, encrypted_buffer, received_tag)
-                        
-#                         recv_nonce_entity = decrypted_buf[:8]
-#                         if nonce_entity != recv_nonce_entity:
-#                             print("Failed for communication with Auth")
-#                             exit()
-#                         else:    
-#                             print("Success for communication with Auth")
-
-#                         crypto_buf, crypto_buf_length = var_length_int_to_num(decrypted_buf[8:])
-#                         crypto_info = decrypted_buf[8+crypto_buf_length:8+crypto_buf_length+crypto_buf]
-#                         print("Crypto Info: ", crypto_info)
-#                         sessionkey = decrypted_buf[8+crypto_buf_length+crypto_buf:]
-#                         number_of_sessionkey = read_unsigned_int_BE(sessionkey)
-#                         print("Number of session key: ", number_of_sessionkey)
-#                         parse_sessionkey(sessionkey[4:])
-#                         client_sock.close()
-
-#                         # first buffer is indicator 1. other buffer is nonce.
-#                         dec_buf = symmetric_decrypt_hmac(session_key, encrypted_buf[:32], encrypted_buf[32:])
-#                         break
-                        
-#                 print("Success for receiving the session key.")
-
-#             elif recv_data[0] == 32:
-#                 data.outb += "Hello"
-#                 sent = sock.send(data.outb)
-#                 data.outb = data.outb[sent:]
-#         else:
-#             print(f"Closing connection to {data.addr}")
-#             sel.unregister(sock)
-
-# host, port = filesystemManager_dir["ip_address"], int(filesystemManager_dir["port_number"])
-
-# lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# lsock.bind((host, port))
-# lsock.listen()
-# print(f"Listening on {(host, port)}")
-# lsock.setblocking(False)
-# sel.register(lsock, selectors.EVENT_READ, data=None)
-
-# try:
-#     while True:
-#         events = sel.select(timeout=None)
-#         for key, mask in events:
-#             if key.data is None:
-#                 accept_wrapper(key.fileobj)
-#             else:
-#                 service_connection(key, mask)
-# except KeyboardInterrupt:
-#     print("Caught keyboard interrupt, exiting")
-# finally:
-#     lsock.close()
-#     sel.close()
-#     print("Finished")
-
-
-# TODO: Send the message and receive the message -> Success of the secure communication
-# TODO: Apply SST to communication between file system manager and entities
