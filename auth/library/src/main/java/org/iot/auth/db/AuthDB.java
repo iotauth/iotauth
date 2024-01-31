@@ -400,7 +400,7 @@ public class AuthDB {
         trustStoreForTrustedAuths.load(null, trustStorePassword.toCharArray());
 
         for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuth()) {
-            TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(),
+            TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(), t.getEntityHost(),
                     t.getPort(),
                     t.getHeartbeatPeriod(),
                     t.getFailureThreshold(),

@@ -31,6 +31,7 @@ public class TrustedAuthTable {
     public enum c {
         ID,
         Host,
+        EntityHost,
         Port,
         HeartbeatPeriod,
         FailureThreshold,
@@ -43,6 +44,7 @@ public class TrustedAuthTable {
 
     private int id;
     private String host;
+    private String entityHost;
     private int port;
     private X509Certificate internetCertificate;
     private X509Certificate entityCertificate;
@@ -55,6 +57,14 @@ public class TrustedAuthTable {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getEntityHost() {
+        return entityHost;
+    }
+
+    public void setEntityHost(String entityHost) {
+        this.entityHost = entityHost;
     }
 
     public String getHost() {
@@ -118,6 +128,7 @@ public class TrustedAuthTable {
         JSONObject object = new JSONObject();
         object.put(c.ID.name(), getId());
         object.put(c.Host.name(), getHost());
+        object.put(c.EntityHost.name(), getEntityHost());
         object.put(c.Port.name(), getPort());
         object.put(c.HeartbeatPeriod.name(), getHeartbeatPeriod());
         object.put(c.FailureThreshold.name(), getFailureThreshold());
@@ -142,6 +153,7 @@ public class TrustedAuthTable {
         TrustedAuthTable trustedAuth = new TrustedAuthTable();
         trustedAuth.setId(resultSet.getInt(c.ID.name()));
         trustedAuth.setHost(resultSet.getString(c.Host.name()));
+        trustedAuth.setEntityHost(resultSet.getString(c.EntityHost.name()));
         trustedAuth.setPort(resultSet.getInt(c.Port.name()));
         trustedAuth.setHeartbeatPeriod(resultSet.getInt(c.HeartbeatPeriod.name()));
         trustedAuth.setFailureThreshold(resultSet.getInt(c.FailureThreshold.name()));

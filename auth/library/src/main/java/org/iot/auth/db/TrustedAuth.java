@@ -22,11 +22,12 @@ import java.security.cert.X509Certificate;
  * @author Hokeun Kim
  */
 public class TrustedAuth {
-    public TrustedAuth(int id, String host, int port, int heartbeatPeriod, int failureThreshold,
+    public TrustedAuth(int id, String host, String entityHost, int port, int heartbeatPeriod, int failureThreshold,
                        X509Certificate internetCertificate, X509Certificate entityCertificate,
                        X509Certificate backupCertificate) {
         this.id = id;
         this.host = host;
+        this.entityHost = entityHost;
         this.port = port;
         this.heartbeatPeriod = heartbeatPeriod;
         this.failureThreshold = failureThreshold;
