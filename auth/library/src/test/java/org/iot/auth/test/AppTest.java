@@ -46,13 +46,9 @@ import java.util.UUID;
  */
 public class AppTest {
     private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
-    private static final String dbPath = "auth.db"; //"databases/auth101/auth.db";
-    private boolean dbCreated = false;
-    private boolean regEntityInserted = false;
-    private boolean commPolicyInserted = false;
-    private boolean trustedAuthInserted = false;
+    private static final String testDbPath = "../library/src/test/test_files/databases/";
     SymmetricKey databaseKey;
-    private String authDBDir = "../databases/auth101/";
+    private String testFilesDir = "../library/src/test/test_files/";
     private AuthDBProtectionMethod authDBProtectionMethod =
             AuthDBProtectionMethod.ENCRYPT_CREDENTIALS;
     @Test
@@ -103,12 +99,8 @@ public class AppTest {
         logger.info("PayLoadLength, {}", authHello.getPayLoadLength());
     }
 
-    @Test
-    @Category(org.iot.auth.db.dao.SQLiteConnector.class)
-    public void testDBCreateion() throws SQLException, ClassNotFoundException, IOException {
-        File file = new File(dbPath);
-        file.delete();
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
+    public void createTestAuthDB(String testDbFileName) throws SQLException, ClassNotFoundException, IOException {
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
         databaseKey = new SymmetricKey(
                 SQLiteConnector.AUTH_DB_CRYPTO_SPEC,
                 new Date().getTime() +
@@ -118,16 +110,20 @@ public class AppTest {
         sqLiteConnector.DEBUG = true;
         sqLiteConnector.createTablesIfNotExists();
         sqLiteConnector.close();
-        dbCreated = true;
+    }
+
+    public void destroyTestAuthDB(String testDbFileName) {
+        File file = new File(testDbFileName);
+        file.delete();
     }
 
     @Test
     @Category(org.iot.auth.db.RegisteredEntity.class)
-    public void testRegEntityInsertion() throws SQLException, ClassNotFoundException, IOException {
-        if (!dbCreated) {
-            testDBCreateion();
-        }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
+    public void testRegEntityInsertionAndSelectAll() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testRegEntityInsertionAndSelectAll" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
         sqLiteConnector.initialize(databaseKey);
         sqLiteConnector.DEBUG = true;
         RegisteredEntityTable regEntity = new RegisteredEntityTable();
@@ -139,7 +135,7 @@ public class AppTest {
         regEntity.setMaxSessionKeysPerRequest(5);
         regEntity.setDistKeyValidityPeriod("1*hour");
         regEntity.setPublicKey(
-                AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.ClientCert.pem"));
+                AuthCrypto.loadPublicKeyFromFile(testFilesDir + "entity_certs/Net1.ClientCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
         regEntity.setBackupToAuthIDs("102,103");
@@ -154,7 +150,7 @@ public class AppTest {
         regEntity.setMaxSessionKeysPerRequest(5);
         regEntity.setDistKeyValidityPeriod("3*sec");
         regEntity.setPublicKey(
-                AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.PtClientCert.pem"));
+                AuthCrypto.loadPublicKeyFromFile(testFilesDir + "entity_certs/Net1.PtClientCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
         regEntity.setBackupToAuthIDs("102");
@@ -169,7 +165,7 @@ public class AppTest {
         regEntity.setMaxSessionKeysPerRequest(5);
         regEntity.setDistKeyValidityPeriod("1*hour");
         regEntity.setPublicKey(
-                AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.ServerCert.pem"));
+                AuthCrypto.loadPublicKeyFromFile(testFilesDir + "entity_certs/Net1.ServerCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
         regEntity.setBackupToAuthIDs("102,103");
@@ -184,24 +180,26 @@ public class AppTest {
         regEntity.setMaxSessionKeysPerRequest(5);
         regEntity.setDistKeyValidityPeriod("3*sec");
         regEntity.setPublicKey(
-                AuthCrypto.loadPublicKeyFromFile(authDBDir + "entity_certs/Net1.PtServerCert.pem"));
+                AuthCrypto.loadPublicKeyFromFile(testFilesDir + "entity_certs/Net1.PtServerCert.pem"));
         regEntity.setDistCryptoSpec("AES-128-CBC:SHA256");
         regEntity.setActive(true);
         regEntity.setBackupToAuthIDs("102");
         regEntity.setBackupFromAuthID(-1);
         sqLiteConnector.insertRecords(regEntity);
 
+        C.PROPERTIES = new AuthServerProperties(testFilesDir + "properties/exampleAuth101.properties", null);
+        sqLiteConnector.selectAllRegEntities("../databases/auth101");
         sqLiteConnector.close();
-        regEntityInserted = true;
+        destroyTestAuthDB(testDbFileName);
     }
 
     @Test
     @Category(org.iot.auth.db.CommunicationPolicy.class)
-    public void testCommPolicyInsertion() throws SQLException, ClassNotFoundException, IOException {
-        if (!dbCreated) {
-            testDBCreateion();
-        }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
+    public void testCommPolicyInsertionAndSelectAll() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testCommPolicyInsertionAndSelectAll" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
         sqLiteConnector.initialize(databaseKey);
         sqLiteConnector.DEBUG = true;
         CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
@@ -277,75 +275,40 @@ public class AppTest {
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
+
+        // Test Select All.
+        sqLiteConnector.selectAllPolicies();
         sqLiteConnector.close();
-        commPolicyInserted = true;
+        destroyTestAuthDB(testDbFileName);
     }
 
     @Test
     @Category(org.iot.auth.db.TrustedAuth.class)
-    public void testTrustedAuthInsertion() throws SQLException, ClassNotFoundException, CertificateEncodingException,
+    public void testTrustedAuthInsertionAndSelectAll() throws SQLException, ClassNotFoundException, CertificateEncodingException,
             IOException
     {
-        if (!dbCreated) {
-            testDBCreateion();
-        }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
+        final String testDbFileName = testDbPath + "testTrustedAuthInsertionAndSelectAll" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
         sqLiteConnector.initialize(databaseKey);
         sqLiteConnector.DEBUG = true;
         TrustedAuthTable trustedAuth = new TrustedAuthTable();
         trustedAuth.setId(102);
         trustedAuth.setHost("localhost");
+        trustedAuth.setEntityHost("localhost");
         trustedAuth.setPort(22901);
         trustedAuth.setInternetCertificate(
-                AuthCrypto.loadCertificateFromFile(authDBDir + "trusted_auth_certs/Auth102InternetCert.pem"));
+                AuthCrypto.loadCertificateFromFile(testFilesDir + "trusted_auth_certs/Auth102InternetCert.pem"));
         trustedAuth.setEntityCertificate(
-                AuthCrypto.loadCertificateFromFile(authDBDir + "trusted_auth_certs/Auth102EntityCert.pem"));
+                AuthCrypto.loadCertificateFromFile(testFilesDir + "trusted_auth_certs/Auth102EntityCert.pem"));
         trustedAuth.setHeartbeatPeriod(3);
         trustedAuth.setFailureThreshold(4);
         sqLiteConnector.insertRecords(trustedAuth);
-        sqLiteConnector.close();
-        trustedAuthInserted = true;
-    }
 
-    @Test
-    @Category(org.iot.auth.db.dao.SQLiteConnector.class)
-    public void testSelectAllCommPolicies() throws SQLException, ClassNotFoundException, IOException {
-        if (!commPolicyInserted) {
-            testCommPolicyInsertion();
-        }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
-        sqLiteConnector.initialize(databaseKey);
-        sqLiteConnector.DEBUG = true;
-        sqLiteConnector.selectAllPolicies();
-        sqLiteConnector.close();
-    }
-
-    @Test
-    @Category(org.iot.auth.db.dao.SQLiteConnector.class)
-    public void testSelectAllRegEntities() throws SQLException, ClassNotFoundException, IOException {
-        if (!regEntityInserted) {
-            testRegEntityInsertion();
-        }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
-        sqLiteConnector.initialize(databaseKey);
-        sqLiteConnector.DEBUG = true;
-        C.PROPERTIES = new AuthServerProperties("../properties/exampleAuth101.properties", null);
-        sqLiteConnector.selectAllRegEntities("../databases/auth101");
-        sqLiteConnector.close();
-    }
-
-    @Test
-    @Category(org.iot.auth.db.dao.SQLiteConnector.class)
-    public void testSelectAllTrustedAuth() throws SQLException, ClassNotFoundException, CertificateEncodingException,
-            IOException
-    {
-        if (!trustedAuthInserted) {
-            testTrustedAuthInsertion();
-        }
-        SQLiteConnector sqLiteConnector = new SQLiteConnector(dbPath, authDBProtectionMethod);
-        sqLiteConnector.initialize(databaseKey);
-        sqLiteConnector.DEBUG = true;
+        // Test Select All.
         sqLiteConnector.selectAllTrustedAuth();
         sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
     }
 }
