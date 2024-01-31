@@ -254,7 +254,6 @@ public class SQLiteConnector {
         sql = "CREATE TABLE IF NOT EXISTS " + TrustedAuthTable.T_TRUSTED_AUTH + "(";
         sql += TrustedAuthTable.c.ID.name() + " INT NOT NULL PRIMARY KEY,";
         sql += TrustedAuthTable.c.Host.name() + " TEXT NOT NULL,";
-        sql += TrustedAuthTable.c.EntityHost.name() + " TEXT NOT NULL,";
         sql += TrustedAuthTable.c.Port.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + " INT NOT NULL,";
         sql += TrustedAuthTable.c.FailureThreshold.name() + " INT NOT NULL,";
@@ -473,19 +472,17 @@ public class SQLiteConnector {
         String sql = "INSERT INTO " + TrustedAuthTable.T_TRUSTED_AUTH + "(";
         sql += TrustedAuthTable.c.ID.name() + ",";
         sql += TrustedAuthTable.c.Host.name() + ",";
-        sql += TrustedAuthTable.c.EntityHost.name() + ",";
         sql += TrustedAuthTable.c.Port.name() + ",";
         sql += TrustedAuthTable.c.HeartbeatPeriod.name() + ",";
         sql += TrustedAuthTable.c.FailureThreshold.name() + ",";
         sql += TrustedAuthTable.c.InternetCertificateValue.name() + ",";
         sql += TrustedAuthTable.c.EntityCertificateValue.name() + ",";
         sql += TrustedAuthTable.c.BackupCertificateValue.name() + ")";
-        sql += " VALUES(?,?,?,?,?,?,?,?,?)";
+        sql += " VALUES(?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setInt(index++,auth.getId());
         preparedStatement.setString(index++,auth.getHost());
-        preparedStatement.setString(index++,auth.getEntityHost());
         preparedStatement.setInt(index++,auth.getPort());
         preparedStatement.setInt(index++,auth.getHeartbeatPeriod());
         preparedStatement.setInt(index++,auth.getFailureThreshold());

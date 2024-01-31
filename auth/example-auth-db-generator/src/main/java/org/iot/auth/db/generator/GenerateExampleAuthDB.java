@@ -304,7 +304,6 @@ public class GenerateExampleAuthDB {
 
                 trustedAuth.setId(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.ID.name())));
                 trustedAuth.setHost((String)jsonObject.get(TrustedAuthTable.c.Host.name()));
-                trustedAuth.setEntityHost((String)jsonObject.get(TrustedAuthTable.c.EntityHost.name()));
                 trustedAuth.setPort(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.Port.name())));
                 trustedAuth.setHeartbeatPeriod(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.HeartbeatPeriod.name())));
                 trustedAuth.setFailureThreshold(convertObjectToInteger(jsonObject.get(TrustedAuthTable.c.FailureThreshold.name())));
