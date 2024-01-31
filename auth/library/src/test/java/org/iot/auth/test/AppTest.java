@@ -296,6 +296,7 @@ public class AppTest {
         TrustedAuthTable trustedAuth = new TrustedAuthTable();
         trustedAuth.setId(102);
         trustedAuth.setHost("localhost");
+        trustedAuth.setEntityHost("localhost");
         trustedAuth.setPort(22901);
         trustedAuth.setInternetCertificate(
                 AuthCrypto.loadCertificateFromFile(testFilesDir + "trusted_auth_certs/Auth102InternetCert.pem"));
