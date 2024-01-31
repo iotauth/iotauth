@@ -31,21 +31,24 @@ def service_connection(key, mask):
     data = key.data
     global payload_max_num
     if mask & selectors.EVENT_READ:
-        recv_data = sock.recv(entity_server.bytes_num)  # Should be ready to read
-        if recv_data:
-            if recv_data[0] == 30:
-                encrypted_buf = entity_server.parse_sessionkey_id(recv_data, filesystemManager_dir)
+        recv_data = sock.recv(entity_server.BYTES_NUM)  # Should be ready to read
+        if not recv_data:
+            print(f"Closing connection to {data.addr}")
+            sel.unregister(sock)
+        else:
+            if recv_data[0] == entity_server.SKEY_HANDSHAKE_1:
+                encrypted_buf = entity_server.parse_sessionkey_id(recv_data[2:], filesystemManager_dir)
                 client_sock = entity_server.auth_socket_connect(filesystemManager_dir)
                 public_key = entity_server.load_pubkey(filesystemManager_dir["auth_pubkey_path"])
                 private_key = entity_server.load_privkey(filesystemManager_dir["privkey_path"])
                 while(1):
-                    recv_data_from_auth = client_sock.recv(1024)
+                    recv_data_from_auth = client_sock.recv(entity_server.BYTES_NUM)
                     if len(recv_data_from_auth) == 0:
                         continue
                     msg_type = recv_data_from_auth[0]
                     length, length_buf = entity_server.var_length_int_to_num(recv_data_from_auth[1:])
-                    if msg_type == 0:
-                        nonce_auth = recv_data_from_auth[4+1+length_buf:]
+                    if msg_type == entity_server.AUTH_HELLO:
+                        nonce_auth = recv_data_from_auth[entity_server.AUTH_ID+1+length_buf:]
                         serialize_message, nonce_entity = entity_server.serialize_message_for_auth(filesystemManager_dir, nonce_auth)
                         
                         ciphertext = entity_server.asymmetric_encrypt(serialize_message, public_key)
@@ -54,31 +57,33 @@ def service_connection(key, mask):
                         total_buffer = entity_server.send_sessionkey_request(ciphertext, signature)
                         client_sock.send(bytes(total_buffer))
 
-                    elif msg_type == 21:
+                    elif msg_type == entity_server.SESSION_KEY_RESP_WITH_DIST_KEY:
                         recv_data = recv_data_from_auth[1+length_buf:]
                         entity_server.parse_distributionkey(recv_data, public_key, private_key, distribution_key)
                         
-                        encrytped_sessionkey = recv_data[entity_server.rsa_key_size*2:]
+                        encrytped_sessionkey = recv_data[entity_server.RSA_KEY_SIZE*2:]
                         
                         encrypted_buffer = encrytped_sessionkey[:len(encrytped_sessionkey)-len(distribution_key["mac_key"])]
                         received_tag = encrytped_sessionkey[len(encrytped_sessionkey)-len(distribution_key["mac_key"]):]
 
                         decrypted_buf = entity_server.symmetric_decrypt_hmac(distribution_key, encrypted_buffer, received_tag)
                         
-                        recv_nonce_entity = decrypted_buf[:8]
+                        recv_nonce_entity = decrypted_buf[:entity_server.NONCE_SIZE]
                         if nonce_entity != recv_nonce_entity:
                             print("Failed for communication with Auth")
                             exit()
                         else:    
                             print("Success for communication with Auth")
 
-                        crypto_buf, crypto_buf_length = entity_server.var_length_int_to_num(decrypted_buf[8:])
-                        crypto_info = decrypted_buf[8+crypto_buf_length:8+crypto_buf_length+crypto_buf]
+                        crypto_buf, crypto_buf_length = entity_server.var_length_int_to_num(decrypted_buf[entity_server.NONCE_SIZE:])
+                        crypto_info = decrypted_buf[entity_server.NONCE_SIZE+crypto_buf_length:entity_server.NONCE_SIZE+crypto_buf_length+crypto_buf]
                         print("Crypto Info: ", crypto_info)
-                        sessionkey = decrypted_buf[8+crypto_buf_length+crypto_buf:]
-                        number_of_sessionkey = entity_server.read_unsigned_int_BE(sessionkey)
+                        print(decrypted_buf)
+                        sessionkey = decrypted_buf[entity_server.NONCE_SIZE+crypto_buf_length+crypto_buf:]
+                        number_of_sessionkey = entity_server.read_unsigned_int_BE(sessionkey, 4)
                         print("Number of session key: ", number_of_sessionkey)
                         entity_server.parse_sessionkey(sessionkey[4:],session_key)
+                        print(session_key)
                         client_sock.close()
 
                         # first buffer is indicator 1. other buffer is nonce.
@@ -92,9 +97,6 @@ def service_connection(key, mask):
                 data.outb += "Hello"
                 sent = sock.send(data.outb)
                 data.outb = data.outb[sent:]
-        else:
-            print(f"Closing connection to {data.addr}")
-            sel.unregister(sock)
 
 host, port = filesystemManager_dir["ip_address"], int(filesystemManager_dir["port_number"])
 

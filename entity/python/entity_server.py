@@ -15,9 +15,19 @@ from cryptography.hazmat.primitives import hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding as pad
 
-bytes_num = 1024
-rsa_key_size = 256
-
+BYTES_NUM = 1024
+RSA_KEY_SIZE = 256
+SESSION_KEY_ID_SIZE = 8
+NONCE_SIZE = 8
+ABS_VALIDITY_SIZE = 6
+REL_VALIDITY_SIZE = 6
+IV_SIZE = 16
+AUTH_ID = 4
+KEY_NUM_BUF = 4
+AUTH_HELLO = 0
+SESSION_KEY_REQ_IN_PUB_ENC = 20
+SESSION_KEY_RESP_WITH_DIST_KEY = 21
+SKEY_HANDSHAKE_1 = 30
 def load_config(path: str, filesystem_manager_dir: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
 
@@ -33,26 +43,28 @@ def load_config(path: str, filesystem_manager_dir: dict) -> None:
     while True:
         line = f.readline()
         if not line: break
-        if line.split("=")[0] == "name":
-            filesystem_manager_dir["name"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "purpose":
-            filesystem_manager_dir["purpose"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "number_key":
-            filesystem_manager_dir["number_key"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "auth_pubkey_path":
-            filesystem_manager_dir["auth_pubkey_path"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "privkey_path":
-            filesystem_manager_dir["privkey_path"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "auth_ip_address":
-            filesystem_manager_dir["auth_ip_address"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "auth_port_number":
-            filesystem_manager_dir["auth_port_number"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "port_number":
-            filesystem_manager_dir["port_number"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "ip_address":
-            filesystem_manager_dir["ip_address"] = line.split("=")[1].strip("\n")
-        elif line.split("=")[0] == "network_protocol":
-            filesystem_manager_dir["network_protocol"] = line.split("=")[1].strip("\n")
+        index = line.split("=")[0]
+        content = line.split("=")[1].strip("\n")
+        if index == "name":
+            filesystem_manager_dir["name"] = content
+        elif index == "purpose":
+            filesystem_manager_dir["purpose"] = content
+        elif index == "number_key":
+            filesystem_manager_dir["number_key"] = content
+        elif index == "auth_pubkey_path":
+            filesystem_manager_dir["auth_pubkey_path"] = content
+        elif index == "privkey_path":
+            filesystem_manager_dir["privkey_path"] = content
+        elif index == "auth_ip_address":
+            filesystem_manager_dir["auth_ip_address"] = content
+        elif index == "auth_port_number":
+            filesystem_manager_dir["auth_port_number"] = content
+        elif index == "port_number":
+            filesystem_manager_dir["port_number"] = content
+        elif index == "ip_address":
+            filesystem_manager_dir["ip_address"] = content
+        elif index == "network_protocol":
+            filesystem_manager_dir["network_protocol"] = content
         else:
             break
     f.close()
@@ -69,7 +81,7 @@ def write_in_n_bytes(num_key: int, key_size: int) -> bytearray:
     """
     buffer = bytearray(4)
     for i in range(key_size):
-        buffer[i] = num_key >> 8*(key_size -1 -i)
+        buffer[i] = num_key >> 8*(key_size-i-1)
     return buffer
 
 def num_to_var_length_int(num: int) -> bytearray:
@@ -111,7 +123,7 @@ def var_length_int_to_num(buffer: bytearray) -> tuple:
             break
     return number, buffer_num
 
-def read_unsigned_int_BE(buffer: bytearray) -> int:
+def read_unsigned_int_BE(buffer: bytearray, size: int) -> int:
     """Reads an unsigned integer in big-endian format from the given buffer.
 
     Args:
@@ -121,8 +133,8 @@ def read_unsigned_int_BE(buffer: bytearray) -> int:
         int: The read unsigned integer.
     """
     num = 0
-    for i in range(4):
-       num |= buffer[i] << 8 *(3-i)
+    for i in range(size):
+       num |= buffer[i] << 8 *(size-1-i)
     return num
 
 def parse_sessionkey(buffer: bytearray, session_key: dict) -> None:
@@ -132,13 +144,20 @@ def parse_sessionkey(buffer: bytearray, session_key: dict) -> None:
         buffer (bytearray): The buffer containing the session key information.
         session_key (dict): A dictionary to store the parsed session key information.
     """
-    session_key["sessionkey_id"] = buffer[:8] 
-    session_key["abs_validity"] = buffer[8:8+6]
-    session_key["rel_validity"] = buffer[8+6:8+6+6]
-    cipher_key_size = buffer[8+6+6]
-    session_key["cipher_key"] = buffer[8+6+6+1:8+6+6+1+cipher_key_size]
-    mac_key_size = buffer[8+6+6+1+cipher_key_size]
-    session_key["mac_key"] = buffer[8+6+6+1+cipher_key_size+1:8+6+6+1+cipher_key_size+1+mac_key_size]
+    index = 0
+    session_key["sessionkey_id"] = buffer[:SESSION_KEY_ID_SIZE] 
+    index += SESSION_KEY_ID_SIZE
+    session_key["abs_validity"] = buffer[index:index+ABS_VALIDITY_SIZE]
+    index += ABS_VALIDITY_SIZE
+    session_key["rel_validity"] = buffer[index:index+REL_VALIDITY_SIZE]
+    index += REL_VALIDITY_SIZE
+    cipher_key_size = buffer[index]
+    index += 1
+    session_key["cipher_key"] = buffer[index:index+cipher_key_size]
+    index += cipher_key_size
+    mac_key_size = buffer[index]
+    index += 1
+    session_key["mac_key"] = buffer[index:index+mac_key_size]
 
 def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> tuple:
     """Encrypts data using AES-CBC and appends an HMAC-SHA256 tag.
@@ -153,13 +172,13 @@ def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> tuple:
     padder = pad.PKCS7(128).padder()
     pad_data = padder.update(buffer)
     pad_data += padder.finalize()
-    iv = secrets.token_bytes(16)
+    iv = secrets.token_bytes(IV_SIZE)
     cipher = Cipher(algorithms.AES128(key_dir["cipher_key"]),modes.CBC(iv))
     encryptor = cipher.encryptor()
     encrypted_buf = encryptor.update(pad_data) + encryptor.finalize()
     enc_total_buf = bytearray(len(iv) + len(encrypted_buf))
-    enc_total_buf[:16] = iv
-    enc_total_buf[16:] = encrypted_buf
+    enc_total_buf[:IV_SIZE] = iv
+    enc_total_buf[IV_SIZE:] = encrypted_buf
     h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
     h.update(bytes(enc_total_buf))
     hmac_tag = h.finalize()
@@ -187,10 +206,10 @@ def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> by
         exit()
     else:
         print("Success for verifying the data")
-    iv = enc_buf[:16]
+    iv = enc_buf[:IV_SIZE]
     cipher = Cipher(algorithms.AES128(key_dir["cipher_key"]),modes.CBC(bytes(iv)))
     decryptor = cipher.decryptor()
-    padded_buf = decryptor.update(bytes(enc_buf[16:])) + decryptor.finalize()
+    padded_buf = decryptor.update(bytes(enc_buf[IV_SIZE:])) + decryptor.finalize()
     unpadder = pad.PKCS7(128).unpadder()
     decrypted_buf = unpadder.update(padded_buf) + unpadder.finalize()
     return decrypted_buf
@@ -281,16 +300,18 @@ def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes) 
     Returns:
         tuple: A tuple containing the serialized message and nonce entity.
     """
-    nonce_entity = secrets.token_bytes(8)
-    serialize_message = bytearray(8+8+4+len(filesystem_manager_dir["name"])+len(filesystem_manager_dir["purpose"])+ 8)
+    buffer_key_len = 4
+    max_buffer_len = 4
+    nonce_entity = secrets.token_bytes(NONCE_SIZE)
+    serialize_message = bytearray(NONCE_SIZE*2+buffer_key_len+len(filesystem_manager_dir["name"])+len(filesystem_manager_dir["purpose"])+ max_buffer_len*2)
     index = 0
     serialize_message[index:8] = nonce_entity
-    index += 8
-    serialize_message[index:index+8] = nonce_auth
-    index += 8
-    buffer = write_in_n_bytes(int(filesystem_manager_dir["number_key"]), key_size = 4)
-    serialize_message[index:index+4] = buffer
-    index += 4
+    index += NONCE_SIZE
+    serialize_message[index:index+NONCE_SIZE] = nonce_auth
+    index += NONCE_SIZE
+    buffer_key = write_in_n_bytes(int(filesystem_manager_dir["number_key"]), key_size = buffer_key_len)
+    serialize_message[index:index+buffer_key_len] = buffer_key
+    index += buffer_key_len
     buffer_name_len = num_to_var_length_int(len(filesystem_manager_dir["name"]))
     serialize_message[index:index+len(buffer_name_len)] = buffer_name_len
     index += len(buffer_name_len)
@@ -318,7 +339,7 @@ def send_sessionkey_request(ciphertext: bytes, signature: bytes) -> bytearray:
 
     total_buffer = bytearray(len(num_buffer)+1+len(ciphertext) + len(signature))
     index =0
-    total_buffer[index] = 20
+    total_buffer[index] = SESSION_KEY_REQ_IN_PUB_ENC
     index += 1
     total_buffer[index:index+len(num_buffer)] = num_buffer
     index += len(num_buffer)
@@ -353,11 +374,13 @@ def parse_sessionkey_id(recv: bytearray, filesystem_manager_dir: dict) -> bytes:
     Returns:
         bytes: The remainder of the received data after extracting the session key ID.
     """
-    key_id = recv[2:2+8]
-    key_id_int = (int(key_id[5]) << 16) + (int(key_id[6]) << 8) +(int(key_id[7]))
+    key_id = recv[:SESSION_KEY_ID_SIZE]
+    key_id_int = 0
+    for i in range(SESSION_KEY_ID_SIZE):
+        key_id_int += (int(key_id[i]) << 8*(7-i))
     filesystem_manager_dir["purpose"] = filesystem_manager_dir["purpose"].replace("00000000", str(key_id_int))
     print(filesystem_manager_dir["purpose"])
-    encrypted_buf = recv[10:]
+    encrypted_buf = recv[SESSION_KEY_ID_SIZE:]
     return encrypted_buf
 
 
@@ -371,10 +394,10 @@ def parse_distributionkey(buffer: bytearray, pubkey: rsa.RSAPublicKey, privkey: 
         privkey (rsa.RSAPrivateKey): The RSA private key for decryption.
         distribution_key (dict): A dictionary to store the parsed distribution key data.
     """
-    sign_data = buffer[:rsa_key_size]
-    sign_sign = buffer[rsa_key_size:rsa_key_size*2]
+    sign_data = buffer[:RSA_KEY_SIZE]
+    sign_sign = buffer[RSA_KEY_SIZE:RSA_KEY_SIZE*2]
     sha256_verify(sign_sign, sign_data, pubkey)
     plaintext = asymmetric_decrypt(sign_data, privkey)
-    distribution_key["abs_validity"] = plaintext[:6]
-    distribution_key["cipher_key"] = plaintext[7:7+plaintext[6]]
-    distribution_key["mac_key"] = plaintext[8+16:]
+    distribution_key["abs_validity"] = plaintext[:ABS_VALIDITY_SIZE]
+    distribution_key["cipher_key"] = plaintext[ABS_VALIDITY_SIZE+1:ABS_VALIDITY_SIZE+1+plaintext[6]]
+    distribution_key["mac_key"] = plaintext[ABS_VALIDITY_SIZE+1+1+plaintext[6]:]
