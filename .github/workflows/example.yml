@@ -1,0 +1,26 @@
+# This workflow will test SST examples.
+
+# Author: Hokeun Kim
+
+name: Example Tests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  generate-example:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./examples
+    steps:
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4  
+      - name: Make the script files executable
+        run: chmod +x generateAll.sh
+      - name: Run the scripts
+        run: |
+          ./generateAll.sh -p asdf
