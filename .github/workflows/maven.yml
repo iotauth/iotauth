@@ -38,7 +38,7 @@ jobs:
       - name: Check out the repository to the runner
         uses: actions/checkout@v4  
       - name: Make the script files executable
-        run: chmod +x generateall.sh
+        run: chmod +x generateAll.sh
       - name: Run the scripts
         run: |
           ./generateAll.sh
