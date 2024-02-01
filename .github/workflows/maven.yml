@@ -1,4 +1,4 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# This workflow will build Auth with Maven, and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
 
 # This workflow uses actions that are not certified by GitHub.
@@ -6,7 +6,9 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Java CI with Maven
+# Author: Hokeun Kim
+
+name: Auth Server Build
 
 on:
   push:
@@ -28,17 +30,3 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn -B package --file auth/pom.xml
-
-  generate-example:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./examples
-    steps:
-      - name: Check out the repository to the runner
-        uses: actions/checkout@v4  
-      - name: Make the script files executable
-        run: chmod +x generateAll.sh
-      - name: Run the scripts
-        run: |
-          ./generateAll.sh
