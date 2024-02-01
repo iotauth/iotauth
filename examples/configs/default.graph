@@ -17,7 +17,7 @@
 			"entityHost": "localhost",
 			"authHost": "localhost",
 			"tcpPort": 22900,
-			"udpPort": 22902, 
+			"udpPort": 22902,
 			"authPort": 22901,
 			"callbackPort": 22903,
 			"dbProtectionMethod": 1,

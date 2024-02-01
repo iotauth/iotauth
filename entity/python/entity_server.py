@@ -290,7 +290,7 @@ def sha256_verify(sign: bytes, data: bytes, pubkey: rsa.RSAPublicKey) -> None:
     pubkey.verify(sign, data, padding.PKCS1v15(), hashes.SHA256())
     print("auth signature verified\n")
 
-def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes) -> tuple:
+def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes, nonce_entity: bytes) -> bytearray:
     """Serializes message for authentication using given directory and nonce.
 
     Args:
@@ -302,7 +302,6 @@ def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes) 
     """
     buffer_key_len = 4
     max_buffer_len = 4
-    nonce_entity = secrets.token_bytes(NONCE_SIZE)
     serialize_message = bytearray(NONCE_SIZE*2+buffer_key_len+len(filesystem_manager_dir["name"])+len(filesystem_manager_dir["purpose"])+ max_buffer_len*2)
     index = 0
     serialize_message[index:8] = nonce_entity
@@ -323,7 +322,7 @@ def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes) 
     serialize_message[index:index+len(filesystem_manager_dir["purpose"])] = bytes.fromhex(str(filesystem_manager_dir["purpose"]).encode('utf-8').hex())
     print(serialize_message)
     
-    return serialize_message, nonce_entity     
+    return serialize_message     
 
 def send_sessionkey_request(ciphertext: bytes, signature: bytes) -> bytearray:
     """Prepares a session key request with the given ciphertext and signature.
@@ -383,8 +382,6 @@ def parse_sessionkey_id(recv: bytearray, filesystem_manager_dir: dict) -> bytes:
     encrypted_buf = recv[SESSION_KEY_ID_SIZE:]
     return encrypted_buf
 
-
-
 def parse_distributionkey(buffer: bytearray, pubkey: rsa.RSAPublicKey, privkey: rsa.RSAPrivateKey, distribution_key: dict) -> None:
     """Parses distribution key from the buffer using public and private keys.
 
@@ -401,3 +398,63 @@ def parse_distributionkey(buffer: bytearray, pubkey: rsa.RSAPublicKey, privkey: 
     distribution_key["abs_validity"] = plaintext[:ABS_VALIDITY_SIZE]
     distribution_key["cipher_key"] = plaintext[ABS_VALIDITY_SIZE+1:ABS_VALIDITY_SIZE+1+plaintext[6]]
     distribution_key["mac_key"] = plaintext[ABS_VALIDITY_SIZE+1+1+plaintext[6]:]
+
+def get_session_key(buffer: bytearray, filesystem_manager_dir: dict, sock: socket.socket, distribution_key: dict, session_key: dict, nonce_entity: bytes):
+    """Handles the process of receiving and processing a session key.
+
+    Args:
+        buffer (bytearray): The input buffer containing the session key information.
+        filesystem_manager_dir (dict): The directory information for the filesystem manager.
+        sock (socket.socket): The socket for communication.
+        distribution_key (dict): The dictionary to store distribution key information.
+        session_key (dict): The dictionary to store session key information.
+        nonce_entity (bytes): Nonce information.
+
+    Returns:
+        None
+    """
+    # Extract message type and length
+    msg_type = buffer[0]
+    length, length_buf = var_length_int_to_num(buffer[1:])
+
+    if msg_type == AUTH_HELLO:
+        # Handle AUTH_HELLO message
+        nonce_auth = buffer[AUTH_ID+1+length_buf:]
+        serialize_message = serialize_message_for_auth(filesystem_manager_dir, nonce_auth, nonce_entity)
+        ciphertext = asymmetric_encrypt(serialize_message, filesystem_manager_dir['pubkey'])
+        signature = sha256_sign(ciphertext, filesystem_manager_dir['privkey'])
+
+        # Send session key request
+        total_buffer = send_sessionkey_request(ciphertext, signature)
+        sock.send(bytes(total_buffer))
+    elif msg_type == SESSION_KEY_RESP_WITH_DIST_KEY:
+        # Handle SESSION_KEY_RESP_WITH_DIST_KEY message
+        recv_data = buffer[1+length_buf:]
+        parse_distributionkey(recv_data, filesystem_manager_dir['pubkey'], filesystem_manager_dir['privkey'], distribution_key)
+        
+        encrypted_sessionkey = recv_data[RSA_KEY_SIZE*2:]
+        
+        # Separate encrypted session key and MAC key
+        encrypted_buffer = encrypted_sessionkey[:len(encrypted_sessionkey)-len(distribution_key["mac_key"])]
+        received_tag = encrypted_sessionkey[len(encrypted_sessionkey)-len(distribution_key["mac_key"]):]
+
+        # Decrypt symmetrically and verify MAC
+        decrypted_buf = symmetric_decrypt_hmac(distribution_key, encrypted_buffer, received_tag)
+        
+        recv_nonce_entity = decrypted_buf[:NONCE_SIZE]
+        if nonce_entity != recv_nonce_entity:
+            print("Failed for communication with Auth")
+            exit()
+        else:    
+            print("Success for communication with Auth")
+
+        # Interpret encrypted data
+        crypto_buf, crypto_buf_length = var_length_int_to_num(decrypted_buf[NONCE_SIZE:])
+        crypto_info = decrypted_buf[NONCE_SIZE+crypto_buf_length:NONCE_SIZE+crypto_buf_length+crypto_buf]
+        print("Crypto Info: ", crypto_info)
+        sessionkey = decrypted_buf[NONCE_SIZE+crypto_buf_length+crypto_buf:]
+        number_of_sessionkey = read_unsigned_int_BE(sessionkey, 4)
+        print("Number of session key: ", number_of_sessionkey)
+        parse_sessionkey(sessionkey[4:], session_key)
+        print(session_key)
+        print("Success for receiving the session key.")
