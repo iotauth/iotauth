@@ -1,6 +1,6 @@
 # Python API
 ---
-This directory includes Python API for SST's entity server and File System Manager, which was introduced in our paper [[Mid4CC](https://dl.acm.org/doi/10.1145/3631309.3632832)].
+This directory includes Python API for SST's entity server and File System Manager, which was introduced in our paper [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
 
 **load_config()**
 - `load_config()` is a function to load the config file.
