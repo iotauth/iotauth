@@ -55,38 +55,42 @@ def service_connection(key, mask):
     data = key.data
     global payload_max_num
 
-    if mask & selectors.EVENT_READ:
-        # Attempt to receive data from the socket
-        recv_data = sock.recv(entity_server.BYTES_NUM)
-        # Check for a closed connection
-        if not recv_data:
-            print(f"Closing connection to {data.addr}")
-            node_selector.unregister(sock)
-        else:
-            # Check for a specific indicator in the received data
-            if recv_data[0] == entity_server.SKEY_HANDSHAKE_1:
-                # Perform session key handshake
-                encrypted_buf = entity_server.parse_sessionkey_id(recv_data[2:], filesystem_manager_dir)
-                client_sock = entity_server.auth_socket_connect(filesystem_manager_dir)
-                nonce_entity = secrets.token_bytes(entity_server.NONCE_SIZE)
+    # If it is not a read event, ignore it.
+    if not (mask & selectors.EVENT_READ):
+        return
+        
+    # Attempt to receive data from the socket
+    recv_data = sock.recv(entity_server.BYTES_NUM)
+    # Check for a closed connection
+    if not recv_data:
+        print(f"Closing connection to {data.addr}")
+        node_selector.unregister(sock)
+        return
 
-                while True:
-                    # Check if we have the expected session key
-                    if session_key["sessionkey_id"] == recv_data[2:2+entity_server.NONCE_SIZE]:
-                        print("We have the session key.")
-                        # Decrypt the buffer using the session key
-                        dec_buf = entity_server.symmetric_decrypt_hmac(session_key, encrypted_buf[:32], encrypted_buf[32:])
-                        print(dec_buf)
-                        # Close the client socket and exit the loop
-                        client_sock.close()
-                        break
-                    # Receive data from the authentication server
-                    recv_data_from_auth = client_sock.recv(entity_server.BYTES_NUM)
-                    # Continue the loop if no data received
-                    if len(recv_data_from_auth) == 0:
-                        continue
-                    # Process the received data to get the session key
-                    entity_server.get_session_key(recv_data_from_auth, filesystem_manager_dir, client_sock, distribution_key, session_key, nonce_entity)
+    # Check for a specific indicator in the received data
+    if recv_data[0] == entity_server.SKEY_HANDSHAKE_1:
+        # Perform session key handshake
+        encrypted_buf = entity_server.parse_sessionkey_id(recv_data[2:], filesystem_manager_dir)
+        client_sock = entity_server.auth_socket_connect(filesystem_manager_dir)
+        nonce_entity = secrets.token_bytes(entity_server.NONCE_SIZE)
+
+        while True:
+            # Check if we have the expected session key
+            if session_key["sessionkey_id"] == recv_data[2:2+entity_server.NONCE_SIZE]:
+                print("We have the session key.")
+                # Decrypt the buffer using the session key
+                dec_buf = entity_server.symmetric_decrypt_hmac(session_key, encrypted_buf[:32], encrypted_buf[32:])
+                print(dec_buf)
+                # Close the client socket and exit the loop
+                client_sock.close()
+                break
+            # Receive data from the authentication server
+            recv_data_from_auth = client_sock.recv(entity_server.BYTES_NUM)
+            # Continue the loop if no data received
+            if len(recv_data_from_auth) == 0:
+                continue
+            # Process the received data to get the session key
+            entity_server.get_session_key(recv_data_from_auth, filesystem_manager_dir, client_sock, distribution_key, session_key, nonce_entity)
 
 host, port = filesystem_manager_dir["ip_address"], int(filesystem_manager_dir["port_number"])
 
