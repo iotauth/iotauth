@@ -28,12 +28,12 @@ AUTH_HELLO = 0
 SESSION_KEY_REQ_IN_PUB_ENC = 20
 SESSION_KEY_RESP_WITH_DIST_KEY = 21
 SKEY_HANDSHAKE_1 = 30
-def load_config(path: str, filesystem_manager_dir: dict) -> None:
+def load_config(path: str, config_dict: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
 
     Args:
         path (str): The path to the configuration file.
-        filesystem_manager_dir (dict): A dictionary where the configuration data will be stored.
+        config_dict (dict): A dictionary where the configuration data will be stored.
 
     Raises:
         FileNotFoundError: If the file at the given path does not exist.
@@ -46,25 +46,25 @@ def load_config(path: str, filesystem_manager_dir: dict) -> None:
         index = line.split("=")[0]
         content = line.split("=")[1].strip("\n")
         if index == "name":
-            filesystem_manager_dir["name"] = content
+            config_dict["name"] = content
         elif index == "purpose":
-            filesystem_manager_dir["purpose"] = content
+            config_dict["purpose"] = content
         elif index == "number_key":
-            filesystem_manager_dir["number_key"] = content
+            config_dict["number_key"] = content
         elif index == "auth_pubkey_path":
-            filesystem_manager_dir["auth_pubkey_path"] = content
+            config_dict["auth_pubkey_path"] = content
         elif index == "privkey_path":
-            filesystem_manager_dir["privkey_path"] = content
+            config_dict["privkey_path"] = content
         elif index == "auth_ip_address":
-            filesystem_manager_dir["auth_ip_address"] = content
+            config_dict["auth_ip_address"] = content
         elif index == "auth_port_number":
-            filesystem_manager_dir["auth_port_number"] = content
+            config_dict["auth_port_number"] = content
         elif index == "port_number":
-            filesystem_manager_dir["port_number"] = content
+            config_dict["port_number"] = content
         elif index == "ip_address":
-            filesystem_manager_dir["ip_address"] = content
+            config_dict["ip_address"] = content
         elif index == "network_protocol":
-            filesystem_manager_dir["network_protocol"] = content
+            config_dict["network_protocol"] = content
         else:
             break
     f.close()
@@ -290,11 +290,11 @@ def sha256_verify(sign: bytes, data: bytes, pubkey: rsa.RSAPublicKey) -> None:
     pubkey.verify(sign, data, padding.PKCS1v15(), hashes.SHA256())
     print("auth signature verified\n")
 
-def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes, nonce_entity: bytes) -> bytearray:
+def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entity: bytes) -> bytearray:
     """Serializes message for authentication using given directory and nonce.
 
     Args:
-        filesystem_manager_dir (dict): A directory containing filesystem manager data.
+        config_dict (dict): A directory containing filesystem manager data.
         nonce_auth (bytes): Nonce for authentication.
 
     Returns:
@@ -302,24 +302,25 @@ def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes, 
     """
     buffer_key_len = 4
     max_buffer_len = 4
-    serialize_message = bytearray(NONCE_SIZE*2+buffer_key_len+len(filesystem_manager_dir["name"])+len(filesystem_manager_dir["purpose"])+ max_buffer_len*2)
+    message_length = NONCE_SIZE * 2 + buffer_key_len+len(config_dict["name"]) + len(config_dict["purpose"]) + max_buffer_len * 2
+    serialize_message = bytearray(message_length)
     index = 0
     serialize_message[index:8] = nonce_entity
     index += NONCE_SIZE
     serialize_message[index:index+NONCE_SIZE] = nonce_auth
     index += NONCE_SIZE
-    buffer_key = write_in_n_bytes(int(filesystem_manager_dir["number_key"]), key_size = buffer_key_len)
+    buffer_key = write_in_n_bytes(int(config_dict["number_key"]), key_size = buffer_key_len)
     serialize_message[index:index+buffer_key_len] = buffer_key
     index += buffer_key_len
-    buffer_name_len = num_to_var_length_int(len(filesystem_manager_dir["name"]))
+    buffer_name_len = num_to_var_length_int(len(config_dict["name"]))
     serialize_message[index:index+len(buffer_name_len)] = buffer_name_len
     index += len(buffer_name_len)
-    serialize_message[index:index+len(filesystem_manager_dir["name"])] = bytes.fromhex(str(filesystem_manager_dir["name"]).encode('utf-8').hex())
-    index += len(filesystem_manager_dir["name"])
-    buffer_purpose_len = num_to_var_length_int(len(filesystem_manager_dir["purpose"]))
+    serialize_message[index:index+len(config_dict["name"])] = bytes.fromhex(str(config_dict["name"]).encode('utf-8').hex())
+    index += len(config_dict["name"])
+    buffer_purpose_len = num_to_var_length_int(len(config_dict["purpose"]))
     serialize_message[index:+len(buffer_purpose_len)] = buffer_purpose_len
     index += len(buffer_purpose_len)
-    serialize_message[index:index+len(filesystem_manager_dir["purpose"])] = bytes.fromhex(str(filesystem_manager_dir["purpose"]).encode('utf-8').hex())
+    serialize_message[index:index+len(config_dict["purpose"])] = bytes.fromhex(str(config_dict["purpose"]).encode('utf-8').hex())
     print(serialize_message)
     
     return serialize_message     
@@ -348,27 +349,27 @@ def send_sessionkey_request(ciphertext: bytes, signature: bytes) -> bytearray:
     
     return total_buffer
 
-def auth_socket_connect(filesystem_manager_dir: dict) -> socket.socket:
+def auth_socket_connect(config_dict: dict) -> socket.socket:
     """Establishes a socket connection for authentication.
 
     Args:
-        filesystem_manager_dir (dict): A directory containing connection details.
+        config_dict (dict): A directory containing connection details.
 
     Returns:
         socket.socket: The established socket connection.
     """
     client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    Host = filesystem_manager_dir["auth_ip_address"]
-    Port = int(filesystem_manager_dir["auth_port_number"])
+    Host = config_dict["auth_ip_address"]
+    Port = int(config_dict["auth_port_number"])
     client_sock.connect((Host, Port))
     return client_sock
 
-def parse_sessionkey_id(recv: bytearray, filesystem_manager_dir: dict) -> bytes:
+def parse_sessionkey_id(recv: bytearray, config_dict: dict) -> bytes:
     """Parses session key ID from received data and updates filesystem manager directory.
 
     Args:
         recv (bytearray): The received data containing the session key ID.
-        filesystem_manager_dir (dict): A directory where the session key ID will be updated.
+        config_dict (dict): A directory where the session key ID will be updated.
 
     Returns:
         bytes: The remainder of the received data after extracting the session key ID.
@@ -378,8 +379,8 @@ def parse_sessionkey_id(recv: bytearray, filesystem_manager_dir: dict) -> bytes:
     for i in range(SESSION_KEY_ID_SIZE):
         key_id_int += (int(key_id[i]) << 8*(7-i))
     # TODO: comment
-    filesystem_manager_dir["purpose"] = f'{"keyId":str(key_id_int)}'
-    print(filesystem_manager_dir["purpose"])
+    config_dict["purpose"] = f'{"keyId":str(key_id_int)}'
+    print(config_dict["purpose"])
     encrypted_buf = recv[SESSION_KEY_ID_SIZE:]
     return encrypted_buf
 
@@ -400,12 +401,12 @@ def parse_distributionkey(buffer: bytearray, pubkey: rsa.RSAPublicKey, privkey: 
     distribution_key["cipher_key"] = plaintext[ABS_VALIDITY_SIZE+1:ABS_VALIDITY_SIZE+1+plaintext[6]]
     distribution_key["mac_key"] = plaintext[ABS_VALIDITY_SIZE+1+1+plaintext[6]:]
 
-def get_session_key(buffer: bytearray, filesystem_manager_dir: dict, sock: socket.socket, distribution_key: dict, session_key: dict, nonce_entity: bytes):
+def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, distribution_key: dict, session_key: dict, nonce_entity: bytes):
     """Handles the process of receiving and processing a session key.
 
     Args:
         buffer (bytearray): The input buffer containing the session key information.
-        filesystem_manager_dir (dict): The directory information for the filesystem manager.
+        config_dict (dict): The directory information for the filesystem manager.
         sock (socket.socket): The socket for communication.
         distribution_key (dict): The dictionary to store distribution key information.
         session_key (dict): The dictionary to store session key information.
@@ -421,9 +422,9 @@ def get_session_key(buffer: bytearray, filesystem_manager_dir: dict, sock: socke
     if msg_type == AUTH_HELLO:
         # Handle AUTH_HELLO message
         nonce_auth = buffer[AUTH_ID+1+length_buf:]
-        serialize_message = serialize_message_for_auth(filesystem_manager_dir, nonce_auth, nonce_entity)
-        ciphertext = asymmetric_encrypt(serialize_message, filesystem_manager_dir['pubkey'])
-        signature = sha256_sign(ciphertext, filesystem_manager_dir['privkey'])
+        serialize_message = serialize_message_for_auth(config_dict, nonce_auth, nonce_entity)
+        ciphertext = asymmetric_encrypt(serialize_message, config_dict['pubkey'])
+        signature = sha256_sign(ciphertext, config_dict['privkey'])
 
         # Send session key request
         total_buffer = send_sessionkey_request(ciphertext, signature)
@@ -431,7 +432,7 @@ def get_session_key(buffer: bytearray, filesystem_manager_dir: dict, sock: socke
     elif msg_type == SESSION_KEY_RESP_WITH_DIST_KEY:
         # Handle SESSION_KEY_RESP_WITH_DIST_KEY message
         recv_data = buffer[1+length_buf:]
-        parse_distributionkey(recv_data, filesystem_manager_dir['pubkey'], filesystem_manager_dir['privkey'], distribution_key)
+        parse_distributionkey(recv_data, config_dict['pubkey'], config_dict['privkey'], distribution_key)
         
         encrypted_sessionkey = recv_data[RSA_KEY_SIZE*2:]
         
