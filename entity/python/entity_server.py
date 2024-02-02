@@ -377,7 +377,8 @@ def parse_sessionkey_id(recv: bytearray, filesystem_manager_dir: dict) -> bytes:
     key_id_int = 0
     for i in range(SESSION_KEY_ID_SIZE):
         key_id_int += (int(key_id[i]) << 8*(7-i))
-    filesystem_manager_dir["purpose"] = filesystem_manager_dir["purpose"].replace("00000000", str(key_id_int))
+    # TODO: comment
+    filesystem_manager_dir["purpose"] = f'{"keyId":str(key_id_int)}'
     print(filesystem_manager_dir["purpose"])
     encrypted_buf = recv[SESSION_KEY_ID_SIZE:]
     return encrypted_buf
