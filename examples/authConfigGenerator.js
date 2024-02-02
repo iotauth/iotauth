@@ -179,6 +179,10 @@ function generateCommunicationPolicyTables() {
     addUploadDownloadlPolicy(policyList,'TeamB','FileSharingTeam');
     addUploadDownloadlPolicy(policyList,'TeamC','FileSharingTeam');
     addServerClientPolicy(policyList, 'TeamA', 'Servers', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'TeamA', 'FileManager', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'TeamB', 'FileManager', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'TeamC', 'FileManager', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'FileSharingTeam', 'FileManager', '1*day', '2*hour');
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';

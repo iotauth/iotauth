@@ -66,8 +66,9 @@ function populateDefaultEntityList(filesharingEnabled) {
         { group: 'TeamA', 		name: 'uploader'},
         { group: 'FileSharingTeam', 		name: 'downloader',			owner: 'TeamA'},
         { group: 'FileSharingTeam', 		name: 'Alice',				owner: 'TeamB'},
-        { group: 'FileSharingTeam', 		name: 'Bob',				owner: 'TeamA'}
-    
+        { group: 'FileSharingTeam', 		name: 'Bob',				owner: 'TeamA'},
+        { group: 'FileManager', name: 'FileSystemManager'}
+
     ];
     var ENTITY_LIST = [
 

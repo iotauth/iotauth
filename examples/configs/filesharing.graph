@@ -36,10 +36,12 @@
 		"net1.downloader": 101,
 		"net1.Alice": 101,
 		"net1.Bob": 101,
+		"net1.FileSystemManager": 101,
 		"net2.uploader": 102,
 		"net2.downloader": 102,
 		"net2.Alice": 102,
-		"net2.Bob": 102
+		"net2.Bob": 102,
+		"net2.FileSystemManager": 102
 	},
 	"entityList": [
 		{
@@ -98,6 +100,19 @@
 			]
 		},
 		{
+			"group": "FileManager",
+			"name": "net1.FileSystemManager",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.FileSystemManager",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
 			"group": "TeamA",
 			"name": "net2.uploader",
 			"distProtocol": "TCP",
@@ -148,6 +163,19 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.Bob",
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "FileManager",
+			"name": "net2.FileSystemManager",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.FileSystemManager",
 			"backupToAuthIds": [
 				101
 			]
