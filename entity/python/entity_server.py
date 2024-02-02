@@ -302,7 +302,9 @@ def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes, 
     """
     buffer_key_len = 4
     max_buffer_len = 4
-    serialize_message = bytearray(NONCE_SIZE*2+buffer_key_len+len(filesystem_manager_dir["name"])+len(filesystem_manager_dir["purpose"])+ max_buffer_len*2)
+    message_length = NONCE_SIZE * 2 + buffer_key_len+len(filesystem_manager_dir["name"])
+        + len(filesystem_manager_dir["purpose"]) + max_buffer_len * 2
+    serialize_message = bytearray(message_length)
     index = 0
     serialize_message[index:8] = nonce_entity
     index += NONCE_SIZE
@@ -314,7 +316,8 @@ def serialize_message_for_auth(filesystem_manager_dir: dict, nonce_auth: bytes, 
     buffer_name_len = num_to_var_length_int(len(filesystem_manager_dir["name"]))
     serialize_message[index:index+len(buffer_name_len)] = buffer_name_len
     index += len(buffer_name_len)
-    serialize_message[index:index+len(filesystem_manager_dir["name"])] = bytes.fromhex(str(filesystem_manager_dir["name"]).encode('utf-8').hex())
+    serialize_message[index:index+len(filesystem_manager_dir["name"])]
+        = bytes.fromhex(str(filesystem_manager_dir["name"]).encode('utf-8').hex())
     index += len(filesystem_manager_dir["name"])
     buffer_purpose_len = num_to_var_length_int(len(filesystem_manager_dir["purpose"]))
     serialize_message[index:+len(buffer_purpose_len)] = buffer_purpose_len
