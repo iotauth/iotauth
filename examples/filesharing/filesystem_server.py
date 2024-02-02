@@ -10,14 +10,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(
 import entity_server
 
 # Setting directories for config, distribution key, and session key
-filesystem_manager_dir = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
+file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
 distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
 session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 
 # Load config for file system manager and save public and private key in directory.
-entity_server.load_config(sys.argv[1], filesystem_manager_dir)
-filesystem_manager_dir["pubkey"] = entity_server.load_pubkey(filesystem_manager_dir["auth_pubkey_path"])
-filesystem_manager_dir["privkey"] = entity_server.load_privkey(filesystem_manager_dir["privkey_path"])
+entity_server.load_config(sys.argv[1], file_manager_dict)
+file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
+file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
 
 node_selector = selectors.DefaultSelector()
 def accept_wrapper(sock):
@@ -60,7 +60,7 @@ def service_connection(key, mask):
         return
         
     # Attempt to receive data from the socket
-    recv_data = sock.recv(entity_server.BYTES_NUM)
+    recv_data = sock.recv(entity_server.READ_BYTES_NUM)
     # Check for a closed connection
     if not recv_data:
         print(f"Closing connection to {data.addr}")
@@ -70,8 +70,8 @@ def service_connection(key, mask):
     # Check for a specific indicator in the received data
     if recv_data[0] == entity_server.SKEY_HANDSHAKE_1:
         # Perform session key handshake
-        encrypted_buf = entity_server.parse_sessionkey_id(recv_data[2:], filesystem_manager_dir)
-        client_sock = entity_server.auth_socket_connect(filesystem_manager_dir)
+        encrypted_buf = entity_server.parse_sessionkey_id(recv_data[2:], file_manager_dict)
+        client_sock = entity_server.auth_socket_connect(file_manager_dict)
         nonce_entity = secrets.token_bytes(entity_server.NONCE_SIZE)
 
         while True:
@@ -85,14 +85,14 @@ def service_connection(key, mask):
                 client_sock.close()
                 break
             # Receive data from the authentication server
-            recv_data_from_auth = client_sock.recv(entity_server.BYTES_NUM)
+            recv_data_from_auth = client_sock.recv(entity_server.READ_BYTES_NUM)
             # Continue the loop if no data received
             if len(recv_data_from_auth) == 0:
                 continue
             # Process the received data to get the session key
-            entity_server.get_session_key(recv_data_from_auth, filesystem_manager_dir, client_sock, distribution_key, session_key, nonce_entity)
+            entity_server.get_session_key(recv_data_from_auth, file_manager_dict, client_sock, distribution_key, session_key, nonce_entity)
 
-host, port = filesystem_manager_dir["ip_address"], int(filesystem_manager_dir["port_number"])
+host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
 
 manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 manager_socket.bind((host, port))

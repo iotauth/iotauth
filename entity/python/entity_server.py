@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives import hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding as pad
 
-BYTES_NUM = 1024
+READ_BYTES_NUM = 1024
 RSA_KEY_SIZE = 256
 SESSION_KEY_ID_SIZE = 8
 NONCE_SIZE = 8
@@ -28,6 +28,7 @@ AUTH_HELLO = 0
 SESSION_KEY_REQ_IN_PUB_ENC = 20
 SESSION_KEY_RESP_WITH_DIST_KEY = 21
 SKEY_HANDSHAKE_1 = 30
+
 def load_config(path: str, config_dict: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
 
@@ -302,7 +303,8 @@ def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entit
     """
     buffer_key_len = 4
     max_buffer_len = 4
-    message_length = NONCE_SIZE * 2 + buffer_key_len+len(config_dict["name"]) + len(config_dict["purpose"]) + max_buffer_len * 2
+    message_length = (NONCE_SIZE * 2 + buffer_key_len+len(config_dict["name"]) 
+                                     + len(config_dict["purpose"]) + max_buffer_len * 2)
     serialize_message = bytearray(message_length)
     index = 0
     serialize_message[index:8] = nonce_entity
@@ -378,8 +380,8 @@ def parse_sessionkey_id(recv: bytearray, config_dict: dict) -> bytes:
     key_id_int = 0
     for i in range(SESSION_KEY_ID_SIZE):
         key_id_int += (int(key_id[i]) << 8*(7-i))
-    # TODO: comment
-    config_dict["purpose"] = f'{"keyId":str(key_id_int)}'
+    # Change key id for purpose
+    config_dict["purpose"] = f'{{"keyId": {str(key_id_int)}}}'
     print(config_dict["purpose"])
     encrypted_buf = recv[SESSION_KEY_ID_SIZE:]
     return encrypted_buf
