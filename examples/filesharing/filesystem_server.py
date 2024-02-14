@@ -14,12 +14,29 @@ file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_
 distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
 session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 
+# Setting directories for managing information of the file
+file_center = {"name":[] , "keyid" : [], "hash_value" : []}
+log_center = {"name":[] , "keyid" : [], "hash_value" : []}
+download_list = []
+
 # Load config for file system manager and save public and private key in directory.
 entity_server.load_config(sys.argv[1], file_manager_dict)
 file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
 file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
 
 node_selector = selectors.DefaultSelector()
+
+def save_info_for_file(recv_data, file_center):
+    name_size = recv_data[1]
+    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    file_center["name"].append(name)
+    keyid_size = recv_data[2+name_size]
+    keyid = recv_data[3+name_size:3+name_size+keyid_size]
+    file_center["keyid"].append(keyid)
+    hash_value_size = recv_data[3+name_size+keyid_size]
+    hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
+    file_center["hash_value"].append(hash_value)
+
 def accept_wrapper(sock):
     """Accepts a connection and performs necessary setup.
 
@@ -66,23 +83,34 @@ def service_connection(key, mask):
         print(f"Closing connection to {data.addr}")
         node_selector.unregister(sock)
         return
-
+    msg_type, received_message = entity_server.parse_received_message(recv_data)
     # Check for a specific indicator in the received data
-    if recv_data[0] == entity_server.SKEY_HANDSHAKE_1:
+    if msg_type == entity_server.SKEY_HANDSHAKE_1:
+        print("received session key handshake1!\n")
         # Perform session key handshake
-        encrypted_buf = entity_server.parse_sessionkey_id(recv_data[2:], file_manager_dict)
+        encrypted_buf = entity_server.parse_sessionkey_id(received_message, file_manager_dict)
         client_sock = entity_server.auth_socket_connect(file_manager_dict)
-        nonce_entity = secrets.token_bytes(entity_server.NONCE_SIZE)
+        nonce_auth = secrets.token_bytes(entity_server.NONCE_SIZE)
 
         while True:
             # Check if we have the expected session key
-            if session_key["sessionkey_id"] == recv_data[2:2+entity_server.NONCE_SIZE]:
-                print("We have the session key.")
-                # Decrypt the buffer using the session key
-                dec_buf = entity_server.symmetric_decrypt_hmac(session_key, encrypted_buf[:32], encrypted_buf[32:])
-                print(dec_buf)
-                # Close the client socket and exit the loop
+            if session_key["sessionkey_id"] == received_message[:entity_server.NONCE_SIZE]:
+                print("We have the session key...!!")
                 client_sock.close()
+                # Decrypt the buffer using the session key
+                dec_buf = entity_server.symmetric_decrypt_hmac(session_key, encrypted_buf[:len(encrypted_buf)-entity_server.MAC_KEY_SIZE], encrypted_buf[len(encrypted_buf)-entity_server.MAC_KEY_SIZE:])
+                # Handshake2
+                nonce_entity = dec_buf[1:]
+                nonce_server = secrets.token_bytes(entity_server.NONCE_SIZE)
+                print("nonce_server: ")
+                print(nonce_server)
+                serialized_buffer = entity_server.serialize_handshake(nonce_server, nonce_entity)
+                print("serialized_buffer: ")
+                print(serialized_buffer)
+                enc_buffer = entity_server.symmetric_encrypt_hmac(session_key, serialized_buffer)
+                total_buffer = entity_server.make_sender_buffer(enc_buffer, entity_server.SKEY_HANDSHAKE_2)
+                sock.send(bytes(total_buffer))
+                # Close the client socket and exit the loop
                 break
             # Receive data from the authentication server
             recv_data_from_auth = client_sock.recv(entity_server.READ_BYTES_NUM)
@@ -90,7 +118,23 @@ def service_connection(key, mask):
             if len(recv_data_from_auth) == 0:
                 continue
             # Process the received data to get the session key
-            entity_server.get_session_key(recv_data_from_auth, file_manager_dict, client_sock, distribution_key, session_key, nonce_entity)
+            entity_server.get_session_key(recv_data_from_auth, file_manager_dict, client_sock, distribution_key, session_key, nonce_auth)
+
+    if msg_type == entity_server.SKEY_HANDSHAKE_3:
+        dec_buf = entity_server.symmetric_decrypt_hmac(session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
+        print("received session key handshake3!\n")
+        print(dec_buf)
+    if msg_type == entity_server.SECURE_COMM_MSG:
+        print("Received secure message!!")
+        dec_buf = entity_server.symmetric_decrypt_hmac(session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
+        seq_num = entity_server.read_int_from_buf(dec_buf, entity_server.SEQ_NUM_SIZE)
+        print("sequential number:", seq_num)
+        print("Decrypted message:", dec_buf[entity_server.SEQ_NUM_SIZE:])
+        if dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_UPLOAD_REQ:
+            save_info_for_file(dec_buf[entity_server.SEQ_NUM_SIZE:], file_center)
+            print(file_center)
+        elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
+            print
 
 host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
 

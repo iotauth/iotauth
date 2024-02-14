@@ -24,11 +24,17 @@ REL_VALIDITY_SIZE = 6
 IV_SIZE = 16
 AUTH_ID = 4
 KEY_NUM_BUF = 4
+SEQ_NUM_SIZE = 8
 AUTH_HELLO = 0
 SESSION_KEY_REQ_IN_PUB_ENC = 20
 SESSION_KEY_RESP_WITH_DIST_KEY = 21
 SKEY_HANDSHAKE_1 = 30
-
+SKEY_HANDSHAKE_2 = 31
+SKEY_HANDSHAKE_3 = 32
+SECURE_COMM_MSG = 33
+MAC_KEY_SIZE = 32
+DATA_UPLOAD_REQ = 0
+DATA_DOWNLOAD_REQ = 1
 def load_config(path: str, config_dict: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
 
@@ -80,7 +86,7 @@ def write_in_n_bytes(num_key: int, key_size: int) -> bytearray:
     Returns:
         bytearray: A byte array representing the integer.
     """
-    buffer = bytearray(4)
+    buffer = bytearray(key_size)
     for i in range(key_size):
         buffer[i] = num_key >> 8*(key_size-i-1)
     return buffer
@@ -160,7 +166,7 @@ def parse_sessionkey(buffer: bytearray, session_key: dict) -> None:
     index += 1
     session_key["mac_key"] = buffer[index:index+mac_key_size]
 
-def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> tuple:
+def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> bytearray:
     """Encrypts data using AES-CBC and appends an HMAC-SHA256 tag.
 
     Args:
@@ -183,7 +189,10 @@ def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> tuple:
     h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
     h.update(bytes(enc_total_buf))
     hmac_tag = h.finalize()
-    return enc_total_buf, hmac_tag
+    total_buffer = bytearray(len(enc_total_buf) + len(hmac_tag))
+    total_buffer[:len(enc_total_buf)] = enc_total_buf
+    total_buffer[len(enc_total_buf):] = hmac_tag
+    return total_buffer
 
 def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> bytes:
     """Decrypts AES-CBC encrypted data and verifies HMAC-SHA256 tag.
@@ -324,32 +333,7 @@ def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entit
     index += len(buffer_purpose_len)
     serialize_message[index:index+len(config_dict["purpose"])] = bytes.fromhex(str(config_dict["purpose"]).encode('utf-8').hex())
     print(serialize_message)
-    
     return serialize_message     
-
-def send_sessionkey_request(ciphertext: bytes, signature: bytes) -> bytearray:
-    """Prepares a session key request with the given ciphertext and signature.
-
-    Args:
-        ciphertext (bytes): The encrypted data.
-        signature (bytes): The signature for the data.
-
-    Returns:
-        bytearray: A bytearray containing the session key request.
-    """
-    num_buffer = num_to_var_length_int(len(ciphertext) + len(signature))
-
-    total_buffer = bytearray(len(num_buffer)+1+len(ciphertext) + len(signature))
-    index =0
-    total_buffer[index] = SESSION_KEY_REQ_IN_PUB_ENC
-    index += 1
-    total_buffer[index:index+len(num_buffer)] = num_buffer
-    index += len(num_buffer)
-    total_buffer[index:index+len(ciphertext)] = ciphertext
-    index += len(ciphertext)
-    total_buffer[index:index+len(signature)] = signature
-    
-    return total_buffer
 
 def auth_socket_connect(config_dict: dict) -> socket.socket:
     """Establishes a socket connection for authentication.
@@ -427,9 +411,11 @@ def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, d
         serialize_message = serialize_message_for_auth(config_dict, nonce_auth, nonce_entity)
         ciphertext = asymmetric_encrypt(serialize_message, config_dict['pubkey'])
         signature = sha256_sign(ciphertext, config_dict['privkey'])
-
+        buffer = bytearray(len(ciphertext)+len(signature))
+        buffer[:len(ciphertext)] = ciphertext
+        buffer[len(ciphertext):] = signature
         # Send session key request
-        total_buffer = send_sessionkey_request(ciphertext, signature)
+        total_buffer = make_sender_buffer(buffer, SESSION_KEY_REQ_IN_PUB_ENC)
         sock.send(bytes(total_buffer))
     elif msg_type == SESSION_KEY_RESP_WITH_DIST_KEY:
         # Handle SESSION_KEY_RESP_WITH_DIST_KEY message
@@ -462,3 +448,41 @@ def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, d
         parse_sessionkey(sessionkey[4:], session_key)
         print(session_key)
         print("Success for receiving the session key.")
+
+def serialize_handshake(nonce: bytearray, reply_nonce: bytearray) -> bytearray:
+    if (nonce == None) & (reply_nonce == None):
+        print("Error: handshake should include at least on nonce.\n")
+    indicator = 0
+    buffer = bytearray(NONCE_SIZE * 2 + 1)
+    if (nonce != None):
+        indicator += 1
+        buffer[1:1+NONCE_SIZE] = nonce
+    if (reply_nonce != None):
+        indicator += 1
+        buffer[1+NONCE_SIZE:1+NONCE_SIZE*2] = reply_nonce
+    buffer[0] = indicator
+    return buffer
+
+def make_sender_buffer(buffer, msg_type):
+    num_buffer = num_to_var_length_int(len(buffer))
+
+    total_buffer = bytearray(len(num_buffer)+1+len(buffer))
+    index =0
+    total_buffer[index] = msg_type
+    index += 1
+    total_buffer[index:index+len(num_buffer)] = num_buffer
+    index += len(num_buffer)
+    total_buffer[index:] = buffer    
+    return total_buffer
+
+def parse_received_message(buffer):
+    msg_type = buffer[0]
+    num, buf_num = var_length_int_to_num(buffer[1:])
+    received_message = buffer[1+buf_num:1+buf_num+num]
+    return msg_type, received_message
+
+def read_int_from_buf(buffer, length):
+    num = 0
+    for i in range(length):
+        num |= buffer[i] << 8 * (length - 1 - i)
+    return num
