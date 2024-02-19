@@ -35,6 +35,7 @@ SECURE_COMM_MSG = 33
 MAC_KEY_SIZE = 32
 DATA_UPLOAD_REQ = 0
 DATA_DOWNLOAD_REQ = 1
+DATA_RESP = 2
 def load_config(path: str, config_dict: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
 
@@ -103,9 +104,9 @@ def num_to_var_length_int(num: int) -> bytearray:
     var_buf_size = 1
     buffer = bytearray(4)
     while (num > 127):
-        buffer[var_buf_size-1] = 128 | num & 127
+        buffer[var_buf_size - 1] = 128 | num & 127
         var_buf_size += 1
-        num >>=7
+        num >>= 7
     buffer[var_buf_size - 1] = num
     buf = bytearray(var_buf_size)
     for i in range(var_buf_size):
@@ -467,7 +468,7 @@ def make_sender_buffer(buffer, msg_type):
     num_buffer = num_to_var_length_int(len(buffer))
 
     total_buffer = bytearray(len(num_buffer)+1+len(buffer))
-    index =0
+    index = 0
     total_buffer[index] = msg_type
     index += 1
     total_buffer[index:index+len(num_buffer)] = num_buffer
@@ -486,3 +487,41 @@ def read_int_from_buf(buffer, length):
     for i in range(length):
         num |= buffer[i] << 8 * (length - 1 - i)
     return num
+
+def concat_data(recv_data, file_center, log_center, download_list):
+    name_size = recv_data[1]
+    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    file_index = download_num_check(name, download_list)
+    res_keyid = file_center["keyid"][file_index]
+    res_hashvalue = file_center["hash_value"][file_index]
+    command = "ipfs cat $1 > "
+    command = command.replace("$1", res_hashvalue)
+    message = bytearray(3+len(res_keyid)+len(command))
+    message[0] = int(hex(DATA_RESP),16)
+    message[1] = int(hex(len(res_keyid)),16)
+    message[2:2+len(res_keyid)] = res_keyid
+    message[2+len(res_keyid)] = int(hex(len(command)),16)
+    message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
+    log_center["name"].append(name), log_center["hash_value"].append(res_hashvalue), log_center["keyid"].append(res_keyid)
+    download_list.append(name)
+    return message
+
+def download_num_check(name, download_list):
+    num = 0
+    if len(download_list) == 0:
+        return num
+    for i in download_list:
+        if i == name:
+            num += 1
+    return num  
+
+def save_info_for_file(recv_data, file_center):
+    name_size = recv_data[1]
+    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    file_center["name"].append(name)
+    keyid_size = recv_data[2+name_size]
+    keyid = recv_data[3+name_size:3+name_size+keyid_size]
+    file_center["keyid"].append(keyid)
+    hash_value_size = recv_data[3+name_size+keyid_size]
+    hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
+    file_center["hash_value"].append(hash_value)
