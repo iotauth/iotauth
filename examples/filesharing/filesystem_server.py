@@ -28,44 +28,6 @@ sequential_num = 0
 
 node_selector = selectors.DefaultSelector()
 
-def save_info_for_file(recv_data, file_center):
-    name_size = recv_data[1]
-    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
-    file_center["name"].append(name)
-    keyid_size = recv_data[2+name_size]
-    keyid = recv_data[3+name_size:3+name_size+keyid_size]
-    file_center["keyid"].append(keyid)
-    hash_value_size = recv_data[3+name_size+keyid_size]
-    hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
-    file_center["hash_value"].append(hash_value)
-
-def concat_data(recv_data):
-    name_size = recv_data[1]
-    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
-    file_index = download_num_check(name)
-    res_keyid = file_center["keyid"][file_index]
-    res_hashvalue = file_center["hash_value"][file_index]
-    command = "ipfs cat $1 > "
-    command = command.replace("$1", res_hashvalue)
-    message = bytearray(3+len(res_keyid)+len(command))
-    message[0] = int(hex(entity_server.DATA_RESP),16)
-    message[1] = int(hex(len(res_keyid)),16)
-    message[2:2+len(res_keyid)] = res_keyid
-    message[2+len(res_keyid)] = int(hex(len(command)),16)
-    message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
-    log_center["name"].append(name), log_center["hash_value"].append(res_hashvalue), log_center["keyid"].append(res_keyid)
-    download_list.append(name)
-    return message
-
-def download_num_check(name):
-    num = 0
-    if len(download_list) == 0:
-        return num
-    for i in download_list:
-        if i == name:
-            num += 1
-    return num  
-
 def accept_wrapper(sock):
     """Accepts a connection and performs necessary setup.
 
@@ -160,14 +122,14 @@ def service_connection(key, mask):
         print("Received sequential number:", seq_num)
         print("Decrypted message:", dec_buf[entity_server.SEQ_NUM_SIZE:])
         if dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_UPLOAD_REQ:
-            save_info_for_file(dec_buf[entity_server.SEQ_NUM_SIZE:], file_center)
+            entity_server.save_info_for_file(dec_buf[entity_server.SEQ_NUM_SIZE:], file_center)
             print(file_center)
         elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
                 print(dec_buf[:entity_server.SEQ_NUM_SIZE - 1])
                 # dec_buf[entity_server.SEQ_NUM_SIZE - 1] += 
                 
                 seq_buffer = entity_server.write_in_n_bytes(sequential_num, entity_server.SEQ_NUM_SIZE)
-                message = concat_data(dec_buf[entity_server.SEQ_NUM_SIZE:])
+                message = entity_server.concat_data(dec_buf[entity_server.SEQ_NUM_SIZE:])
                 total_message = bytearray(entity_server.SEQ_NUM_SIZE + len(message))
                 total_message[:entity_server.SEQ_NUM_SIZE - 1] = seq_buffer
                 total_message[entity_server.SEQ_NUM_SIZE:] = message
