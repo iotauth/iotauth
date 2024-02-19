@@ -129,7 +129,7 @@ def service_connection(key, mask):
                 # dec_buf[entity_server.SEQ_NUM_SIZE - 1] += 
                 
                 seq_buffer = entity_server.write_in_n_bytes(sequential_num, entity_server.SEQ_NUM_SIZE)
-                message = entity_server.concat_data(dec_buf[entity_server.SEQ_NUM_SIZE:])
+                message = entity_server.concat_data(dec_buf[entity_server.SEQ_NUM_SIZE:], file_center, log_center, download_list)
                 total_message = bytearray(entity_server.SEQ_NUM_SIZE + len(message))
                 total_message[:entity_server.SEQ_NUM_SIZE - 1] = seq_buffer
                 total_message[entity_server.SEQ_NUM_SIZE:] = message
