@@ -451,44 +451,93 @@ def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, d
         print("Success for receiving the session key.")
 
 def serialize_handshake(nonce: bytearray, reply_nonce: bytearray) -> bytearray:
+    """Serializes the handshake data into a bytearray.
+
+    Args:
+        nonce (bytearray): The nonce for the handshake.
+        reply_nonce (bytearray): The reply nonce for the handshake.
+
+    Returns:
+        bytearray: The serialized handshake data.
+    """
     if (nonce == None) & (reply_nonce == None):
-        print("Error: handshake should include at least on nonce.\n")
+        print("Error: handshake should include at least one nonce.\n")
+
     indicator = 0
     buffer = bytearray(NONCE_SIZE * 2 + 1)
+
     if (nonce != None):
         indicator += 1
         buffer[1:1+NONCE_SIZE] = nonce
+
     if (reply_nonce != None):
         indicator += 1
         buffer[1+NONCE_SIZE:1+NONCE_SIZE*2] = reply_nonce
+
     buffer[0] = indicator
     return buffer
 
-def make_sender_buffer(buffer, msg_type):
-    num_buffer = num_to_var_length_int(len(buffer))
+def make_sender_buffer(buffer: bytearray, msg_type: int):
+    """Creates a buffer for sending messages.
 
-    total_buffer = bytearray(len(num_buffer)+1+len(buffer))
+    Args:
+        buffer (bytearray): The message buffer.
+        msg_type (int): The message type.
+
+    Returns:
+        bytearray: The total buffer for sending.
+    """
+    num_buffer = num_to_var_length_int(len(buffer))
+    total_buffer = bytearray(len(num_buffer) + 1 + len(buffer))
     index = 0
     total_buffer[index] = msg_type
     index += 1
-    total_buffer[index:index+len(num_buffer)] = num_buffer
+    total_buffer[index:index + len(num_buffer)] = num_buffer
     index += len(num_buffer)
     total_buffer[index:] = buffer    
     return total_buffer
 
-def parse_received_message(buffer):
+def parse_received_message(buffer: bytearray):
+    """Parses a received message buffer.
+
+    Args:
+        buffer (bytearray): The buffer containing the received message.
+
+    Returns:
+        tuple: A tuple containing the message type and the received message.
+    """
     msg_type = buffer[0]
     num, buf_num = var_length_int_to_num(buffer[1:])
     received_message = buffer[1+buf_num:1+buf_num+num]
     return msg_type, received_message
 
-def read_int_from_buf(buffer, length):
+
+def read_int_from_buf(buffer: bytearray, length: int):
+    """Reads an integer value from the buffer.
+
+    Args:
+        buffer (bytearray): The buffer containing the integer.
+        length (int): The length of the integer in bytes.
+
+    Returns:
+        int: The integer value.
+    """
     num = 0
     for i in range(length):
         num |= buffer[i] << 8 * (length - 1 - i)
     return num
+def concat_data(recv_data: bytearray, file_center: dict, log_center: dict, download_list: list):
+    """Concatenates data for a response message.
 
-def concat_data(recv_data, file_center, log_center, download_list):
+    Args:
+        recv_data (bytearray): The received data.
+        file_center (dict): Dictionary containing file information.
+        log_center (dict): Dictionary containing log information.
+        download_list (list): List of downloaded files.
+
+    Returns:
+        bytearray: The concatenated message.
+    """
     name_size = recv_data[1]
     name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
     file_index = download_num_check(name, download_list)
@@ -506,7 +555,16 @@ def concat_data(recv_data, file_center, log_center, download_list):
     download_list.append(name)
     return message
 
-def download_num_check(name, download_list):
+def download_num_check(name: str, download_list: dict):
+    """Checks the number of times a file has been downloaded.
+
+    Args:
+        name (str): The name of the file.
+        download_list (list): List of downloaded files.
+
+    Returns:
+        int: The number of times the file has been downloaded.
+    """
     num = 0
     if len(download_list) == 0:
         return num
@@ -515,7 +573,16 @@ def download_num_check(name, download_list):
             num += 1
     return num  
 
-def save_info_for_file(recv_data, file_center):
+def save_info_for_file(recv_data: bytearray, file_center: dict):
+    """Saves file information.
+
+    Args:
+        recv_data (bytearray): The received data.
+        file_center (dict): Dictionary containing file information.
+
+    Returns:
+        None
+    """
     name_size = recv_data[1]
     name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
     file_center["name"].append(name)
@@ -525,3 +592,25 @@ def save_info_for_file(recv_data, file_center):
     hash_value_size = recv_data[3+name_size+keyid_size]
     hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
     file_center["hash_value"].append(hash_value)
+
+def data_response(dec_buf: bytearray, file_center: dict, log_center: dict, download_list: list, session_key: dict, sequential_num: int):
+    """Generates a response message for data.
+
+    Args:
+        dec_buf (bytearray): The decrypted buffer.
+        file_center (dict): Dictionary containing file information.
+        log_center (dict): Dictionary containing log information.
+        download_list (list): List of downloaded files.
+        session_key (dict): Dictionary containing session key information.
+        sequential_num (int): Sequential number.
+
+    Returns:
+        bytearray: The response message.
+    """
+    seq_buffer = write_in_n_bytes(sequential_num, SEQ_NUM_SIZE)
+    message = concat_data(dec_buf[SEQ_NUM_SIZE:], file_center, log_center, download_list)
+    total_message = bytearray(SEQ_NUM_SIZE + len(message))
+    total_message[:SEQ_NUM_SIZE - 1] = seq_buffer
+    total_message[SEQ_NUM_SIZE:] = message
+    enc_buffer = symmetric_encrypt_hmac(session_key, total_message)
+    return make_sender_buffer(enc_buffer, SECURE_COMM_MSG)

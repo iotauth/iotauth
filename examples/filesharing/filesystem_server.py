@@ -114,7 +114,6 @@ def service_connection(key, mask):
     if msg_type == entity_server.SKEY_HANDSHAKE_3:
         dec_buf = entity_server.symmetric_decrypt_hmac(session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
         print("received session key handshake3!\n")
-        print(dec_buf)
     if msg_type == entity_server.SECURE_COMM_MSG:
         print("Received secure message!!")
         dec_buf = entity_server.symmetric_decrypt_hmac(session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
@@ -125,17 +124,8 @@ def service_connection(key, mask):
             entity_server.save_info_for_file(dec_buf[entity_server.SEQ_NUM_SIZE:], file_center)
             print(file_center)
         elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
-                print(dec_buf[:entity_server.SEQ_NUM_SIZE - 1])
-                # dec_buf[entity_server.SEQ_NUM_SIZE - 1] += 
-                
-                seq_buffer = entity_server.write_in_n_bytes(sequential_num, entity_server.SEQ_NUM_SIZE)
-                message = entity_server.concat_data(dec_buf[entity_server.SEQ_NUM_SIZE:], file_center, log_center, download_list)
-                total_message = bytearray(entity_server.SEQ_NUM_SIZE + len(message))
-                total_message[:entity_server.SEQ_NUM_SIZE - 1] = seq_buffer
-                total_message[entity_server.SEQ_NUM_SIZE:] = message
-                print(total_message)
-                enc_buffer = entity_server.symmetric_encrypt_hmac(session_key, total_message)
-                total_buffer = entity_server.make_sender_buffer(enc_buffer, entity_server.SECURE_COMM_MSG)
+                total_buffer = entity_server.data_response(dec_buf, file_center, 
+                                                           log_center, download_list, session_key, sequential_num)
                 sock.send(bytes(total_buffer))
                 sequential_num += 1
 
