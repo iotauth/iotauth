@@ -54,7 +54,7 @@ See README.md under *examples/* to know specific process.
 
 2. Run 'python3 filesystem_manager.py' to execute filesystem manager.
 
-### To run example entities written in C language.
+### To run example entities written in C language
 See README.md under *entity/c/* to know specific process.
 
 1. Run 'git submodule update --remote' to move the ipfs submodule for filesharing.
@@ -70,3 +70,47 @@ See README.md under *entity/c/* to know specific process.
 6. Run './entity_downloader ../downloader.config', to execute net1.downloader.
 
 7. Run './entity_uploader ../uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
+
+# Security for File System Manager
+
+File System Manager manages the information for the file such as file hash value, key id, and provider info. If someone attacks File System Manager and knows the information, this information can be used in either ways. Therefore, we need to enhance the security for File System Manager. SST's Auth can provides secure session key to File System Manager and we add Auth's communication policy and implement the code for security as Python API in *$ROOT/entity/python/*.
+
+# How to run examples with security
+
+For this section, we use *$ROOT* for the root directory of this repository.
+
+### To generate credentials for example Auths and entities, and to create example Auth databases
+
+The process is the same as the above example.
+
+### To run IPFS (in command line)
+
+The process is the same as the above example.
+
+### To run example Auths (in command line)
+
+The process is the same as the above example.
+
+### To run example filesystem manager with security
+
+1. Change directories to *$ROOT/examples/filesharing/*.
+
+2. Run 'python3 secure_filesystem_manager.py filesystem_manager.config' to execute filesystem manager.
+
+### To run example entities written in C language
+
+See README.md under *entity/c/* to know specific process.
+
+1. Run 'git submodule update --remote' to move the ipfs submodule for filesharing.
+
+2. Change directories to *$ROOT/entity/c/ipfs_examples/*
+
+3. Run 'mkdir build && cd build'
+
+4. Run 'cmake ../' to make the Makefile for build.
+
+5. Run 'make' 
+
+6. Run './secure_entity_downloader ../secure_downloader.config', to execute net1.downloader.
+
+7. Run './secure_entity_uploader ../secure_uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
