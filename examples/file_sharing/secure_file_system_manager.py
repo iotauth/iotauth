@@ -9,25 +9,6 @@ print(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))) +"/entity/python")
 import entity_server
 
-# Setting directories for config, distribution key, and session key
-file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
-distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
-session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
-
-# Setting directories for managing information of the file
-file_center = {"name":[] , "keyid" : [], "hash_value" : []}
-log_center = {"name":[] , "keyid" : [], "hash_value" : []}
-download_list = []
-
-# Load config for file system manager and save public and private key in directory.
-entity_server.load_config(sys.argv[1], file_manager_dict)
-file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
-file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
-
-sequential_num = 0
-
-node_selector = selectors.DefaultSelector()
-
 def accept_wrapper(sock):
     """Accepts a connection and performs necessary setup.
 
@@ -128,6 +109,25 @@ def service_connection(key, mask):
                                                            log_center, download_list, session_key, sequential_num)
                 sock.send(bytes(total_buffer))
                 sequential_num += 1
+
+# Setting directories for config, distribution key, and session key
+file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
+distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
+session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
+
+# Setting directories for managing information of the file
+file_center = {"name":[] , "keyid" : [], "hash_value" : []}
+log_center = {"name":[] , "keyid" : [], "hash_value" : []}
+download_list = []
+
+# Load config for file system manager and save public and private key in directory.
+entity_server.load_config(sys.argv[1], file_manager_dict)
+file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
+file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
+
+sequential_num = 0
+
+node_selector = selectors.DefaultSelector()
 
 host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
 
