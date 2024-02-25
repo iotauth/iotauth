@@ -110,6 +110,16 @@ def service_connection(key, mask):
                 sock.send(bytes(total_buffer))
                 sequential_num += 1
 
+# Check number of arguments
+if len(sys.argv) != 2:
+    print("""
+Not enough arguments for the secure file system manager.
+A configuration file is required as an argument.
+
+Usage:  python3 secure_filesystem_manager.py file_system_manager.config
+""")
+    sys.exit(0)
+
 # Setting directories for config, distribution key, and session key
 file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
 distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
