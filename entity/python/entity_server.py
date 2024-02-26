@@ -477,7 +477,7 @@ def serialize_handshake(nonce: bytearray, reply_nonce: bytearray) -> bytearray:
     buffer[0] = indicator
     return buffer
 
-def make_sender_buffer(buffer: bytearray, msg_type: int):
+def make_sender_buffer(buffer: bytearray, msg_type: int) -> bytearray:
     """Creates a buffer for sending messages.
 
     Args:
@@ -497,7 +497,7 @@ def make_sender_buffer(buffer: bytearray, msg_type: int):
     total_buffer[index:] = buffer    
     return total_buffer
 
-def parse_received_message(buffer: bytearray):
+def parse_received_message(buffer: bytearray) -> tuple:
     """Parses a received message buffer.
 
     Args:
@@ -526,7 +526,7 @@ def read_int_from_buf(buffer: bytearray, length: int):
     for i in range(length):
         num |= buffer[i] << 8 * (length - 1 - i)
     return num
-def concat_data(recv_data: bytearray, file_center: dict, log_center: dict, download_list: list):
+def concat_data(recv_data: bytearray, file_center: dict, log_center: dict, download_list: list) -> bytearray:
     """Concatenates data for a response message.
 
     Args:
@@ -555,7 +555,7 @@ def concat_data(recv_data: bytearray, file_center: dict, log_center: dict, downl
     download_list.append(name)
     return message
 
-def download_num_check(name: str, download_list: dict):
+def download_num_check(name: str, download_list: dict) -> int:
     """Checks the number of times a file has been downloaded.
 
     Args:
@@ -593,7 +593,7 @@ def save_info_for_file(recv_data: bytearray, file_center: dict):
     hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
     file_center["hash_value"].append(hash_value)
 
-def data_response(dec_buf: bytearray, file_center: dict, log_center: dict, download_list: list, session_key: dict, sequential_num: int):
+def data_response(dec_buf: bytearray, file_center: dict, log_center: dict, download_list: list, session_key: dict, sequential_num: int) -> bytearray:
     """Generates a response message for data.
 
     Args:
