@@ -71,8 +71,12 @@ See README.md under *entity/c/* for details.
 7. Run './entity_uploader ../uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
 
 # Security for File System Manager
+---
+![Image of Example for File Sharing](figures/secure_file_system_manager.png)
 
-File System Manager manages the information for the file such as file hash value, session key ID, and provider info. If someone attacks File System Manager and knows the information, this information can be used in either way. Therefore, we need to enhance the security of the file system manager. SST's Auth can provide a secure session key to File System Manager and we add Auth's communication policy and implement the code for security as Python API in *$ROOT/entity/python/*.
+File System Manager manages the information for the file such as file hash value, session key ID, and provider info. If someone attacks File System Manager and knows the information, this information can be used in either way. Therefore, we need to enhance the security of the file system manager. 
+
+According figure above, net1.uploader and net1.downloader receive the session key from Auth respectively. File System Manager requests the session key using session key id to Auth (For more detail, you can see process through communication between entity client and server from *$ROOT/entity/c/*.) Thanks to secure key received from Auth, File System Manager can manage the information for the file. Also, We add Auth's communication policy and implement the code for security as Python API in *$ROOT/entity/python/*.
 
 # How to run examples with security
 
