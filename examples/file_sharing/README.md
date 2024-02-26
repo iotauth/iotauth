@@ -5,7 +5,7 @@ This directory includes descriptions for file sharing and file_system_manager.py
 
 # Example details
 ---
-![Image of Example for File Sharing](https://raw.githubusercontent.com/iotauth/iotauth/ipfs/examples/file_sharing/figures/example_description.png)
+![Image of Example for File Sharing](figures/example_description.png)
 
 The figure above illustrates the example with Auths (*Auth*), their example entities and the file system manager. *Auth* is an authorization entity for network 1 (net1), and it has two registered entities, namely, *net1.uploader* and *net1.downloader*. The file system manager manages the information for files.
 
@@ -17,7 +17,7 @@ net1.downloader checks if there is a key that fits the session key ID, and if no
 # File system manager
 The file system manager is an entity that manages detailed information about files registered in IPFS. When a file is uploaded to IPFS, the file appears only as a hash value, with no other information. However, when a person wants to give files only to certain people, he or she must use hash values and other information to block access to others. The way to block other people's access can be blocked if Auth does not provide a session key. However, another entity is required to obtain information on the session key. Therefore, the file system manager stores session keys and purposes according to hash values together to provide this information when a specific entity requests information. Details are below.
 
-![Image of Example for File Sharing](https://raw.githubusercontent.com/iotauth/iotauth/ipfs/examples/file_sharing/figures/file_system_manager.png)
+![Image of Example for File Sharing](figures/file_system_manager.png)
 
 
 
