@@ -24,11 +24,18 @@ REL_VALIDITY_SIZE = 6
 IV_SIZE = 16
 AUTH_ID = 4
 KEY_NUM_BUF = 4
+SEQ_NUM_SIZE = 8
 AUTH_HELLO = 0
 SESSION_KEY_REQ_IN_PUB_ENC = 20
 SESSION_KEY_RESP_WITH_DIST_KEY = 21
 SKEY_HANDSHAKE_1 = 30
-
+SKEY_HANDSHAKE_2 = 31
+SKEY_HANDSHAKE_3 = 32
+SECURE_COMM_MSG = 33
+MAC_KEY_SIZE = 32
+DATA_UPLOAD_REQ = 0
+DATA_DOWNLOAD_REQ = 1
+DATA_RESP = 2
 def load_config(path: str, config_dict: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
 
@@ -80,7 +87,7 @@ def write_in_n_bytes(num_key: int, key_size: int) -> bytearray:
     Returns:
         bytearray: A byte array representing the integer.
     """
-    buffer = bytearray(4)
+    buffer = bytearray(key_size)
     for i in range(key_size):
         buffer[i] = num_key >> 8*(key_size-i-1)
     return buffer
@@ -97,9 +104,9 @@ def num_to_var_length_int(num: int) -> bytearray:
     var_buf_size = 1
     buffer = bytearray(4)
     while (num > 127):
-        buffer[var_buf_size-1] = 128 | num & 127
+        buffer[var_buf_size - 1] = 128 | num & 127
         var_buf_size += 1
-        num >>=7
+        num >>= 7
     buffer[var_buf_size - 1] = num
     buf = bytearray(var_buf_size)
     for i in range(var_buf_size):
@@ -160,7 +167,7 @@ def parse_sessionkey(buffer: bytearray, session_key: dict) -> None:
     index += 1
     session_key["mac_key"] = buffer[index:index+mac_key_size]
 
-def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> tuple:
+def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> bytearray:
     """Encrypts data using AES-CBC and appends an HMAC-SHA256 tag.
 
     Args:
@@ -183,7 +190,10 @@ def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> tuple:
     h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
     h.update(bytes(enc_total_buf))
     hmac_tag = h.finalize()
-    return enc_total_buf, hmac_tag
+    total_buffer = bytearray(len(enc_total_buf) + len(hmac_tag))
+    total_buffer[:len(enc_total_buf)] = enc_total_buf
+    total_buffer[len(enc_total_buf):] = hmac_tag
+    return total_buffer
 
 def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> bytes:
     """Decrypts AES-CBC encrypted data and verifies HMAC-SHA256 tag.
@@ -324,32 +334,7 @@ def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entit
     index += len(buffer_purpose_len)
     serialize_message[index:index+len(config_dict["purpose"])] = bytes.fromhex(str(config_dict["purpose"]).encode('utf-8').hex())
     print(serialize_message)
-    
     return serialize_message     
-
-def send_sessionkey_request(ciphertext: bytes, signature: bytes) -> bytearray:
-    """Prepares a session key request with the given ciphertext and signature.
-
-    Args:
-        ciphertext (bytes): The encrypted data.
-        signature (bytes): The signature for the data.
-
-    Returns:
-        bytearray: A bytearray containing the session key request.
-    """
-    num_buffer = num_to_var_length_int(len(ciphertext) + len(signature))
-
-    total_buffer = bytearray(len(num_buffer)+1+len(ciphertext) + len(signature))
-    index =0
-    total_buffer[index] = SESSION_KEY_REQ_IN_PUB_ENC
-    index += 1
-    total_buffer[index:index+len(num_buffer)] = num_buffer
-    index += len(num_buffer)
-    total_buffer[index:index+len(ciphertext)] = ciphertext
-    index += len(ciphertext)
-    total_buffer[index:index+len(signature)] = signature
-    
-    return total_buffer
 
 def auth_socket_connect(config_dict: dict) -> socket.socket:
     """Establishes a socket connection for authentication.
@@ -427,9 +412,11 @@ def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, d
         serialize_message = serialize_message_for_auth(config_dict, nonce_auth, nonce_entity)
         ciphertext = asymmetric_encrypt(serialize_message, config_dict['pubkey'])
         signature = sha256_sign(ciphertext, config_dict['privkey'])
-
+        buffer = bytearray(len(ciphertext)+len(signature))
+        buffer[:len(ciphertext)] = ciphertext
+        buffer[len(ciphertext):] = signature
         # Send session key request
-        total_buffer = send_sessionkey_request(ciphertext, signature)
+        total_buffer = make_sender_buffer(buffer, SESSION_KEY_REQ_IN_PUB_ENC)
         sock.send(bytes(total_buffer))
     elif msg_type == SESSION_KEY_RESP_WITH_DIST_KEY:
         # Handle SESSION_KEY_RESP_WITH_DIST_KEY message
@@ -462,3 +449,168 @@ def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, d
         parse_sessionkey(sessionkey[4:], session_key)
         print(session_key)
         print("Success for receiving the session key.")
+
+def serialize_handshake(nonce: bytearray, reply_nonce: bytearray) -> bytearray:
+    """Serializes the handshake data into a bytearray.
+
+    Args:
+        nonce (bytearray): The nonce for the handshake.
+        reply_nonce (bytearray): The reply nonce for the handshake.
+
+    Returns:
+        bytearray: The serialized handshake data.
+    """
+    if (nonce == None) & (reply_nonce == None):
+        print("Error: handshake should include at least one nonce.\n")
+
+    indicator = 0
+    buffer = bytearray(NONCE_SIZE * 2 + 1)
+
+    if (nonce != None):
+        indicator += 1
+        buffer[1:1+NONCE_SIZE] = nonce
+
+    if (reply_nonce != None):
+        indicator += 1
+        buffer[1+NONCE_SIZE:1+NONCE_SIZE*2] = reply_nonce
+
+    buffer[0] = indicator
+    return buffer
+
+def make_sender_buffer(buffer: bytearray, msg_type: int) -> bytearray:
+    """Creates a buffer for sending messages.
+
+    Args:
+        buffer (bytearray): The message buffer.
+        msg_type (int): The message type.
+
+    Returns:
+        bytearray: The total buffer for sending.
+    """
+    num_buffer = num_to_var_length_int(len(buffer))
+    total_buffer = bytearray(len(num_buffer) + 1 + len(buffer))
+    index = 0
+    total_buffer[index] = msg_type
+    index += 1
+    total_buffer[index:index + len(num_buffer)] = num_buffer
+    index += len(num_buffer)
+    total_buffer[index:] = buffer    
+    return total_buffer
+
+def parse_received_message(buffer: bytearray) -> tuple:
+    """Parses a received message buffer.
+
+    Args:
+        buffer (bytearray): The buffer containing the received message.
+
+    Returns:
+        tuple: A tuple containing the message type and the received message.
+    """
+    msg_type = buffer[0]
+    num, buf_num = var_length_int_to_num(buffer[1:])
+    received_message = buffer[1+buf_num:1+buf_num+num]
+    return msg_type, received_message
+
+
+def read_int_from_buf(buffer: bytearray, length: int):
+    """Reads an integer value from the buffer.
+
+    Args:
+        buffer (bytearray): The buffer containing the integer.
+        length (int): The length of the integer in bytes.
+
+    Returns:
+        int: The integer value.
+    """
+    num = 0
+    for i in range(length):
+        num |= buffer[i] << 8 * (length - 1 - i)
+    return num
+def concat_data(recv_data: bytearray, file_center: dict, log_center: dict, download_list: list) -> bytearray:
+    """Concatenates data for a response message.
+
+    Args:
+        recv_data (bytearray): The received data.
+        file_center (dict): Dictionary containing file information.
+        log_center (dict): Dictionary containing log information.
+        download_list (list): List of downloaded files.
+
+    Returns:
+        bytearray: The concatenated message.
+    """
+    name_size = recv_data[1]
+    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    file_index = download_num_check(name, download_list)
+    res_keyid = file_center["keyid"][file_index]
+    res_hashvalue = file_center["hash_value"][file_index]
+    command = "ipfs cat $1 > "
+    command = command.replace("$1", res_hashvalue)
+    message = bytearray(3+len(res_keyid)+len(command))
+    message[0] = int(hex(DATA_RESP),16)
+    message[1] = int(hex(len(res_keyid)),16)
+    message[2:2+len(res_keyid)] = res_keyid
+    message[2+len(res_keyid)] = int(hex(len(command)),16)
+    message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
+    log_center["name"].append(name), log_center["hash_value"].append(res_hashvalue), log_center["keyid"].append(res_keyid)
+    download_list.append(name)
+    return message
+
+def download_num_check(name: str, download_list: dict) -> int:
+    """Checks the number of times a file has been downloaded.
+
+    Args:
+        name (str): The name of the file.
+        download_list (list): List of downloaded files.
+
+    Returns:
+        int: The number of times the file has been downloaded.
+    """
+    num = 0
+    if len(download_list) == 0:
+        return num
+    for i in download_list:
+        if i == name:
+            num += 1
+    return num  
+
+def save_info_for_file(recv_data: bytearray, file_center: dict):
+    """Saves file information.
+
+    Args:
+        recv_data (bytearray): The received data.
+        file_center (dict): Dictionary containing file information.
+
+    Returns:
+        None
+    """
+    name_size = recv_data[1]
+    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    file_center["name"].append(name)
+    keyid_size = recv_data[2+name_size]
+    keyid = recv_data[3+name_size:3+name_size+keyid_size]
+    file_center["keyid"].append(keyid)
+    hash_value_size = recv_data[3+name_size+keyid_size]
+    hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
+    file_center["hash_value"].append(hash_value)
+
+def data_response(dec_buf: bytearray, file_center: dict, log_center: dict, download_list: list, session_key: dict, sequential_num: int) -> bytearray:
+    """Generates a response message for data.
+
+    Args:
+        dec_buf (bytearray): The decrypted buffer.
+        file_center (dict): Dictionary containing file information.
+        log_center (dict): Dictionary containing log information.
+        download_list (list): List of downloaded files.
+        session_key (dict): Dictionary containing session key information.
+        sequential_num (int): Sequential number.
+
+    Returns:
+        bytearray: The response message.
+    """
+    seq_buffer = write_in_n_bytes(sequential_num, SEQ_NUM_SIZE)
+    message = concat_data(dec_buf[SEQ_NUM_SIZE:], file_center, log_center, download_list)
+    total_message = bytearray(SEQ_NUM_SIZE + len(message))
+    total_message[:SEQ_NUM_SIZE - 1] = seq_buffer
+    total_message[SEQ_NUM_SIZE:] = message
+    enc_buffer = symmetric_encrypt_hmac(session_key, total_message)
+    return make_sender_buffer(enc_buffer, SECURE_COMM_MSG)
