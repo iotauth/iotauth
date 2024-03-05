@@ -4,8 +4,10 @@ import selectors
 import types
 import subprocess
 import time
+import os
 from datetime import datetime
 import secrets
+import base64
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography import x509
@@ -14,7 +16,9 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding as pad
-
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import cryptography
 READ_BYTES_NUM = 1024
 RSA_KEY_SIZE = 256
 SESSION_KEY_ID_SIZE = 8
@@ -36,6 +40,8 @@ MAC_KEY_SIZE = 32
 DATA_UPLOAD_REQ = 0
 DATA_DOWNLOAD_REQ = 1
 DATA_RESP = 2
+database_name = "file_information.txt"
+
 def load_config(path: str, config_dict: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
 
@@ -526,13 +532,13 @@ def read_int_from_buf(buffer: bytearray, length: int):
     for i in range(length):
         num |= buffer[i] << 8 * (length - 1 - i)
     return num
-def concat_data(recv_data: bytearray, file_center: dict, log_center: dict, download_list: list) -> bytearray:
+def concat_data(recv_data: bytearray, file_center: dict, record_database: dict, download_list: list) -> bytearray:
     """Concatenates data for a response message.
 
     Args:
         recv_data (bytearray): The received data.
         file_center (dict): Dictionary containing file information.
-        log_center (dict): Dictionary containing log information.
+        record_database (dict): Dictionary containing log information.
         download_list (list): List of downloaded files.
 
     Returns:
@@ -551,7 +557,7 @@ def concat_data(recv_data: bytearray, file_center: dict, log_center: dict, downl
     message[2:2+len(res_keyid)] = res_keyid
     message[2+len(res_keyid)] = int(hex(len(command)),16)
     message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
-    log_center["name"].append(name), log_center["hash_value"].append(res_hashvalue), log_center["keyid"].append(res_keyid)
+    record_database["name"].append(name), record_database["hash_value"].append(res_hashvalue), record_database["keyid"].append(res_keyid)
     download_list.append(name)
     return message
 
@@ -593,13 +599,13 @@ def save_info_for_file(recv_data: bytearray, file_center: dict):
     hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
     file_center["hash_value"].append(hash_value)
 
-def data_response(dec_buf: bytearray, file_center: dict, log_center: dict, download_list: list, session_key: dict, sequential_num: int) -> bytearray:
+def data_response(dec_buf: bytearray, file_center: dict, record_database: dict, download_list: list, session_key: dict, sequential_num: int) -> bytearray:
     """Generates a response message for data.
 
     Args:
         dec_buf (bytearray): The decrypted buffer.
         file_center (dict): Dictionary containing file information.
-        log_center (dict): Dictionary containing log information.
+        record_database (dict): Dictionary containing log information.
         download_list (list): List of downloaded files.
         session_key (dict): Dictionary containing session key information.
         sequential_num (int): Sequential number.
@@ -608,9 +614,95 @@ def data_response(dec_buf: bytearray, file_center: dict, log_center: dict, downl
         bytearray: The response message.
     """
     seq_buffer = write_in_n_bytes(sequential_num, SEQ_NUM_SIZE)
-    message = concat_data(dec_buf[SEQ_NUM_SIZE:], file_center, log_center, download_list)
+    message = concat_data(dec_buf[SEQ_NUM_SIZE:], file_center, record_database, download_list)
     total_message = bytearray(SEQ_NUM_SIZE + len(message))
     total_message[:SEQ_NUM_SIZE - 1] = seq_buffer
     total_message[SEQ_NUM_SIZE:] = message
     enc_buffer = symmetric_encrypt_hmac(session_key, total_message)
     return make_sender_buffer(enc_buffer, SECURE_COMM_MSG)
+
+def encrypt_with_password(filename, number, file_center):
+    """
+    Given a filename (str) and key (bytes), it encrypts the file and write it
+    """
+    salt = bytes(16)
+    kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=salt,
+    iterations=480000,
+    )
+    num_bytes = bytes(number,"utf-8")
+    key = base64.urlsafe_b64encode(kdf.derive(num_bytes))
+    f = Fernet(key)
+    file_data = ""
+    for i in range(len(file_center['name'])):
+        key_id_int = 0
+        print(file_center['keyid'][i])
+        for j in range(SESSION_KEY_ID_SIZE):
+            key_id_int += (int(file_center['keyid'][i][j]) << 8*(7-j))
+        file_data += file_center['name'][i] + " " + str(key_id_int) + " " + file_center['hash_value'][i] + "\n"
+    file_data = file_data.encode('utf-8')
+    # encrypt data
+    encrypted_data = f.encrypt(file_data)
+    # write the encrypted file
+    with open(filename, "wb") as file:
+        file.write(encrypted_data)
+        file.close()
+
+def decrypt_with_password(filename, number):
+    """
+    Given a filename (str) and key (bytes), it decrypts the file and write it
+    """
+    salt = bytes(16)
+    kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=salt,
+    iterations=480000,
+    )
+    num_bytes = bytes(number,"utf-8")
+    key = base64.urlsafe_b64encode(kdf.derive(num_bytes))
+    f = Fernet(key)
+    with open(filename, "rb") as file:
+        # read the encrypted data
+        encrypted_data = file.read()
+        file.close()
+    # decrypt data
+    try:
+        decrypted_data = f.decrypt(encrypted_data)
+    except cryptography.fernet.InvalidToken:
+        print("Invalid token, most likely the password is incorrect")
+        return
+    print("File decrypted successfully")
+    with open(filename, "wb") as file:
+        file.write(decrypted_data)
+        file.close()
+    return decrypted_data
+
+def check_database(file_name, file_center):
+    if os.path.isfile(file_name):
+        print("Database already exists.")
+        number = input("Press the password for the database: ")
+        decrypted_data = decrypt_with_password(file_name, number)
+        print(decrypted_data)
+        if decrypted_data == None:
+            print("decryption was not appplied!!")
+            return file_center, number
+        else:
+            for i in decrypted_data.decode('utf-8').split("\n"):
+                if len(i) == 0:
+                    continue
+                file_center['name'].append(i.split(' ')[0])
+                key_id_int = int(i.split(' ')[1])
+                key_id_bytes = bytearray(SESSION_KEY_ID_SIZE)
+                for k in range(SESSION_KEY_ID_SIZE):
+                    key_id_bytes[k] = key_id_int >> 8 * (7-k)
+                    key_id_int -= key_id_bytes[k] << 8 * (7-k)
+                file_center['keyid'].append(key_id_bytes)
+                file_center['hash_value'].append(i.split(' ')[2])
+            return file_center, number
+    else:
+        print("Database does not exist.")
+        number = input("Generate the password for the database: ")
+        return file_center, number
