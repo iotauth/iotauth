@@ -106,7 +106,7 @@ def service_connection(key, mask):
             print(file_center)
         elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
                 total_buffer = entity_server.data_response(dec_buf, file_center, 
-                                                           log_center, download_list, session_key, sequential_num)
+                                                           record_database, download_list, session_key, sequential_num)
                 sock.send(bytes(total_buffer))
                 sequential_num += 1
 
@@ -127,7 +127,7 @@ session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "
 
 # Setting directories for managing information of the file
 file_center = {"name":[] , "keyid" : [], "hash_value" : []}
-log_center = {"name":[] , "keyid" : [], "hash_value" : []}
+record_database = {"name":[] , "keyid" : [], "hash_value" : []}
 download_list = []
 
 # Load config for file system manager and save public and private key in directory.
@@ -148,6 +148,7 @@ print(f"Listening on {(host, port)}")
 manager_socket.setblocking(False)
 node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
 
+file_center, password = entity_server.check_database(entity_server.database_name, file_center)
 try:
     while True:
         events = node_selector.select(timeout=None)
@@ -161,4 +162,5 @@ except KeyboardInterrupt:
 finally:
     manager_socket.close()
     node_selector.close()
+    entity_server.encrypt_with_password(entity_server.database_name, password, file_center)
     print("Finished")
