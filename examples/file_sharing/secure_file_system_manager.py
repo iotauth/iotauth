@@ -66,11 +66,11 @@ def service_connection(key, mask):
 
         while True:
             # Check if we have the expected session key
-            if session_key["sessionkey_id"] == received_message[:entity_server.NONCE_SIZE]:
+            if comm_session_key["sessionkey_id"] == received_message[:entity_server.NONCE_SIZE]:
                 print("We have the session key...!!")
                 client_sock.close()
                 # Decrypt the buffer using the session key
-                dec_buf = entity_server.symmetric_decrypt_hmac(session_key, encrypted_buf[:len(encrypted_buf)-entity_server.MAC_KEY_SIZE], encrypted_buf[len(encrypted_buf)-entity_server.MAC_KEY_SIZE:])
+                dec_buf = entity_server.symmetric_decrypt_hmac(comm_session_key, encrypted_buf[:len(encrypted_buf)-entity_server.MAC_KEY_SIZE], encrypted_buf[len(encrypted_buf)-entity_server.MAC_KEY_SIZE:])
                 # Handshake2
                 nonce_entity = dec_buf[1:]
                 nonce_server = secrets.token_bytes(entity_server.NONCE_SIZE)
@@ -79,7 +79,7 @@ def service_connection(key, mask):
                 serialized_buffer = entity_server.serialize_handshake(nonce_server, nonce_entity)
                 print("serialized_buffer: ")
                 print(serialized_buffer)
-                enc_buffer = entity_server.symmetric_encrypt_hmac(session_key, serialized_buffer)
+                enc_buffer = entity_server.symmetric_encrypt_hmac(comm_session_key, serialized_buffer)
                 total_buffer = entity_server.make_sender_buffer(enc_buffer, entity_server.SKEY_HANDSHAKE_2)
                 sock.send(bytes(total_buffer))
                 # Close the client socket and exit the loop
@@ -90,14 +90,14 @@ def service_connection(key, mask):
             if len(recv_data_from_auth) == 0:
                 continue
             # Process the received data to get the session key
-            entity_server.get_session_key(recv_data_from_auth, file_manager_dict, client_sock, distribution_key, session_key, nonce_auth)
+            entity_server.get_session_key(recv_data_from_auth, file_manager_dict, client_sock, distribution_key, comm_session_key, nonce_auth)
 
     if msg_type == entity_server.SKEY_HANDSHAKE_3:
-        dec_buf = entity_server.symmetric_decrypt_hmac(session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
+        dec_buf = entity_server.symmetric_decrypt_hmac(comm_session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
         print("received session key handshake3!\n")
     if msg_type == entity_server.SECURE_COMM_MSG:
         print("Received secure message!!")
-        dec_buf = entity_server.symmetric_decrypt_hmac(session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
+        dec_buf = entity_server.symmetric_decrypt_hmac(comm_session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
         seq_num = entity_server.read_int_from_buf(dec_buf, entity_server.SEQ_NUM_SIZE)
         print("Received sequential number:", seq_num)
         print("Decrypted message:", dec_buf[entity_server.SEQ_NUM_SIZE:])
@@ -106,7 +106,7 @@ def service_connection(key, mask):
             print(file_metadata_table)
         elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
                 total_buffer = entity_server.data_response(dec_buf, file_metadata_table, 
-                                                           record_database, download_list, session_key, sequential_num)
+                                                           record_metadata_table, download_list, comm_session_key, sequential_num)
                 sock.send(bytes(total_buffer))
                 sequential_num += 1
 
@@ -123,11 +123,11 @@ Usage:  python3 secure_filesystem_manager.py file_system_manager.config
 # Setting directories for config, distribution key, and session key
 file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
 distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
-session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
+comm_session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 
 # Setting directories for managing information of the file
 file_metadata_table = {"name":[] , "keyid" : [], "hash_value" : []}
-record_database = {"name":[] , "keyid" : [], "hash_value" : []}
+record_metadata_table = {"name":[] , "keyid" : [], "hash_value" : []}
 download_list = []
 
 # Load config for file system manager and save public and private key in directory.
@@ -148,8 +148,7 @@ print(f"Listening on {(host, port)}")
 manager_socket.setblocking(False)
 node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
 
-file_metadata_table, record_database, password = entity_server.check_database('tutorial.db', file_metadata_table, record_database)
-# file_metadata_table, record_database, password = entity_server.check_database(entity_server.database_name, file_metadata_table, record_database)
+file_metadata_table, record_metadata_table, password = entity_server.check_database(entity_server.database_name, file_metadata_table, record_metadata_table)
 try:
     while True:
         events = node_selector.select(timeout=None)
@@ -163,6 +162,5 @@ except KeyboardInterrupt:
 finally:
     manager_socket.close()
     node_selector.close()
-    # entity_server.encrypt_with_password(entity_server.database_name, password, file_metadata_table, )
-    entity_server.encrypt_with_password('tutorial.db', password, file_metadata_table, record_database)
+    entity_server.encrypt_with_password(entity_server.database_name, password, file_metadata_table, record_metadata_table)
     print("Finished")

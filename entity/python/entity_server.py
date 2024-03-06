@@ -41,7 +41,7 @@ MAC_KEY_SIZE = 32
 DATA_UPLOAD_REQ = 0
 DATA_DOWNLOAD_REQ = 1
 DATA_RESP = 2
-database_name = "file_information.txt"
+database_name = "file_system_manager.db"
 
 def load_config(path: str, config_dict: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
@@ -533,13 +533,13 @@ def read_int_from_buf(buffer: bytearray, length: int):
     for i in range(length):
         num |= buffer[i] << 8 * (length - 1 - i)
     return num
-def concat_data(recv_data: bytearray, file_metadata_table: dict, record_database: dict, download_list: list) -> bytearray:
+def concat_data(recv_data: bytearray, file_metadata_table: dict, record_metadata_table: dict, download_list: list) -> bytearray:
     """Concatenates data for a response message.
 
     Args:
         recv_data (bytearray): The received data.
         file_metadata_table (dict): Dictionary containing file information.
-        record_database (dict): Dictionary containing log information.
+        record_metadata_table (dict): Dictionary containing log information.
         download_list (list): List of downloaded files.
 
     Returns:
@@ -558,7 +558,7 @@ def concat_data(recv_data: bytearray, file_metadata_table: dict, record_database
     message[2:2+len(res_keyid)] = res_keyid
     message[2+len(res_keyid)] = int(hex(len(command)),16)
     message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
-    record_database["name"].append(name), record_database["hash_value"].append(res_hashvalue), record_database["keyid"].append(res_keyid)
+    record_metadata_table["name"].append(name), record_metadata_table["hash_value"].append(res_hashvalue), record_metadata_table["keyid"].append(res_keyid)
     download_list.append(name)
     return message
 
@@ -600,13 +600,13 @@ def save_info_for_file(recv_data: bytearray, file_metadata_table: dict):
     hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
     file_metadata_table["hash_value"].append(hash_value)
 
-def data_response(dec_buf: bytearray, file_metadata_table: dict, record_database: dict, download_list: list, session_key: dict, sequential_num: int) -> bytearray:
+def data_response(dec_buf: bytearray, file_metadata_table: dict, record_metadata_table: dict, download_list: list, session_key: dict, sequential_num: int) -> bytearray:
     """Generates a response message for data.
 
     Args:
         dec_buf (bytearray): The decrypted buffer.
         file_metadata_table (dict): Dictionary containing file information.
-        record_database (dict): Dictionary containing log information.
+        record_metadata_table (dict): Dictionary containing log information.
         download_list (list): List of downloaded files.
         session_key (dict): Dictionary containing session key information.
         sequential_num (int): Sequential number.
@@ -615,32 +615,47 @@ def data_response(dec_buf: bytearray, file_metadata_table: dict, record_database
         bytearray: The response message.
     """
     seq_buffer = write_in_n_bytes(sequential_num, SEQ_NUM_SIZE)
-    message = concat_data(dec_buf[SEQ_NUM_SIZE:], file_metadata_table, record_database, download_list)
+    message = concat_data(dec_buf[SEQ_NUM_SIZE:], file_metadata_table, record_metadata_table, download_list)
     total_message = bytearray(SEQ_NUM_SIZE + len(message))
     total_message[:SEQ_NUM_SIZE - 1] = seq_buffer
     total_message[SEQ_NUM_SIZE:] = message
     enc_buffer = symmetric_encrypt_hmac(session_key, total_message)
     return make_sender_buffer(enc_buffer, SECURE_COMM_MSG)
 
-def dict_to_tuple(dict):
+def dict_to_tuple(metadata_dict: dict) -> list:
+    """
+    Converts a dictionary to a list of tuples.
+
+    Args:
+        metadata_dict (dict): The dictionary to be converted.
+
+    Returns:
+        list: A list of tuples containing the dictionary data.
+    """
     tuple_list = []
-    for i in range(len(dict['name'])):
-        key_id_int = 0
-        for j in range(SESSION_KEY_ID_SIZE):
-            key_id_int += (int(dict['keyid'][i][j]) << 8*(7-j))
-        tuple_list.append((dict['name'][i], key_id_int, dict['hash_value'][i]))
+    for i, name in enumerate(metadata_dict['name']):
+        key_id_int = sum(int(byte) << (8 * (7-j)) for j, byte in enumerate(metadata_dict['keyid'][i]))
+        tuple_list.append((name, key_id_int, metadata_dict['hash_value'][i]))
     return tuple_list
 
-def encrypt_with_password(filename, number, file_metadata_table, record_metadata_table):
+def encrypt_with_password(filename: str, number: str, file_metadata_table: dict, record_metadata_table: dict) -> None:
     """
-    Given a filename (str) and key (bytes), it encrypts the file and write it
+    Encrypts a file using a password and writes it.
+
+    Args:
+        filename (str): The name of the file to be encrypted.
+        number (str): The password used for encryption.
+        file_metadata_table (dict): Metadata for file records.
+        record_metadata_table (dict): Metadata for record files.
+
+    Returns:
+        None
     """
     con = sqlite3.connect(filename)
     cur = con.cursor()
     cur.execute("CREATE TABLE file_metadata(name, keyid, hash value)")
     file_metadata_list = dict_to_tuple(file_metadata_table)
     cur.executemany("INSERT INTO file_metadata VALUES(?, ?, ?)", file_metadata_list)
-    # con.commit()
     cur.execute("CREATE TABLE record_metadata(name, keyid, hash value)")
     record_metadata_list = dict_to_tuple(record_metadata_table)
     cur.executemany("INSERT INTO record_metadata VALUES(?, ?, ?)", record_metadata_list)
@@ -649,42 +664,40 @@ def encrypt_with_password(filename, number, file_metadata_table, record_metadata
 
     salt = bytes(16)
     kdf = PBKDF2HMAC(
-    algorithm=hashes.SHA256(),
-    length=32,
-    salt=salt,
-    iterations=480000,
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=480000,
     )
     num_bytes = bytes(number,"utf-8")
     key = base64.urlsafe_b64encode(kdf.derive(num_bytes))
     f = Fernet(key)
-    # file_data = ""
-    # for i in range(len(file_metadata_table['name'])):
-    #     key_id_int = 0
-    #     for j in range(SESSION_KEY_ID_SIZE):
-    #         key_id_int += (int(file_metadata_table['keyid'][i][j]) << 8*(7-j))
-    #     file_data += file_metadata_table['name'][i] + " " + str(key_id_int) + " " + file_metadata_table['hash_value'][i] + "\n"
-    # file_data = file_data.encode('utf-8')
     # encrypt data
     with open(filename, "rb") as file:
         # read the encrypted data
         file_data = file.read()
-        file.close()
     encrypted_data = f.encrypt(file_data)
     # write the encrypted file
     with open(filename, "wb") as file:
         file.write(encrypted_data)
-        file.close()
 
-def decrypt_with_password(filename, number):
+def decrypt_with_password(filename: str, number: str) -> bytes:
     """
-    Given a filename (str) and key (bytes), it decrypts the file and write it
+    Decrypts a file using a password and writes it.
+
+    Args:
+        filename (str): The name of the file to be decrypted.
+        number (str): The password used for decryption.
+
+    Returns:
+        bytes: The decrypted file data.
     """
     salt = bytes(16)
     kdf = PBKDF2HMAC(
-    algorithm=hashes.SHA256(),
-    length=32,
-    salt=salt,
-    iterations=480000,
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=480000,
     )
     num_bytes = bytes(number,"utf-8")
     key = base64.urlsafe_b64encode(kdf.derive(num_bytes))
@@ -692,7 +705,6 @@ def decrypt_with_password(filename, number):
     with open(filename, "rb") as file:
         # read the encrypted data
         encrypted_data = file.read()
-        file.close()
     # decrypt data
     try:
         decrypted_data = f.decrypt(encrypted_data)
@@ -702,10 +714,19 @@ def decrypt_with_password(filename, number):
     print("File decrypted successfully")
     with open(filename, "wb") as file:
         file.write(decrypted_data)
-        file.close()
     return decrypted_data
 
-def database_to_dict(data, dict):
+def database_to_dict(data: str, dict: dict) -> dict:
+    """
+    Converts database data into a dictionary.
+
+    Args:
+        data (str): Data retrieved from the database.
+        dict (dict): The dictionary to store the data.
+
+    Returns:
+        dict: The updated dictionary with database data.
+    """
     key_id_int = int(data[1])
     key_id_bytes = bytearray(SESSION_KEY_ID_SIZE)
     for k in range(SESSION_KEY_ID_SIZE):
@@ -716,45 +737,39 @@ def database_to_dict(data, dict):
     dict['hash_value'].append(data[2])
     return dict
 
-def check_database(file_name, file_metadata_table, record_database):
+def check_database(file_name: str, file_metadata_table: dict, record_metadata_table: dict) -> tuple:
+    """
+    Checks the existence of a database and retrieves its content.
+
+    Args:
+        file_name (str): The name of the database file.
+        file_metadata_table (dict): Metadata for file records.
+        record_metadata_table (dict): Metadata for record files.
+
+    Returns:
+        tuple: Metadata tables and the password used for decryption.
+    """
     if os.path.isfile(file_name):
         print("Database already exists.")
         number = input("Press the password for the database: ")
         decrypted_data = decrypt_with_password(file_name, number)
         if decrypted_data == None:
-            print("decryption was not appplied!!")
+            print("decryption was not applied!!")
             os.remove(file_name)
-            return file_metadata_table, record_database, number
+            return file_metadata_table, record_metadata_table, number
         else:
             con = sqlite3.connect(file_name)
             cur = con.cursor()
             for row in cur.execute("SELECT * FROM file_metadata"):
-                print(row)
                 file_metadata_table = database_to_dict(row, file_metadata_table)
-                # key_id_int = int(row[1])
-                # key_id_bytes = bytearray(SESSION_KEY_ID_SIZE)
-                # for k in range(SESSION_KEY_ID_SIZE):
-                #     key_id_bytes[k] = key_id_int >> 8 * (7-k)
-                #     key_id_int -= key_id_bytes[k] << 8 * (7-k)
-                # file_metadata_table['name'].append(row[0])
-                # file_metadata_table['keyid'].append(key_id_bytes)
-                # file_metadata_table['hash_value'].append(row[2])
             for row in cur.execute("SELECT * FROM record_metadata"):
-                print(row)
-                # key_id_int = int(row[1])
-                # key_id_bytes = bytearray(SESSION_KEY_ID_SIZE)
-                # for k in range(SESSION_KEY_ID_SIZE):
-                #     key_id_bytes[k] = key_id_int >> 8 * (7-k)
-                #     key_id_int -= key_id_bytes[k] << 8 * (7-k)
-                # record_database['name'].append(row[0])
-                # record_database['keyid'].append(key_id_bytes)
-                # record_database['hash_value'].append(row[2])
-                record_database = database_to_dict(row, record_database)
+                record_metadata_table = database_to_dict(row, record_metadata_table)
             con.close()
             os.remove(file_name)
-            return file_metadata_table, record_database, number
+            print(file_metadata_table, record_metadata_table)
+            return file_metadata_table, record_metadata_table, number
                 
     else:
         print("Database does not exist.")
         number = input("Generate the password for the database: ")
-        return file_metadata_table, record_database, number
+        return file_metadata_table, record_metadata_table, number
