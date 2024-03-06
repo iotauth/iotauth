@@ -102,10 +102,10 @@ def service_connection(key, mask):
         print("Received sequential number:", seq_num)
         print("Decrypted message:", dec_buf[entity_server.SEQ_NUM_SIZE:])
         if dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_UPLOAD_REQ:
-            entity_server.save_info_for_file(dec_buf[entity_server.SEQ_NUM_SIZE:], file_center)
-            print(file_center)
+            entity_server.save_info_for_file(dec_buf[entity_server.SEQ_NUM_SIZE:], file_metadata_table)
+            print(file_metadata_table)
         elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
-                total_buffer = entity_server.data_response(dec_buf, file_center, 
+                total_buffer = entity_server.data_response(dec_buf, file_metadata_table, 
                                                            record_database, download_list, session_key, sequential_num)
                 sock.send(bytes(total_buffer))
                 sequential_num += 1
@@ -126,7 +126,7 @@ distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
 session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 
 # Setting directories for managing information of the file
-file_center = {"name":[] , "keyid" : [], "hash_value" : []}
+file_metadata_table = {"name":[] , "keyid" : [], "hash_value" : []}
 record_database = {"name":[] , "keyid" : [], "hash_value" : []}
 download_list = []
 
@@ -148,7 +148,8 @@ print(f"Listening on {(host, port)}")
 manager_socket.setblocking(False)
 node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
 
-file_center, password = entity_server.check_database(entity_server.database_name, file_center)
+file_metadata_table, record_database, password = entity_server.check_database('tutorial.db', file_metadata_table, record_database)
+# file_metadata_table, record_database, password = entity_server.check_database(entity_server.database_name, file_metadata_table, record_database)
 try:
     while True:
         events = node_selector.select(timeout=None)
@@ -162,5 +163,6 @@ except KeyboardInterrupt:
 finally:
     manager_socket.close()
     node_selector.close()
-    entity_server.encrypt_with_password(entity_server.database_name, password, file_center)
+    # entity_server.encrypt_with_password(entity_server.database_name, password, file_metadata_table, )
+    entity_server.encrypt_with_password('tutorial.db', password, file_metadata_table, record_database)
     print("Finished")
