@@ -78,6 +78,8 @@ File System Manager manages the information for the file such as file hash value
 
 According figure above, net1.uploader and net1.downloader receive the session key from Auth respectively. File System Manager requests the session key using session key id to Auth (For more detail, you can see process through communication between entity client and server from *$ROOT/entity/c/*.) Thanks to secure key received from Auth, File System Manager can manage the information for the file. Also, We add Auth's communication policy and implement the code for security as Python API in *$ROOT/entity/python/*.
 
+To manages effectively the information for files, we make the database using SQLite and Python API in *$ROOT/entity/python/*. This database saves two tables which are file metadata table and record metadata table. To apply security to this database, we design the security using encryption for the database with the password which we inputs.
+
 # How to run examples with security
 
 For this section, we use *$ROOT* for the root directory of this repository.
@@ -99,6 +101,8 @@ The process is the same as the above example.
 1. Change directories to *$ROOT/examples/file_sharing/*.
 
 2. Run 'python3 secure_file_system_manager.py file_system_manager.config' to execute the file system manager.
+
+3. Press the password for the database to get previous information.
 
 ### To run example entities written in C language
 
