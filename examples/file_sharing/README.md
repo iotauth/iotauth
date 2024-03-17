@@ -58,7 +58,7 @@ See README.md under *entity/c/* for details.
 
 1. Run 'git submodule update --remote' to move the IPFS submodule for file sharing.
 
-2. Change directories to *$ROOT/entity/c/ipfs_examples/*
+2. Change directories to *$ROOT/entity/c/ipfs_examples/* (Move the file for experiment in this directory and change the file name to "plain_text")
 
 3. Run 'mkdir build && cd build'
 
@@ -66,7 +66,7 @@ See README.md under *entity/c/* for details.
 
 5. Run 'make' 
 
-6. Run './entity_uploader ../uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
+6. Run './entity_uploader ../uploader.config ../plain_text ../addReader.txt' in a separate terminal, to execute net1.uploader.
 
 7. Run './entity_downloader ../downloader.config', to execute net1.downloader.
 
@@ -110,7 +110,7 @@ See README.md under *entity/c/* for details.
 
 1. Run 'git submodule update --remote' to move the IPFS submodule for file sharing.
 
-2. Change directories to *$ROOT/entity/c/ipfs_examples/*
+2. Change directories to *$ROOT/entity/c/ipfs_examples/* (Move the file for experiment in this directory and change the file name to "plain_text")
 
 3. Run 'mkdir build && cd build'
 
@@ -118,6 +118,6 @@ See README.md under *entity/c/* for details.
 
 5. Run 'make' 
 
-6. Run './secure_entity_uploader ../secure_uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
+6. Run './secure_entity_uploader ../secure_uploader.config ../plain_text ../addReader.txt' in a separate terminal, to execute net1.uploader.
 
 7. Run './secure_entity_downloader ../secure_downloader.config', to execute net1.downloader.
