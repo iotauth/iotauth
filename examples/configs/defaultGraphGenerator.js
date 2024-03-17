@@ -175,11 +175,7 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
             }
             entity.backupToAuthIds = backupToAuthList;
             assignments[entity.name] = authId;
-            // entityList.push(entity);
             if(entity.owner != null & filesharingEnabled == true) {
-                // if (entity.reader_type == "group"){
-                //     entity.name = entity.name.slice(5)
-                // }
                 var fileSharingList = {
                         group: entity.group,
                         reader: entity.name,
@@ -191,7 +187,6 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
             if (entity.reader_type == "group"){
                 continue;
             }
-            // assignments[entity.name] = authId;
             entityList.push(entity);
         }
     }

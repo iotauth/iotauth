@@ -66,9 +66,9 @@ See README.md under *entity/c/* for details.
 
 5. Run 'make' 
 
-6. Run './entity_downloader ../downloader.config', to execute net1.downloader.
+6. Run './entity_uploader ../uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
 
-7. Run './entity_uploader ../uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
+7. Run './entity_downloader ../downloader.config', to execute net1.downloader.
 
 # Security for File System Manager
 ---
@@ -118,6 +118,6 @@ See README.md under *entity/c/* for details.
 
 5. Run 'make' 
 
-6. Run './secure_entity_downloader ../secure_downloader.config', to execute net1.downloader.
+6. Run './secure_entity_uploader ../secure_uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
 
-7. Run './secure_entity_uploader ../secure_uploader.config ../plain_text.txt ../addReader.txt' in a separate terminal, to execute net1.uploader.
+7. Run './secure_entity_downloader ../secure_downloader.config', to execute net1.downloader.

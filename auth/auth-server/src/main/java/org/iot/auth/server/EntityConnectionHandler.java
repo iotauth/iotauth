@@ -625,6 +625,7 @@ public abstract class EntityConnectionHandler {
             getLogger().debug("Auth nonce is correct!");
         }
         JSONObject purpose = addReaderReqMessage.getPurpose();
+        getLogger().info("Purpose {}", purpose);
         AddReaderReqPurpose objPurpose = new AddReaderReqPurpose(purpose);
         // StringTokenizer reqPurpose = new StringTokenizer(objPurpose.getTarget().toString() ,":",false);
         // String ownerGroup = reqPurpose.nextToken();

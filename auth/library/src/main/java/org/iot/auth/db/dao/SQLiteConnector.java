@@ -299,6 +299,7 @@ public class SQLiteConnector {
         statement = connection.createStatement();
         sql = "CREATE TABLE IF NOT EXISTS " + FileSharingTable.T_File_Sharing + "(";
         sql += FileSharingTable.c.Owner.name() + " TEXT NOT NULL,";
+        sql += FileSharingTable.c.ReaderType.name() + " TEXT NOT NULL,";
         sql += FileSharingTable.c.Reader.name() + " TEXT NOT NULL)";
 
         if (DEBUG) logger.info(sql);
@@ -605,13 +606,15 @@ public class SQLiteConnector {
     public boolean insertRecords(FileSharingTable fileSharing) throws SQLException, ClassNotFoundException {
         String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
         sql += FileSharingTable.c.Owner.name() + ",";
+        sql += FileSharingTable.c.ReaderType.name() + ",";
         sql += FileSharingTable.c.Reader.name() + ")";
-        sql += " VALUES (?,?)";
+        sql += " VALUES (?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setString(index++,fileSharing.getOwner());
+        preparedStatement.setString(index++,fileSharing.getReaderType());
         preparedStatement.setString(index++,fileSharing.getReader());
-        logger.info("{} {}", fileSharing.getOwner(),fileSharing.getReader() );
+        logger.info("{} {} {}", fileSharing.getOwner(), fileSharing.getReaderType(), fileSharing.getReader() );
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -900,8 +903,8 @@ public class SQLiteConnector {
         statement = connection.createStatement();
         String sql_deduplication = "SELECT * FROM " + FileSharingTable.T_File_Sharing;
         sql_deduplication += " WHERE " + FileSharingTable.c.Owner + "='";
-        sql_deduplication += owner + "' AND " + FileSharingTable.c.Reader + "='";
-        sql_deduplication += fileReader + "'";
+        sql_deduplication += owner + "' AND " + FileSharingTable.c.ReaderType + "='entity' AND ";
+        sql_deduplication += FileSharingTable.c.Reader + "='" + fileReader + "'";
         ResultSet resultSet = statement.executeQuery(sql_deduplication);
         if (resultSet.getString("Reader") != null) {
             logger.info("Already registered reader information!");
@@ -910,8 +913,9 @@ public class SQLiteConnector {
         else {
             String sql = "INSERT INTO " + FileSharingTable.T_File_Sharing + "(";
             sql += FileSharingTable.c.Owner.name() + ",";
+            sql += FileSharingTable.c.ReaderType.name() + ",";
             sql += FileSharingTable.c.Reader.name() + ")";
-            sql += " VALUES ('" + owner + "', '" + fileReader + "')";
+            sql += " VALUES ('" + owner + "', 'entity', '" + fileReader + "')";
             if (DEBUG) logger.info(sql);
             PreparedStatement preparedStatement  = connection.prepareStatement(sql);
             boolean result = preparedStatement.execute();
