@@ -64,9 +64,10 @@ function populateDefaultEntityList(filesharingEnabled) {
     ];
     var FILESHARING_ENTITY_LIST = [
         { group: 'TeamA', 		name: 'uploader'},
-        { group: 'FileSharingTeam', 		name: 'downloader',			owner: 'TeamA'},
-        { group: 'FileSharingTeam', 		name: 'Alice',				owner: 'TeamB'},
-        { group: 'FileSharingTeam', 		name: 'Bob',				owner: 'TeamA'},
+        { group: 'TeamB', 		name: 'downloader',         reader_type: 'entity',		owner: 'TeamA'},
+        { group: 'TeamC', 		name: 'Alice',              reader_type: 'entity',		owner: 'TeamB'},
+        { group: 'TeamB', 		name: 'Bob',				reader_type: 'entity',      owner: 'TeamA'},
+        { group: 'TeamE', 		name: 'TeamE',				reader_type: 'group',      owner: 'TeamA'},
         { group: 'FileManager', name: 'FileSystemManager'}
 
     ];
@@ -174,15 +175,24 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
             }
             entity.backupToAuthIds = backupToAuthList;
             assignments[entity.name] = authId;
-            entityList.push(entity);
+            // entityList.push(entity);
             if(entity.owner != null & filesharingEnabled == true) {
+                // if (entity.reader_type == "group"){
+                //     entity.name = entity.name.slice(5)
+                // }
                 var fileSharingList = {
-                    group: entity.group,
-                    reader: entity.name,
-                    owner: entity.owner
+                        group: entity.group,
+                        reader: entity.name,
+                        readerType: entity.reader_type,
+                        owner: entity.owner
                 };
                 filesharingLists.push(fileSharingList);
             }
+            if (entity.reader_type == "group"){
+                continue;
+            }
+            // assignments[entity.name] = authId;
+            entityList.push(entity);
         }
     }
 

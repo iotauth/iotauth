@@ -36,11 +36,13 @@
 		"net1.downloader": 101,
 		"net1.Alice": 101,
 		"net1.Bob": 101,
+		"net1.TeamE": 101,
 		"net1.FileSystemManager": 101,
 		"net2.uploader": 102,
 		"net2.downloader": 102,
 		"net2.Alice": 102,
 		"net2.Bob": 102,
+		"net2.TeamE": 102,
 		"net2.FileSystemManager": 102
 	},
 	"entityList": [
@@ -58,8 +60,9 @@
 			]
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamB",
 			"name": "net1.downloader",
+			"reader_type": "entity",
 			"owner": "TeamA",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
@@ -72,8 +75,9 @@
 			]
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamC",
 			"name": "net1.Alice",
+			"reader_type": "entity",
 			"owner": "TeamB",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
@@ -86,8 +90,9 @@
 			]
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamB",
 			"name": "net1.Bob",
+			"reader_type": "entity",
 			"owner": "TeamA",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
@@ -126,8 +131,9 @@
 			]
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamB",
 			"name": "net2.downloader",
+			"reader_type": "entity",
 			"owner": "TeamA",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
@@ -140,8 +146,9 @@
 			]
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamC",
 			"name": "net2.Alice",
+			"reader_type": "entity",
 			"owner": "TeamB",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
@@ -154,8 +161,9 @@
 			]
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamB",
 			"name": "net2.Bob",
+			"reader_type": "entity",
 			"owner": "TeamA",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
@@ -183,33 +191,51 @@
 	],
 	"filesharingLists": [
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamB",
 			"reader": "net1.downloader",
+			"readerType": "entity",
 			"owner": "TeamA"
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamC",
 			"reader": "net1.Alice",
+			"readerType": "entity",
 			"owner": "TeamB"
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamB",
 			"reader": "net1.Bob",
+			"readerType": "entity",
 			"owner": "TeamA"
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamE",
+			"reader": "net1.TeamE",
+			"readerType": "group",
+			"owner": "TeamA"
+		},
+		{
+			"group": "TeamB",
 			"reader": "net2.downloader",
+			"readerType": "entity",
 			"owner": "TeamA"
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamC",
 			"reader": "net2.Alice",
+			"readerType": "entity",
 			"owner": "TeamB"
 		},
 		{
-			"group": "FileSharingTeam",
+			"group": "TeamB",
 			"reader": "net2.Bob",
+			"readerType": "entity",
+			"owner": "TeamA"
+		},
+		{
+			"group": "TeamE",
+			"reader": "net2.TeamE",
+			"readerType": "group",
 			"owner": "TeamA"
 		}
 	]
