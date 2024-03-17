@@ -105,8 +105,8 @@ def service_connection(key, mask):
             entity_server.save_info_for_file(dec_buf[entity_server.SEQ_NUM_SIZE:], file_metadata_table)
             print(file_metadata_table)
         elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
-                total_buffer = entity_server.data_response(dec_buf, file_metadata_table, 
-                                                           record_metadata_table, download_list, comm_session_key, sequential_num)
+                total_buffer = entity_server.metadata_response(dec_buf, file_metadata_table, 
+                                                           record_history_table, download_list, comm_session_key, sequential_num)
                 sock.send(bytes(total_buffer))
                 sequential_num += 1
 
@@ -126,8 +126,8 @@ distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
 comm_session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 
 # Setting directories for managing information of the file
-file_metadata_table = {"name":[] , "keyid" : [], "hash_value" : []}
-record_metadata_table = {"name":[] , "keyid" : [], "hash_value" : []}
+file_metadata_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
+record_history_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
 download_list = []
 
 # Load config for file system manager and save public and private key in directory.
@@ -148,7 +148,7 @@ print(f"Listening on {(host, port)}")
 manager_socket.setblocking(False)
 node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
 
-file_metadata_table, record_metadata_table, password = entity_server.check_database(entity_server.database_name, file_metadata_table, record_metadata_table)
+file_metadata_table, record_history_table, password = entity_server.check_database(entity_server.database_name, file_metadata_table, record_history_table)
 try:
     while True:
         events = node_selector.select(timeout=None)
@@ -162,5 +162,5 @@ except KeyboardInterrupt:
 finally:
     manager_socket.close()
     node_selector.close()
-    entity_server.encrypt_with_password(entity_server.database_name, password, file_metadata_table, record_metadata_table)
+    entity_server.create_encrypt_database(entity_server.database_name, password, file_metadata_table, record_history_table)
     print("Finished")
