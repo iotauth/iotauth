@@ -1,5 +1,4 @@
 node_modules/*
 !node_modules/common.js
 package-lock.json
-filesharing/*.pem
 *.db
