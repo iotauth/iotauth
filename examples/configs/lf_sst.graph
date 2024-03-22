@@ -1,0 +1,111 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901,
+			"callbackPort": 21903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		},
+		{
+			"id": 102,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 22900,
+			"udpPort": 22902,
+			"authPort": 22901,
+			"callbackPort": 22903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		}
+	],
+	"authTrusts": [
+		{
+			"id1": 101,
+			"id2": 102
+		}
+	],
+	"assignments": {
+		"net1.rti": 101,
+		"net1.fed_0": 101,
+		"net1.fed_1": 101,
+		"net1.fed_2": 101,
+		"net1.fed_3": 101
+	},
+	"entityList": [
+		{
+			"group": "Servers",
+			"name": "net1.rti",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RTI",
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net1.fed_0",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Fed_0",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net1.fed_1",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Fed_1",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net1.fed_2",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Fed_2",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Clients",
+			"name": "net1.fed_3",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Fed_3",
+			"backupToAuthIds": [
+				102
+			]
+		}
+	],
+	"filesharingLists": []
+}
