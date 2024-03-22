@@ -118,7 +118,7 @@ See README.md under *entity/c/* for details.
 
 5. Run `make` 
 
-6. [*Optional*] To create a plain text file to be encrypted, run `head -c 1024 < /dev/urandom > plain_txet`, for example, to create a random binary file of size of 1024 bytes.
+6. [*Optional*] To create a plain text file to be encrypted, run `head -c 1024 < /dev/urandom > plain_text`, for example, to create a random binary file of size of 1024 bytes.
 
 7. Run `./secure_entity_uploader ../secure_uploader.config ../plain_text ../addReader.txt` in a separate terminal, to execute net1.uploader. NOTE: *plain_text* is a file to be encrypted and uploaded (can be any file), and *addReader.txt* is a file including a list of readers to be added dynamically,. Below is an example *addReader.txt* file.
    ```
