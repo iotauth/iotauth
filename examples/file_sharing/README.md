@@ -28,22 +28,22 @@ For this section, we use *$ROOT* for the root directory of this repository.
 ### To generate credentials for example Auths and entities, and to create example Auth databases
 Change the directory to _$_ROOT/examples*.
 
-2. Run the script *generateAll.sh*, by entering './generateAll.sh -g configs/file_sharing.graph'.
+2. Run the script *generateAll.sh*, by entering `./generateAll.sh -g configs/file_sharing.graph`.
 
 3. You will be prompted to enter a password for keystores of Auths. Enter your password to proceed.
 
-4. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanAll.sh*, with the command './cleanAll.sh'.
+4. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanAll.sh*, with the command `./cleanAll.sh`.
 
 ### To run IPFS (in command line)
-1. Run 'ipfs daemon' to activate an IPFS environment. (IPFS command line tools should be installed a priori. If it is not installed, then you can install it easily by reading [IPFS install](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions)).
+1. Run `ipfs daemon` to activate an IPFS environment. (IPFS command line tools should be installed a priori. If it is not installed, then you can install it easily by reading [IPFS install](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions)).
 
 ### To run example Auths (in command line)
 See README.md under *examples/* for details.
 1. Change directories $ROOT/auth/auth-server/.
 
-2. Run 'mvn clean install' to build an executable jar file.
+2. Run `mvn clean install` to build an executable jar file.
 
-3. Run the jar file with the properties file for Auth101, with 'java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties'.
+3. Run the jar file with the properties file for Auth101, with `java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties`.
 
 4. Enter your password to proceed.
 
@@ -51,24 +51,24 @@ See README.md under *examples/* for details.
 
 1. Change directories to *$ROOT/examples/file_sharing/*.
 
-2. Run 'python3 file_system_manager.py' to execute the file system manager.
+2. Run `python3 file_system_manager.py` to execute the file system manager.
 
 ### To run example entities written in C language
 See README.md under *entity/c/* for details.
 
-1. Run 'git submodule update --remote' to move the IPFS submodule for file sharing.
+1. Run `git submodule update --remote` to move the IPFS submodule for file sharing.
 
 2. Change directories to *$ROOT/entity/c/ipfs_examples/* (Move the file for experiment in this directory and change the file name to "plain_text")
 
-3. Run 'mkdir build && cd build'
+3. Run `mkdir build && cd build`
 
-4. Run 'cmake ../' to make the Makefile to build.
+4. Run `cmake ../` to make the Makefile to build.
 
-5. Run 'make' 
+5. Run `make` 
 
-6. Run './entity_uploader ../uploader.config ../plain_text ../addReader.txt' in a separate terminal, to execute net1.uploader.
+6. Run `./entity_uploader ../uploader.config ../plain_text ../addReader.txt` in a separate terminal, to execute net1.uploader.
 
-7. Run './entity_downloader ../downloader.config', to execute net1.downloader.
+7. Run `./entity_downloader ../downloader.config`, to execute net1.downloader.
 
 # Security for File System Manager
 ---
@@ -78,7 +78,7 @@ File System Manager manages the information for the file such as file hash value
 
 According figure above, net1.uploader and net1.downloader receive the session key from Auth respectively. File System Manager requests the session key using session key id to Auth (For more detail, you can see process through communication between entity client and server from *$ROOT/entity/c/*.) Thanks to secure key received from Auth, File System Manager can manage the information for the file. Also, We add Auth's communication policy and implement the code for security as Python API in *$ROOT/entity/python/*.
 
-To manages effectively the information for files, we make the database using SQLite and Python API in *$ROOT/entity/python/*. This database saves two tables which are file metadata table and record metadata table. To apply security to this database, we design the security using encryption for the database with the password which we inputs.
+To manage effectively the information for files, we make the database using SQLite and Python API in *$ROOT/entity/python/*. This database saves two tables which are file metadata table and record metadata table. To apply security to this database, we design the security using encryption for the database with the password which we input.
 
 # How to run examples with security
 
@@ -88,7 +88,7 @@ For this section, we use *$ROOT* for the root directory of this repository.
 
 The process is the same as the above example.
 
-### To run IPFS (in command line)
+### To run IPFS (in the command line)
 
 The process is the same as the above example.
 
@@ -100,7 +100,7 @@ The process is the same as the above example.
 
 1. Change directories to *$ROOT/examples/file_sharing/*.
 
-2. Run 'python3 secure_file_system_manager.py file_system_manager.config' to execute the file system manager.
+2. Run `python3 secure_file_system_manager.py file_system_manager.config` to execute the file system manager.
 
 3. Press the password for the database to get previous information.
 
@@ -108,16 +108,22 @@ The process is the same as the above example.
 
 See README.md under *entity/c/* for details.
 
-1. Run 'git submodule update --remote' to move the IPFS submodule for file sharing.
+1. Run `git submodule update --remote` to move the IPFS submodule for file sharing.
 
 2. Change directories to *$ROOT/entity/c/ipfs_examples/* (Move the file for experiment in this directory and change the file name to "plain_text")
 
-3. Run 'mkdir build && cd build'
+3. Run `mkdir build && cd build`
 
-4. Run 'cmake ../' to make the Makefile to build.
+4. Run `cmake ../` to make the Makefile to build.
 
-5. Run 'make' 
+5. Run `make` 
 
-6. Run './secure_entity_uploader ../secure_uploader.config ../plain_text ../addReader.txt' in a separate terminal, to execute net1.uploader.
+6. [*Optional*] To create a plain text file to be encrypted, run `head -c 1024 < /dev/urandom > plain_txet`, for example, to create a random binary file of size of 1024 bytes.
 
-7. Run './secure_entity_downloader ../secure_downloader.config', to execute net1.downloader.
+7. Run `./secure_entity_uploader ../secure_uploader.config ../plain_text ../addReader.txt` in a separate terminal, to execute net1.uploader. NOTE: *plain_text* is a file to be encrypted and uploaded (can be any file), and *addReader.txt* is a file including a list of readers to be added dynamically,. Below is an example *addReader.txt* file.
+   ```
+   {"AddReader":"net1.david"}
+   {"AddReader":"net1.Alice"}
+   ```
+
+9. Run `./secure_entity_downloader ../secure_downloader.config`, to execute net1.downloader.
