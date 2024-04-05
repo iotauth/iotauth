@@ -42,7 +42,7 @@
 		{
 			"group": "Servers",
 			"name": "net1.rti",
-			"port": 21100,
+			"port": 15045,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
