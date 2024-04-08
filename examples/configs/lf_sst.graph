@@ -33,8 +33,8 @@
 	],
 	"assignments": {
 		"net1.rti": 101,
-		"net1.fed_0": 101,
-		"net1.fed_1": 101,
+		"net1.federate__fed1": 101,
+		"net1.federate__fed2": 101,
 		"net1.fed_2": 101,
 		"net1.fed_3": 101
 	},
@@ -48,7 +48,7 @@
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 1,
 			"netName": "net1",
-			"credentialPrefix": "Net1.RTI",
+			"credentialPrefix": "Net1.rti",
 			"host": "localhost",
 			"backupToAuthIds": [
 				102
@@ -56,26 +56,26 @@
 		},
 		{
 			"group": "Clients",
-			"name": "net1.fed_0",
+			"name": "net1.federate__fed1",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.Fed_0",
+			"credentialPrefix": "Net1.federate__fed1",
 			"backupToAuthIds": [
 				102
 			]
 		},
 		{
 			"group": "Clients",
-			"name": "net1.fed_1",
+			"name": "net1.federate__fed2",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.Fed_1",
+			"credentialPrefix": "Net1.federate__fed2",
 			"backupToAuthIds": [
 				102
 			]
