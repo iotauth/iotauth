@@ -444,7 +444,9 @@ public class AuthServer {
     }
 
     /**
-     * Method for exposing an AuthDB operation, generateSessionKeys
+     * Method for exposing an AuthDB operation, generateSessionKeys.
+     * This method is protected using the "synchronized" keyword to ensure the atomicity of the process creating session
+     * keys when there are multiple threads trying to create session keys at the same time.
      * @param owner The owner who will own the generated session keys.
      * @param numKeys The number of keys specified.
      * @param communicationPolicy The communication policy specified.
@@ -454,7 +456,7 @@ public class AuthServer {
      * @throws SQLException if database error occurs.
      * @throws ClassNotFoundException if the class cannot be located.
      */
-    public List<SessionKey> generateSessionKeys(String owner, int numKeys, CommunicationPolicy communicationPolicy,
+    public synchronized List<SessionKey> generateSessionKeys(String owner, int numKeys, CommunicationPolicy communicationPolicy,
                                                 SessionKeyPurpose sessionKeyPurpose)
             throws IOException, SQLException, ClassNotFoundException {
         return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy, sessionKeyPurpose);
