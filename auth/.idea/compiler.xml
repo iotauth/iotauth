@@ -8,8 +8,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="example-auth-db-generator" />
-        <module name="library" />
         <module name="migration-solver" />
+        <module name="library" />
         <module name="auth-server" />
       </profile>
     </annotationProcessing>

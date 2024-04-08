@@ -350,7 +350,7 @@ public class AuthDB {
 
     private void loadRegEntityDB() throws SQLException, ClassNotFoundException {
 
-        sqLiteConnector.selectAllRegEntities(authDatabaseDir).forEach(regEntityTable -> {
+        sqLiteConnector.selectAllRegEntities().forEach(regEntityTable -> {
             DistributionKey distributionKey = null;
             if (regEntityTable.getDistKeyVal() != null) {
                 distributionKey = new DistributionKey(

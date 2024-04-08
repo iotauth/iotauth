@@ -188,7 +188,7 @@ public class AppTest {
         sqLiteConnector.insertRecords(regEntity);
 
         C.PROPERTIES = new AuthServerProperties(testFilesDir + "properties/exampleAuth101.properties", null);
-        sqLiteConnector.selectAllRegEntities("../databases/auth101");
+        sqLiteConnector.selectAllRegEntities();
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
     }
