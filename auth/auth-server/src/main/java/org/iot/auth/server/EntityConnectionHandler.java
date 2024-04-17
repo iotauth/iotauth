@@ -343,6 +343,11 @@ public abstract class EntityConnectionHandler {
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
             close();
         }
+        catch (RuntimeException e) {
+            getLogger().info("RuntimeException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
+            close();
+        }
     }
 
     /**
