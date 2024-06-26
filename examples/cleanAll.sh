@@ -20,7 +20,7 @@ rm -rf auth*
 cd ../../
 
 cd $AUTH_PROPERTIES_DIR
-rm *.properties
+rm -f *.properties
 cd ../../
 
 cd $ENTITY_CREDS_DIR
