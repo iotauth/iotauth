@@ -343,9 +343,19 @@ public abstract class EntityConnectionHandler {
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
             close();
         }
+        catch (InvalidNonceException e) {
+            getLogger().info("InvalidNonceException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
+            close();
+        }
         catch (RuntimeException e) {
             getLogger().info("RuntimeException: " + e.getMessage());
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
+            close();
+        }
+        catch (Exception e) {
+            getLogger().info("Exception: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.UNKNOWN_INTERNAL_ERROR);
             close();
         }
     }
@@ -356,6 +366,8 @@ public abstract class EntityConnectionHandler {
      * @throws IOException If socket IO fails.
      */
     protected void sendAuthAlert(AuthAlertCode authAlertCode) throws IOException {
+        getLogger().info("Sending AUTH_ALERT to entity at Port {} with auth alert code {}",
+                getRemoteAddress(), authAlertCode.name());
         writeToSocket(new AuthAlertMessage(authAlertCode).serialize().getRawBytes());
     }
 

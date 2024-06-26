@@ -24,7 +24,8 @@ import java.util.Map;
  */
 public enum AuthAlertCode {
     INVALID_DISTRIBUTION_KEY((byte)0),
-    INVALID_SESSION_KEY_REQ((byte)1);
+    INVALID_SESSION_KEY_REQ((byte)1),
+    UNKNOWN_INTERNAL_ERROR((byte)2);
 
     public static AuthAlertCode fromByte(byte value) {
         return codesByValue.get(value);
