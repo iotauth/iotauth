@@ -60,7 +60,7 @@ function getRegisteredEntity(entity) {
         UsePermanentDistKey: entity.usePermanentDistKey,
         MaxSessionKeysPerRequest: entity.maxSessionKeysPerRequest,
         DistKeyValidityPeriod: entity.distKeyValidityPeriod,
-        DistCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
+        DistCryptoSpec: entity.distributionCryptoSpec.cipher + ':' + entity.distributionCryptoSpec.mac,
         Active: true,
         BackupToAuthIDs: entity.backupToAuthIds,
         BackupFromAuthID: -1

@@ -131,14 +131,24 @@ function getCryptoInfo(entity) {
             cryptoInfo.publicKeyCryptoSpec.diffieHellman = entity.diffieHellman;
         }
     }
-    cryptoInfo.distributionCryptoSpec = {
-        'cipher': common.DEFAULT_CIPHER,
-        'mac': common.DEFAULT_MAC
-    };
-    cryptoInfo.sessionCryptoSpec = {
-        'cipher': common.DEFAULT_CIPHER,
-        'mac': common.DEFAULT_MAC
-    };
+    if (entity.distributionCryptoSpec != null) {
+    } else {
+		entity.distributionCryptoSpec.cipher = common.DEFAULT_CIPHER;
+		entity.distributionCryptoSpec.mac = common.DEFAULT_MAC;
+    }
+	cryptoInfo.distributionCryptoSpec = {
+		'cipher': entity.distributionCryptoSpec.cipher,
+		'mac': entity.distributionCryptoSpec.mac,
+	};
+    if (entity.sessionCryptoSpec != null) {
+    } else {
+		entity.sessionCryptoSpec.cipher = common.DEFAULT_CIPHER;
+		entity.sessionCryptoSpec.mac = common.DEFAULT_MAC;
+    }
+	cryptoInfo.sessionCryptoSpec = {
+		'cipher': entity.sessionCryptoSpec.cipher,
+		'mac': entity.sessionCryptoSpec.mac,
+	};
     if (entity.diffieHellman != null) {
         cryptoInfo.sessionCryptoSpec.diffieHellman = entity.diffieHellman;
     }
