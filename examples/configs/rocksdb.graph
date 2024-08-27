@@ -32,19 +32,19 @@
 		}
 	],
 	"assignments": {
-		"net1.compute_server": 101,
-		"net1.compaction_server": 101
+		"net1.compute_node": 101,
+		"net1.compaction_node": 101
 	},
 	"entityList": [
 		{
-			"group": "Clients",
-			"name": "net1.compute_server",
+			"group": "ComputeNodes",
+			"name": "net1.compute_node",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.compute_server",
+			"credentialPrefix": "Net1.compute_node",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CTR",
 				"mac": "SHA256"
@@ -58,15 +58,15 @@
 			]
 		},
 		{
-			"group": "Servers",
-			"name": "net1.compaction_server",
+			"group": "CompactionNodes",
+			"name": "net1.compaction_node",
 			"port": 21100,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 1,
 			"netName": "net1",
-			"credentialPrefix": "Net1.compaction_server",
+			"credentialPrefix": "Net1.compaction_node",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CTR",
 				"mac": "SHA256"
