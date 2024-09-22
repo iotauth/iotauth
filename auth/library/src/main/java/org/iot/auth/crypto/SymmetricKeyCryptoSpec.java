@@ -115,7 +115,7 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
             }
             // 128 bits -> 16 bytes
         }
-        else if (cryptoAlgo.equals("AES/CTR/PKCS5Padding")) {
+        else if (cryptoAlgo.equals("AES/CTR/NoPadding")) {
             if (keySize == 16) {
                 return new String("AES-128-CTR");
             }
@@ -176,7 +176,7 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
             return new CryptoAlgoKeySize("AES/CBC/PKCS5Padding", 32);
         }
         else if (jsCryptoAlgo.equals("AES-128-CTR")) {
-            return new CryptoAlgoKeySize("AES/CTR/PKCS5Padding", 16);
+            return new CryptoAlgoKeySize("AES/CTR/NoPadding", 16);
         }
         else if (jsCryptoAlgo.equals("SHA256")) {
             return new CryptoAlgoKeySize("HmacSHA256");
