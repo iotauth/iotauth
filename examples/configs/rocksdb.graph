@@ -1,0 +1,85 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901,
+			"callbackPort": 21903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		},
+		{
+			"id": 102,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 22900,
+			"udpPort": 22902,
+			"authPort": 22901,
+			"callbackPort": 22903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		}
+	],
+	"authTrusts": [
+		{
+			"id1": 101,
+			"id2": 102
+		}
+	],
+	"assignments": {
+		"net1.compute_node": 101,
+		"net1.compaction_node": 101
+	},
+	"entityList": [
+		{
+			"group": "ComputeNodes",
+			"name": "net1.compute_node",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compute_node",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "CompactionNodes",
+			"name": "net1.compaction_node",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compaction_node",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		}
+	],
+	"filesharingLists": []
+}

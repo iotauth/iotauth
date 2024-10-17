@@ -55,6 +55,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.Uploader",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
@@ -70,6 +78,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.Downloader",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
@@ -85,6 +101,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.Alice",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
@@ -100,6 +124,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.Bob",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
@@ -113,6 +145,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.FileSystemManager",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
@@ -126,6 +166,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.Uploader",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				101
 			]
@@ -141,6 +189,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.Downloader",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				101
 			]
@@ -156,6 +212,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.Alice",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				101
 			]
@@ -171,6 +235,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.Bob",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				101
 			]
@@ -184,6 +256,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.FileSystemManager",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				101
 			]

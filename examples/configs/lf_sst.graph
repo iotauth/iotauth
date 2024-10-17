@@ -49,6 +49,14 @@
 			"maxSessionKeysPerRequest": 1,
 			"netName": "net1",
 			"credentialPrefix": "Net1.rti",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"host": "localhost",
 			"backupToAuthIds": [
 				102
@@ -63,6 +71,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.federate__fed1",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
@@ -76,6 +92,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.federate__fed2",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
@@ -89,6 +113,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.Fed_2",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
@@ -102,6 +134,14 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.Fed_3",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
 			"backupToAuthIds": [
 				102
 			]
