@@ -19,6 +19,7 @@ import org.json.simple.JSONObject;
 
 /**
  * A class for symmetric key cryptography specifications
+ * 
  * @author Hokeun Kim
  */
 public class SymmetricKeyCryptoSpec extends CryptoSpec {
@@ -38,6 +39,7 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
 
     /**
      * Constructor for symmetric crypto spec that uses MAC only.
+     * 
      * @param macAlgorithm The name of MAC algorithm
      */
     public SymmetricKeyCryptoSpec(String macAlgorithm) {
@@ -49,8 +51,8 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     }
 
     public static SymmetricKeyCryptoSpec fromJSONObject(JSONObject jsonObject) {
-        CryptoAlgoKeySize cipherAlgoKeySize = fromJSCryptoAlgo((String)jsonObject.get(key.cipher.toString()));
-        CryptoAlgoKeySize hashAlgoKeySize = fromJSCryptoAlgo((String)jsonObject.get(key.mac.toString()));
+        CryptoAlgoKeySize cipherAlgoKeySize = fromJSCryptoAlgo((String) jsonObject.get(key.cipher.toString()));
+        CryptoAlgoKeySize hashAlgoKeySize = fromJSCryptoAlgo((String) jsonObject.get(key.mac.toString()));
 
         return new SymmetricKeyCryptoSpec(cipherAlgoKeySize.getCryptoAlgo(), cipherAlgoKeySize.getKeySize(),
                 hashAlgoKeySize.getCryptoAlgo());
@@ -69,15 +71,19 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     public String toSpecString() {
         return toJavaScriptSpecString(cipherAlgorithm, cipherKeySize) + ":" + toJavaScriptSpecString(macAlgorithm, -1);
     }
+
     public String getCipherAlgorithm() {
         return cipherAlgorithm;
     }
+
     public int getCipherKeySize() {
         return cipherKeySize;
     }
+
     public String getMacAlgorithm() {
         return macAlgorithm;
     }
+
     public int getMacKeySize() {
         return macKeySize;
     }
@@ -91,7 +97,7 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     }
 
     public String toString() {
-            return "Cipher: " + cipherAlgorithm + "\tCipherKeySize: " + cipherKeySize + "\tMAC Algorithm: " + macAlgorithm;
+        return "Cipher: " + cipherAlgorithm + "\tCipherKeySize: " + cipherKeySize + "\tMAC Algorithm: " + macAlgorithm;
     }
 
     private String cipherAlgorithm;
@@ -102,25 +108,24 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     private static String toJavaScriptSpecString(String cryptoAlgo, int keySize) {
         if (cryptoAlgo.equals("")) {
             return new String("");
-        }
-        else if (cryptoAlgo.equals("AES/CBC/PKCS5Padding")) {
+        } else if (cryptoAlgo.equals("AES/CBC/PKCS5Padding")) {
             if (keySize == 16) {
                 return new String("AES-128-CBC");
-            }
-            else if (keySize == 24) {
+            } else if (keySize == 24) {
                 return new String("AES-192-CBC");
-            }
-            else if (keySize == 32) {
+            } else if (keySize == 32) {
                 return new String("AES-256-CBC");
             }
             // 128 bits -> 16 bytes
-        }
-        else if (cryptoAlgo.equals("AES/CTR/NoPadding")) {
+        } else if (cryptoAlgo.equals("AES/CTR/NoPadding")) {
             if (keySize == 16) {
                 return new String("AES-128-CTR");
             }
-        }
-        else if (cryptoAlgo.equals("HmacSHA256")) {
+        } else if (cryptoAlgo.equals("AES/GCM/NoPadding")) {
+            if (keySize == 16) {
+                return new String("AES-128-GCM");
+            }
+        } else if (cryptoAlgo.equals("HmacSHA256")) {
             return new String("SHA256");
         }
         throw new IllegalArgumentException("No such crypto algorithm: " + cryptoAlgo + ", keySize:" + keySize);
@@ -129,32 +134,35 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     private static int getMacAlgoKeySize(String macAlgo) {
         if (macAlgo.equals("HmacSHA256")) {
             return 32;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("No such MAC algorithm: " + macAlgo);
         }
     }
-
 
     private static class CryptoAlgoKeySize {
         public CryptoAlgoKeySize(String cipherAlgo, int keySize) {
             this.cipherAlgo = cipherAlgo;
             this.keySize = keySize;
         }
+
         public CryptoAlgoKeySize(String cipherAlgo) {
             this.cipherAlgo = cipherAlgo;
             this.keySize = -1;
         }
+
         public CryptoAlgoKeySize() {
             this.cipherAlgo = "";
             this.keySize = 0;
         }
+
         public String getCryptoAlgo() {
             return cipherAlgo;
         }
+
         public int getKeySize() {
             return keySize;
         }
+
         private String cipherAlgo;
         private int keySize;
     }
@@ -162,26 +170,20 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     private static CryptoAlgoKeySize fromJSCryptoAlgo(String jsCryptoAlgo) {
         if (jsCryptoAlgo.equals("")) {
             return new CryptoAlgoKeySize();
-        }
-        else if (jsCryptoAlgo.equals("AES-128-CBC")) {
+        } else if (jsCryptoAlgo.equals("AES-128-CBC")) {
             // 128 bits -> 16 bytes
             return new CryptoAlgoKeySize("AES/CBC/PKCS5Padding", 16);
-        }
-        else if (jsCryptoAlgo.equals("AES-192-CBC")) {
+        } else if (jsCryptoAlgo.equals("AES-192-CBC")) {
             // 192 bits -> 24 bytes
             return new CryptoAlgoKeySize("AES/CBC/PKCS5Padding", 24);
-        }
-        else if (jsCryptoAlgo.equals("AES-256-CBC")) {
+        } else if (jsCryptoAlgo.equals("AES-256-CBC")) {
             // 256 bits -> 32 bytes
             return new CryptoAlgoKeySize("AES/CBC/PKCS5Padding", 32);
-        }
-        else if (jsCryptoAlgo.equals("AES-128-CTR")) {
+        } else if (jsCryptoAlgo.equals("AES-128-CTR")) {
             return new CryptoAlgoKeySize("AES/CTR/NoPadding", 16);
-        }
-        else if (jsCryptoAlgo.equals("AES-128-GCM")) {
-            return new CryptoAlgoKeySize("AES/GCM/PKCS5Padding", 16);
-        }
-        else if (jsCryptoAlgo.equals("SHA256")) {
+        } else if (jsCryptoAlgo.equals("AES-128-GCM")) {
+            return new CryptoAlgoKeySize("AES/GCM/NoPadding", 16);
+        } else if (jsCryptoAlgo.equals("SHA256")) {
             return new CryptoAlgoKeySize("HmacSHA256");
         }
         throw new IllegalArgumentException("No such JS crypto algorithm: " + jsCryptoAlgo);

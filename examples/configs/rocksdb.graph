@@ -33,7 +33,11 @@
 	],
 	"assignments": {
 		"net1.compute_node": 101,
-		"net1.compaction_node": 101
+		"net1.compaction_node": 101,
+		"net1.compute_node_GCM": 101,
+		"net1.compaction_node_GCM": 101,
+		"net1.compute_node_CBC": 101,
+		"net1.compaction_node_CBC": 101
 	},
 	"entityList": [
 		{
@@ -73,6 +77,94 @@
 			},
 			"sessionCryptoSpec": {
 				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "ComputeNodesGCM",
+			"name": "net1.compute_node_GCM",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compute_node_GCM",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-GCM",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-GCM",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "CompactionNodesGCM",
+			"name": "net1.compaction_node_GCM",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compaction_node_GCM",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-GCM",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-GCM",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "ComputeNodesCBC",
+			"name": "net1.compute_node_CBC",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compute_node_CBC",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "CompactionNodesCBC",
+			"name": "net1.compaction_node_CBC",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compaction_node_CBC",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
 			},
 			"host": "localhost",
