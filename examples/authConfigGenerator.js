@@ -167,7 +167,7 @@ function addUploadDownloadlPolicy(list, requestingGroup, target) {
     });    
 }
 // generate client policy tables
-function addComputeCompactionPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
     list.push({
         RequestingGroup: requestingGroup,
         TargetType: 'Group',
@@ -251,7 +251,7 @@ function generateCommunicationPolicyTables() {
     addServerClientPolicy(policyList, 'TeamA', 'FileManager', '1*day', '2*hour');
     addServerClientPolicy(policyList, 'TeamB', 'FileManager', '1*day', '2*hour');
     addServerClientPolicy(policyList, 'TeamC', 'FileManager', '1*day', '2*hour');
-    addComputeCompactionPolicy(policyList, 'ComputeNodes', 'CompactionNodes', '1*day', '2*hour');
+    addComputeCompactionCTRPolicy(policyList, 'ComputeNodesCTR', 'CompactionNodesCTR', '1*day', '2*hour');
     addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
     addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
     for (var i = 0; i < authList.length; i++) {
