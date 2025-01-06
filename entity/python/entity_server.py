@@ -354,7 +354,7 @@ def auth_socket_connect(config_dict: dict) -> socket.socket:
     """
     client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     Host = config_dict["auth_ip_address"]
-    Port = int(config_dict["auth_port_number"])
+    Port = config_dict["auth_port_number"]
     client_sock.connect((Host, Port))
     return client_sock
 
