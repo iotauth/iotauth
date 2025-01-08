@@ -69,7 +69,7 @@ public class SessionKeyReqPurpose {
         } else if (purpose.containsKey(fileSharing)) {
             objTarget = purpose.get(fileSharing);
             if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.FILE_SHARING;
+                this.targetType = CommunicationTargetType.FILE_SHARING_TEAM;
             }
         }
 
