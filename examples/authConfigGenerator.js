@@ -60,7 +60,7 @@ function getRegisteredEntity(entity) {
         UsePermanentDistKey: entity.usePermanentDistKey,
         MaxSessionKeysPerRequest: entity.maxSessionKeysPerRequest,
         DistKeyValidityPeriod: entity.distKeyValidityPeriod,
-        DistCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
+        DistCryptoSpec: entity.distributionCryptoSpec.cipher + ':' + entity.distributionCryptoSpec.mac,
         Active: true,
         BackupToAuthIDs: entity.backupToAuthIds,
         BackupFromAuthID: -1
@@ -166,6 +166,71 @@ function addUploadDownloadlPolicy(list, requestingGroup, target) {
         RelativeValidity: '365*day'
     });    
 }
+// generate client policy tables
+function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+    list.push({
+        RequestingGroup: requestingGroup,
+        TargetType: 'Group',
+        Target: target,
+        MaxNumSessionKeyOwners: 2,
+        SessionCryptoSpec: 'AES-128-CTR:SHA256',
+        AbsoluteValidity: absoluteValidity,
+        RelativeValidity: relativeValidity
+    });
+    list.push({
+        RequestingGroup: target,
+        TargetType: 'Group',
+        Target: requestingGroup,
+        MaxNumSessionKeyOwners: 2,
+        SessionCryptoSpec: 'AES-128-CTR:SHA256',
+        AbsoluteValidity: absoluteValidity,
+        RelativeValidity: relativeValidity
+    });
+}
+
+// generate client policy tables
+function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+    list.push({
+        RequestingGroup: requestingGroup,
+        TargetType: 'Group',
+        Target: target,
+        MaxNumSessionKeyOwners: 2,
+        SessionCryptoSpec: 'AES-128-GCM:SHA256',
+        AbsoluteValidity: absoluteValidity,
+        RelativeValidity: relativeValidity
+    });
+    list.push({
+        RequestingGroup: target,
+        TargetType: 'Group',
+        Target: requestingGroup,
+        MaxNumSessionKeyOwners: 2,
+        SessionCryptoSpec: 'AES-128-GCM:SHA256',
+        AbsoluteValidity: absoluteValidity,
+        RelativeValidity: relativeValidity
+    });
+}
+
+// generate client policy tables
+function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+    list.push({
+        RequestingGroup: requestingGroup,
+        TargetType: 'Group',
+        Target: target,
+        MaxNumSessionKeyOwners: 2,
+        SessionCryptoSpec: 'AES-128-CBC:SHA256',
+        AbsoluteValidity: absoluteValidity,
+        RelativeValidity: relativeValidity
+    });
+    list.push({
+        RequestingGroup: target,
+        TargetType: 'Group',
+        Target: requestingGroup,
+        MaxNumSessionKeyOwners: 2,
+        SessionCryptoSpec: 'AES-128-CBC:SHA256',
+        AbsoluteValidity: absoluteValidity,
+        RelativeValidity: relativeValidity
+    });
+}
 
 function generateCommunicationPolicyTables() {
     var policyList = [];
@@ -186,6 +251,9 @@ function generateCommunicationPolicyTables() {
     addServerClientPolicy(policyList, 'TeamA', 'FileManager', '1*day', '2*hour');
     addServerClientPolicy(policyList, 'TeamB', 'FileManager', '1*day', '2*hour');
     addServerClientPolicy(policyList, 'TeamC', 'FileManager', '1*day', '2*hour');
+    addComputeCompactionCTRPolicy(policyList, 'ComputeNodesCTR', 'CompactionNodesCTR', '1*day', '2*hour');
+    addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
+    addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';

@@ -32,23 +32,133 @@
 		}
 	],
 	"assignments": {
-		"net1.rti": 101,
-		"net1.federate__fed1": 101,
-		"net1.federate__fed2": 101,
-		"net1.fed_2": 101,
-		"net1.fed_3": 101
+		"net1.compute_node": 101,
+		"net1.compaction_node_CTR": 101,
+		"net1.compute_node_GCM": 101,
+		"net1.compaction_node_GCM": 101,
+		"net1.compute_node_CBC": 101,
+		"net1.compaction_node_CBC": 101
 	},
 	"entityList": [
 		{
-			"group": "Servers",
-			"name": "net1.rti",
-			"port": 15045,
+			"group": "ComputeNodesCTR",
+			"name": "net1.compute_node",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compute_node",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "CompactionNodesCTR",
+			"name": "net1.compaction_node_CTR",
+			"port": 21100,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 1,
 			"netName": "net1",
-			"credentialPrefix": "Net1.rti",
+			"credentialPrefix": "Net1.compaction_node_CTR",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CTR",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "ComputeNodesGCM",
+			"name": "net1.compute_node_GCM",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compute_node_GCM",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-GCM",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-GCM",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "CompactionNodesGCM",
+			"name": "net1.compaction_node_GCM",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compaction_node_GCM",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-GCM",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-GCM",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "ComputeNodesCBC",
+			"name": "net1.compute_node_CBC",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compute_node_CBC",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "CompactionNodesCBC",
+			"name": "net1.compaction_node_CBC",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.compaction_node_CBC",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -58,90 +168,6 @@
 				"mac": "SHA256"
 			},
 			"host": "localhost",
-			"backupToAuthIds": [
-				102
-			]
-		},
-		{
-			"group": "Clients",
-			"name": "net1.federate__fed1",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.federate__fed1",
-			"distributionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"sessionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"backupToAuthIds": [
-				102
-			]
-		},
-		{
-			"group": "Clients",
-			"name": "net1.federate__fed2",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.federate__fed2",
-			"distributionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"sessionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"backupToAuthIds": [
-				102
-			]
-		},
-		{
-			"group": "Clients",
-			"name": "net1.fed_2",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.Fed_2",
-			"distributionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"sessionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"backupToAuthIds": [
-				102
-			]
-		},
-		{
-			"group": "Clients",
-			"name": "net1.fed_3",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.Fed_3",
-			"distributionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"sessionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
 			"backupToAuthIds": [
 				102
 			]

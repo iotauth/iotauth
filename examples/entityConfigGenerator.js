@@ -132,12 +132,12 @@ function getCryptoInfo(entity) {
         }
     }
     cryptoInfo.distributionCryptoSpec = {
-        'cipher': common.DEFAULT_CIPHER,
-        'mac': common.DEFAULT_MAC
+        'cipher': entity.distributionCryptoSpec.cipher,
+        'mac': entity.distributionCryptoSpec.mac,
     };
     cryptoInfo.sessionCryptoSpec = {
-        'cipher': common.DEFAULT_CIPHER,
-        'mac': common.DEFAULT_MAC
+        'cipher': entity.sessionCryptoSpec.cipher,
+        'mac': entity.sessionCryptoSpec.mac,
     };
     if (entity.diffieHellman != null) {
         cryptoInfo.sessionCryptoSpec.diffieHellman = entity.diffieHellman;

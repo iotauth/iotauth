@@ -58,3 +58,30 @@ For the following instructions, we use $ROOT to indicate the root directory of t
 ![Image of Auth101 Config](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/auth101_intellij_config.png)
 
 ![Image of Auth102 Config](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/auth102_intellij_config.png)
+
+
+# Using VSCode
+
+* Install the [Maven for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-maven) and [Extension Pack for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack) extensions.
+
+* Get to the `Explorer` (Ctrl+Shift+E), and find the `Maven` tab. Go to the `auth-server/Lifecycle`, and push the play button on `clean` and `install`.
+
+* Add the below configuration to `launch.json`.
+```
+        {
+            "name": "auth",
+            "type": "java",
+            "request": "launch",
+            "mainClass": "org.iot.auth.AuthServer",
+            "args": [
+                "-p",
+                "../properties/exampleAuth101.properties"
+            ],
+            "cwd": "${workspaceFolder}/auth/auth-server",
+            "vmArgs": "-Djava.version=17",
+            "javaHome": "/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
+        },
+```
+
+* Also, add `"java.jdt.ls.java.home": "/usr/lib/jvm/java-17-openjdk-amd64/bin/java"` to `settings.json`.
+* Then, push the `F5`.
