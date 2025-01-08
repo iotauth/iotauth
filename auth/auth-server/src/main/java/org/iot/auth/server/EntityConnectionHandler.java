@@ -459,7 +459,7 @@ public abstract class EntityConnectionHandler {
         switch (reqPurpose.getTargetType()) {
             // If a target or publish-topic is specified, generate new keys
             case TARGET_GROUP:
-            case FILE_SHARING:
+            case FILE_SHARING_TEAM:
             case PUBLISH_TOPIC: {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());

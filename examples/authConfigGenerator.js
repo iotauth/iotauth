@@ -158,7 +158,7 @@ function addPubSubPolicy(list, requestingGroup, isPub) {
 function addUploadDownloadlPolicy(list, requestingGroup, target) {
     list.push({
         RequestingGroup: requestingGroup,
-        TargetType: 'FileSharing',
+        TargetType: 'FileSharingTeam',
         Target: target,
         MaxNumSessionKeyOwners: 10,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
