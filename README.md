@@ -39,13 +39,13 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 ## Active Contributors
 - [Hokeun Kim](https://hokeun.github.io/) (Assistant Professor at Arizona State University)
 - [Dongha Kim](https://github.com/Jakio815) (Ph.D. Student at Arizona State University)
-- [Yeongbin Jo](https://github.com/yeongbin7) (M.S. Student at Hanyang University)
+- [Yeongbin Jo](https://github.com/yeongbin7) (Former M.S. Student at Hanyang University)
 
 ## Former Contributors
 - [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
-- [Eunsuk Kang](https://eskang.github.io/) (Assistant Professor at Carnegie Mellon University)
-- [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/) (Assistant Researcher at UC Berkeley)
-- [Taekyung Kim](https://github.com/LukeKimm) (M.S. Student at Hanyang University)
+- [Eunsuk Kang](https://eskang.github.io/) (Associate Professor at Carnegie Mellon University)
+- [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/) (CEO at Xronos Inc.)
+- [Taekyung Kim](https://github.com/LukeKimm) (Officer in the Republic of Korea Army)
 
 # External libraries
 ---
