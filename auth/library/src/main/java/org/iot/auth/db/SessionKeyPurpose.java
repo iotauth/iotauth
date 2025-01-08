@@ -28,7 +28,7 @@ public class SessionKeyPurpose {
                 targetType == CommunicationTargetType.SUBSCRIBE_TOPIC) {
             this.targetType = "PubSub";
         }
-        else if (targetType == CommunicationTargetType.FILE_SHARING) {
+        else if (targetType == CommunicationTargetType.FILE_SHARING_TEAM) {
             this.targetType = "FileSharing";
         }
         else {
