@@ -47,7 +47,7 @@ public enum CommunicationTargetType {
                 return PUBLISH_TOPIC;
             case "SubTopic":
                 return SUBSCRIBE_TOPIC;
-            case "FileSharingTeam":
+            case "FileSharing":
                 return FILE_SHARING_TEAM;
             case "AddReader":
                 return ADD_READER;
