@@ -40,7 +40,7 @@ SECURE_COMM_MSG = 33
 MAC_KEY_SIZE = 32
 DATA_UPLOAD_REQ = 0
 DATA_DOWNLOAD_REQ = 1
-DATA_RESP = 2
+DOWNLOAD_RESP = 2
 database_name = "file_system_manager.db"
 
 def load_config(path: str, config_dict: dict) -> None:
@@ -553,7 +553,8 @@ def concat_data(recv_data: bytearray, file_metadata_table: dict, record_history_
     command = "ipfs cat $1 > "
     command = command.replace("$1", res_hashvalue)
     message = bytearray(3+len(res_keyid)+len(command))
-    message[0] = int(hex(DATA_RESP),16)
+    message[0] = int(hex(DOWNLOAD_RESP),16)
+    print(message[0])
     message[1] = int(hex(len(res_keyid)),16)
     message[2:2+len(res_keyid)] = res_keyid
     message[2+len(res_keyid)] = int(hex(len(command)),16)
