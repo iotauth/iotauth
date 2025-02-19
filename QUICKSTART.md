@@ -65,4 +65,4 @@ $ ./entity_client ../c_client.config
 
 For further details, see "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/master/examples/README.md) for more details.
 
-Also for more C examples, see https://github.com/iotauth/sst-c-api/tree/master/examples/ for more details.
+Also for more C examples, see https://github.com/iotauth/sst-c-api/tree/master/examples/ for more details.\
