@@ -102,6 +102,24 @@ See README.md under *auth/*.
 
 8. Do the same within net2.client and net2.server as in the steps 4-7.
 
+### To run example entities written in C
+
+1. Update *sst-c-api* submodule.
+2. Change directories to *$ROOT/entity/c/examples/server_client_example*.
+
+3. Build C examples.
+```
+$ mkdir build && cd build
+$ cmake ../
+$ make
+```
+
+4. Run './entity_server ../c_server.config', to execute net1.server.
+
+4. Run './entity_client ../c_client.config' in a separate terminal, to execute net1.client.
+
+See https://github.com/iotauth/sst-c-api/tree/master/examples/ for more details.
+
 ### To run example entities written in Cape Code
 
 1. [Install Ptolemy II](https://icyphy.github.io/ptII/) and run the [Cape Code Swarmlet host](https://wiki.eecs.berkeley.edu/accessors/Main/CapeCodeHost). (For more information of Cape Code, see [here](https://chess.eecs.berkeley.edu/capecode/))
