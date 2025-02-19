@@ -1,43 +1,23 @@
 # Prerequisites
+1. OpenSSL 3.0 or higher, for cryptographic key generation, and the C API.
+2. Java 11 or higher, for *Auth*.
+3. NodeJS, Npm, and Maven.
+5. CMake 3.19 or higher, for C example compilation.
 ## Ubuntu 24.04
 ```
-// openssl 3.0 or higher
-$ apt-get install openssl 
-
-// java 11 or higher
-$ apt-get install openjdk-17-jdk
-
-$ apt-get install nodejs
-$ apt-get install npm
-$ apt-get install maven
-
-// cmake 3.19 or higher
-$ apt-get install cmake
+$ apt-get install openssl openjdk-17-jdk nodejs npm maven cmake
 
 $ git clone https://github.com/iotauth/iotauth.git
 $ cd iotauth
-// Update submodule.
 $ git submodule update --init
 ```
 
 ## Mac OS
 ```
-// openssl 3.0 or higher
-$ brew install openssl@3
-
-// java 11 or higher
-$ brew install openjdk
-
-$ brew install node
-$ brew install npm
-$ brew install maven
-
-// cmake 3.19 or higher
-$ brew install cmake
+$ brew install openssl@3 openjdk node npm maven cmake
 
 $ git clone https://github.com/iotauth/iotauth.git
 $ cd iotauth
-// Update submodule.
 $ git submodule update --init
 ```
 
@@ -57,21 +37,27 @@ $ mvn clean install
 $ cd entity/c/examples/server_client_example/
 $ mkdir build
 $ cd build
+```
 
-// For full logs, add -DCMAKE_BUILD_TYPE=DEBUG
+For full logs, add `-DCMAKE_BUILD_TYPE=DEBUG` as cmake flags.
+```
 $ cmake ../
 $ make
 ```
 ## Execute C examples
 Turn on three terminals. Run each command on each terminal.
+1. Execute Auth in `$ROOT/auth/auth-server`.
 ```
-// Execute Auth in $ROOT/auth/auth-server
 $ java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties
+```
 
-// Execute server example in $ROOT/entity/c/examples/server_client_example/build
+2. Execute server example in `$ROOT/entity/c/examples/server_client_example/build`.
+```
 $ ./entity_server ../c_server.config
+```
 
-// Execute client example in $ROOT/entity/c/examples/server_client_example/build
+3. Execute client example in `$ROOT/entity/c/examples/server_client_example/build`.
+```
 $ ./entity_client ../c_client.config
 ```
 
