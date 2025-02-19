@@ -6,20 +6,20 @@
 ## Ubuntu 24.04
 ```
 $ apt-get install openssl openjdk-17-jdk nodejs npm maven cmake
-
-$ git clone https://github.com/iotauth/iotauth.git
-$ cd iotauth
-$ git submodule update --init
 ```
 
 ## Mac OS
 ```
 $ brew install openssl@3 openjdk node npm maven cmake
+```
 
+## Clone repository & Update submodule
+```
 $ git clone https://github.com/iotauth/iotauth.git
 $ cd iotauth
 $ git submodule update --init
 ```
+
 
 # C Basic Server Client Example
 ## Generate Credentials, Build ***Auth***
@@ -39,7 +39,7 @@ $ mkdir build
 $ cd build
 ```
 
-For full logs, add `-DCMAKE_BUILD_TYPE=DEBUG` as cmake flags.
+To see full logs, add `-DCMAKE_BUILD_TYPE=DEBUG` as cmake flags.
 ```
 $ cmake ../
 $ make
