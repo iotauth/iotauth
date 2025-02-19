@@ -118,7 +118,7 @@ $ make
 
 4. Run './entity_client ../c_client.config' in a separate terminal, to execute net1.client.
 
-See https://github.com/iotauth/sst-c-api/tree/master/examples/ for more details.
+See https://github.com/iotauth/sst-c-api/tree/master/examples/ for more examples.
 
 ### To run example entities written in Cape Code
 

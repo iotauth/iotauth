@@ -1,4 +1,3 @@
 [submodule "entity/sst-c-api"]
 	path = entity/c
 	url = https://github.com/iotauth/sst-c-api.git
-	
