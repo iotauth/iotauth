@@ -7,7 +7,10 @@ The architecture provides security guarantees while addressing IoT-related issue
 The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our magazine article [[IT Professional '17'](https://ieeexplore.ieee.org/document/8057722/)].
 Our ACM journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/3375837)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
 In 2023, we released C API for SST introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
-We also recently applied SST for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
+We also recently applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://2025.sigmod.org/sigmod_papers.shtml)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
+
+More publications on SST or using SST include [[SmartSP '25](https://arxiv.org/abs/2411.13441)], [[FDL '23](https://ieeexplore.ieee.org/document/10272133)], and [[SenSys '23 - Poster Abstract]](https://dl.acm.org/doi/10.1145/3625687.3628408).
+
 For the most in-depth technical document of SST, please refer to this Ph.D. dissertation [[UC Berkeley '17](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-139.html)].
 
 This repository includes 1) an open-source Java implementation of Auth and 2) sample codes for local entities to use Auth (authentication/authorization) services provided by Auth in various programming languages for different platforms.
@@ -25,7 +28,7 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 
 # Directory structure
 ---
-- **android**: Directory for SST's Auth and entities for Android platform (*currently under development*)
+- **android**: Directory for SST's Auth and entities for the Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
 - **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/master/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
 - **examples**: Directory for scripts and descriptions to run example Auths and entities.
@@ -43,13 +46,14 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 ## Active Contributors
 - [Hokeun Kim](https://hokeun.github.io/) (Assistant Professor at Arizona State University)
 - [Dongha Kim](https://github.com/Jakio815) (Ph.D. Student at Arizona State University)
-- [Yeongbin Jo](https://github.com/yeongbin7) (Former M.S. Student at Hanyang University)
+- [Carlos Beltran Quinonez](https://github.com/CarlosBeltranQ) (M.S. Student at Arizona State University)
 
 ## Former Contributors
 - [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
 - [Eunsuk Kang](https://eskang.github.io/) (Associate Professor at Carnegie Mellon University)
 - [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/) (CEO at Xronos Inc.)
 - [Taekyung Kim](https://github.com/LukeKimm) (Officer in the Republic of Korea Army)
+- [Yeongbin Jo](https://github.com/yeongbin7) (Former M.S. Student at Hanyang University)
 
 # External libraries
 ---
@@ -64,4 +68,4 @@ This project is currently intended for academic and research purposes, although 
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP), a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 This work was supported in part by the National Research Foundation of Korea (NRF) grants funded by the Korea government (MSIT).
 
-*Last updated on February 2, 2024*
+*Last updated on March 31, 2025*
