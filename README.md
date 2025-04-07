@@ -1,6 +1,6 @@
 # Overview
 ---
-This is a repository for an open-source project of **SST (Secure Swarm Toolkit)** and the local authentication and authorization entity, **Auth**, for the Internet of Things (IoT) security. Auth is a local point of authorization, and Auth's main roles are 1) providing authentication/authorization for its locally registered entities or devices and 2) working as a bridge of authorization between its local entities and the Internet. 
+This is a repository for an open-source project of **SST (Secure Swarm Toolkit)** and the local authentication and authorization entity, **Auth**, for the security of distributed systems and Internet of Things (IoT). Auth is a local point of authorization, and Auth's main roles are 1) providing authentication/authorization for its locally registered entities or devices and 2) working as a bridge of authorization between its local entities and the Internet. 
 
 Our conference papers [[IoTDI '17](https://dl.acm.org/citation.cfm?id=3054980)], [[FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)] describe a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity).
 The architecture provides security guarantees while addressing IoT-related issues, including resource constraints and intermittent connectivity.
