@@ -9,7 +9,7 @@ Our ACM journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/33758
 In 2023, we released C API for SST introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
 We also recently applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://2025.sigmod.org/sigmod_papers.shtml)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
 
-More publications on SST or using SST include [[SmartSP '25](https://arxiv.org/abs/2411.13441)], [[FDL '23](https://ieeexplore.ieee.org/document/10272133)], and [[SenSys '23 - Poster Abstract]](https://dl.acm.org/doi/10.1145/3625687.3628408).
+More publications on SST or using SST include [[SmartSP '24](https://arxiv.org/abs/2411.13441)], [[FDL '23](https://ieeexplore.ieee.org/document/10272133)], and [[SenSys '23 - Poster Abstract]](https://dl.acm.org/doi/10.1145/3625687.3628408).
 
 For the most in-depth technical document of SST, please refer to this Ph.D. dissertation [[UC Berkeley '17](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-139.html)].
 
