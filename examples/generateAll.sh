@@ -81,7 +81,7 @@ EXAMPLES_DIR=`eval pwd`
 cd ../entity/node
 echo "Installing required npm modules for example node entities ..."
 ./initNodeEntities.sh
-cd $EXAMPLES_DIR
+cd "$EXAMPLES_DIR"
 
 # generate credentials and configs
 if [ "$GEN_CRED_CONFIG" = true ] ; then
