@@ -114,7 +114,7 @@ for (var i = 0; i < authTrusts.length; i++) {
 // copy Auth certs to entity directory
 const AUTH_CERTS_DIR = PROJ_ROOT_DIR + 'entity/auth_certs';
 fs.mkdirSync(AUTH_CERTS_DIR, {recursive: true});;
-common.safeSpawnSync('cp', [ AUTH_DATABASES_DIR.replace(/ /g, '\\ ') + 'auth*/my_certs/*EntityCert.pem', '"' + AUTH_CERTS_DIR + '"']);
+common.safeSpawnSync('cp', [ AUTH_DATABASES_DIR.replace(/\\/g, '\\\\').replace(/ /g, '\\ ') + 'auth*/my_certs/*EntityCert.pem', '"' + AUTH_CERTS_DIR + '"']);
 
 // generate entity credentials
 function generateEntityCert(entity, copyTo, keyPathPrefix, certPathPrefix) {
