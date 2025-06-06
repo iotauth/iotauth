@@ -23,6 +23,7 @@
 var fs = require('fs');
 var path = require("path");
 const execFileSync = require('child_process').execFileSync;
+var common = require('./common');
 
 // get graph file
 if (process.argv.length <= 2) {
@@ -51,7 +52,7 @@ function getIndividualAuthDBDir(authId) {
 process.chdir('auth/');
 execFileSync('mvn', ['-pl', 'example-auth-db-generator', '-am', 'install', '-DskipTests'], {stdio: 'inherit'});
 process.chdir('example-auth-db-generator');
-execFileSync('cp', ['target/init-example-auth-db-jar-with-dependencies.jar', '../']);
+common.safeFileCopy('target/init-example-auth-db-jar-with-dependencies.jar', '../');
 process.chdir('..');
 
 var authList = graph.authList;
@@ -60,17 +61,17 @@ for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
 	execFileSync('java', ['-jar', 'init-example-auth-db-jar-with-dependencies.jar', '-i', auth.id, '-d', auth.dbProtectionMethod]);
 }
-execFileSync('rm', ['init-example-auth-db-jar-with-dependencies.jar']);
+fs.rmSync('init-example-auth-db-jar-with-dependencies.jar');
 
 if (removeFilesAfterDBGen) {
 	console.log('deleting credentials and config files after DB generation...');
 	for (var i = 0; i < authList.length; i++) {
 		var auth = authList[i];
 		var individualAuthDBDir = getIndividualAuthDBDir(auth.id);
-		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'my_certs/')]);
-		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'entity_certs/')]);
-		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'entity_keys/')]);
-		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'trusted_auth_certs/')]);
-		execFileSync('rm', ['-rf', path.join(individualAuthDBDir, 'configs/')]);
+		fs.rmSync(path.join(individualAuthDBDir, 'my_certs/'), { recursive: true, force: true });
+		fs.rmSync(path.join(individualAuthDBDir, 'entity_certs/'), { recursive: true, force: true });
+		fs.rmSync(path.join(individualAuthDBDir, 'entity_keys/'), { recursive: true, force: true });
+		fs.rmSync(path.join(individualAuthDBDir, 'trusted_auth_certs/'), { recursive: true, force: true });
+		fs.rmSync(path.join(individualAuthDBDir, 'configs/'), { recursive: true, force: true });
 	}
 }

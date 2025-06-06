@@ -165,7 +165,7 @@ function writeEntityConfigToFile(entity, entityConfig) {
     var separatorIndex = entityFullName.indexOf('.');
 	const ENTITY_CONFIG_DIR = PROJ_ROOT_DIR + 'entity/node/example_entities/configs/'
 		+ entity.netName + '/';
-	execFileSync('mkdir', ['-p', ENTITY_CONFIG_DIR]);
+	fs.mkdirSync(ENTITY_CONFIG_DIR, {recursive: true});
     var configFilePath = ENTITY_CONFIG_DIR + entityFullName.substring(separatorIndex + 1) + '.config';
     console.log('Writing entityConfig to ' + configFilePath + ' ...');
     fs.writeFileSync(configFilePath,
