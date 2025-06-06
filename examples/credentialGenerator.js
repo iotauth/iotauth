@@ -21,14 +21,11 @@
 "use strict";
 
 var fs = require('fs');
+var path = require('path')
 // Ending with Sync will not return until the child process terminates.
 var readlineSync = require('readline-sync');
-const execSync = require('child_process').execSync;
 const execFileSync = require('child_process').execFileSync;
-// Use spawnSync instead of execSync or execFileSync for the commands
-// involving asterisks (*) to be expanded in shell. openssl commands
-// seem to require spawnSync and some of them also require {shell: true}.
-var spawnSync = require('child_process').spawnSync; 
+var common = require('./common');
 
 // get graph file
 if (process.argv.length <= 2) {
@@ -73,14 +70,12 @@ const AUTH_PASSWORD = MASTER_PASSWORD;
 // basic directories
 process.chdir('..');
 const PROJ_ROOT_DIR = process.cwd() + '/';
-
-const AUTH_CREDS_DIR = PROJ_ROOT_DIR + 'auth/credentials/';
-const CA_DIR = AUTH_CREDS_DIR + 'ca/';
+const CA_DIR = PROJ_ROOT_DIR + 'auth/credentials/ca/';
 const AUTH_DATABASES_DIR = PROJ_ROOT_DIR + 'auth/databases/';
 const VAL_DAYS = 730;
 
 // generate CA credentials
-process.chdir(AUTH_CREDS_DIR);
+process.chdir('auth/credentials/');
 execFileSync('./generateCACredentials.sh', [CA_PASSWORD]);
 
 // generate Auth credentials and directories
@@ -89,16 +84,16 @@ for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
 	execFileSync('./generateExampleAuthCredentials.sh', [auth.id, auth.authHost, CA_PASSWORD, AUTH_PASSWORD]);
 	var MY_CERTS_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_certs/';
-	execFileSync('mkdir', ['-p', MY_CERTS_DIR]);
-	spawnSync('mv', ['certs/Auth' + auth.id + '*Cert.pem', MY_CERTS_DIR], {shell: true});
+	fs.mkdirSync(MY_CERTS_DIR, {recursive: true});
+	common.safeSpawnSync('mv', ['certs/Auth' + auth.id + '*Cert.pem', '"' + MY_CERTS_DIR + '"']);
 	
 	var MY_KEYSTORES_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_keystores/';
-	execFileSync('mkdir', ['-p', MY_KEYSTORES_DIR]);
-	spawnSync('mv', ['keystores/Auth' + auth.id + '*.pfx', MY_KEYSTORES_DIR], {shell: true});
+	fs.mkdirSync(MY_KEYSTORES_DIR, {recursive: true});
+	common.safeSpawnSync('mv', ['keystores/Auth' + auth.id + '*.pfx', '"' + MY_KEYSTORES_DIR + '"']);
 	var CURRENT_AUTH_DB_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id;
-	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/entity_certs/']);
-	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/entity_keys/']);
-	execFileSync('mkdir', ['-p', CURRENT_AUTH_DB_DIR + '/trusted_auth_certs/']);
+	fs.mkdirSync(CURRENT_AUTH_DB_DIR + '/entity_certs/', {recursive: true});
+	fs.mkdirSync(CURRENT_AUTH_DB_DIR + '/entity_keys/', {recursive: true});
+	fs.mkdirSync(CURRENT_AUTH_DB_DIR + '/trusted_auth_certs/', {recursive: true});
 }
 
 // exchange credentials for trusted Auths
@@ -106,8 +101,8 @@ function copyAuthCerts(fromId, toId) {
 	var srcFilePrefix = AUTH_DATABASES_DIR + "auth" + fromId + '/my_certs/Auth' + fromId;
 	var srcFileSuffix = 'Cert.pem';
 	var dstDir = AUTH_DATABASES_DIR + 'auth' + toId + '/trusted_auth_certs';
-	execFileSync('cp', [srcFilePrefix + 'Internet' + srcFileSuffix, dstDir]);
-	execFileSync('cp', [srcFilePrefix + 'Entity' + srcFileSuffix, dstDir]);
+	common.safeFileCopy(srcFilePrefix + 'Internet' + srcFileSuffix, dstDir);
+	common.safeFileCopy(srcFilePrefix + 'Entity' + srcFileSuffix, dstDir);
 }
 var authTrusts = graph.authTrusts;
 for (var i = 0; i < authTrusts.length; i++) {
@@ -118,31 +113,37 @@ for (var i = 0; i < authTrusts.length; i++) {
 
 // copy Auth certs to entity directory
 const AUTH_CERTS_DIR = PROJ_ROOT_DIR + 'entity/auth_certs';
-execFileSync('mkdir', ['-p', AUTH_CERTS_DIR]);
-spawnSync('cp', [AUTH_DATABASES_DIR + 'auth*/my_certs/*EntityCert.pem', AUTH_CERTS_DIR], {shell: true});
+fs.mkdirSync(AUTH_CERTS_DIR, {recursive: true});;
+common.safeSpawnSync('cp', [ AUTH_DATABASES_DIR.replace(/\\/g, '\\\\').replace(/ /g, '\\ ') + 'auth*/my_certs/*EntityCert.pem', '"' + AUTH_CERTS_DIR + '"']);
 
 // generate entity credentials
 function generateEntityCert(entity, copyTo, keyPathPrefix, certPathPrefix) {
-	spawnSync('openssl', ['genrsa', '-out', keyPathPrefix + 'Key.pem 2048'], {shell: true});
-	spawnSync('openssl', ['req', '-new', '-key', keyPathPrefix + 'Key.pem', '-sha256', '-out', keyPathPrefix + 'Req.pem',
+	const keyFilePath = '"' + keyPathPrefix + 'Key.pem"';
+	const reqFilePath = '"' + keyPathPrefix + 'Req.pem"';
+	const certFilePath = '"' + certPathPrefix + 'Cert.pem"';
+	const derKeyFilePath = '"' + keyPathPrefix + 'Key.der"';
+	const caCertFilePath = '"' + CA_DIR + 'CACert.pem"';
+	const caKeyFilePath = '"' + CA_DIR + 'CAKey.pem"';
+	common.safeSpawnSync('openssl', ['genrsa', '-out', keyFilePath, '2048']);
+	common.safeSpawnSync('openssl', ['req', '-new', '-key', keyFilePath, '-sha256', '-out', reqFilePath,
 		'-subj', '/C=US/ST=CA/L=Berkeley/O=EECS/OU=' + entity.netName + '/CN=' + entity.name]);
-	spawnSync('openssl', ['x509', '-passin', 'pass:' + CA_PASSWORD, '-req', '-in', keyPathPrefix + 'Req.pem', '-sha256', '-extensions', 'usr_cert', '-CA',
-		CA_DIR + 'CACert.pem', '-CAkey', CA_DIR + 'CAKey.pem', '-CAcreateserial', '-out', certPathPrefix + 'Cert.pem', '-days', VAL_DAYS]);
-	execFileSync('rm', [keyPathPrefix + 'Req.pem']);
+	common.safeSpawnSync('openssl', ['x509', '-passin', 'pass:' + CA_PASSWORD, '-req', '-in', reqFilePath, '-sha256', '-extensions', 'usr_cert', '-CA',
+		caCertFilePath, '-CAkey', caKeyFilePath, '-CAcreateserial', '-out', certFilePath, '-days', VAL_DAYS]);
+	fs.rmSync(keyPathPrefix + 'Req.pem');
 	if (entity.inDerFormat == true) {
-		spawnSync('openssl', ['pkcs8', '-topk8', '-inform', 'PEM', '-outform', 'DER', '-in', keyPathPrefix + 'Key.pem', '-out', keyPathPrefix + 'Key.der', '-nocrypt']);
-		execFileSync('rm', [keyPathPrefix + 'Key.pem']);
+		common.safeSpawnSync('openssl', ['pkcs8', '-topk8', '-inform', 'PEM', '-outform', 'DER', '-in', keyFilePath, '-out', derKeyFilePath, '-nocrypt']);
+		fs.rmSync(keyPathPrefix + 'Key.pem');
 	}
-	execFileSync('cp', [certPathPrefix + 'Cert.pem', copyTo]);
+	common.safeFileCopy(certPathPrefix + 'Cert.pem', copyTo);
 }
-function generateEntityDistKey(entity, copyTo, keyPathPrefix) {
+function generateEntityDistKey(copyTo, keyPathPrefix) {
 	const CIPHER_KEY_SIZE = 16;
 	const MAC_KEY_SIZE = 32;
-	spawnSync('openssl', ['rand', CIPHER_KEY_SIZE, '>', keyPathPrefix + 'CipherKey.key'], {shell: true});
-	spawnSync('openssl', ['rand', MAC_KEY_SIZE, '>', keyPathPrefix + 'MacKey.key'], {shell: true});
+	common.safeSpawnSync('openssl', ['rand', CIPHER_KEY_SIZE, '>', '"' + keyPathPrefix + 'CipherKey.key"']);
+	common.safeSpawnSync('openssl', ['rand', MAC_KEY_SIZE, '>', '"' + keyPathPrefix + 'MacKey.key"']);
 
-	execFileSync('cp', [keyPathPrefix +'CipherKey.key', copyTo]);
-	execFileSync('cp', [keyPathPrefix + 'MacKey.key', copyTo]);
+	common.safeFileCopy(keyPathPrefix + 'CipherKey.key', copyTo);
+	common.safeFileCopy(keyPathPrefix + 'MacKey.key', copyTo);
 }
 function generateEntityCredential(entity, copyTo) {
 	const ENTITY_CREDS_DIR = PROJ_ROOT_DIR + 'entity/credentials/';
@@ -150,14 +151,14 @@ function generateEntityCredential(entity, copyTo) {
 	const ENTITY_KEYS_DIR = ENTITY_CREDS_DIR + 'keys/';
 
 	var KEYS_NET_DIR = ENTITY_KEYS_DIR + entity.netName + '/';
-	execFileSync('mkdir', ['-p', KEYS_NET_DIR]);
+	fs.mkdirSync(KEYS_NET_DIR, {recursive: true});
 	var keyPathPrefix = KEYS_NET_DIR + entity.credentialPrefix;
 	if (entity.usePermanentDistKey == true) {
-		generateEntityDistKey(entity, copyTo + 'entity_keys/', keyPathPrefix);
+		generateEntityDistKey(copyTo + 'entity_keys/', keyPathPrefix);
 	}
 	else {
 		var CERTS_NET_DIR = ENTITY_CERTS_DIR + entity.netName + '/';
-		execFileSync('mkdir', ['-p', CERTS_NET_DIR]);
+		fs.mkdirSync(CERTS_NET_DIR, {recursive: true});
 		var certPathPrefix = CERTS_NET_DIR + entity.credentialPrefix;
 		generateEntityCert(entity, copyTo + 'entity_certs/', keyPathPrefix, certPathPrefix);
 	}
