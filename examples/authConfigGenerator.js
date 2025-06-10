@@ -47,7 +47,7 @@ var authList = graph.authList;
 function createConfigDirs() {
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
-        execFileSync('mkdir', ['-p', getAuthConfigDir(auth.id)]);
+        fs.mkdirSync(getAuthConfigDir(auth.id), {recursive: true});
     }
 }
 
