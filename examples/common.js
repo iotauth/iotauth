@@ -31,7 +31,7 @@ const execFileSync = require('child_process').execFileSync;
 
 exports.DEFAULT_SIGN = 'RSA-SHA256';
 exports.DEFAULT_RSA_KEY_SIZE = 256;     // 2048 bits
-exports.DEFAULT_RSA_PADDING = 'RSA_PKCS1_PADDING';
+exports.DEFAULT_RSA_PADDING = 'RSA_PKCS1_OAEP_PADDING';
 exports.DEFAULT_CIPHER = 'AES-128-CBC';
 exports.DEFAULT_MAC = 'SHA256';
 
