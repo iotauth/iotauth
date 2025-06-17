@@ -48,6 +48,7 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 - [Dongha Kim](https://github.com/Jakio815) (Ph.D. Student at Arizona State University)
 - [Carlos Beltran Quinonez](https://github.com/CarlosBeltranQ) (M.S. Student at Arizona State University)
 - [Sunyoung Kim](https://github.com/sunnykim638) (Undergraduate Student at Arizona State University)
+- [Jose Felix](https://github.com/JFelix000) (M.S. Student at Arizona State University)
 
 ## Former Contributors
 - [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
@@ -69,4 +70,4 @@ This project is currently intended for academic and research purposes, although 
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP), a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 This work was supported in part by the National Research Foundation of Korea (NRF) grants funded by the Korea government (MSIT).
 
-*Last updated on May 21, 2025*
+*Last updated on June 17, 2025*
