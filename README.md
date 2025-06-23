@@ -7,7 +7,7 @@ The architecture provides security guarantees while addressing IoT-related issue
 The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our magazine article [[IT Professional '17'](https://ieeexplore.ieee.org/document/8057722/)].
 Our ACM journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/3375837)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
 In 2023, we released C API for SST introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
-We also recently applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://2025.sigmod.org/sigmod_papers.shtml)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
+We also recently applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://dl.acm.org/doi/10.1145/3725354)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
 
 More publications on SST or using SST include [[SmartSP '24](https://arxiv.org/abs/2411.13441)], [[FDL '23](https://ieeexplore.ieee.org/document/10272133)], and [[SenSys '23 - Poster Abstract]](https://dl.acm.org/doi/10.1145/3625687.3628408).
 
@@ -70,4 +70,4 @@ This project is currently intended for academic and research purposes, although 
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP), a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 This work was supported in part by the National Research Foundation of Korea (NRF) grants funded by the Korea government (MSIT).
 
-*Last updated on June 17, 2025*
+*Last updated on June 22, 2025*
