@@ -107,7 +107,7 @@ The process is the same as the above example.
 
 1. Run `git submodule update --remote` to update the `sst-c-api` submodule.
 
-2. Change directories to `$ROOT/entity/c/examples/ipfs_examples/` (Move the file for experiment in this directory and change the file name to "plain_text")
+2. Change directories to `$ROOT/entity/c/examples/ipfs_examples/c` (Move the file for the experiment in this directory and change the file name to "plain_text")
 
 3. Run `mkdir build && cd build`
 
@@ -117,10 +117,10 @@ The process is the same as the above example.
 
 6. [*Optional*] To create a plain text file to be encrypted, run `head -c 1024 < /dev/urandom > plain_text`, for example, to create a random binary file of size of 1024 bytes.
 
-7. Run `./secure_entity_uploader ../secure_uploader.config ../plain_text ../addReader.txt` in a separate terminal, to execute `net1.uploader`. NOTE: `plain_text` is a file to be encrypted and uploaded (can be any file), and `addReader.txt` is a file including a list of readers to be added dynamically,. Below is an example `addReader.txt` file.
+7. Run `./secure_entity_uploader ../../secure_uploader.config plain_text ../../addReader.txt` in a separate terminal, to execute `net1.uploader`. NOTE: `plain_text` is a file to be encrypted and uploaded (can be any file), and `addReader.txt` is a file including a list of readers to be added dynamically. Below is an example `addReader.txt` file.
    ```
-   {"AddReader":"net1.david"}
+   {"AddReader":"net1.Bob"}
    {"AddReader":"net1.Alice"}
    ```
 
-9. Run `./secure_entity_downloader ../secure_downloader.config`, to execute `net1.downloader`.
+9. Run `./secure_entity_downloader ../../secure_downloader.config`, to execute `net1.downloader`.
