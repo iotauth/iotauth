@@ -66,6 +66,8 @@ def load_config(path: str, config_dict: dict) -> None:
             config_dict["purpose"] = content
         elif index == "number_key":
             config_dict["number_key"] = content
+        elif index == "authid":
+            config_dict["authid"] = content
         elif index == "auth_pubkey_path":
             config_dict["auth_pubkey_path"] = content
         elif index == "privkey_path":
