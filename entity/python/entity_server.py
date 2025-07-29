@@ -27,7 +27,7 @@ NONCE_SIZE = 8
 ABS_VALIDITY_SIZE = 6
 REL_VALIDITY_SIZE = 6
 IV_SIZE = 16
-AUTH_ID = 4
+AUTH_ID_LEN = 4
 KEY_NUM_BUF = 4
 SEQ_NUM_SIZE = 8
 AUTH_HELLO = 0
@@ -66,6 +66,8 @@ def load_config(path: str, config_dict: dict) -> None:
             config_dict["purpose"] = content
         elif index == "number_key":
             config_dict["number_key"] = content
+        elif index == "authid":
+            config_dict["authid"] = content
         elif index == "auth_pubkey_path":
             config_dict["auth_pubkey_path"] = content
         elif index == "privkey_path":
@@ -414,8 +416,14 @@ def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, d
     length, length_buf = var_length_int_to_num(buffer[1:])
 
     if msg_type == AUTH_HELLO:
+        # Extract and validate auth_id (big-endian)
+        received_auth_id = read_unsigned_int_BE(buffer[1+length_buf:], AUTH_ID_LEN)
+        expected_auth_id = int(config_dict['authid'])
+        if received_auth_id != expected_auth_id:
+            print("Auth ID NOT matched.")
+            return 
         # Handle AUTH_HELLO message
-        nonce_auth = buffer[AUTH_ID+1+length_buf:]
+        nonce_auth = buffer[AUTH_ID_LEN+1+length_buf:]
         serialize_message = serialize_message_for_auth(config_dict, nonce_auth, nonce_entity)
         ciphertext = asymmetric_encrypt(serialize_message, config_dict['pubkey'])
         signature = sha256_sign(ciphertext, config_dict['privkey'])
