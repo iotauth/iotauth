@@ -746,7 +746,7 @@ def database_to_dict(data: str, dict: dict) -> dict:
     dict['hash_value'].append(data[2])
     return dict
 
-def check_database(file_name: str, file_metadata_table: dict, record_history_table: dict) -> tuple:
+def check_database(password, file_name: str, file_metadata_table: dict, record_history_table: dict) -> tuple:
     """
     Checks the existence of a database and retrieves its content.
 
@@ -760,7 +760,10 @@ def check_database(file_name: str, file_metadata_table: dict, record_history_tab
     """
     if os.path.isfile(file_name):
         print("Database already exists.")
-        number = input("Press the password for the database: ")
+        if (password):
+            number = password
+        else :
+            number = input("Press the password for the database: ")
         decrypted_data = decrypt_with_password(file_name, number)
         if decrypted_data == None:
             print("decryption was not applied!!")

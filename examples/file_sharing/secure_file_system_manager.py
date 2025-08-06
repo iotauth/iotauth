@@ -4,6 +4,7 @@ import sys
 import socket
 import os
 import types
+import argparse
 import secrets
 print(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))) +"/entity/python")
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))) +"/entity/python")
@@ -110,57 +111,71 @@ def service_connection(key, mask):
                 sock.send(bytes(total_buffer))
                 sequential_num += 1
 
-# Check number of arguments
-if len(sys.argv) != 2:
-    print("""
-Not enough arguments for the secure file system manager.
-A configuration file is required as an argument.
 
-Usage:  python3 secure_filesystem_manager.py file_system_manager.config
-""")
-    sys.exit(0)
 
-# Setting directories for config, distribution key, and session key
-file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
-distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
-comm_session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 
-# Setting directories for managing information of the file
-file_metadata_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
-record_history_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
-download_list = []
 
-# Load config for file system manager and save public and private key in directory.
-entity_server.load_config(sys.argv[1], file_manager_dict)
-file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
-file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
+def main():
+    parser = argparse.ArgumentParser(description="Process config and optional password.")
 
-sequential_num = 0
+    # Positional argument: config path
+    parser.add_argument("config", help="Path to config file")
 
-node_selector = selectors.DefaultSelector()
+    # Optional: -p or --password
+    parser.add_argument("-p", "--password", help="Password for authentication (optional)")
 
-host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
+    args = parser.parse_args()
 
-manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-manager_socket.bind((host, port))
-manager_socket.listen()
-print(f"Listening on {(host, port)}")
-manager_socket.setblocking(False)
-node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
+    print(f"Config file: {args.config}")
+    if args.password:
+        print(f"Password: {args.password}")
+    else:
+        print("No password provided.")
 
-file_metadata_table, record_history_table, password = entity_server.check_database(entity_server.database_name, file_metadata_table, record_history_table)
-try:
-    while True:
-        events = node_selector.select(timeout=None)
-        for key, mask in events:
-            if key.data is None:
-                accept_wrapper(key.fileobj)
-            else:
-                service_connection(key, mask)
-except KeyboardInterrupt:
-    print("Caught keyboard interrupt, exiting")
-finally:
-    manager_socket.close()
-    node_selector.close()
-    entity_server.create_encrypt_database(entity_server.database_name, password, file_metadata_table, record_history_table)
-    print("Finished")
+    # Setting directories for config, distribution key, and session key
+    file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
+    distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
+    comm_session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
+
+    # Setting directories for managing information of the file
+    file_metadata_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
+    record_history_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
+    download_list = []
+
+    # Load config for file system manager and save public and private key in directory.
+    entity_server.load_config(sys.argv[1], file_manager_dict)
+    file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
+    file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
+
+    sequential_num = 0
+
+    node_selector = selectors.DefaultSelector()
+
+    host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
+
+    manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    manager_socket.bind((host, port))
+    manager_socket.listen()
+    print(f"Listening on {(host, port)}")
+    manager_socket.setblocking(False)
+    node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
+
+    file_metadata_table, record_history_table, password = entity_server.check_database(args.password, entity_server.database_name, file_metadata_table, record_history_table)
+    try:
+        while True:
+            events = node_selector.select(timeout=None)
+            for key, mask in events:
+                if key.data is None:
+                    accept_wrapper(key.fileobj)
+                else:
+                    service_connection(key, mask)
+    except KeyboardInterrupt:
+        print("Caught keyboard interrupt, exiting")
+    finally:
+        manager_socket.close()
+        node_selector.close()
+        entity_server.create_encrypt_database(entity_server.database_name, password, file_metadata_table, record_history_table)
+        print("Finished")
+
+if __name__ == "__main__":
+    main()
