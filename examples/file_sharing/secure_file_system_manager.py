@@ -36,7 +36,7 @@ def accept_wrapper(sock):
     node_selector.register(conn, events, data=data)
 
 
-def service_connection(key, mask):
+def service_connection(key, mask, file_manager_dict, file_metadata_table, distribution_key, comm_session_key, download_list, sequence_num, record_history_table):
     """Services an existing connection based on the specified events.
 
     Args:
@@ -48,7 +48,7 @@ def service_connection(key, mask):
     """
     sock = key.fileobj
     data = key.data
-    global payload_max_num, sequential_num
+    global payload_max_num
 
     # If it is not a read event, ignore it.
     if not (mask & selectors.EVENT_READ):
@@ -112,9 +112,9 @@ def service_connection(key, mask):
             print(file_metadata_table)
         elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
                 total_buffer = entity_server.metadata_response(dec_buf, file_metadata_table, 
-                                                           record_history_table, download_list, comm_session_key, sequential_num)
+                                                           record_history_table, download_list, comm_session_key, sequence_num)
                 sock.send(bytes(total_buffer))
-                sequential_num += 1
+                sequence_num += 1
 
 
 
@@ -135,15 +135,14 @@ def main():
     file_metadata_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
     record_history_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
     download_list = []
+    sequence_num = 0
 
     # Load config for file system manager and save public and private key in directory.
     entity_server.load_config(sys.argv[1], file_manager_dict)
     file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
     file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
 
-    sequential_num = 0
 
-    node_selector = selectors.DefaultSelector()
 
     host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
     # Prevent binding to all interfaces for security
@@ -166,7 +165,7 @@ def main():
                 if key.data is None:
                     accept_wrapper(key.fileobj)
                 else:
-                    service_connection(key, mask)
+                    service_connection(key, mask, file_manager_dict, file_metadata_table, distribution_key, comm_session_key, download_list, sequence_num, record_history_table)
     except KeyboardInterrupt:
         print("Caught keyboard interrupt, exiting")
     finally:
