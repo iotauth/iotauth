@@ -783,5 +783,9 @@ def check_database(password, file_name: str, file_metadata_table: dict, record_h
                 
     else:
         print("Database does not exist.")
-        number = input("Generate the password for the database: ")
+        if (password):
+            number = password
+            print("New database generated using password.")
+        else :
+            number = input("Generate the password for the database: ")
         return file_metadata_table, record_history_table, number
