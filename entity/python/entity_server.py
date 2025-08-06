@@ -24,6 +24,9 @@ import cryptography
 
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
 
 READ_BYTES_NUM = 1024
 RSA_KEY_SIZE = 256
@@ -322,29 +325,36 @@ def asymmetric_decrypt(message: bytes, privkey: RSA.RsaKey) -> bytes:
     plaintext = cipher.decrypt(message)
     return plaintext
 
-def sha256_sign(message: bytes, privkey: rsa.RSAPrivateKey) -> bytes:
+
+def sha256_sign(message: bytes, privkey: RSA.RsaKey) -> bytes:
     """Signs a message using SHA256 and an RSA private key.
 
     Args:
         message (bytes): The message to be signed.
-        privkey (rsa.RSAPrivateKey): The RSA private key for signing.
+        privkey (RSA.RsaKey): The RSA private key.
 
     Returns:
         bytes: The digital signature.
     """
-    signature = privkey.sign(message, padding.PKCS1v15(), hashes.SHA256())
+    h = SHA256.new(message)
+    signature = pkcs1_15.new(privkey).sign(h)
     return signature
 
-def sha256_verify(sign: bytes, data: bytes, pubkey: rsa.RSAPublicKey) -> None:
+def sha256_verify(sign: bytes, data: bytes, pubkey: RSA.RsaKey) -> None:
     """Verifies an SHA256 signature using an RSA public key.
 
     Args:
         sign (bytes): The signature to verify.
         data (bytes): The data that was signed.
-        pubkey (rsa.RSAPublicKey): The RSA public key for verification.
+        pubkey (RSA.RsaKey): The RSA public key for verification.
     """
-    pubkey.verify(sign, data, padding.PKCS1v15(), hashes.SHA256())
-    print("auth signature verified\n")
+    h = SHA256.new(data)
+    try:
+        pkcs1_15.new(pubkey).verify(h, sign)
+        print("Signature successfully verified.\n")
+    except (ValueError, TypeError):
+        print(" verification failed.")
+        raise
 
 def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entity: bytes) -> bytearray:
     """Serializes message for authentication using given directory and nonce.
