@@ -117,20 +117,9 @@ def service_connection(key, mask):
 
 def main():
     parser = argparse.ArgumentParser(description="Process config and optional password.")
-
-    # Positional argument: config path
     parser.add_argument("config", help="Path to config file")
-
-    # Optional: -p or --password
     parser.add_argument("-p", "--password", help="Password for authentication (optional)")
-
     args = parser.parse_args()
-
-    print(f"Config file: {args.config}")
-    if args.password:
-        print(f"Password: {args.password}")
-    else:
-        print("No password provided.")
 
     # Setting directories for config, distribution key, and session key
     file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
