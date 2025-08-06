@@ -1,33 +1,18 @@
-import sys
 import socket
-import selectors
-import types
-import subprocess
-import time
 import os
-from datetime import datetime
-import secrets
-import base64
 import sqlite3
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.backends import default_backend
-from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import hmac
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding as pad
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-import cryptography
-
-
-from Crypto.Cipher import PKCS1_OAEP
+import os
+from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
-from Crypto.Hash import SHA256
+from Crypto.Hash import HMAC, SHA256
 from Crypto.PublicKey import RSA
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Protocol.KDF import PBKDF2
 
+KEY_LEN = 32
+PBKDF2_ITER = 480_000
 READ_BYTES_NUM = 1024
 RSA_KEY_SIZE = 256
 SESSION_KEY_ID_SIZE = 8
@@ -192,25 +177,28 @@ def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> bytearray:
         buffer (bytes): The data to be encrypted.
 
     Returns:
-        tuple: A tuple of (encrypted data, HMAC tag).
+        bytearray: IV + ciphertext + HMAC tag
     """
-    padder = pad.PKCS7(128).padder()
-    pad_data = padder.update(buffer)
-    pad_data += padder.finalize()
-    iv = secrets.token_bytes(IV_SIZE)
-    cipher = Cipher(algorithms.AES128(key_dir["cipher_key"]),modes.CBC(iv))
-    encryptor = cipher.encryptor()
-    encrypted_buf = encryptor.update(pad_data) + encryptor.finalize()
-    enc_total_buf = bytearray(len(iv) + len(encrypted_buf))
-    enc_total_buf[:IV_SIZE] = iv
-    enc_total_buf[IV_SIZE:] = encrypted_buf
-    h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
-    h.update(bytes(enc_total_buf))
-    hmac_tag = h.finalize()
-    total_buffer = bytearray(len(enc_total_buf) + len(hmac_tag))
-    total_buffer[:len(enc_total_buf)] = enc_total_buf
-    total_buffer[len(enc_total_buf):] = hmac_tag
-    return total_buffer
+    # Padding (PKCS#7)
+    pad_data = pad(buffer, AES.block_size)
+
+    # Generate IV
+    iv = get_random_bytes(IV_SIZE)
+
+    # AES-CBC encryption
+    cipher = AES.new(key_dir["cipher_key"], AES.MODE_CBC, iv)
+    encrypted_buf = cipher.encrypt(pad_data)
+
+    # Combine IV and ciphertext
+    enc_total_buf = iv + encrypted_buf
+
+    # Compute HMAC-SHA256
+    h = HMAC.new(key_dir["mac_key"], digestmod=SHA256)
+    h.update(enc_total_buf)
+    hmac_tag = h.digest()
+
+    # Final output: IV + ciphertext + HMAC
+    return bytearray(enc_total_buf + hmac_tag)
 
 def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> bytes:
     """Decrypts AES-CBC encrypted data and verifies HMAC-SHA256 tag.
@@ -224,22 +212,29 @@ def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> by
         bytes: The decrypted data.
 
     Raises:
-        ValueError: If the HMAC verification fails.
+        ValueError: If HMAC verification fails.
     """
-    h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
-    h.update(bytes(enc_buf))
-    hmac_tag = h.finalize()
-    if hmac_tag != hmac_buf:
-        print("Failed for verifying the data")
-        exit()
-    else:
-        print("Success for verifying the data")
+    # Verify HMAC
+    h = HMAC.new(key_dir["mac_key"], digestmod=SHA256)
+    h.update(enc_buf)
+    try:
+        h.verify(hmac_buf)
+        print("HMAC verification succeeded.")
+    except ValueError:
+        print("HMAC verification failed.")
+        raise ValueError("Authentication failed: HMAC does not match.")
+
+    # Extract IV and ciphertext
     iv = enc_buf[:IV_SIZE]
-    cipher = Cipher(algorithms.AES128(key_dir["cipher_key"]),modes.CBC(bytes(iv)))
-    decryptor = cipher.decryptor()
-    padded_buf = decryptor.update(bytes(enc_buf[IV_SIZE:])) + decryptor.finalize()
-    unpadder = pad.PKCS7(128).unpadder()
-    decrypted_buf = unpadder.update(padded_buf) + unpadder.finalize()
+    ciphertext = enc_buf[IV_SIZE:]
+
+    # AES-CBC decryption
+    cipher = AES.new(key_dir["cipher_key"], AES.MODE_CBC, iv)
+    padded_buf = cipher.decrypt(ciphertext)
+
+    # Remove padding (PKCS#7)
+    decrypted_buf = unpad(padded_buf, AES.block_size)
+
     return decrypted_buf
 
 def load_pubkey(key_dir: str) -> RSA.RsaKey:
@@ -297,7 +292,7 @@ def asymmetric_encrypt(message: bytes, pubkey: RSA.RsaKey) -> bytes:
 
     Args:
         message (bytes): The message to be encrypted.
-        pubkey (rsa.RSAPublicKey): The RSA public key for encryption.
+        pubkey (RSA.RsaKey): The RSA public key for encryption.
 
     Returns:
         bytes: The encrypted message.
@@ -426,13 +421,13 @@ def parse_sessionkey_id(recv: bytearray, config_dict: dict) -> bytes:
     encrypted_buf = recv[SESSION_KEY_ID_SIZE:]
     return encrypted_buf
 
-def parse_distributionkey(buffer: bytearray, pubkey: rsa.RSAPublicKey, privkey: rsa.RSAPrivateKey, distribution_key: dict) -> None:
+def parse_distributionkey(buffer: bytearray, pubkey: RSA.RsaKey, privkey: RSA.RsaKey, distribution_key: dict) -> None:
     """Parses distribution key from the buffer using public and private keys.
 
     Args:
         buffer (bytearray): The buffer containing the distribution key data.
-        pubkey (rsa.RSAPublicKey): The RSA public key for verification.
-        privkey (rsa.RSAPrivateKey): The RSA private key for decryption.
+        pubkey (RSA.RsaKey): The RSA public key for verification.
+        privkey (RSA.RsaKey): The RSA private key for decryption.
         distribution_key (dict): A dictionary to store the parsed distribution key data.
     """
     sign_data = buffer[:RSA_KEY_SIZE]
@@ -718,57 +713,61 @@ def create_encrypt_database(filename: str, number: str, file_metadata_table: dic
     con.close()
 
     salt = bytes(16)
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=480000,
-    )
-    num_bytes = bytes(number,"utf-8")
-    key = base64.urlsafe_b64encode(kdf.derive(num_bytes))
-    f = Fernet(key)
-    # encrypt data
-    with open(filename, "rb") as file:
-        # read the encrypted data
-        file_data = file.read()
-    encrypted_data = f.encrypt(file_data)
-    # write the encrypted file
-    with open(filename, "wb") as file:
-        file.write(encrypted_data)
+    password_bytes = number.encode("utf-8")
+    key = PBKDF2(password_bytes, salt, dkLen=KEY_LEN, count=PBKDF2_ITER)
+    with open(filename, "rb") as f:
+        plaintext = f.read()
+
+    iv = get_random_bytes(IV_SIZE)
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    ciphertext = cipher.encrypt(pad(plaintext, AES.block_size))
+
+    with open(filename, "wb") as f:
+        f.write(salt + iv + ciphertext)
+
+    print(f"Encrypted database saved: {filename}")
 
 def decrypt_with_password(filename: str, number: str) -> bytes:
     """
-    Decrypts a file using a password and writes it.
+    Decrypts a file using AES-CBC and a password-derived key.
 
     Args:
-        filename (str): The name of the file to be decrypted.
-        number (str): The password used for decryption.
+        filename (str): The encrypted file path.
+        number (str): The password used to derive the decryption key.
 
     Returns:
         bytes: The decrypted file data.
+
+    Raises:
+        ValueError: If decryption or unpadding fails (e.g., wrong password).
     """
-    salt = bytes(16)
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=480000,
-    )
-    num_bytes = bytes(number,"utf-8")
-    key = base64.urlsafe_b64encode(kdf.derive(num_bytes))
-    f = Fernet(key)
     with open(filename, "rb") as file:
-        # read the encrypted data
-        encrypted_data = file.read()
-    # decrypt data
+        file_data = file.read()
+
+    if len(file_data) < 32:
+        raise ValueError("Invalid encrypted file format.")
+
+    # Extract salt, IV, and ciphertext
+    salt = file_data[:16]
+    iv = file_data[16:32]
+    ciphertext = file_data[32:]
+
+    # Derive key from password
+    password_bytes = number.encode("utf-8")
+    key = PBKDF2(password_bytes, salt, dkLen=KEY_LEN, count=PBKDF2_ITER)
+
     try:
-        decrypted_data = f.decrypt(encrypted_data)
-    except cryptography.fernet.InvalidToken:
-        print("Invalid token, most likely the password is incorrect")
-        return
-    print("File decrypted successfully")
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        padded_data = cipher.decrypt(ciphertext)
+        decrypted_data = unpad(padded_data, AES.block_size)
+    except (ValueError, KeyError):
+        print("Invalid password or corrupted file.")
+        return None
+
     with open(filename, "wb") as file:
         file.write(decrypted_data)
+
+    print("File decrypted successfully.")
     return decrypted_data
 
 def database_to_dict(data: str, dict: dict) -> dict:
