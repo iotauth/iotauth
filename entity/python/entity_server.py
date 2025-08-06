@@ -20,6 +20,11 @@ from cryptography.hazmat.primitives import padding as pad
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import cryptography
+
+
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
+
 READ_BYTES_NUM = 1024
 RSA_KEY_SIZE = 256
 SESSION_KEY_ID_SIZE = 8
@@ -234,33 +239,57 @@ def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> by
     decrypted_buf = unpadder.update(padded_buf) + unpadder.finalize()
     return decrypted_buf
 
-def load_pubkey(key_dir: str) -> rsa.RSAPublicKey:
+def load_pubkey(key_dir: str) -> RSA.RsaKey:
     """Loads an RSA public key from a file.
 
     Args:
         key_dir (str): The path to the public key file.
 
     Returns:
-        rsa.RSAPublicKey: The loaded RSA public key.
+         RSA.RsaKey: The loaded RSA public key.
     """
-    with open(key_dir, 'rb') as pem_inn:
-        public_key = (x509.load_pem_x509_certificate(pem_inn.read(), default_backend)).public_key()
+    try:
+        if not os.path.isfile(key_dir):
+            raise FileNotFoundError(f"Key file not found: {key_dir}")
+
+        with open(key_dir, "r") as f:
+            key_data = f.read()
+
+        public_key = RSA.import_key(key_data)
+    except FileNotFoundError as e:
+        print(f"[ERROR] File not found: {e}")
+    except ValueError as e:
+        print(f"[ERROR] Invalid public key format: {e}")
+    except Exception as e:
+        print(f"[ERROR] Unexpected error while loading public key: {e}")
     return public_key
 
-def load_privkey(key_dir: str) -> rsa.RSAPrivateKey:
+def load_privkey(key_dir: str) -> RSA.RsaKey:
     """Loads an RSA private key from a file.
 
     Args:
         key_dir (str): The path to the private key file.
 
     Returns:
-        rsa.RSAPrivateKey: The loaded RSA private key.
+        RSA.RsaKey: The loaded RSA private key.
     """
-    with open(key_dir, 'rb') as pem_in:
-        private_key= serialization.load_pem_private_key(pem_in.read(), None)
+    try:
+        if not os.path.exists(key_dir):
+            raise FileNotFoundError(f"Key file not found: {key_dir}")
+
+        with open(key_dir, "r") as f:
+            key_data = f.read()
+
+        private_key = RSA.import_key(key_data)
+    except FileNotFoundError as e:
+        print(f"[ERROR] File not found: {e}")
+    except ValueError as e:
+        print(f"[ERROR] Invalid key format or corrupt PEM: {e}")
+    except Exception as e:
+        print(f"[ERROR] Unexpected error while loading private key: {e}")
     return private_key
 
-def asymmetric_encrypt(message: bytes, pubkey: rsa.RSAPublicKey) -> bytes:
+def asymmetric_encrypt(message: bytes, pubkey: RSA.RsaKey) -> bytes:
     """Encrypts a message using an RSA public key.
 
     Args:
@@ -270,20 +299,27 @@ def asymmetric_encrypt(message: bytes, pubkey: rsa.RSAPublicKey) -> bytes:
     Returns:
         bytes: The encrypted message.
     """
-    ciphertext = pubkey.encrypt(bytes(message),padding.PKCS1v15())
+    # Create a PKCS1_OAEP cipher object with the public key
+    cipher = PKCS1_OAEP.new(pubkey)
+    # Encrypt the message
+    ciphertext = cipher.encrypt(bytes(message))
     return ciphertext
 
-def asymmetric_decrypt(message: bytes, privkey: rsa.RSAPrivateKey) -> bytes:
+def asymmetric_decrypt(message: bytes, privkey: RSA.RsaKey) -> bytes:
     """Decrypts a message using an RSA private key.
 
     Args:
         message (bytes): The encrypted message.
-        privkey (rsa.RSAPrivateKey): The RSA private key for decryption.
+        privkey (RSA.RsaKey): The RSA private key for decryption.
 
     Returns:
         bytes: The decrypted message.
     """
-    plaintext = privkey.decrypt(message, padding.PKCS1v15())
+    # Create cipher object with the private key
+    cipher = PKCS1_OAEP.new(privkey)
+
+    # Decrypt the ciphertext
+    plaintext = cipher.decrypt(message)
     return plaintext
 
 def sha256_sign(message: bytes, privkey: rsa.RSAPrivateKey) -> bytes:
@@ -336,12 +372,12 @@ def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entit
     buffer_name_len = num_to_var_length_int(len(config_dict["name"]))
     serialize_message[index:index+len(buffer_name_len)] = buffer_name_len
     index += len(buffer_name_len)
-    serialize_message[index:index+len(config_dict["name"])] = bytes.fromhex(str(config_dict["name"]).encode('utf-8').hex())
+    serialize_message[index:index+len(config_dict["name"])] = str(config_dict["name"]).encode('utf-8')
     index += len(config_dict["name"])
     buffer_purpose_len = num_to_var_length_int(len(config_dict["purpose"]))
     serialize_message[index:+len(buffer_purpose_len)] = buffer_purpose_len
     index += len(buffer_purpose_len)
-    serialize_message[index:index+len(config_dict["purpose"])] = bytes.fromhex(str(config_dict["purpose"]).encode('utf-8').hex())
+    serialize_message[index:index+len(config_dict["purpose"])] = str(config_dict["purpose"]).encode('utf-8')
     print(serialize_message)
     return serialize_message     
 
