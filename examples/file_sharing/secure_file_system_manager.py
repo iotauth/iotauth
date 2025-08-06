@@ -6,9 +6,14 @@ import os
 import types
 import argparse
 import secrets
-print(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))) +"/entity/python")
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))) +"/entity/python")
+import selectors
+
+# Compute absolute path to /entity/python relative to this file
+base_dir = os.path.abspath(os.path.join(__file__, "..", "..", "..", "entity", "python"))
+sys.path.append(base_dir)
 import entity_server
+
+node_selector = selectors.DefaultSelector()
 
 def accept_wrapper(sock):
     """Accepts a connection and performs necessary setup.
@@ -172,4 +177,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
