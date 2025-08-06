@@ -141,6 +141,10 @@ def main():
     node_selector = selectors.DefaultSelector()
 
     host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
+    # Prevent binding to all interfaces for security
+    if host in ("", "0.0.0.0"):
+        print("Error: Refusing to bind to all interfaces (empty string or 0.0.0.0). Please specify a dedicated interface IP address in the config file.")
+        sys.exit(1)
 
     manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     manager_socket.bind((host, port))
