@@ -105,7 +105,7 @@ The process is the same as the above example.
 
 3. Run `python3 secure_file_system_manager.py file_system_manager.config` to execute the file system manager.
 
-4. Press the password for the database to get previous information (also `-p` or `--password` option works when executing).
+4. The program will ask a password to type in for the database, or you can pass it as the executable input, using the `-p` or `--password` option (e.g., `python3 secure_file_system_manager.py file_system_manager.config -p asdf`).
 
 ### To run example entities written in C language
 
