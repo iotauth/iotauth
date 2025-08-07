@@ -51,7 +51,9 @@ See README.md under *examples/* for details.
 
 1. Change directories to `$ROOT/examples/file_sharing/`.
 
-2. Run `python3 file_system_manager.py` to execute the file system manager.
+2. Install crypto library. `pip install pycryptodome`.
+
+3. Run `python3 file_system_manager.py` to execute the file system manager.
 
 ### To run example entities written in C language
 
@@ -99,9 +101,11 @@ The process is the same as the above example.
 
 1. Change directories to `$ROOT/examples/file_sharing/`.
 
-2. Run `python3 secure_file_system_manager.py file_system_manager.config` to execute the file system manager.
+2. Install crypto functions. `pip install pycryptodome`.
 
-3. Press the password for the database to get previous information.
+3. Run `python3 secure_file_system_manager.py file_system_manager.config` to execute the file system manager.
+
+4. Press the password for the database to get previous information (also `-p` or `--password` option works when executing).
 
 ### To run example entities written in C language
 

@@ -834,3 +834,4 @@ def check_database(password, file_name: str, file_metadata_table: dict, record_h
         else :
             number = input("Generate the password for the database: ")
         return file_metadata_table, record_history_table, number
+    
