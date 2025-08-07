@@ -4,10 +4,16 @@ import sys
 import socket
 import os
 import types
+import argparse
 import secrets
-print(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))) +"/entity/python")
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))) +"/entity/python")
+import selectors
+
+# Compute absolute path to /entity/python relative to this file
+base_dir = os.path.abspath(os.path.join(__file__, "..", "..", "..", "entity", "python"))
+sys.path.append(base_dir)
 import entity_server
+
+node_selector = selectors.DefaultSelector()
 
 def accept_wrapper(sock):
     """Accepts a connection and performs necessary setup.
@@ -30,7 +36,7 @@ def accept_wrapper(sock):
     node_selector.register(conn, events, data=data)
 
 
-def service_connection(key, mask):
+def service_connection(key, mask, file_manager_dict, file_metadata_table, distribution_key, comm_session_key, download_list, sequence_num, record_history_table):
     """Services an existing connection based on the specified events.
 
     Args:
@@ -42,7 +48,7 @@ def service_connection(key, mask):
     """
     sock = key.fileobj
     data = key.data
-    global payload_max_num, sequential_num
+    global payload_max_num
 
     # If it is not a read event, ignore it.
     if not (mask & selectors.EVENT_READ):
@@ -106,61 +112,67 @@ def service_connection(key, mask):
             print(file_metadata_table)
         elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
                 total_buffer = entity_server.metadata_response(dec_buf, file_metadata_table, 
-                                                           record_history_table, download_list, comm_session_key, sequential_num)
+                                                           record_history_table, download_list, comm_session_key, sequence_num)
                 sock.send(bytes(total_buffer))
-                sequential_num += 1
+                sequence_num += 1
 
-# Check number of arguments
-if len(sys.argv) != 2:
-    print("""
-Not enough arguments for the secure file system manager.
-A configuration file is required as an argument.
 
-Usage:  python3 secure_filesystem_manager.py file_system_manager.config
-""")
-    sys.exit(0)
 
-# Setting directories for config, distribution key, and session key
-file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
-distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
-comm_session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 
-# Setting directories for managing information of the file
-file_metadata_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
-record_history_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
-download_list = []
 
-# Load config for file system manager and save public and private key in directory.
-entity_server.load_config(sys.argv[1], file_manager_dict)
-file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
-file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
+def main():
+    parser = argparse.ArgumentParser(description="Process config and optional password.")
+    parser.add_argument("config", help="Path to config file")
+    parser.add_argument("-p", "--password", help="Password for authentication (optional)")
+    args = parser.parse_args()
 
-sequential_num = 0
+    # Setting directories for config, distribution key, and session key
+    file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
+    distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
+    comm_session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
 
-node_selector = selectors.DefaultSelector()
+    # Setting directories for managing information of the file
+    file_metadata_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
+    record_history_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
+    download_list = []
+    sequence_num = 0
 
-host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
+    # Load config for file system manager and save public and private key in directory.
+    entity_server.load_config(sys.argv[1], file_manager_dict)
+    file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
+    file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
 
-manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-manager_socket.bind((host, port))
-manager_socket.listen()
-print(f"Listening on {(host, port)}")
-manager_socket.setblocking(False)
-node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
 
-file_metadata_table, record_history_table, password = entity_server.check_database(entity_server.database_name, file_metadata_table, record_history_table)
-try:
-    while True:
-        events = node_selector.select(timeout=None)
-        for key, mask in events:
-            if key.data is None:
-                accept_wrapper(key.fileobj)
-            else:
-                service_connection(key, mask)
-except KeyboardInterrupt:
-    print("Caught keyboard interrupt, exiting")
-finally:
-    manager_socket.close()
-    node_selector.close()
-    entity_server.create_encrypt_database(entity_server.database_name, password, file_metadata_table, record_history_table)
-    print("Finished")
+
+    host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
+    # Prevent binding to all interfaces for security
+    if host in ("", "0.0.0.0"):
+        print("Error: Refusing to bind to all interfaces (empty string or 0.0.0.0). Please specify a dedicated interface IP address in the config file.")
+        sys.exit(1)
+
+    manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    manager_socket.bind((host, port))
+    manager_socket.listen()
+    print(f"Listening on {(host, port)}")
+    manager_socket.setblocking(False)
+    node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
+
+    file_metadata_table, record_history_table, password = entity_server.check_database(args.password, entity_server.database_name, file_metadata_table, record_history_table)
+    try:
+        while True:
+            events = node_selector.select(timeout=None)
+            for key, mask in events:
+                if key.data is None:
+                    accept_wrapper(key.fileobj)
+                else:
+                    service_connection(key, mask, file_manager_dict, file_metadata_table, distribution_key, comm_session_key, download_list, sequence_num, record_history_table)
+    except KeyboardInterrupt:
+        print("Caught keyboard interrupt, exiting")
+    finally:
+        manager_socket.close()
+        node_selector.close()
+        entity_server.create_encrypt_database(entity_server.database_name, password, file_metadata_table, record_history_table)
+        print("Finished")
+
+if __name__ == "__main__":
+    main()

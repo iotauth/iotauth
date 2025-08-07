@@ -35,7 +35,7 @@ Change the directory to `$ROOT/examples`.
 4. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanAll.sh*, with the command `./cleanAll.sh`.
 
 ### To run IPFS (in command line)
-1. Run `ipfs daemon` to activate an IPFS environment. (IPFS command line tools should be installed a priori. If it is not installed, then you can install it easily by reading [IPFS install](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions)).
+1. Run `ipfs daemon` to activate an IPFS environment. (IPFS command line tools should be installed a priori. If it is not installed, then you can install it easily by reading [IPFS install](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions). Also run `ipfs init` if it's the initial execution of IPFS.)
 
 ### To run example Auths (in command line)
 See README.md under *examples/* for details.
@@ -51,7 +51,9 @@ See README.md under *examples/* for details.
 
 1. Change directories to `$ROOT/examples/file_sharing/`.
 
-2. Run `python3 file_system_manager.py` to execute the file system manager.
+2. Install crypto library. `pip install pycryptodome`.
+
+3. Run `python3 file_system_manager.py` to execute the file system manager.
 
 ### To run example entities written in C language
 
@@ -99,9 +101,11 @@ The process is the same as the above example.
 
 1. Change directories to `$ROOT/examples/file_sharing/`.
 
-2. Run `python3 secure_file_system_manager.py file_system_manager.config` to execute the file system manager.
+2. Install crypto functions. `pip install pycryptodome`.
 
-3. Press the password for the database to get previous information.
+3. Run `python3 secure_file_system_manager.py file_system_manager.config` to execute the file system manager.
+
+4. The program will ask a password to type in for the database, or you can pass it as the executable input, using the `-p` or `--password` option (e.g., `python3 secure_file_system_manager.py file_system_manager.config -p asdf`).
 
 ### To run example entities written in C language
 

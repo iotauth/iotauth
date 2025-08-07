@@ -1,25 +1,18 @@
-import sys
 import socket
-import selectors
-import types
-import subprocess
-import time
 import os
-from datetime import datetime
-import secrets
-import base64
 import sqlite3
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.backends import default_backend
-from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import hmac
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding as pad
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-import cryptography
+import os
+from Crypto.Cipher import AES, PKCS1_OAEP
+from Crypto.PublicKey import RSA
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import HMAC, SHA256
+from Crypto.PublicKey import RSA
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Protocol.KDF import PBKDF2
+
+KEY_LEN = 32
+PBKDF2_ITER = 480_000
 READ_BYTES_NUM = 1024
 RSA_KEY_SIZE = 256
 SESSION_KEY_ID_SIZE = 8
@@ -184,25 +177,28 @@ def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> bytearray:
         buffer (bytes): The data to be encrypted.
 
     Returns:
-        tuple: A tuple of (encrypted data, HMAC tag).
+        bytearray: IV + ciphertext + HMAC tag
     """
-    padder = pad.PKCS7(128).padder()
-    pad_data = padder.update(buffer)
-    pad_data += padder.finalize()
-    iv = secrets.token_bytes(IV_SIZE)
-    cipher = Cipher(algorithms.AES128(key_dir["cipher_key"]),modes.CBC(iv))
-    encryptor = cipher.encryptor()
-    encrypted_buf = encryptor.update(pad_data) + encryptor.finalize()
-    enc_total_buf = bytearray(len(iv) + len(encrypted_buf))
-    enc_total_buf[:IV_SIZE] = iv
-    enc_total_buf[IV_SIZE:] = encrypted_buf
-    h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
-    h.update(bytes(enc_total_buf))
-    hmac_tag = h.finalize()
-    total_buffer = bytearray(len(enc_total_buf) + len(hmac_tag))
-    total_buffer[:len(enc_total_buf)] = enc_total_buf
-    total_buffer[len(enc_total_buf):] = hmac_tag
-    return total_buffer
+    # Padding (PKCS#7)
+    pad_data = pad(buffer, AES.block_size)
+
+    # Generate IV
+    iv = get_random_bytes(IV_SIZE)
+
+    # AES-CBC encryption
+    cipher = AES.new(key_dir["cipher_key"], AES.MODE_CBC, iv)
+    encrypted_buf = cipher.encrypt(pad_data)
+
+    # Combine IV and ciphertext
+    enc_total_buf = iv + encrypted_buf
+
+    # Compute HMAC-SHA256
+    h = HMAC.new(key_dir["mac_key"], digestmod=SHA256)
+    h.update(enc_total_buf)
+    hmac_tag = h.digest()
+
+    # Final output: IV + ciphertext + HMAC
+    return bytearray(enc_total_buf + hmac_tag)
 
 def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> bytes:
     """Decrypts AES-CBC encrypted data and verifies HMAC-SHA256 tag.
@@ -216,99 +212,144 @@ def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> by
         bytes: The decrypted data.
 
     Raises:
-        ValueError: If the HMAC verification fails.
+        ValueError: If HMAC verification fails.
     """
-    h = hmac.HMAC(key_dir["mac_key"], hashes.SHA256(), backend=default_backend())
-    h.update(bytes(enc_buf))
-    hmac_tag = h.finalize()
-    if hmac_tag != hmac_buf:
-        print("Failed for verifying the data")
-        exit()
-    else:
-        print("Success for verifying the data")
+    # Verify HMAC
+    h = HMAC.new(key_dir["mac_key"], digestmod=SHA256)
+    h.update(enc_buf)
+    try:
+        h.verify(hmac_buf)
+        print("HMAC verification succeeded.")
+    except ValueError:
+        print("HMAC verification failed.")
+        raise ValueError("Authentication failed: HMAC does not match.")
+
+    # Extract IV and ciphertext
     iv = enc_buf[:IV_SIZE]
-    cipher = Cipher(algorithms.AES128(key_dir["cipher_key"]),modes.CBC(bytes(iv)))
-    decryptor = cipher.decryptor()
-    padded_buf = decryptor.update(bytes(enc_buf[IV_SIZE:])) + decryptor.finalize()
-    unpadder = pad.PKCS7(128).unpadder()
-    decrypted_buf = unpadder.update(padded_buf) + unpadder.finalize()
+    ciphertext = enc_buf[IV_SIZE:]
+
+    # AES-CBC decryption
+    cipher = AES.new(key_dir["cipher_key"], AES.MODE_CBC, iv)
+    padded_buf = cipher.decrypt(ciphertext)
+
+    # Remove padding (PKCS#7)
+    decrypted_buf = unpad(padded_buf, AES.block_size)
+
     return decrypted_buf
 
-def load_pubkey(key_dir: str) -> rsa.RSAPublicKey:
+def load_pubkey(key_dir: str) -> RSA.RsaKey:
     """Loads an RSA public key from a file.
 
     Args:
         key_dir (str): The path to the public key file.
 
     Returns:
-        rsa.RSAPublicKey: The loaded RSA public key.
+         RSA.RsaKey: The loaded RSA public key.
     """
-    with open(key_dir, 'rb') as pem_inn:
-        public_key = (x509.load_pem_x509_certificate(pem_inn.read(), default_backend)).public_key()
+    try:
+        if not os.path.isfile(key_dir):
+            raise FileNotFoundError(f"Key file not found: {key_dir}")
+
+        with open(key_dir, "r") as f:
+            key_data = f.read()
+
+        public_key = RSA.import_key(key_data)
+    except FileNotFoundError as e:
+        print(f"[ERROR] File not found: {e}")
+    except ValueError as e:
+        print(f"[ERROR] Invalid public key format: {e}")
+    except Exception as e:
+        print(f"[ERROR] Unexpected error while loading public key: {e}")
     return public_key
 
-def load_privkey(key_dir: str) -> rsa.RSAPrivateKey:
+def load_privkey(key_dir: str) -> RSA.RsaKey:
     """Loads an RSA private key from a file.
 
     Args:
         key_dir (str): The path to the private key file.
 
     Returns:
-        rsa.RSAPrivateKey: The loaded RSA private key.
+        RSA.RsaKey: The loaded RSA private key.
     """
-    with open(key_dir, 'rb') as pem_in:
-        private_key= serialization.load_pem_private_key(pem_in.read(), None)
+    try:
+        if not os.path.exists(key_dir):
+            raise FileNotFoundError(f"Key file not found: {key_dir}")
+
+        with open(key_dir, "r") as f:
+            key_data = f.read()
+
+        private_key = RSA.import_key(key_data)
+    except FileNotFoundError as e:
+        print(f"[ERROR] File not found: {e}")
+    except ValueError as e:
+        print(f"[ERROR] Invalid key format or corrupt PEM: {e}")
+    except Exception as e:
+        print(f"[ERROR] Unexpected error while loading private key: {e}")
     return private_key
 
-def asymmetric_encrypt(message: bytes, pubkey: rsa.RSAPublicKey) -> bytes:
+def asymmetric_encrypt(message: bytes, pubkey: RSA.RsaKey) -> bytes:
     """Encrypts a message using an RSA public key.
 
     Args:
         message (bytes): The message to be encrypted.
-        pubkey (rsa.RSAPublicKey): The RSA public key for encryption.
+        pubkey (RSA.RsaKey): The RSA public key for encryption.
 
     Returns:
         bytes: The encrypted message.
     """
-    ciphertext = pubkey.encrypt(bytes(message),padding.PKCS1v15())
+    # Create a PKCS1_OAEP cipher object with the public key
+    cipher = PKCS1_OAEP.new(pubkey)
+    # Encrypt the message
+    ciphertext = cipher.encrypt(bytes(message))
     return ciphertext
 
-def asymmetric_decrypt(message: bytes, privkey: rsa.RSAPrivateKey) -> bytes:
+def asymmetric_decrypt(message: bytes, privkey: RSA.RsaKey) -> bytes:
     """Decrypts a message using an RSA private key.
 
     Args:
         message (bytes): The encrypted message.
-        privkey (rsa.RSAPrivateKey): The RSA private key for decryption.
+        privkey (RSA.RsaKey): The RSA private key for decryption.
 
     Returns:
         bytes: The decrypted message.
     """
-    plaintext = privkey.decrypt(message, padding.PKCS1v15())
+    # Create cipher object with the private key
+    cipher = PKCS1_OAEP.new(privkey)
+
+    # Decrypt the ciphertext
+    plaintext = cipher.decrypt(message)
     return plaintext
 
-def sha256_sign(message: bytes, privkey: rsa.RSAPrivateKey) -> bytes:
+
+def sha256_sign(message: bytes, privkey: RSA.RsaKey) -> bytes:
     """Signs a message using SHA256 and an RSA private key.
 
     Args:
         message (bytes): The message to be signed.
-        privkey (rsa.RSAPrivateKey): The RSA private key for signing.
+        privkey (RSA.RsaKey): The RSA private key.
 
     Returns:
         bytes: The digital signature.
     """
-    signature = privkey.sign(message, padding.PKCS1v15(), hashes.SHA256())
+    h = SHA256.new(message)
+    signature = pkcs1_15.new(privkey).sign(h)
     return signature
 
-def sha256_verify(sign: bytes, data: bytes, pubkey: rsa.RSAPublicKey) -> None:
+def sha256_verify(sign: bytes, data: bytes, pubkey: RSA.RsaKey) -> None:
     """Verifies an SHA256 signature using an RSA public key.
 
     Args:
         sign (bytes): The signature to verify.
         data (bytes): The data that was signed.
-        pubkey (rsa.RSAPublicKey): The RSA public key for verification.
+        pubkey (RSA.RsaKey): The RSA public key for verification.
     """
-    pubkey.verify(sign, data, padding.PKCS1v15(), hashes.SHA256())
-    print("auth signature verified\n")
+    h = SHA256.new(data)
+    try:
+        pkcs1_15.new(pubkey).verify(h, sign)
+        print("Signature successfully verified.\n")
+    except (ValueError, TypeError):
+        print(" verification failed.")
+        raise
 
 def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entity: bytes) -> bytearray:
     """Serializes message for authentication using given directory and nonce.
@@ -336,12 +377,12 @@ def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entit
     buffer_name_len = num_to_var_length_int(len(config_dict["name"]))
     serialize_message[index:index+len(buffer_name_len)] = buffer_name_len
     index += len(buffer_name_len)
-    serialize_message[index:index+len(config_dict["name"])] = bytes.fromhex(str(config_dict["name"]).encode('utf-8').hex())
+    serialize_message[index:index+len(config_dict["name"])] = str(config_dict["name"]).encode('utf-8')
     index += len(config_dict["name"])
     buffer_purpose_len = num_to_var_length_int(len(config_dict["purpose"]))
     serialize_message[index:+len(buffer_purpose_len)] = buffer_purpose_len
     index += len(buffer_purpose_len)
-    serialize_message[index:index+len(config_dict["purpose"])] = bytes.fromhex(str(config_dict["purpose"]).encode('utf-8').hex())
+    serialize_message[index:index+len(config_dict["purpose"])] = str(config_dict["purpose"]).encode('utf-8')
     print(serialize_message)
     return serialize_message     
 
@@ -380,13 +421,13 @@ def parse_sessionkey_id(recv: bytearray, config_dict: dict) -> bytes:
     encrypted_buf = recv[SESSION_KEY_ID_SIZE:]
     return encrypted_buf
 
-def parse_distributionkey(buffer: bytearray, pubkey: rsa.RSAPublicKey, privkey: rsa.RSAPrivateKey, distribution_key: dict) -> None:
+def parse_distributionkey(buffer: bytearray, pubkey: RSA.RsaKey, privkey: RSA.RsaKey, distribution_key: dict) -> None:
     """Parses distribution key from the buffer using public and private keys.
 
     Args:
         buffer (bytearray): The buffer containing the distribution key data.
-        pubkey (rsa.RSAPublicKey): The RSA public key for verification.
-        privkey (rsa.RSAPrivateKey): The RSA private key for decryption.
+        pubkey (RSA.RsaKey): The RSA public key for verification.
+        privkey (RSA.RsaKey): The RSA private key for decryption.
         distribution_key (dict): A dictionary to store the parsed distribution key data.
     """
     sign_data = buffer[:RSA_KEY_SIZE]
@@ -672,57 +713,61 @@ def create_encrypt_database(filename: str, number: str, file_metadata_table: dic
     con.close()
 
     salt = bytes(16)
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=480000,
-    )
-    num_bytes = bytes(number,"utf-8")
-    key = base64.urlsafe_b64encode(kdf.derive(num_bytes))
-    f = Fernet(key)
-    # encrypt data
-    with open(filename, "rb") as file:
-        # read the encrypted data
-        file_data = file.read()
-    encrypted_data = f.encrypt(file_data)
-    # write the encrypted file
-    with open(filename, "wb") as file:
-        file.write(encrypted_data)
+    password_bytes = number.encode("utf-8")
+    key = PBKDF2(password_bytes, salt, dkLen=KEY_LEN, count=PBKDF2_ITER)
+    with open(filename, "rb") as f:
+        plaintext = f.read()
+
+    iv = get_random_bytes(IV_SIZE)
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    ciphertext = cipher.encrypt(pad(plaintext, AES.block_size))
+
+    with open(filename, "wb") as f:
+        f.write(salt + iv + ciphertext)
+
+    print(f"Encrypted database saved: {filename}")
 
 def decrypt_with_password(filename: str, number: str) -> bytes:
     """
-    Decrypts a file using a password and writes it.
+    Decrypts a file using AES-CBC and a password-derived key.
 
     Args:
-        filename (str): The name of the file to be decrypted.
-        number (str): The password used for decryption.
+        filename (str): The encrypted file path.
+        number (str): The password used to derive the decryption key.
 
     Returns:
         bytes: The decrypted file data.
+
+    Raises:
+        ValueError: If decryption or unpadding fails (e.g., wrong password).
     """
-    salt = bytes(16)
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=480000,
-    )
-    num_bytes = bytes(number,"utf-8")
-    key = base64.urlsafe_b64encode(kdf.derive(num_bytes))
-    f = Fernet(key)
     with open(filename, "rb") as file:
-        # read the encrypted data
-        encrypted_data = file.read()
-    # decrypt data
+        file_data = file.read()
+
+    if len(file_data) < 32:
+        raise ValueError("Invalid encrypted file format.")
+
+    # Extract salt, IV, and ciphertext
+    salt = file_data[:16]
+    iv = file_data[16:32]
+    ciphertext = file_data[32:]
+
+    # Derive key from password
+    password_bytes = number.encode("utf-8")
+    key = PBKDF2(password_bytes, salt, dkLen=KEY_LEN, count=PBKDF2_ITER)
+
     try:
-        decrypted_data = f.decrypt(encrypted_data)
-    except cryptography.fernet.InvalidToken:
-        print("Invalid token, most likely the password is incorrect")
-        return
-    print("File decrypted successfully")
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        padded_data = cipher.decrypt(ciphertext)
+        decrypted_data = unpad(padded_data, AES.block_size)
+    except (ValueError, KeyError):
+        print("Invalid password or corrupted file.")
+        return None
+
     with open(filename, "wb") as file:
         file.write(decrypted_data)
+
+    print("File decrypted successfully.")
     return decrypted_data
 
 def database_to_dict(data: str, dict: dict) -> dict:
@@ -746,7 +791,7 @@ def database_to_dict(data: str, dict: dict) -> dict:
     dict['hash_value'].append(data[2])
     return dict
 
-def check_database(file_name: str, file_metadata_table: dict, record_history_table: dict) -> tuple:
+def check_database(password, file_name: str, file_metadata_table: dict, record_history_table: dict) -> tuple:
     """
     Checks the existence of a database and retrieves its content.
 
@@ -760,7 +805,10 @@ def check_database(file_name: str, file_metadata_table: dict, record_history_tab
     """
     if os.path.isfile(file_name):
         print("Database already exists.")
-        number = input("Press the password for the database: ")
+        if (password):
+            number = password
+        else :
+            number = input("Press the password for the database: ")
         decrypted_data = decrypt_with_password(file_name, number)
         if decrypted_data == None:
             print("decryption was not applied!!")
@@ -780,5 +828,10 @@ def check_database(file_name: str, file_metadata_table: dict, record_history_tab
                 
     else:
         print("Database does not exist.")
-        number = input("Generate the password for the database: ")
+        if (password):
+            number = password
+            print("New database generated using password.")
+        else :
+            number = input("Generate the password for the database: ")
         return file_metadata_table, record_history_table, number
+    
