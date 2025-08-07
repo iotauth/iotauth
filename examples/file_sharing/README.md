@@ -35,7 +35,7 @@ Change the directory to `$ROOT/examples`.
 4. If there is any error or you want to start with a clean copy, you can delete all generated credentials and Auth databases by running the script *cleanAll.sh*, with the command `./cleanAll.sh`.
 
 ### To run IPFS (in command line)
-1. Run `ipfs daemon` to activate an IPFS environment. (IPFS command line tools should be installed a priori. If it is not installed, then you can install it easily by reading [IPFS install](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions)).
+1. Run `ipfs daemon` to activate an IPFS environment. (IPFS command line tools should be installed a priori. If it is not installed, then you can install it easily by reading [IPFS install](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions). Also run `ipfs init` if it's the initial execution of IPFS.)
 
 ### To run example Auths (in command line)
 See README.md under *examples/* for details.
