@@ -45,9 +45,6 @@ public class SymmetricKey {
     private Buffer macKeyVal = null;
     private Date expirationTime;
     private SymmetricKeyCryptoSpec cryptoSpec;
-    private Cipher cipher = null;
-    private Mac mac = null;
-    private SecretKey cipherKey = null;
     protected static final Logger logger = LoggerFactory.getLogger(SymmetricKey.class);
     /**
      * Constructor with given key value
@@ -164,41 +161,12 @@ public class SymmetricKey {
         return new Buffer(key.getEncoded());
     }
 
-    private void initializeMac() {
-        try {
-            mac = Mac.getInstance(cryptoSpec.getMacAlgorithm());
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException("Exception occurred while initializing MAC object!");
-        }
-        SecretKey macKey = new SecretKeySpec(macKeyVal.getRawBytes(), mac.getAlgorithm());
-        try {
-            mac.init(macKey);
-        } catch (InvalidKeyException e) {
-            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException("Exception occurred while initializing MAC object!");
-        }
-    }
-
-    private void initializeCipherMac() {
-        try {
-            cipher = Cipher.getInstance(cryptoSpec.getCipherAlgorithm());
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
-            throw new RuntimeException("Exception occurred while initializing cipher!");
-        }
-        String[] cipherAlgoTokens = cipher.getAlgorithm().split("/");
-        cipherKey = new SecretKeySpec(cipherKeyVal.getRawBytes(), cipherAlgoTokens[0]);
-        initializeMac();
-    }
 
     public Buffer authenticateAttachMac(Buffer input) throws UseOfExpiredKeyException {
         if (isExpired()) {
             throw new UseOfExpiredKeyException("Trying to use an expired key!");
         }
-        if (mac == null) {
-            initializeMac();
-        }
+        Mac mac = newMac();
         Buffer buffer = new Buffer(input);
         Buffer tag = new Buffer(mac.doFinal(input.getRawBytes()));
         buffer.concat(tag);
@@ -209,9 +177,7 @@ public class SymmetricKey {
         if (isExpired()) {
             throw new UseOfExpiredKeyException("Trying to use an expired key!");
         }
-        if (mac == null) {
-            initializeMac();
-        }
+        Mac mac = newMac();
         Buffer data = input.slice(0, input.length() - mac.getMacLength());
         Buffer receivedTag = input.slice(input.length() - mac.getMacLength());
         Buffer computedTag = new Buffer(mac.doFinal(data.getRawBytes()));
@@ -228,9 +194,9 @@ public class SymmetricKey {
         if (isExpired()) {
             throw new UseOfExpiredKeyException("Trying to use an expired key!");
         }
-        if (cipher == null || mac == null) {
-            initializeCipherMac();
-        }
+        Mac mac = newMac();
+        Cipher cipher = newCipher();
+        SecretKey cipherKey = newCipherKey(cipher);
         try {
             cipher.init(Cipher.ENCRYPT_MODE, cipherKey);
 
@@ -254,6 +220,38 @@ public class SymmetricKey {
         }
     }
 
+    private Mac newMac() {
+        try {
+            Mac m = Mac.getInstance(cryptoSpec.getMacAlgorithm());
+            SecretKey macKey = new SecretKeySpec(macKeyVal.getRawBytes(), m.getAlgorithm());
+            try {
+                m.init(macKey);
+            } catch (InvalidKeyException e) {
+                logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+                throw new RuntimeException("Exception occurred while initializing MAC object!", e);
+            }
+            return m;
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while initializing MAC object!", e);
+        }
+    }
+
+    private Cipher newCipher() {
+        try {
+            Cipher cipher = Cipher.getInstance(cryptoSpec.getCipherAlgorithm());
+            return cipher;
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+            throw new RuntimeException("Exception occurred while initializing cipher!");
+        }
+    }
+
+    private SecretKey newCipherKey(Cipher cipher) {
+        String[] cipherAlgoTokens = cipher.getAlgorithm().split("/");
+        return new SecretKeySpec(cipherKeyVal.getRawBytes(), cipherAlgoTokens[0]);
+    } 
+
     public Buffer decryptVerify(Buffer input) throws InvalidMacException, MessageIntegrityException,
             UseOfExpiredKeyException, InvalidSymmetricKeyOperationException {
         if (isMacOnly()) {
@@ -262,9 +260,10 @@ public class SymmetricKey {
         if (isExpired()) {
             throw new UseOfExpiredKeyException("Trying to use an expired key!");
         }
-        if (cipher == null || mac == null) {
-            initializeCipherMac();
-        }
+        Mac mac = newMac();
+        Cipher cipher = newCipher();
+        SecretKey cipherKey = newCipherKey(cipher);
+
         Buffer encrypted = input.slice(0, input.length() - mac.getMacLength());
         Buffer receivedTag = input.slice(input.length() - mac.getMacLength());
         Buffer computedTag = new Buffer(mac.doFinal(encrypted.getRawBytes()));
