@@ -254,6 +254,8 @@ function generateCommunicationPolicyTables() {
     addComputeCompactionCTRPolicy(policyList, 'ComputeNodesCTR', 'CompactionNodesCTR', '1*day', '2*hour');
     addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
     addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'HighTrustAgent', 'Website', '1*day', '4*hour');
+    addServerClientPolicy(policyList, 'LowTrustAgent', 'Website', '1*day', '1*hour');
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';
