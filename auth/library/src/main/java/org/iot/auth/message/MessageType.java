@@ -50,7 +50,10 @@ public enum MessageType {
     ADD_READER_RESP_WITH_DIST_KEY((byte)61),
     ADD_READER_REQ((byte)62),
     ADD_READER_RESP((byte)63),
-    AUTH_ALERT((byte)100);
+    AUTH_ALERT((byte)100),
+    /** For agentic AI access control **/
+    GRANT_AGENT_REQ((byte) 70),
+    GRANT_AGENT_RESP((byte) 71);
 
     public static MessageType fromByte(byte value) {
         return typesByValue.get(value);
