@@ -23,6 +23,7 @@ import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.bean.FileSharingTable;
+import org.iot.auth.db.bean.AgentTable;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.exception.InvalidDBDataTypeException;
 import org.iot.auth.exception.UseOfExpiredKeyException;

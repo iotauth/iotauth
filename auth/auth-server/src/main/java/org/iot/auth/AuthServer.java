@@ -409,6 +409,18 @@ public class AuthServer {
         return db.addFileReader(owner, reader);
     }
 
+    /**
+     * Method for exposing an AuthDB operation, addFileReader
+     * @param user The user who uses the agent.
+     * @param agent The agentic AI to be associated with the user.
+     * @return Whether the operation succeeded.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
+     */
+    public boolean addAgent(String user, String agent) throws SQLException, ClassNotFoundException {
+        return db.addAgent(user, agent);
+    }
+
     public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {
         try {
             db.insertCommunicationPolicy(newCommunicationPolicyTable);
@@ -512,6 +524,15 @@ public class AuthServer {
      */
     public ArrayList <String> getFileSharingInfo(String fileOwner) {
         return db.getFileSharingInfoByOwner(fileOwner);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getAgentByOwner
+     * @param user The user of the agent.
+     * @return List of agents' name registered by user
+     */
+    public ArrayList <String> getAgentInfo(String user) {
+        return db.getAgentInfoByUser(user);
     }
 
     /**

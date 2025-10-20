@@ -741,7 +741,7 @@ public abstract class EntityConnectionHandler {
         }
         JSONObject purpose = grantAgentReqMessage.getPurpose();
         GrantAgentReqMessage objPurpose = new GrantAgentReqMessage(purpose);
-        //server.addFileReader(requestingEntity.getGroup(),objPurpose.getTarget().toString());
+        server.addAgent(requestingEntity.getGroup(),objPurpose.getTarget().toString());
     }
 
     /**

@@ -131,6 +131,17 @@ function generateFileSharingInfoTables() {
     }
 }
 
+// generate agent info table
+function getAgentInfo(entity) {
+    var agentInfo = {
+        Agent: entity.name,
+        AgentLevel: entity.group,
+        User: entity.user
+    }
+    return agentInfo;
+}
+
+
 // generate client policy tables
 function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
     list.push({

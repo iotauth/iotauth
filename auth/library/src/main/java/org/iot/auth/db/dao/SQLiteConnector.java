@@ -306,6 +306,19 @@ public class SQLiteConnector {
             logger.info("Table {} already exists", FileSharingTable.T_File_Sharing);
         closeStatement();
 
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + AgentTable.T_Agent + "(";
+        sql += AgentTable.c.User.name() + " TEXT NOT NULL,";
+        sql += AgentTable.c.AgentLevel.name() + " TEXT NOT NULL,";
+        sql += AgentTable.c.Agent.name() + " TEXT NOT NULL)";
+
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", AgentTable.T_Agent);
+        else
+            logger.info("Table {} already exists", AgentTable.T_Agent);
+        closeStatement();
+
         closeConnection();
     }
 
@@ -614,6 +627,36 @@ public class SQLiteConnector {
     }
 
     /**
+     * Inserts the agentic ai information into the agent table.
+     *
+     * @param agentTable the object container of the information in agent table
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @see AgentTable
+     */
+    public boolean insertRecords(AgentTable agentTable) throws SQLException {
+        String sql = "INSERT INTO " + AgentTable.T_Agent + "(";
+        sql += AgentTable.c.User.name() + ",";
+        sql += AgentTable.c.AgentLevel.name() + ",";
+        sql += AgentTable.c.Agent.name() + ")";
+        sql += " VALUES (?,?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setString(index++,agentTable.getUser());
+        preparedStatement.setString(index++,agentTable.getAgentLevel());
+        preparedStatement.setString(index++,agentTable.getUser());
+        logger.info("{} {} {}", agentTable.getUser(), agentTable.getAgentLevel(), agentTable.getAgent() );
+        if (DEBUG) logger.info("{}",preparedStatement);
+        boolean result = preparedStatement.execute();
+        preparedStatement.close();
+        closeConnection();
+        return result;
+    }
+
+    /**
      * Selects all policies record from the table communication policy.
      * @return a list of all policies stored in the database
      * @throws SQLException  if a database access error occurs;
@@ -812,6 +855,37 @@ public class SQLiteConnector {
     }
 
     /**
+     * Select a group of agents owned by the user.
+     * @param user the user of the agents
+     * @return returns the group of agents
+     * @throws SQLException  if a database access error occurs;
+     */
+    public ArrayList <String> selectAgentInfoByUser(String user){
+        String sql = "SELECT Agent FROM " + AgentTable.T_Agent;
+        sql += " WHERE " + AgentTable.c.User.name() + " = " + "'" + user + "'";
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = null;
+        try {
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        ArrayList <String>  result = new ArrayList <String>();
+        try{
+            while(resultSet.next()){
+            result.add(resultSet.getString("Agent"));
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    /**
      * Deletes expired cached session keys from the database.
      * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
      * @throws SQLException  if a database access error occurs;
@@ -887,6 +961,38 @@ public class SQLiteConnector {
             sql += FileSharingTable.c.ReaderType.name() + ",";
             sql += FileSharingTable.c.Reader.name() + ")";
             sql += " VALUES ('" + owner + "', 'entity', '" + fileReader + "')";
+            if (DEBUG) logger.info(sql);
+            PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+            return preparedStatement.execute();
+        }
+    }
+
+    /**
+     * Register an agent with the specified user in the Agent table.
+     * @param user The user who uses the agent.
+     * @param agent The agentic AI to be associated with the user.
+     * @return <code>true</code> if the appending is successful; otherwise, <code>false</code>
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public boolean appendAgent(String user, String agent) throws SQLException {
+        statement = connection.createStatement();
+        String sql_deduplication = "SELECT * FROM " + AgentTable.T_Agent;
+        sql_deduplication += " WHERE " + AgentTable.c.User + "='";
+        sql_deduplication += user + "' AND " + AgentTable.c.AgentLevel + "='entity' AND ";
+        sql_deduplication += AgentTable.c.Agent + "='" + agent + "'";
+        ResultSet resultSet = statement.executeQuery(sql_deduplication);
+        if (resultSet.getString("Agent") != null) {
+            logger.info("Already registered agent information!");
+            return true;
+        }
+        else {
+            String sql = "INSERT INTO " + AgentTable.T_Agent + "(";
+            sql += AgentTable.c.User.name() + ",";
+            sql += AgentTable.c.AgentLevel.name() + ",";
+            sql += AgentTable.c.Agent.name() + ")";
+            sql += " VALUES ('" + user + "', 'entity', '" + agent + "')";
             if (DEBUG) logger.info(sql);
             PreparedStatement preparedStatement  = connection.prepareStatement(sql);
             return preparedStatement.execute();

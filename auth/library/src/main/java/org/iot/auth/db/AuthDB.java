@@ -235,12 +235,20 @@ public class AuthDB {
         return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
     }
 
+    public ArrayList<String> getAgentInfoByUser(String user) {
+        return sqLiteConnector.selectAgentInfoByUser(user);
+    }
+
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         return sqLiteConnector.appendSessionKeyOwner(keyID, newOwner);
     }
 
     public boolean addFileReader(String groupOwner, String reader) throws SQLException, ClassNotFoundException {
         return sqLiteConnector.appendFileReader(groupOwner, reader);
+    }
+
+    public boolean addAgent(String user, String agent) throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.appendAgent(user, agent);
     }
 
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
