@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A class for a grant agent req message from an entity.
  * <pre>
- * GrantAgentReqMessage Format
+ * GrantAgentAccessReqMessage Format
  * {
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
  *      nonce: /Buffer/, (AUTH_NONCE_SIZE)
@@ -37,14 +37,14 @@ import org.slf4j.LoggerFactory;
  * } </pre>
  * @author Sunyoung Kim
  */
-public class GrantAgentReqMessage extends IoTSPMessage {
+public class GrantAgentAccessReqMessage extends IoTSPMessage {
     /**
      * Constructor to construct a grant agent request message from message payload.
      * @param type Message type of the grant agent request.
      * @param decPayload Payload of the message in Buffer.
      * @throws ParseException When JSON parser fails
      */
-    public GrantAgentReqMessage(MessageType type, Buffer decPayload) throws ParseException {
+    public GrantAgentAccessReqMessage(MessageType type, Buffer decPayload) throws ParseException {
         super(type);
         int curIndex = 0;
         this.entityNonce = decPayload.slice(curIndex, curIndex + ENTITY_NONCE_SIZE);
@@ -71,6 +71,24 @@ public class GrantAgentReqMessage extends IoTSPMessage {
         }
     }
 
+    public GrantAgentAccessReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
+        // purpose keys
+        final String AddAgent = "AddAgent";
+        Object objTarget = null;
+        CommunicationTargetType targetType = CommunicationTargetType.UNKNOWN;
+
+        if (purpose.containsKey(AddAgent)) {
+            objTarget = purpose.get(AddAgent);
+            if (objTarget.getClass() == String.class) {
+                targetType = CommunicationTargetType.ADD_READER;
+            }
+        }
+        if (targetType == CommunicationTargetType.UNKNOWN) {
+            throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
+        }
+        this.target = objTarget;
+    }
+
     public Buffer getEntityNonce() {
         return entityNonce;
     }
@@ -87,11 +105,16 @@ public class GrantAgentReqMessage extends IoTSPMessage {
         return diffieHellmanParam;
     }
 
+    public Object getTarget() {
+        return target;
+    }
+    
+    private Object target;
     private Buffer entityNonce;
     private Buffer authNonce;
     private String entityName;
     private JSONObject purpose;
     private Buffer diffieHellmanParam;
 
-    private static final Logger logger = LoggerFactory.getLogger(GrantAgentReqMessage.class);
+    private static final Logger logger = LoggerFactory.getLogger(GrantAgentAccessReqMessage.class);
 }

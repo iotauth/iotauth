@@ -294,7 +294,7 @@ public abstract class EntityConnectionHandler {
             processAddReaderReq(dec.getRegisteredEntity(), addReaderReqMessage, authNonce);
             sendAddReaderResp(dec.getRegisteredEntity().getDistributionKey(), addReaderReqMessage.getEntityNonce(), null);
         }
-        else if (type == MessageType.GRANT_AGENT_REQ_IN_PUB_ENC) {
+        else if (type == MessageType. GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC) {
             getLogger().info("Received grant agent request message encrypted with public key!");
             // parse signed data
             Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
@@ -303,9 +303,9 @@ public abstract class EntityConnectionHandler {
             Buffer decPayload = server.getCrypto().authPrivateDecrypt(encPayload);
             getLogger().debug("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
 
-            GrantAgentReqMessage grantAgentReqMessage = new GrantAgentReqMessage(type, decPayload);
+            GrantAgentAccessReqMessage grantAgentAccessReqMessage = new GrantAgentAccessReqMessage(type, decPayload);
 
-            RegisteredEntity requestingEntity = server.getRegisteredEntity(grantAgentReqMessage.getEntityName());
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(grantAgentAccessReqMessage.getEntityName());
 
             if (requestingEntity == null) {
                 throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ_IN_PUB_ENC: Session key requester is not found!");
@@ -323,19 +323,19 @@ public abstract class EntityConnectionHandler {
             catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
                 throw new InvalidSignatureException("Entity signature verification failed!!");
             }
-            processGrantAgentReq(requestingEntity, grantAgentReqMessage, authNonce);
+            processGrantAgentAccessReq(requestingEntity, grantAgentAccessReqMessage, authNonce);
 
-            DistributionKeyInfo distributionKeyInfo = GenerateDistributionKey(requestingEntity, grantAgentReqMessage.getDiffieHellmanParam());
+            DistributionKeyInfo distributionKeyInfo = GenerateDistributionKey(requestingEntity, grantAgentAccessReqMessage.getDiffieHellmanParam());
             Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfo.getDistributionKeyInfoBuffer(),
                     requestingEntity.getPublicKey());
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
-            sendGrantAgentResp(distributionKeyInfo.getDistributionKey(), grantAgentReqMessage.getEntityNonce(), encryptedDistKey);
+            sendGrantAgentAccessResp(distributionKeyInfo.getDistributionKey(), grantAgentAccessReqMessage.getEntityNonce(), encryptedDistKey);
         }
-        else if (type == MessageType.GRANT_AGENT_REQ) {
+        else if (type == MessageType. GRANT_AGENT_ACCESS_REQ) {
             DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
-            GrantAgentReqMessage grantAgentReqMessage = new GrantAgentReqMessage(type, dec.getPayload());
-            processGrantAgentReq(dec.getRegisteredEntity(), grantAgentReqMessage, authNonce);
-            sendGrantAgentResp(dec.getRegisteredEntity().getDistributionKey(), grantAgentReqMessage.getEntityNonce(), null);
+            GrantAgentAccessReqMessage grantAgentAccessReqMessage = new GrantAgentAccessReqMessage(type, dec.getPayload());
+            processGrantAgentAccessReq(dec.getRegisteredEntity(), grantAgentAccessReqMessage, authNonce);
+            sendGrantAgentAccessResp(dec.getRegisteredEntity().getDistributionKey(), grantAgentAccessReqMessage.getEntityNonce(), null);
         }
         else {
             getLogger().info("Received unrecognized message from the entity!");
@@ -470,18 +470,18 @@ public abstract class EntityConnectionHandler {
      * @throws IOException If TCP socket IO fails.
      * @throws UseOfExpiredKeyException When an expired key is used.
      */
-    private void sendGrantAgentResp(DistributionKey distributionKey, Buffer entityNonce,
+    private void sendGrantAgentAccessResp(DistributionKey distributionKey, Buffer entityNonce,
                                     Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException,
                                     InvalidSymmetricKeyOperationException
     {
-        GrantAgentRespMessage grantAgentRespMessage;
+        GrantAgentAccessRespMessage grantAgentAccessRespMessage;
         if (encryptedDistKey != null) {
-            grantAgentRespMessage = new GrantAgentRespMessage(encryptedDistKey, entityNonce);
+            grantAgentAccessRespMessage = new GrantAgentAccessRespMessage(encryptedDistKey, entityNonce);
         }
         else {
-            grantAgentRespMessage = new GrantAgentRespMessage(entityNonce);
+            grantAgentAccessRespMessage = new GrantAgentAccessRespMessage(entityNonce);
         }
-        writeToSocket(grantAgentRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
+        writeToSocket(grantAgentAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
     } 
 
     /**
@@ -717,7 +717,7 @@ public abstract class EntityConnectionHandler {
     /**
      * Interpret an grant agent request from the entity, and process it. 
      * @param requestingEntity The entity who sent the session key request.
-     * @param grantAgentReqMessage The add reader request message object.
+     * @param grantAgentAccessReqMessage The add reader request message object.
      * @param authNonce Auth nonce to be checked with the nonce in the add reader request message.
      * @throws IOException If IO fails.
      * @throws ParseException If JSON parsing fails.
@@ -726,21 +726,21 @@ public abstract class EntityConnectionHandler {
      * @throws InvalidSessionKeyTargetException If the target of add reader request is not valid.
      * @throws InvalidNonceException If nonce does not match.
      */
-    private void processGrantAgentReq(
-            RegisteredEntity requestingEntity, GrantAgentReqMessage grantAgentReqMessage, Buffer authNonce)
+    private void processGrantAgentAccessReq(
+            RegisteredEntity requestingEntity, GrantAgentAccessReqMessage grantAgentAccessReqMessage, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
             InvalidNonceException {
-        getLogger().debug("Sender entity: {}", grantAgentReqMessage.getEntityName());
+        getLogger().debug("Sender entity: {}", grantAgentAccessReqMessage.getEntityName());
 
-        getLogger().debug("Received auth nonce: {}", grantAgentReqMessage.getAuthNonce().toHexString());
-        if (!authNonce.equals(grantAgentReqMessage.getAuthNonce())) {
+        getLogger().debug("Received auth nonce: {}", grantAgentAccessReqMessage.getAuthNonce().toHexString());
+        if (!authNonce.equals(grantAgentAccessReqMessage.getAuthNonce())) {
             throw new InvalidNonceException("Auth nonce does not match!");
         }
         else {
             getLogger().debug("Auth nonce is correct!");
         }
-        JSONObject purpose = grantAgentReqMessage.getPurpose();
-        GrantAgentReqMessage objPurpose = new GrantAgentReqMessage(purpose);
+        JSONObject purpose = grantAgentAccessReqMessage.getPurpose();
+        GrantAgentAccessReqMessage objPurpose = new GrantAgentAccessReqMessage(purpose);
         server.addAgent(requestingEntity.getGroup(),objPurpose.getTarget().toString());
     }
 
