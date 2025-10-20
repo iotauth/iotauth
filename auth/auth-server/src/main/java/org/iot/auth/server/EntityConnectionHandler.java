@@ -329,7 +329,7 @@ public abstract class EntityConnectionHandler {
             Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfo.getDistributionKeyInfoBuffer(),
                     requestingEntity.getPublicKey());
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
-            sendGrantAgentResp(distributionKeyInfo.getDistributionKey(), addReaderReqMessage.getEntityNonce(), encryptedDistKey);
+            sendGrantAgentResp(distributionKeyInfo.getDistributionKey(), grantAgentReqMessage.getEntityNonce(), encryptedDistKey);
         }
         else if (type == MessageType.GRANT_AGENT_REQ) {
             DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
@@ -476,10 +476,10 @@ public abstract class EntityConnectionHandler {
     {
         GrantAgentRespMessage grantAgentRespMessage;
         if (encryptedDistKey != null) {
-            grantAgentRespMessage = new grantAgentRespMessage(encryptedDistKey, entityNonce);
+            grantAgentRespMessage = new GrantAgentRespMessage(encryptedDistKey, entityNonce);
         }
         else {
-            grantAgentRespMessage = new grantAgentRespMessage(entityNonce);
+            grantAgentRespMessage = new GrantAgentRespMessage(entityNonce);
         }
         writeToSocket(grantAgentRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
     } 

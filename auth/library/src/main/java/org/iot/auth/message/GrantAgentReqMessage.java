@@ -93,5 +93,5 @@ public class GrantAgentReqMessage extends IoTSPMessage {
     private JSONObject purpose;
     private Buffer diffieHellmanParam;
 
-    private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);
+    private static final Logger logger = LoggerFactory.getLogger(GrantAgentReqMessage.class);
 }
