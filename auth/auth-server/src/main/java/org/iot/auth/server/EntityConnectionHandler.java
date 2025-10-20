@@ -717,7 +717,7 @@ public abstract class EntityConnectionHandler {
     /**
      * Interpret an grant agent request from the entity, and process it. 
      * @param requestingEntity The entity who sent the session key request.
-     * @param addReaderReqMessage The add reader request message object.
+     * @param grantAgentReqMessage The add reader request message object.
      * @param authNonce Auth nonce to be checked with the nonce in the add reader request message.
      * @throws IOException If IO fails.
      * @throws ParseException If JSON parsing fails.
