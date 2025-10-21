@@ -870,7 +870,7 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public boolean appendFileReader(String owner, String fileReader) throws SQLException {
+    public boolean appendFileReader(final String owner, final String fileReader) throws SQLException {
         statement = connection.createStatement();
         String sql_deduplication = "SELECT * FROM " + FileSharingTable.T_File_Sharing;
         sql_deduplication += " WHERE " + FileSharingTable.c.Owner + "='";
