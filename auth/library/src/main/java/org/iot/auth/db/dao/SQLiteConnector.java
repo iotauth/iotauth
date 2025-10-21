@@ -340,10 +340,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,policy.getAbsValidityStr());
         preparedStatement.setString(index++,policy.getRelValidityStr());
         if (DEBUG) logger.info(preparedStatement.toString());
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert.
     }
 
     public RegisteredEntityTable encryptRecords(RegisteredEntityTable regEntity) {
@@ -426,10 +426,10 @@ public class SQLiteConnector {
 
         preparedStatement.toString();
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert or replace.
     }
 
     /**
@@ -494,10 +494,10 @@ public class SQLiteConnector {
             preparedStatement.setNull(index++, Types.BLOB);
         }
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert.
     }
 
 
@@ -549,10 +549,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,cachedSessionKey.getSessionCryptoSpec());
         preparedStatement.setBytes(index++,cachedSessionKey.getKeyVal());
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert.
     }
 
     /**
@@ -577,10 +577,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++, metaData.getKey());
         preparedStatement.setString(index++, metaData.getValue());
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1;
     }
 
     /**
@@ -607,10 +607,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,fileSharing.getReader());
         logger.info("{} {} {}", fileSharing.getOwner(), fileSharing.getReaderType(), fileSharing.getReader() );
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert.
     }
 
     /**
