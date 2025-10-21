@@ -338,5 +338,4 @@ public class AppTest {
 
         // TODO (@hokeun): Implement selectAllFileSharing and add test for it.
     }
-
 }
