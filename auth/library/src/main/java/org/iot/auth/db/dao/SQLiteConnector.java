@@ -274,7 +274,8 @@ public class SQLiteConnector {
         sql += CachedSessionKeyTable.c.ExpirationTime.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.RelValidity.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.CryptoSpec.name() + " TEXT NOT NULL,";
-        sql += CachedSessionKeyTable.c.KeyVal.name() + " BLOB NOT NULL)";
+        sql += CachedSessionKeyTable.c.KeyVal.name() + " BLOB NOT NULL,";
+        sql += CachedSessionKeyTable.c.ExpectedOwners.name() + " TEXT)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", CachedSessionKeyTable.T_CACHED_SESSION_KEY);
@@ -549,8 +550,9 @@ public class SQLiteConnector {
         sql += CachedSessionKeyTable.c.ExpirationTime.name() + ",";
         sql += CachedSessionKeyTable.c.RelValidity.name() + ",";
         sql += CachedSessionKeyTable.c.CryptoSpec.name() + ",";
-        sql += CachedSessionKeyTable.c.KeyVal.name() + ")";
-        sql += " VALUES(?,?,?,?,?,?,?,?)";
+        sql += CachedSessionKeyTable.c.KeyVal.name() + ",";
+        sql += CachedSessionKeyTable.c.ExpectedOwners.name()  + ")";
+        sql += " VALUES(?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setLong(index++,cachedSessionKey.getID());
@@ -561,6 +563,7 @@ public class SQLiteConnector {
         preparedStatement.setLong(index++,cachedSessionKey.getRelValidity());
         preparedStatement.setString(index++,cachedSessionKey.getSessionCryptoSpec());
         preparedStatement.setBytes(index++,cachedSessionKey.getKeyVal());
+        preparedStatement.setString(index++,cachedSessionKey.getExpectedOwners());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();

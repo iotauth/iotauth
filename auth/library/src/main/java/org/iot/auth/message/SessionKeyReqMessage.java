@@ -29,8 +29,7 @@ import org.slf4j.LoggerFactory;
  * SessionKeyReq Format
  * {
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
- *      nonce: /Buffer/, (AUTH_NONCE_SIZE)
- *      replyNonce:    /Buffer/, (AUTH_NONCE_SIZE)
+ *      authNonce:    /Buffer/, (AUTH_NONCE_SIZE)
  *      numKeys: /UInt32BE/,
  *      sender: /string/, (senderLen UInt8)
  *      purpose: JSON,

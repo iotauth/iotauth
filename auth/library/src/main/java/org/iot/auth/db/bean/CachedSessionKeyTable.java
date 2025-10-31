@@ -38,7 +38,8 @@ public class CachedSessionKeyTable {
         ExpirationTime,
         RelValidity,
         CryptoSpec,
-        KeyVal
+        KeyVal,
+        ExpectedOwners
     }
 
     public static CachedSessionKeyTable fromSessionKey(SessionKey sessionKey) {
@@ -51,6 +52,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
         cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toSpecString());
         cachedSessionKey.setKeyVal(sessionKey.getSerializedKeyVal().getRawBytes());
+        cachedSessionKey.setExpectedOwners(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getExpectedOwners()));
         return cachedSessionKey;
     }
 
@@ -116,6 +118,9 @@ public class CachedSessionKeyTable {
         this.keyVal = Arrays.copyOf(keyVal, keyVal.length);
     }
 
+    public String getExpectedOwners() { return this.expectedOwners; }
+    public void setExpectedOwners(String expectedOwners) { this.expectedOwners = expectedOwners; }
+
     public static CachedSessionKeyTable createRecord(ResultSet r) throws SQLException {
         CachedSessionKeyTable cachedSessionKey = new CachedSessionKeyTable();
         cachedSessionKey.setID(r.getLong(c.ID.name()));
@@ -126,6 +131,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setRelValidity(r.getLong(c.RelValidity.name()));
         cachedSessionKey.setSessionCryptoSpec(r.getString(c.CryptoSpec.name()));
         cachedSessionKey.setKeyVal(r.getBytes(c.KeyVal.name()));
+        cachedSessionKey.setExpectedOwners(r.getString(c.ExpectedOwners.name()));
         return cachedSessionKey;
     }
 
@@ -140,6 +146,7 @@ public class CachedSessionKeyTable {
         object.put(c.RelValidity.name(), getRelValidity());
         object.put(c.CryptoSpec.name(), getSessionCryptoSpec());
         object.put(c.KeyVal.name(), getKeyVal());
+        object.put(c.ExpectedOwners.name(), getExpectedOwners());
         return object;
     }
 
@@ -154,4 +161,6 @@ public class CachedSessionKeyTable {
     private String sessionCryptoSpec;
 
     private byte[] keyVal;
+
+    private String expectedOwners;
 }

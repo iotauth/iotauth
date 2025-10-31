@@ -211,7 +211,7 @@ public abstract class EntityConnectionHandler {
         else if (type == MessageType.GRANT_AGENT_ACCESS_REQ){
             DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
             GrantAgentAccessReqMessage grantAgentAccessReqMessage = new GrantAgentAccessReqMessage(type, dec.getPayload());
-        
+
         }
         else if (type == MessageType.MIGRATION_REQ_WITH_SIGN) {
             getLogger().info("Received migration request with signature!");
@@ -671,6 +671,9 @@ public abstract class EntityConnectionHandler {
                     return sendAuthSessionKeyReq(authID, authSessionKeyReqMessage);
                 }
                 break;
+            }
+            case AGENT_ACCESSED_WEBSITE: {
+                // TODO
             }
             default: {
                 getLogger().error("Unrecognized target for session key request! TargetType: " + reqPurpose.getTargetType().getValue());
