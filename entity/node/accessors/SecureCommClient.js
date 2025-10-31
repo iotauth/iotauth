@@ -154,6 +154,22 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
     }
 }
 
+function handleSessionKeyForGrantAccessResp(sessionKeyID, receivedDistKey, callbackParameters) {
+    if (parameters.migrationEnabled) {
+        authFailureCount = 0;
+        console.log('handleSessionKeyForGrantAccessResp: session key request succeeded! authFailureCount: ' + authFailureCount);
+    }
+    if (receivedDistKey != null) {
+        console.log('updating distribution key: ' + util.inspect(receivedDistKey));
+        currentDistributionKey = receivedDistKey;
+    }
+    console.log('received sessionKeyID' +  sessionKeyID);
+    
+    if (callbackParameters != null && callbackParameters.callback) {
+        callbackParameters.callback();
+    }
+}
+
 function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbackParameters) {
     var options = iotAuth.getSessionKeyReqOptions(entityConfig, currentDistributionKey, purpose, numKeys);
     var eventHandlers = {
@@ -334,6 +350,11 @@ SecureCommClient.prototype.showSocket = function() {
 SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
     sendSessionKeyRequest({group: 'Servers'}, numKeys,
         handleSessionKeyResp, null);
+}
+
+SecureCommClient.prototype.getSessionKeysForGrantAccess = function(numKeys) {
+    sendSessionKeyRequest({agentAccess: 'HighTrustAgents, Website'}, numKeys,
+        handleSessionKeyForGrantAccessResp, null);
 }
 
 SecureCommClient.prototype.migrateToTrustedAuth = function() {

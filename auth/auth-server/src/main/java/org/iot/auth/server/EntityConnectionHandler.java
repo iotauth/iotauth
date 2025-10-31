@@ -211,7 +211,15 @@ public abstract class EntityConnectionHandler {
         else if (type == MessageType.GRANT_AGENT_ACCESS_REQ){
             DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
             GrantAgentAccessReqMessage grantAgentAccessReqMessage = new GrantAgentAccessReqMessage(type, dec.getPayload());
+            SessionKeysAndSpec ret =
+                    processSessionKeyReq(dec.getRegisteredEntity(), new SessionKeyReqInternal(sessionKeyReqMessage.getEntityName(), sessionKeyReqMessage.getAuthNonce(), 
+                        sessionKeyReqMessage.getNumKeys(), sessionKeyReqMessage.getPurpose()), authNonce);
+            List<SessionKey> sessionKeyList = ret.getSessionKeys();
+            SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
+            sendSessionKeyResp(dec.getRegisteredEntity().getDistributionKey(), sessionKeyReqMessage.getEntityNonce(),
+                    sessionKeyList, sessionCryptoSpec, null);
+            close();
         }
         else if (type == MessageType.MIGRATION_REQ_WITH_SIGN) {
             getLogger().info("Received migration request with signature!");
@@ -330,51 +338,6 @@ public abstract class EntityConnectionHandler {
             processAddReaderReq(dec.getRegisteredEntity(), addReaderReqMessage, authNonce);
             sendAddReaderResp(dec.getRegisteredEntity().getDistributionKey(), addReaderReqMessage.getEntityNonce(), null);
         }
-        /* 
-        else if (type == MessageType.GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC) {
-            getLogger().info("Received grant agent request message encrypted with public key!");
-            // parse signed data
-            Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
-            getLogger().debug("Encrypted data ({}): {}", encPayload.length(), encPayload.toHexString());
-            Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
-            Buffer decPayload = server.getCrypto().authPrivateDecrypt(encPayload);
-            getLogger().debug("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
-
-            GrantAgentAccessReqMessage grantAgentAccessReqMessage = new GrantAgentAccessReqMessage(type, decPayload);
-
-            RegisteredEntity requestingEntity = server.getRegisteredEntity(grantAgentAccessReqMessage.getEntityName());
-
-            if (requestingEntity == null) {
-                throw new UnrecognizedEntityException("Error in GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC: Grant Agent Access requester is not found!");
-            }
-
-            // checking signature
-            try {
-                if (!server.getCrypto().verifySignedData(encPayload, signature, requestingEntity.getPublicKey())) {
-                    throw new InvalidSignatureException("Entity signature verification failed!!");
-                }
-                else {
-                    getLogger().debug("Entity signature is correct!");
-                }
-            }
-            catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-                throw new InvalidSignatureException("Entity signature verification failed!!");
-            }
-            processGrantAgentAccessReq(requestingEntity, grantAgentAccessReqMessage, authNonce);
-
-            DistributionKeyInfo distributionKeyInfo = GenerateDistributionKey(requestingEntity, grantAgentAccessReqMessage.getDiffieHellmanParam());
-            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKeyInfo.getDistributionKeyInfoBuffer(),
-                    requestingEntity.getPublicKey());
-            encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
-            sendGrantAgentAccessResp(distributionKeyInfo.getDistributionKey(), grantAgentAccessReqMessage.getEntityNonce(), encryptedDistKey);
-        }
-        else if (type == MessageType.GRANT_AGENT_ACCESS_REQ) {
-            DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
-            GrantAgentAccessReqMessage grantAgentAccessReqMessage = new GrantAgentAccessReqMessage(type, dec.getPayload());
-            processGrantAgentAccessReq(dec.getRegisteredEntity(), grantAgentAccessReqMessage, authNonce);
-            sendGrantAgentAccessResp(dec.getRegisteredEntity().getDistributionKey(), grantAgentAccessReqMessage.getEntityNonce(), null);
-        }
-        */
         else {
             getLogger().info("Received unrecognized message from the entity!");
             close();
