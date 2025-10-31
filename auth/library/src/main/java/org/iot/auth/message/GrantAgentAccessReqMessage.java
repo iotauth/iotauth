@@ -71,24 +71,6 @@ public class GrantAgentAccessReqMessage extends IoTSPMessage {
         }
     }
 
-    public GrantAgentAccessReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
-        // purpose keys
-        final String AddAgent = "AddAgent";
-        Object objTarget = null;
-        CommunicationTargetType targetType = CommunicationTargetType.UNKNOWN;
-
-        if (purpose.containsKey(AddAgent)) {
-            objTarget = purpose.get(AddAgent);
-            if (objTarget.getClass() == String.class) {
-                targetType = CommunicationTargetType.ADD_READER;
-            }
-        }
-        if (targetType == CommunicationTargetType.UNKNOWN) {
-            throw new InvalidSessionKeyTargetException("Unrecognized purpose: " + purpose);
-        }
-        this.target = objTarget;
-    }
-
     public Buffer getEntityNonce() {
         return entityNonce;
     }
@@ -104,12 +86,7 @@ public class GrantAgentAccessReqMessage extends IoTSPMessage {
     public Buffer getDiffieHellmanParam() {
         return diffieHellmanParam;
     }
-
-    public Object getTarget() {
-        return target;
-    }
     
-    private Object target;
     private Buffer entityNonce;
     private Buffer authNonce;
     private String entityName;

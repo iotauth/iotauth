@@ -90,6 +90,31 @@ public abstract class EntityConnectionHandler {
             return distributionKey;
         }
     }
+
+    private class SessionKeyReqInternal {
+        private String entityName;
+        private Buffer authNonce;
+        private int numKeys;
+        private JSONObject purpose;
+        public SessionKeyReqInternal(String entityName, Buffer authNonce, int numKeys, JSONObject purpose) {
+            this.entityName = entityName;
+            this.authNonce = authNonce;
+            this.numKeys = numKeys;
+            this.purpose = purpose;
+        }
+        public String getEntityName() {
+            return entityName;
+        }
+        public Buffer getAuthNonce() {
+            return authNonce;
+        }
+        public int getNumKeys() {
+            return numKeys;
+        }
+        public JSONObject getPurpose() {
+            return purpose;
+        }
+     }
     protected EntityConnectionHandler(AuthServer server) {
         this.server = server;
     }
@@ -148,9 +173,11 @@ public abstract class EntityConnectionHandler {
             catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
                 throw new InvalidSignatureException("Entity signature verification failed!!");
             }
-
+            /// public SessionKeyReqInternal(String entityName, Buffer authNonce, int numKeys, JSONObject purpose)
             SessionKeysAndSpec ret =
-                    processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
+                    processSessionKeyReq(requestingEntity,
+                        new SessionKeyReqInternal(sessionKeyReqMessage.getEntityName(), sessionKeyReqMessage.getAuthNonce(), 
+                        sessionKeyReqMessage.getNumKeys(), sessionKeyReqMessage.getPurpose()), authNonce);
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
@@ -169,13 +196,22 @@ public abstract class EntityConnectionHandler {
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, dec.getPayload());
 
             SessionKeysAndSpec ret =
-                    processSessionKeyReq(dec.getRegisteredEntity(), sessionKeyReqMessage, authNonce);
+                    processSessionKeyReq(dec.getRegisteredEntity(), new SessionKeyReqInternal(sessionKeyReqMessage.getEntityName(), sessionKeyReqMessage.getAuthNonce(), 
+                        sessionKeyReqMessage.getNumKeys(), sessionKeyReqMessage.getPurpose()), authNonce);
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
             sendSessionKeyResp(dec.getRegisteredEntity().getDistributionKey(), sessionKeyReqMessage.getEntityNonce(),
                     sessionKeyList, sessionCryptoSpec, null);
             close();
+        }
+        else if (type == MessageType.GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC) {
+            throw new UnsupportedOperationException("TODO: Impelement handling of GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC.");
+        }
+        else if (type == MessageType.GRANT_AGENT_ACCESS_REQ){
+            DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
+            GrantAgentAccessReqMessage grantAgentAccessReqMessage = new GrantAgentAccessReqMessage(type, dec.getPayload());
+        
         }
         else if (type == MessageType.MIGRATION_REQ_WITH_SIGN) {
             getLogger().info("Received migration request with signature!");
@@ -294,7 +330,8 @@ public abstract class EntityConnectionHandler {
             processAddReaderReq(dec.getRegisteredEntity(), addReaderReqMessage, authNonce);
             sendAddReaderResp(dec.getRegisteredEntity().getDistributionKey(), addReaderReqMessage.getEntityNonce(), null);
         }
-        else if (type == MessageType. GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC) {
+        /* 
+        else if (type == MessageType.GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC) {
             getLogger().info("Received grant agent request message encrypted with public key!");
             // parse signed data
             Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
@@ -308,7 +345,7 @@ public abstract class EntityConnectionHandler {
             RegisteredEntity requestingEntity = server.getRegisteredEntity(grantAgentAccessReqMessage.getEntityName());
 
             if (requestingEntity == null) {
-                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ_IN_PUB_ENC: Session key requester is not found!");
+                throw new UnrecognizedEntityException("Error in GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC: Grant Agent Access requester is not found!");
             }
 
             // checking signature
@@ -331,12 +368,13 @@ public abstract class EntityConnectionHandler {
             encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
             sendGrantAgentAccessResp(distributionKeyInfo.getDistributionKey(), grantAgentAccessReqMessage.getEntityNonce(), encryptedDistKey);
         }
-        else if (type == MessageType. GRANT_AGENT_ACCESS_REQ) {
+        else if (type == MessageType.GRANT_AGENT_ACCESS_REQ) {
             DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
             GrantAgentAccessReqMessage grantAgentAccessReqMessage = new GrantAgentAccessReqMessage(type, dec.getPayload());
             processGrantAgentAccessReq(dec.getRegisteredEntity(), grantAgentAccessReqMessage, authNonce);
             sendGrantAgentAccessResp(dec.getRegisteredEntity().getDistributionKey(), grantAgentAccessReqMessage.getEntityNonce(), null);
         }
+        */
         else {
             getLogger().info("Received unrecognized message from the entity!");
             close();
@@ -488,7 +526,7 @@ public abstract class EntityConnectionHandler {
      * Interpret a session key request from the entity, and process it. The process includes communication policy
      * checking, session key generation, and communicating with a trusted Auth to get the session key.
      * @param requestingEntity The entity who sent the session key request.
-     * @param sessionKeyReqMessage The session key request message object.
+     * @param sessionKeyReq The session key request message object.
      * @param authNonce Auth nonce to be checked with the nonce in the session key request message.
      * @return A pair of resulting session key list and usage (cryptography) specification for the session keys. The
      * session keys can be either generated or retrieved from a trusted Auth.
@@ -500,23 +538,23 @@ public abstract class EntityConnectionHandler {
      * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
      */
     private SessionKeysAndSpec processSessionKeyReq(
-            RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)
+            RegisteredEntity requestingEntity, SessionKeyReqInternal sessionKeyReq, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
             TooManySessionKeysRequestedException, InvalidNonceException {
-        getLogger().debug("Sender entity: {}", sessionKeyReqMessage.getEntityName());
+        getLogger().debug("Sender entity: {}", sessionKeyReq.getEntityName());
 
-        getLogger().debug("Received auth nonce: {}", sessionKeyReqMessage.getAuthNonce().toHexString());
-        if (!authNonce.equals(sessionKeyReqMessage.getAuthNonce())) {
+        getLogger().debug("Received auth nonce: {}", sessionKeyReq.getAuthNonce().toHexString());
+        if (!authNonce.equals(sessionKeyReq.getAuthNonce())) {
             throw new InvalidNonceException("Auth nonce does not match!");
         }
         else {
             getLogger().debug("Auth nonce is correct!");
         }
-        if (sessionKeyReqMessage.getNumKeys() > requestingEntity.getMaxSessionKeysPerRequest()) {
+        if (sessionKeyReq.getNumKeys() > requestingEntity.getMaxSessionKeysPerRequest()) {
             throw new TooManySessionKeysRequestedException("More session keys than allowed are requested!");
         }
 
-        JSONObject purpose = sessionKeyReqMessage.getPurpose();
+        JSONObject purpose = sessionKeyReq.getPurpose();
         SessionKeyReqPurpose reqPurpose = new SessionKeyReqPurpose(purpose);
 
         SymmetricKeyCryptoSpec cryptoSpec = null;
@@ -535,9 +573,9 @@ public abstract class EntityConnectionHandler {
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
                         new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
-                getLogger().debug("numKeys {}", sessionKeyReqMessage.getNumKeys());
+                getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
                 sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
-                        sessionKeyReqMessage.getNumKeys(), communicationPolicy, sessionKeyPurpose);
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
                 break;
             }
             // If a subscribe-topic is specified, derive the keys from DB
@@ -614,7 +652,7 @@ public abstract class EntityConnectionHandler {
                 }
 
                 if (authID == server.getAuthID()) {
-                    getLogger().info("numKeys {}", sessionKeyReqMessage.getNumKeys());
+                    getLogger().info("numKeys {}", sessionKeyReq.getNumKeys());
                     SessionKeyPurpose sessionKeyPurpose =
                             new SessionKeyPurpose(CommunicationTargetType.TARGET_GROUP, requestingEntity.getGroup());
                     // get cached keys for this group
@@ -740,8 +778,7 @@ public abstract class EntityConnectionHandler {
             getLogger().debug("Auth nonce is correct!");
         }
         JSONObject purpose = grantAgentAccessReqMessage.getPurpose();
-        GrantAgentAccessReqMessage objPurpose = new GrantAgentAccessReqMessage(purpose);
-        server.addAgent(requestingEntity.getGroup(),objPurpose.getTarget().toString());
+        server.addAgent(requestingEntity.getGroup(),purpose.get("AddReader").toString());
     }
 
     /**
