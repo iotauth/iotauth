@@ -39,20 +39,24 @@ public class CachedSessionKeyTable {
         RelValidity,
         CryptoSpec,
         KeyVal,
-        ExpectedOwners
+        ExpectedOwnerGroups
     }
 
     public static CachedSessionKeyTable fromSessionKey(SessionKey sessionKey) {
         CachedSessionKeyTable cachedSessionKey = new CachedSessionKeyTable();
         cachedSessionKey.setID(sessionKey.getID());
-        cachedSessionKey.setOwner(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getOwners()));
+        if (sessionKey.getOwners() != null) {
+            cachedSessionKey.setOwner(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getOwners()));
+        }
         cachedSessionKey.setMaxNumOwners(sessionKey.getMaxNumOwners());
         cachedSessionKey.setPurpose(sessionKey.getPurpose());
         cachedSessionKey.setAbsValidity(sessionKey.getRawExpirationTime());
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
         cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toSpecString());
         cachedSessionKey.setKeyVal(sessionKey.getSerializedKeyVal().getRawBytes());
-        cachedSessionKey.setExpectedOwners(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getExpectedOwners()));
+        if (sessionKey.getExpectedOwnerGroups() != null) {
+            cachedSessionKey.setExpectedOwnerGroups(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getExpectedOwnerGroups()));
+        }
         return cachedSessionKey;
     }
 
@@ -118,8 +122,8 @@ public class CachedSessionKeyTable {
         this.keyVal = Arrays.copyOf(keyVal, keyVal.length);
     }
 
-    public String getExpectedOwners() { return this.expectedOwners; }
-    public void setExpectedOwners(String expectedOwners) { this.expectedOwners = expectedOwners; }
+    public String getExpectedOwnerGroups() { return this.expectedOwnerGroups; }
+    public void setExpectedOwnerGroups(String expectedOwnerGroups) { this.expectedOwnerGroups = expectedOwnerGroups; }
 
     public static CachedSessionKeyTable createRecord(ResultSet r) throws SQLException {
         CachedSessionKeyTable cachedSessionKey = new CachedSessionKeyTable();
@@ -131,7 +135,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setRelValidity(r.getLong(c.RelValidity.name()));
         cachedSessionKey.setSessionCryptoSpec(r.getString(c.CryptoSpec.name()));
         cachedSessionKey.setKeyVal(r.getBytes(c.KeyVal.name()));
-        cachedSessionKey.setExpectedOwners(r.getString(c.ExpectedOwners.name()));
+        cachedSessionKey.setExpectedOwnerGroups(r.getString(c.ExpectedOwnerGroups.name()));
         return cachedSessionKey;
     }
 
@@ -146,7 +150,7 @@ public class CachedSessionKeyTable {
         object.put(c.RelValidity.name(), getRelValidity());
         object.put(c.CryptoSpec.name(), getSessionCryptoSpec());
         object.put(c.KeyVal.name(), getKeyVal());
-        object.put(c.ExpectedOwners.name(), getExpectedOwners());
+        object.put(c.ExpectedOwnerGroups.name(), getExpectedOwnerGroups());
         return object;
     }
 
@@ -162,5 +166,5 @@ public class CachedSessionKeyTable {
 
     private byte[] keyVal;
 
-    private String expectedOwners;
+    private String expectedOwnerGroups;
 }

@@ -48,7 +48,8 @@ public class SessionKey extends SymmetricKey {
         ExpirationTime,
         RelValidity,
         CryptoSpec,
-        KeyVal
+        KeyVal,
+        ExpectedOwnerGroups
     }
 
     public SessionKey(long id, String[] owners, int maxNumOwners, String purpose,
@@ -65,7 +66,8 @@ public class SessionKey extends SymmetricKey {
 
     public SessionKey(long id, String[] owners, int maxNumOwners, String purpose,
                       long expirationTime, long relValidity,
-                      SymmetricKeyCryptoSpec cryptoSpec)
+                      SymmetricKeyCryptoSpec cryptoSpec,
+                      String[] expectedOwnerGroups)
     {
         super(cryptoSpec, expirationTime);
         this.id = id;
@@ -73,6 +75,7 @@ public class SessionKey extends SymmetricKey {
         this.maxNumOwners = maxNumOwners;
         this.purpose = purpose;
         this.relValidity = relValidity;
+        this.expectedOwnerGroups = expectedOwnerGroups;
     }
 
     public String toString() {
@@ -144,8 +147,8 @@ public class SessionKey extends SymmetricKey {
         return relValidity;
     }
 
-    public String[] getExpectedOwners() {
-        return expectedOwners;
+    public String[] getExpectedOwnerGroups() {
+        return expectedOwnerGroups;
     }
 
 
@@ -157,5 +160,5 @@ public class SessionKey extends SymmetricKey {
 
     private long relValidity;
 
-    private String[] expectedOwners;
+    private String[] expectedOwnerGroups;
 }

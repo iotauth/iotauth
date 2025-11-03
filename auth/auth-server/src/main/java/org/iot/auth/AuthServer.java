@@ -471,7 +471,29 @@ public class AuthServer {
     public synchronized List<SessionKey> generateSessionKeys(String owner, int numKeys, CommunicationPolicy communicationPolicy,
                                                 SessionKeyPurpose sessionKeyPurpose)
             throws IOException, SQLException, ClassNotFoundException {
-        return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy, sessionKeyPurpose);
+        return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy, sessionKeyPurpose, null);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, generateSessionKeys, but for delegation.
+     * Since it's for delegation, it does not take the requester as an owner.
+     * Instead, we take explicit expected owners in terms of their groups.
+     * This method is protected using the "synchronized" keyword to ensure the atomicity of the process creating session
+     * keys when there are multiple threads trying to create session keys at the same time.
+     *
+     * @param numKeys             The number of keys specified.
+     * @param communicationPolicy The communication policy specified.
+     * @param sessionKeyPurpose   The purpose Auth generates session keys for.
+     * @param expectedOwnerGroups The group names of expected owners.
+     * @return A list of session keys.
+     * @throws IOException            If an error occurs in IO.
+     * @throws SQLException           if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
+     */
+    public synchronized List<SessionKey> generateSessionKeysForDelegation(int numKeys, CommunicationPolicy communicationPolicy,
+                                                                         SessionKeyPurpose sessionKeyPurpose, String[] expectedOwnerGroups)
+            throws IOException, SQLException, ClassNotFoundException {
+        return db.generateSessionKeys(authID, null, numKeys, communicationPolicy, sessionKeyPurpose, expectedOwnerGroups);
     }
 
     /**

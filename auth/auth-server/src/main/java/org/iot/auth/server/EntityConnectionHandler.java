@@ -484,7 +484,7 @@ public abstract class EntityConnectionHandler {
         if (encryptedDistKey != null) {
             grantAgentAccessRespMessage = new GrantAgentAccessRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
         }
-        writeToSocket(grantAgentAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
+//        writeToSocket(grantAgentAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
     } 
 
     /**
@@ -637,9 +637,22 @@ public abstract class EntityConnectionHandler {
                 }
                 break;
             }
-            case AGENT_ACCESSED_WEBSITE: {
+            case DELEGATION: {
+                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
+                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                if (communicationPolicy == null) {
+                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
+                }
+                cryptoSpec = communicationPolicy.getSessionCryptoSpec();
+                // generate session keys
+                SessionKeyPurpose sessionKeyPurpose =
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
+                sessionKeyList = server.generateSessionKeysForDelegation(
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose,
+                        ((String)reqPurpose.getTarget()).split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM));
                 // TODO
-                
+                break;
             }
             default: {
                 getLogger().error("Unrecognized target for session key request! TargetType: " + reqPurpose.getTargetType().getValue());

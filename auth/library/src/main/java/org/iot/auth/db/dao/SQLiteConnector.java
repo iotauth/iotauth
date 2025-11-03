@@ -268,14 +268,14 @@ public class SQLiteConnector {
         statement = connection.createStatement();
         sql = "CREATE TABLE IF NOT EXISTS " + CachedSessionKeyTable.T_CACHED_SESSION_KEY + "(";
         sql += CachedSessionKeyTable.c.ID.name() + " INT NOT NULL PRIMARY KEY,";
-        sql += CachedSessionKeyTable.c.Owners.name() + " TEXT NOT NULL,";
+        sql += CachedSessionKeyTable.c.Owners.name() + " TEXT,";
         sql += CachedSessionKeyTable.c.MaxNumOwners.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.Purpose.name() + " TEXT NOT NULL,";
         sql += CachedSessionKeyTable.c.ExpirationTime.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.RelValidity.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.CryptoSpec.name() + " TEXT NOT NULL,";
         sql += CachedSessionKeyTable.c.KeyVal.name() + " BLOB NOT NULL,";
-        sql += CachedSessionKeyTable.c.ExpectedOwners.name() + " TEXT)";
+        sql += CachedSessionKeyTable.c.ExpectedOwnerGroups.name() + " TEXT)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", CachedSessionKeyTable.T_CACHED_SESSION_KEY);
@@ -551,7 +551,7 @@ public class SQLiteConnector {
         sql += CachedSessionKeyTable.c.RelValidity.name() + ",";
         sql += CachedSessionKeyTable.c.CryptoSpec.name() + ",";
         sql += CachedSessionKeyTable.c.KeyVal.name() + ",";
-        sql += CachedSessionKeyTable.c.ExpectedOwners.name()  + ")";
+        sql += CachedSessionKeyTable.c.ExpectedOwnerGroups.name()  + ")";
         sql += " VALUES(?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
@@ -563,7 +563,7 @@ public class SQLiteConnector {
         preparedStatement.setLong(index++,cachedSessionKey.getRelValidity());
         preparedStatement.setString(index++,cachedSessionKey.getSessionCryptoSpec());
         preparedStatement.setBytes(index++,cachedSessionKey.getKeyVal());
-        preparedStatement.setString(index++,cachedSessionKey.getExpectedOwners());
+        preparedStatement.setString(index++,cachedSessionKey.getExpectedOwnerGroups());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();

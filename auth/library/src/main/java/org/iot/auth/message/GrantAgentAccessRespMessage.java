@@ -51,10 +51,10 @@ public class GrantAgentAccessRespMessage extends IoTSPMessage  {
         encryptedDistKey = null;
         this.entityNonce = entityNonce;
         this.cryptoSpec = cryptoSpec;
-        this.sessionKeyIDList = new ArrayList<>();
-        for (SessionKey key : sessionKeyList){
-            this.sessionKeyIDList.add(key.getID());
-        }
+//        this.sessionKeyIDList = new ArrayList<>();
+//        for (SessionKey key : sessionKeyList){
+//            this.sessionKeyIDList.add(key.getID());
+//        }
     }
 
     /**
@@ -71,12 +71,12 @@ public class GrantAgentAccessRespMessage extends IoTSPMessage  {
         logger.debug("cryptoSpecString: {}", cryptoSpecString);
         payload.concat(new BufferedString(cryptoSpecString).serialize());
         Buffer bufSessionKeyCount = new Buffer(4);
-        bufSessionKeyCount.putInt(sessionKeyList.size(), 0);
-        payload.concat(bufSessionKeyCount);
-
-        for (SessionKey sessionKey: sessionKeyList) {
-            payload.concat(sessionKey.serialize());
-        }
+//        bufSessionKeyCount.putInt(sessionKeyList.size(), 0);
+//        payload.concat(bufSessionKeyCount);
+//
+//        for (SessionKey sessionKey: sessionKeyList) {
+//            payload.concat(sessionKey.serialize());
+//        }
 
         payload = distKey.encryptAuthenticate(payload);
 
@@ -92,6 +92,6 @@ public class GrantAgentAccessRespMessage extends IoTSPMessage  {
     private Buffer encryptedDistKey;
     private Buffer entityNonce;
     private SymmetricKeyCryptoSpec cryptoSpec;
-    private List<Long> sessionKeyIDList;
+    private Long sessionKeyID;
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);
 }

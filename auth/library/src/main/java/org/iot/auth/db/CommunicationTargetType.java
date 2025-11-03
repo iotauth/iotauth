@@ -30,7 +30,7 @@ public enum CommunicationTargetType {
     CACHED_SESSION_KEYS(40),
     FILE_SHARING_TEAM(50),
     ADD_READER(60),
-    AGENT_ACCESSED_WEBSITE(70);
+    DELEGATION(70);
 
     public int getValue() {
         return value;
@@ -52,8 +52,8 @@ public enum CommunicationTargetType {
                 return FILE_SHARING_TEAM;
             case "AddReader":
                 return ADD_READER;
-            case "AgentAccessedWebsite":
-                return AGENT_ACCESSED_WEBSITE;
+            case "Delegation":
+                return DELEGATION;
             default:
                 return UNKNOWN;
         }
