@@ -154,7 +154,7 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
     }
 }
 
-function handleSessionKeyForGrantAccessResp(sessionKeyIDList, receivedDistKey, callbackParameters) {
+function handleSessionKeyForGrantAccessResp(sessionKeyID, receivedDistKey, callbackParameters) {
     if (parameters.migrationEnabled) {
         authFailureCount = 0;
         console.log('handleSessionKeyForGrantAccessResp: session key request succeeded! authFailureCount: ' + authFailureCount);
@@ -163,7 +163,7 @@ function handleSessionKeyForGrantAccessResp(sessionKeyIDList, receivedDistKey, c
         console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         currentDistributionKey = receivedDistKey;
     }
-    console.log('received sessionKeyID' +  sessionKeyIDList.get(0));
+    console.log('received sessionKeyID' +  sessionKeyID);
     
     if (callbackParameters != null && callbackParameters.callback) {
         callbackParameters.callback();
@@ -353,7 +353,7 @@ SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
 }
 
 SecureCommClient.prototype.getSessionKeysForGrantAccess = function(numKeys) {
-    sendSessionKeyRequest({agentAccess: 'HighTrustAgents, Website'}, numKeys,
+    sendSessionKeyRequest({delegation: 'HighTrustAgents,Website'}, numKeys,
         handleSessionKeyForGrantAccessResp, null);
 }
 
