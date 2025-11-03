@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
  * {
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
  *      authNonce:    /Buffer/, (AUTH_NONCE_SIZE)
+ *      numKeys: /UInt32BE/,
  *      sender: /string/, (senderLen UInt8)
  *      purpose: JSON,
  *      dhParam: /Buffer/ (optional, Diffie-Hellman parameter)
@@ -51,6 +52,9 @@ public class GrantAgentAccessReqMessage extends IoTSPMessage {
 
         this.authNonce = decPayload.slice(curIndex, curIndex + AUTH_NONCE_SIZE);
         curIndex += AUTH_NONCE_SIZE;
+
+        this.numKeys = decPayload.getInt(curIndex);
+        curIndex += 4;
 
         BufferedString bufStr = decPayload.getBufferedString(curIndex);
         this.entityName = bufStr.getString();
@@ -79,6 +83,9 @@ public class GrantAgentAccessReqMessage extends IoTSPMessage {
     public String getEntityName() {
         return entityName;
     }
+    public int getNumKeys() {
+        return numKeys;
+    }
     public JSONObject getPurpose() {
         return purpose;
     }
@@ -89,6 +96,7 @@ public class GrantAgentAccessReqMessage extends IoTSPMessage {
     private Buffer entityNonce;
     private Buffer authNonce;
     private String entityName;
+    private int numKeys;
     private JSONObject purpose;
     private Buffer diffieHellmanParam;
 

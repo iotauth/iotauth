@@ -154,7 +154,7 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
     }
 }
 
-function handleSessionKeyForGrantAccessResp(sessionKeyID, receivedDistKey, callbackParameters) {
+function handleSessionKeyForGrantAccessResp(sessionKeyIDList, receivedDistKey, callbackParameters) {
     if (parameters.migrationEnabled) {
         authFailureCount = 0;
         console.log('handleSessionKeyForGrantAccessResp: session key request succeeded! authFailureCount: ' + authFailureCount);
@@ -163,7 +163,7 @@ function handleSessionKeyForGrantAccessResp(sessionKeyID, receivedDistKey, callb
         console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         currentDistributionKey = receivedDistKey;
     }
-    console.log('received sessionKeyID' +  sessionKeyID);
+    console.log('received sessionKeyID' +  sessionKeyIDList.get(0));
     
     if (callbackParameters != null && callbackParameters.callback) {
         callbackParameters.callback();
