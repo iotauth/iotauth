@@ -242,6 +242,17 @@ function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteVa
         RelativeValidity: relativeValidity
     });
 }
+function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+    list.push({
+        RequestingGroup: requestingGroup,
+        TargetType: 'Delegation',
+        Target: target,
+        MaxNumSessionKeyOwners: 2,
+        SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
+        AbsoluteValidity: absoluteValidity,
+        RelativeValidity: relativeValidity
+    });
+}
 
 function generateCommunicationPolicyTables() {
     var policyList = [];
@@ -265,8 +276,7 @@ function generateCommunicationPolicyTables() {
     addComputeCompactionCTRPolicy(policyList, 'ComputeNodesCTR', 'CompactionNodesCTR', '1*day', '2*hour');
     addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
     addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
-    addServerClientPolicy(policyList, 'HighTrustAgent', 'Website', '1*day', '4*hour');
-    addServerClientPolicy(policyList, 'LowTrustAgent', 'Website', '1*day', '1*hour');
+    addDelegationPolicy(policyList, 'Users', 'HighTrustAgents,Website', '1*day', '2*hour')
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';
