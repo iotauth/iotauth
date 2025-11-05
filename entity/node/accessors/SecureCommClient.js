@@ -163,7 +163,7 @@ function handleSessionKeyForGrantAccessResp(sessionKeyID, receivedDistKey, callb
         console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         currentDistributionKey = receivedDistKey;
     }
-    console.log('received sessionKeyID' +  sessionKeyID);
+    console.log('received sessionKeyID ' +  sessionKeyID.toString());
     
     if (callbackParameters != null && callbackParameters.callback) {
         callbackParameters.callback();

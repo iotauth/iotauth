@@ -480,11 +480,14 @@ public abstract class EntityConnectionHandler {
                                     Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException,
                                     InvalidSymmetricKeyOperationException
     {
-        GrantAgentAccessRespMessage grantAgentAccessRespMessage;
+        GrantAgentAccessRespMessage grantAgentAccessRespMessage =
+                new GrantAgentAccessRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
         if (encryptedDistKey != null) {
-            grantAgentAccessRespMessage = new GrantAgentAccessRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
+            // TODO
+            //grantAgentAccessRespMessage =
+            //                new GrantAgentAccessRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
         }
-//        writeToSocket(grantAgentAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
+        writeToSocket(grantAgentAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
     } 
 
     /**
@@ -734,34 +737,6 @@ public abstract class EntityConnectionHandler {
         server.addFileReader(requestingEntity.getGroup(),objPurpose.getTarget().toString());
     }
 
-    /**
-     * Interpret an grant agent request from the entity, and process it. 
-     * @param requestingEntity The entity who sent the session key request.
-     * @param grantAgentAccessReqMessage The add reader request message object.
-     * @param authNonce Auth nonce to be checked with the nonce in the add reader request message.
-     * @throws IOException If IO fails.
-     * @throws ParseException If JSON parsing fails.
-     * @throws SQLException When there is a problem in SQL
-     * @throws ClassNotFoundException When class is not found.
-     * @throws InvalidSessionKeyTargetException If the target of add reader request is not valid.
-     * @throws InvalidNonceException If nonce does not match.
-     */
-    private void processGrantAgentAccessReq(
-            RegisteredEntity requestingEntity, GrantAgentAccessReqMessage grantAgentAccessReqMessage, Buffer authNonce)
-            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
-            InvalidNonceException {
-        getLogger().debug("Sender entity: {}", grantAgentAccessReqMessage.getEntityName());
-
-        getLogger().debug("Received auth nonce: {}", grantAgentAccessReqMessage.getAuthNonce().toHexString());
-        if (!authNonce.equals(grantAgentAccessReqMessage.getAuthNonce())) {
-            throw new InvalidNonceException("Auth nonce does not match!");
-        }
-        else {
-            getLogger().debug("Auth nonce is correct!");
-        }
-        JSONObject purpose = grantAgentAccessReqMessage.getPurpose();
-        server.addAgent(requestingEntity.getGroup(),purpose.get("AddReader").toString());
-    }
 
     /**
      * Decrypt the input buffer with distribution key and get the requesting entity information.

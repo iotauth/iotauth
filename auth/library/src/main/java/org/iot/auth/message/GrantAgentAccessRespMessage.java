@@ -51,10 +51,7 @@ public class GrantAgentAccessRespMessage extends IoTSPMessage  {
         encryptedDistKey = null;
         this.entityNonce = entityNonce;
         this.cryptoSpec = cryptoSpec;
-//        this.sessionKeyIDList = new ArrayList<>();
-//        for (SessionKey key : sessionKeyList){
-//            this.sessionKeyIDList.add(key.getID());
-//        }
+        this.sessionKeyID = sessionKeyList.get(0).getID();
     }
 
     /**
@@ -70,14 +67,18 @@ public class GrantAgentAccessRespMessage extends IoTSPMessage  {
         String cryptoSpecString = cryptoSpec.toJSONObject().toString();
         logger.debug("cryptoSpecString: {}", cryptoSpecString);
         payload.concat(new BufferedString(cryptoSpecString).serialize());
-        Buffer bufSessionKeyCount = new Buffer(4);
-//        bufSessionKeyCount.putInt(sessionKeyList.size(), 0);
-//        payload.concat(bufSessionKeyCount);
-//
+
+        //Buffer bufSessionKeyCount = new Buffer(4);
+        //bufSessionKeyCount.putInt(sessionKeyList.size(), 0);
+        //payload.concat(bufSessionKeyCount);
+
 //        for (SessionKey sessionKey: sessionKeyList) {
 //            payload.concat(sessionKey.serialize());
 //        }
-
+        // private static final int SESSION_KEY_ID_SIZE = 8;
+        Buffer bufSessionKeyID = new Buffer(8);
+        bufSessionKeyID.putLong(sessionKeyID, 0);
+        payload.concat(bufSessionKeyID);
         payload = distKey.encryptAuthenticate(payload);
 
         if (type == MessageType.GRANT_AGENT_ACCESS_RESP_WITH_DIST_KEY) {
