@@ -68,13 +68,6 @@ public class GrantAgentAccessRespMessage extends IoTSPMessage  {
         logger.debug("cryptoSpecString: {}", cryptoSpecString);
         payload.concat(new BufferedString(cryptoSpecString).serialize());
 
-        //Buffer bufSessionKeyCount = new Buffer(4);
-        //bufSessionKeyCount.putInt(sessionKeyList.size(), 0);
-        //payload.concat(bufSessionKeyCount);
-
-//        for (SessionKey sessionKey: sessionKeyList) {
-//            payload.concat(sessionKey.serialize());
-//        }
         // private static final int SESSION_KEY_ID_SIZE = 8;
         Buffer bufSessionKeyID = new Buffer(8);
         bufSessionKeyID.putLong(sessionKeyID, 0);
