@@ -50,11 +50,11 @@ public enum MessageType {
     ADD_READER_RESP_WITH_DIST_KEY((byte)61),
     ADD_READER_REQ((byte)62),
     ADD_READER_RESP((byte)63),
-    /** For agentic AI access control **/
-    GRANT_AGENT_ACCESS_REQ_IN_PUB_ENC((byte)70),
-    GRANT_AGENT_ACCESS_RESP_WITH_DIST_KEY((byte)71),
-    GRANT_AGENT_ACCESS_REQ((byte) 72),
-    GRANT_AGENT_ACCESS_RESP((byte) 73),
+    /** For delegated access **/
+    DELEGATED_ACCESS_REQ_IN_PUB_ENC((byte)70),
+    DELEGATED_ACCESS_RESP_WITH_DIST_KEY((byte)71),
+    DELEGATED_ACCESS_REQ((byte) 72),
+    DELEGATED_ACCESS_RESP((byte) 73),
     AUTH_ALERT((byte)100);
 
     public static MessageType fromByte(byte value) {

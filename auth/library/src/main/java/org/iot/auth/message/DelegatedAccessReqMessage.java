@@ -24,9 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class for a grant agent req message from an entity.
+ * A class for a delegated access req message from an entity.
  * <pre>
- * GrantAgentAccessReqMessage Format
+ * DelegatedAccessReqMessage Format
  * {
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
  *      authNonce:    /Buffer/, (AUTH_NONCE_SIZE)
@@ -37,14 +37,14 @@ import org.slf4j.LoggerFactory;
  * } </pre>
  * @author Sunyoung Kim
  */
-public class GrantAgentAccessReqMessage extends IoTSPMessage {
+public class DelegatedAccessReqMessage extends IoTSPMessage {
     /**
-     * Constructor to construct a grant agent request message from message payload.
-     * @param type Message type of the grant agent request.
+     * Constructor to construct a delegated access request message from message payload.
+     * @param type Message type of the delegated access request.
      * @param decPayload Payload of the message in Buffer.
      * @throws ParseException When JSON parser fails
      */
-    public GrantAgentAccessReqMessage(MessageType type, Buffer decPayload) throws ParseException {
+    public DelegatedAccessReqMessage(MessageType type, Buffer decPayload) throws ParseException {
         super(type);
         int curIndex = 0;
         this.entityNonce = decPayload.slice(curIndex, curIndex + ENTITY_NONCE_SIZE);
@@ -100,5 +100,5 @@ public class GrantAgentAccessReqMessage extends IoTSPMessage {
     private JSONObject purpose;
     private Buffer diffieHellmanParam;
 
-    private static final Logger logger = LoggerFactory.getLogger(GrantAgentAccessReqMessage.class);
+    private static final Logger logger = LoggerFactory.getLogger(DelegatedAccessReqMessage.class);
 }

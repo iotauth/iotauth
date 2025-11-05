@@ -84,8 +84,8 @@ function commandInterpreter() {
             command = input.slice(0, idx);
             message = input.slice(idx + 1);
         }
-        if (command == 'agentAccess') {
-            console.log('agentAccess (Session key request for cached keys that will be used to grant access to agent) command');
+        if (command == 'delegateAccess') {
+            console.log('delegateAccess (Session key request for cached keys that will be used to delegate access) command');
             secureCommClient.getSessionKeysForGrantAccess(1);
              
         }
