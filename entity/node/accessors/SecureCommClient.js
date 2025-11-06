@@ -352,9 +352,14 @@ SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
         handleSessionKeyResp, null);
 }
 
-SecureCommClient.prototype.getSessionKeysForGrantAccess = function(numKeys) {
+SecureCommClient.prototype.getSessionKeyIdForGrantAccess = function(numKeys) {
     sendSessionKeyRequest({delegation: 'HighTrustAgents,Website'}, numKeys,
         handleSessionKeyForGrantAccessResp, null);
+}
+
+SecureCommClient.prototype.getSessionKeysForGrantAccess = function(keyID) {
+    sendSessionKeyRequest({keyId: keyID}, 1,
+        handleSessionKeyResp, null);
 }
 
 SecureCommClient.prototype.migrateToTrustedAuth = function() {

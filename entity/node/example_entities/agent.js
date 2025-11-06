@@ -14,8 +14,8 @@
  */
 
 /**
- * Example client entity written using SecureCommClient accessor.
- * @author Hokeun Kim
+ * Example agent entity written using SecureCommClient accessor.
+ * @author Sunyoung Kim
  */
 "use strict";
 
@@ -45,7 +45,7 @@ function receivedHandler(data) {
     }
 }
 
-var configFilePath = 'configs/net1/user.config';
+var configFilePath = 'configs/net1/client.config';
 if (process.argv.length > 2) {
     configFilePath = process.argv[2];
 }
@@ -64,6 +64,9 @@ if (process.argv.length > 5) {
         var keyId = parseInt(process.argv[4]);
         secureCommClient.setParameter('keyId', keyId);
         secureCommClient.provideInput('serverHostPort', {host: 'localhost', port: serverPort});
+    } else if (commandArg == 'getKey'){
+        var keyId = parseInt(process.argv[4]);
+        secureCommClient.getSessionKeysForGrantAccess(keyId);
     }
 }
 
@@ -84,44 +87,12 @@ function commandInterpreter() {
             command = input.slice(0, idx);
             message = input.slice(idx + 1);
         }
-        if (command == 'delegateAccess') {
-            console.log('delegateAccess (Session key request for cached keys that will be used to delegate access) command');
-            secureCommClient.getSessionKeyIdForGrantAccess(1);
-             
+
+        if (command == 'getKey') {
+            console.log('getKey command. get sesssion key by ID: ');
+            secureCommClient.getSessionKeysForGrantAccess(keyId);
         }
-        else if (command == 'showKeys') {
-            console.log('showKeys command. distribution key and session keys: ');
-            console.log(secureCommClient.showKeys());
-        }
-        else if (command == 'showSocket') {
-            console.log('showSocket command. current secure client socket: ');
-            console.log(secureCommClient.showSocket());
-        }
-        else if (command == 'send') {
-            console.log('send command');
-            if (message == undefined) {
-                console.log('no message!');
-                return;
-            }
-            secureCommClient.provideInput('toSend', Buffer.from(message));
-        }
-        else if (command == 'skReq') {
-            console.log('skReq (Session key request for cached keys that will be used to connect to servers) command');
-            var numKeys = 3;
-            if (message != undefined) {
-                numKeys = parseInt(message);
-            }
-            secureCommClient.getSessionKeysForCaching(numKeys);
-             
-        }
-        else if (command == 'numKeys') {
-            console.log('numKeys (Set number of session keys per request) command');
-            var numKeys = 3;
-            if (message != undefined) {
-                numKeys = parseInt(message);
-            }
-            secureCommClient.setParameter('numKeysPerRequest', numKeys);
-        }
+
         else {
             console.log('unrecognized command: ' + command);
         }
