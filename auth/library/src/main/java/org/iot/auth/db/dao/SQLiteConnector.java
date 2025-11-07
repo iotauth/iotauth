@@ -930,8 +930,8 @@ public class SQLiteConnector {
      */
     public boolean appendSessionKeyOwner(long keyID, String newOwner) throws SQLException {
         String sql = "UPDATE " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
-        sql += " SET " + CachedSessionKeyTable.c.Owners.name() + " = ";
-        sql += CachedSessionKeyTable.c.Owners.name() + "|| ',' || " + "'" + newOwner + "'";
+        sql += " SET " + CachedSessionKeyTable.c.Owners.name() + " = COALESCE(";
+        sql += CachedSessionKeyTable.c.Owners.name() + "|| ',', '') || " + "'" + newOwner + "'";
         sql += " WHERE " + CachedSessionKeyTable.c.ID.name() + " = " + keyID;
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);

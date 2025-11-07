@@ -62,10 +62,13 @@ public class CachedSessionKeyTable {
 
     public SessionKey toSessionKey() {
         SymmetricKeyCryptoSpec cryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(getSessionCryptoSpec());
-        SessionKey sessionKey = new SessionKey(getID(), getOwner().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
+        SessionKey sessionKey = new SessionKey(getID(),
+                getOwner() != null ? getOwner().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM) : new String[0],
                 getMaxNumOwners(), getPurpose(),
                 getAbsValidity(), getRelValidity(),
-                cryptoSpec, new Buffer(getKeyVal()));
+                cryptoSpec, new Buffer(getKeyVal()),
+                getExpectedOwnerGroups() != null ?
+                        getExpectedOwnerGroups().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM) : new String[0]);
         return sessionKey;
     }
 
