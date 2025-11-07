@@ -154,6 +154,29 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
     }
 }
 
+function handleSessionKeyRespForGrantAccess(sessionKeyList, receivedDistKey, callbackParameters) {
+    if (parameters.migrationEnabled) {
+        authFailureCount = 0;
+        console.log('handleSessionKeyRespForGrantAccess: session key request succeeded! authFailureCount: ' + authFailureCount);
+    }
+    if (receivedDistKey != null) {
+        console.log('updating distribution key: ' + util.inspect(receivedDistKey));
+        currentDistributionKey = receivedDistKey;
+    }
+    console.log('received ' + sessionKeyList.length + ' keys');
+    console.log('session key value ' + util.inspect(sessionKeyList));
+    currentSessionKeyList = currentSessionKeyList.concat(sessionKeyList);
+
+    if (currentSessionKeyList.length > 0 && callbackParameters != null) {
+        initSecureCommWithSessionKey(currentSessionKeyList.shift(),
+            callbackParameters.host, callbackParameters.port);
+    }
+
+    if (callbackParameters != null && callbackParameters.callback) {
+        callbackParameters.callback();
+    }
+}
+
 function handleSessionKeyForGrantAccessResp(sessionKeyID, receivedDistKey, callbackParameters) {
     if (parameters.migrationEnabled) {
         authFailureCount = 0;
@@ -359,7 +382,7 @@ SecureCommClient.prototype.getSessionKeyIdForGrantAccess = function(numKeys) {
 
 SecureCommClient.prototype.getSessionKeysForGrantAccess = function(keyID) {
     sendSessionKeyRequest({keyId: keyID}, 1,
-        handleSessionKeyResp, null);
+        handleSessionKeyRespForGrantAccess, null);
 }
 
 SecureCommClient.prototype.migrateToTrustedAuth = function() {
