@@ -64,10 +64,10 @@ if (process.argv.length > 5) {
         var keyId = parseInt(process.argv[4]);
         secureCommClient.setParameter('keyId', keyId);
         secureCommClient.provideInput('serverHostPort', {host: 'localhost', port: serverPort});
-    } else if (commandArg == 'getKey'){
-        var keyId = parseInt(process.argv[4]);
-        secureCommClient.getSessionKeysForGrantAccess(keyId);
     }
+} else if (process.argv[3] == 'keyId'){
+    var keyId = parseInt(process.argv[4]);
+    secureCommClient.getSessionKeysForGrantAccess(keyId);
 }
 
 function commandInterpreter() {
