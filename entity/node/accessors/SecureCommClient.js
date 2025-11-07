@@ -160,11 +160,22 @@ function handleSessionKeyRespForGrantAccess(sessionKeyList, receivedDistKey, cal
         console.log('handleSessionKeyRespForGrantAccess: session key request succeeded! authFailureCount: ' + authFailureCount);
     }
     if (receivedDistKey != null) {
-        console.log('updating distribution key: ' + util.inspect(receivedDistKey));
+        // console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         currentDistributionKey = receivedDistKey;
     }
-    console.log('received ' + sessionKeyList.length + ' keys');
-    console.log('session key value ' + util.inspect(sessionKeyList));
+    // console.log('received ' + sessionKeyList.length + ' keys');
+
+    var sessionKeys = sessionKeyList[0];
+    let keys = Array.isArray(sessionKeys) ? sessionKeys : [ sessionKeys ];
+    const out = keys.map(k => ({
+        id: String(k.id),
+        cipherKey_b64: k.cipherKeyVal.toString('base64'),
+        macKey_b64: k.macKeyVal.toString('base64'),
+        absValidity: k.absValidity,
+        relValidity: k.relValidity
+    }));
+    console.log(JSON.stringify({ session_keys: out }));
+
     currentSessionKeyList = currentSessionKeyList.concat(sessionKeyList);
 
     if (currentSessionKeyList.length > 0 && callbackParameters != null) {
@@ -177,7 +188,7 @@ function handleSessionKeyRespForGrantAccess(sessionKeyList, receivedDistKey, cal
     }
 }
 
-function handleSessionKeyForGrantAccessResp(sessionKeyID, receivedDistKey, callbackParameters) {
+function handleSessionKeyIdResp(sessionKeyID, receivedDistKey, callbackParameters) {
     if (parameters.migrationEnabled) {
         authFailureCount = 0;
         console.log('handleSessionKeyForGrantAccessResp: session key request succeeded! authFailureCount: ' + authFailureCount);
@@ -377,7 +388,7 @@ SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
 
 SecureCommClient.prototype.getSessionKeyIdForGrantAccess = function(numKeys) {
     sendSessionKeyRequest({delegation: 'HighTrustAgents,Website'}, numKeys,
-        handleSessionKeyForGrantAccessResp, null);
+        handleSessionKeyIdResp, null);
 }
 
 SecureCommClient.prototype.getSessionKeysForGrantAccess = function(keyID) {
