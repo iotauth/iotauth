@@ -186,6 +186,7 @@ function handleSessionKeyRespForGrantAccess(sessionKeyList, receivedDistKey, cal
     if (callbackParameters != null && callbackParameters.callback) {
         callbackParameters.callback();
     }
+    process.exit(0);
 }
 
 function handleSessionKeyIdResp(sessionKeyID, receivedDistKey, callbackParameters) {
