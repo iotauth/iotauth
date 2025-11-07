@@ -929,9 +929,21 @@ public class SQLiteConnector {
      * or an argument is supplied to this method
      */
     public boolean appendSessionKeyOwner(long keyID, String newOwner) throws SQLException {
+        // Adding the comma separator only when there is already an owner.
+
+        // UPDATE your_table
+        // SET owner =
+        //     CASE
+        //         WHEN owner IS NULL OR TRIM(owner) = '' THEN 'OwnerN'
+        //         ELSE owner || ',' || 'OwnerN'
+        //     END
+        // WHERE <condition>;
+
         String sql = "UPDATE " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
-        sql += " SET " + CachedSessionKeyTable.c.Owners.name() + " = COALESCE(";
-        sql += CachedSessionKeyTable.c.Owners.name() + "|| ',', '') || " + "'" + newOwner + "'";
+        sql += " SET " + CachedSessionKeyTable.c.Owners.name() + " = CASE WHEN ";
+        sql += CachedSessionKeyTable.c.Owners.name() + " IS NULL OR TRIM(";
+        sql += CachedSessionKeyTable.c.Owners.name() + ") = '' THEN '" + newOwner + "'";
+        sql += " ELSE " + CachedSessionKeyTable.c.Owners.name() + " || ',' || '" + newOwner + "' END";
         sql += " WHERE " + CachedSessionKeyTable.c.ID.name() + " = " + keyID;
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
