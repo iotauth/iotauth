@@ -277,6 +277,8 @@ function generateCommunicationPolicyTables() {
     addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
     addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
     addDelegationPolicy(policyList, 'Users', 'HighTrustAgents,Website', '1*day', '2*hour')
+    addDelegationPolicy(policyList, 'Users', 'MediumTrustAgents,Website', '1*day', '1*hour')
+    addDelegationPolicy(policyList, 'Users', 'LowTrustAgents,Website', '1*day', '300*sec')
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';

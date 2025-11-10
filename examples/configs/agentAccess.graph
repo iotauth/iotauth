@@ -35,10 +35,12 @@
 		"net1.user": 101,
 		"net1.website": 101,
 		"net1.highTrustAgent": 101,
+		"net1.mediumTrustAgent": 101,
 		"net1.lowTrustAgent": 101,
 		"net2.user": 102,
 		"net2.website": 102,
 		"net2.highTrustAgent": 102,
+		"net2.mediumTrustAgent": 102,
 		"net2.lowTrustAgent": 102
 	},
 	"entityList": [
@@ -95,6 +97,27 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
 			"credentialPrefix": "Net1.HighTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "MediumTrustAgents",
+			"name": "net1.mediumTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.MediumTrustAgent",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -181,6 +204,27 @@
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net2",
 			"credentialPrefix": "Net2.HighTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "MediumTrustAgents",
+			"name": "net2.mediumTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.MediumTrustAgent",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
