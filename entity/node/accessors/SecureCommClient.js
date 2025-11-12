@@ -387,8 +387,8 @@ SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
         handleSessionKeyResp, null);
 }
 
-SecureCommClient.prototype.getSessionKeyIdForGrantAccess = function(numKeys) {
-    sendSessionKeyRequest({delegation: 'HighTrustAgents,Website'}, numKeys,
+SecureCommClient.prototype.getSessionKeyIdForGrantAccess = function(numKeys, trustLevel) {
+    sendSessionKeyRequest({delegation: trustLevel + ',Website'}, numKeys,
         handleSessionKeyIdResp, null);
 }
 

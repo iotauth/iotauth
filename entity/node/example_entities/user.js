@@ -86,7 +86,20 @@ function commandInterpreter() {
         }
         if (command == 'delegateAccess') {
             console.log('delegateAccess (Session key request for cached keys that will be used to delegate access) command');
-            secureCommClient.getSessionKeyIdForGrantAccess(1);
+            console.log('Enter the agent\'s trust level');
+
+            var trust = message;
+            var trustLevel;
+            if (trust == 'high'){
+                trustLevel = 'HighTrustAgents';
+            } else if (trust == 'medium'){
+                trustLevel = 'MediumTrustAgents';
+            } else if (trust == 'low'){
+                trustLevel = 'LowTrustAgents';
+            } else {
+                console.log('unrecognized trust level: ' + command);
+            }
+            secureCommClient.getSessionKeyIdForGrantAccess(1, trustLevel);
              
         }
         else if (command == 'showKeys') {
