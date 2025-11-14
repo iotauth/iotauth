@@ -432,12 +432,25 @@ public abstract class EntityConnectionHandler {
                                     Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException,
                                     InvalidSymmetricKeyOperationException
     {
+        if (sessionKeyList.isEmpty()) {
+            throw new RuntimeException("Auth is trying to send an empty session key response with no session key.");
+        }
         SessionKeyRespMessage sessionKeyResp;
         if (encryptedDistKey != null) {
             sessionKeyResp = new SessionKeyRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
         }
         else {
-            sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
+            SessionKey firstSessionKey = sessionKeyList.get(0);
+            // Special case of providing the other owner's group information for delegated access.
+            if (sessionKeyList.size() == 1 && firstSessionKey.getPurpose().startsWith("Delegation:")
+                    && firstSessionKey.getOwners() != null && firstSessionKey.getOwners().length == 1) {
+                String owner = firstSessionKey.getOwners()[0];
+                sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList,
+                        server.getRegisteredEntity(owner).getGroup());
+            }
+            else {
+                sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
+            }
         }
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }

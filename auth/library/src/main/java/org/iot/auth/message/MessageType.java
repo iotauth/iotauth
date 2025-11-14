@@ -55,6 +55,7 @@ public enum MessageType {
     DELEGATED_ACCESS_RESP_WITH_DIST_KEY((byte)71),
     DELEGATED_ACCESS_REQ((byte) 72),
     DELEGATED_ACCESS_RESP((byte) 73),
+    SESSION_EKY_RESP_FOR_DELEGATION((byte) 74),
     AUTH_ALERT((byte)100);
 
     public static MessageType fromByte(byte value) {

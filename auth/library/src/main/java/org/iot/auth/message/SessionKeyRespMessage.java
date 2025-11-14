@@ -71,6 +71,17 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
         this.sessionKeyList = sessionKeyList;
     }
 
+
+    public SessionKeyRespMessage(Buffer entityNonce, SymmetricKeyCryptoSpec cryptoSpec,
+                                 List<SessionKey> sessionKeyList, String otherSessionKeyOwnerGroup) {
+        super(MessageType.SESSION_EKY_RESP_FOR_DELEGATION);
+        encryptedDistKey = null;
+        this.entityNonce = entityNonce;
+        this.cryptoSpec = cryptoSpec;
+        this.sessionKeyList = sessionKeyList;
+        this.otherSessionKeyOwnerGroup = otherSessionKeyOwnerGroup;
+    }
+
     /**
      * Serialize the session key response message and encrypt with the specified distribution key.
      * @param distKey A distribution key for encrypting the session key request message.
@@ -93,6 +104,10 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
             payload.concat(sessionKey.serialize());
         }
 
+        if (otherSessionKeyOwnerGroup != null) {
+            // TODO: Append otherSessionKeyOwnerGroup.
+        }
+
         payload = distKey.encryptAuthenticate(payload);
 
         if (type == MessageType.SESSION_KEY_RESP_WITH_DIST_KEY) {
@@ -108,5 +123,6 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
     private Buffer entityNonce;
     private SymmetricKeyCryptoSpec cryptoSpec;
     private List<SessionKey> sessionKeyList;
+    private String otherSessionKeyOwnerGroup = null;
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);
 }
