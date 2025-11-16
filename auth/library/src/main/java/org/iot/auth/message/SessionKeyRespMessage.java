@@ -105,7 +105,7 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
         }
 
         if (otherSessionKeyOwnerGroup != null) {
-            // TODO: Append otherSessionKeyOwnerGroup.
+            payload.concat(new BufferedString(otherSessionKeyOwnerGroup).serialize());
         }
 
         payload = distKey.encryptAuthenticate(payload);
