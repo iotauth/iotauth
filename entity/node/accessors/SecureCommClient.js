@@ -189,6 +189,42 @@ function handleSessionKeyRespForGrantAccess(sessionKeyList, receivedDistKey, cal
     process.exit(0);
 }
 
+function handleSessionKeyRespForWebsite(sessionKeyList, otherSessionKeyOwnerGroup, receivedDistKey, callbackParameters) {
+    if (parameters.migrationEnabled) {
+        authFailureCount = 0;
+        console.log('handleSessionKeyRespForGrantAccess: session key request succeeded! authFailureCount: ' + authFailureCount);
+    }
+    if (receivedDistKey != null) {
+        currentDistributionKey = receivedDistKey;
+    }
+    var sessionKeys = sessionKeyList[0];
+    let keys = Array.isArray(sessionKeys) ? sessionKeys : [ sessionKeys ];
+    const out = keys.map(k => ({
+        id: String(k.id),
+        cipherKey_b64: k.cipherKeyVal.toString('base64'),
+        macKey_b64: k.macKeyVal.toString('base64'),
+        absValidity: k.absValidity,
+        relValidity: k.relValidity,
+        owner: otherSessionKeyOwnerGroup
+    }));
+    //console.log(otherSessionKeyOwnerGroup);
+    console.log(JSON.stringify({
+        session_keys: out,
+    }));
+
+    currentSessionKeyList = currentSessionKeyList.concat(sessionKeyList);
+
+    if (currentSessionKeyList.length > 0 && callbackParameters != null) {
+        initSecureCommWithSessionKey(currentSessionKeyList.shift(),
+            callbackParameters.host, callbackParameters.port);
+    }
+
+    if (callbackParameters != null && callbackParameters.callback) {
+        callbackParameters.callback();
+    }
+    process.exit(0);
+}
+
 function handleSessionKeyIdResp(sessionKeyID, receivedDistKey, callbackParameters) {
     if (parameters.migrationEnabled) {
         authFailureCount = 0;
@@ -395,6 +431,11 @@ SecureCommClient.prototype.getSessionKeyIdForGrantAccess = function(numKeys, tru
 SecureCommClient.prototype.getSessionKeysForGrantAccess = function(keyID) {
     sendSessionKeyRequest({keyId: keyID}, 1,
         handleSessionKeyRespForGrantAccess, null);
+}
+
+SecureCommClient.prototype.getSessionKeysForWebsite = function(keyID) {
+    sendSessionKeyRequest({keyId: keyID}, 1,
+        handleSessionKeyRespForWebsite, null);
 }
 
 SecureCommClient.prototype.migrateToTrustedAuth = function() {
