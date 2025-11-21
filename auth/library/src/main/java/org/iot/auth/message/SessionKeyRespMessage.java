@@ -65,17 +65,27 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
     public SessionKeyRespMessage(Buffer entityNonce, SymmetricKeyCryptoSpec cryptoSpec,
                                  List<SessionKey> sessionKeyList) {
         super(MessageType.SESSION_KEY_RESP);
-        encryptedDistKey = null;
+        this.encryptedDistKey = null;
         this.entityNonce = entityNonce;
         this.cryptoSpec = cryptoSpec;
         this.sessionKeyList = sessionKeyList;
     }
 
 
+    public SessionKeyRespMessage(Buffer encryptedDistKey, Buffer entityNonce, SymmetricKeyCryptoSpec cryptoSpec,
+                                 List<SessionKey> sessionKeyList, String otherSessionKeyOwnerGroup) {
+        super(MessageType.SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY);
+        this.encryptedDistKey = encryptedDistKey;
+        this.entityNonce = entityNonce;
+        this.cryptoSpec = cryptoSpec;
+        this.sessionKeyList = sessionKeyList;
+        this.otherSessionKeyOwnerGroup = otherSessionKeyOwnerGroup;
+    }
+
     public SessionKeyRespMessage(Buffer entityNonce, SymmetricKeyCryptoSpec cryptoSpec,
                                  List<SessionKey> sessionKeyList, String otherSessionKeyOwnerGroup) {
         super(MessageType.SESSION_KEY_RESP_FOR_DELEGATION);
-        encryptedDistKey = null;
+        this.encryptedDistKey = null;
         this.entityNonce = entityNonce;
         this.cryptoSpec = cryptoSpec;
         this.sessionKeyList = sessionKeyList;
@@ -120,9 +130,9 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
     }
 
     private Buffer encryptedDistKey;
-    private Buffer entityNonce;
-    private SymmetricKeyCryptoSpec cryptoSpec;
-    private List<SessionKey> sessionKeyList;
+    private final Buffer entityNonce;
+    private final SymmetricKeyCryptoSpec cryptoSpec;
+    private final List<SessionKey> sessionKeyList;
     private String otherSessionKeyOwnerGroup = null;
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);
 }

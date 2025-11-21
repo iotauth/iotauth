@@ -173,7 +173,7 @@ public abstract class EntityConnectionHandler {
             catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
                 throw new InvalidSignatureException("Entity signature verification failed!!");
             }
-            /// public SessionKeyReqInternal(String entityName, Buffer authNonce, int numKeys, JSONObject purpose)
+
             SessionKeysAndSpec ret =
                     processSessionKeyReq(requestingEntity,
                         new SessionKeyReqInternal(sessionKeyReqMessage.getEntityName(), sessionKeyReqMessage.getAuthNonce(), 

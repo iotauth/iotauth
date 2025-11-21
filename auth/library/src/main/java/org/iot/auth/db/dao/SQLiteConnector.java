@@ -616,7 +616,6 @@ public class SQLiteConnector {
         return result;
     }
 
-
     /**
      * Selects all policies record from the table communication policy.
      * @return a list of all policies stored in the database
@@ -815,7 +814,6 @@ public class SQLiteConnector {
         return result;
     }
 
-
     /**
      * Deletes expired cached session keys from the database.
      * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
@@ -858,7 +856,7 @@ public class SQLiteConnector {
      */
     public boolean appendSessionKeyOwner(long keyID, String newOwner) throws SQLException {
         // Adding the comma separator only when there is already an owner.
-
+        //
         // UPDATE your_table
         // SET owner =
         //     CASE
@@ -909,7 +907,6 @@ public class SQLiteConnector {
             return preparedStatement.execute();
         }
     }
-
 
     /**
      * Select the value of a meta data by its key
