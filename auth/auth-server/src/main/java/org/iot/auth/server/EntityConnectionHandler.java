@@ -207,6 +207,8 @@ public abstract class EntityConnectionHandler {
         }
         else if (type == MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC) {
             throw new UnsupportedOperationException("TODO: Impelement handling of DELEGATED_ACCESS_REQ_IN_PUB_ENC.");
+            // getLogger().info("Received delegated access request message encrypted with public key!");
+
         }
         else if (type == MessageType.DELEGATED_ACCESS_REQ){
             DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
@@ -497,8 +499,8 @@ public abstract class EntityConnectionHandler {
                 new DelegatedAccessRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
         if (encryptedDistKey != null) {
             // TODO
-            //delegatedAccessRespMessage =
-            //                new DelegatedAccessRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
+            delegatedAccessRespMessage =
+                            new DelegatedAccessRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
         }
         writeToSocket(delegatedAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
     } 

@@ -54,6 +54,15 @@ public class DelegatedAccessRespMessage extends IoTSPMessage  {
         this.sessionKeyID = sessionKeyList.get(0).getID();
     }
 
+    public DelegatedAccessRespMessage(Buffer encryptedDistKey, Buffer entityNonce, SymmetricKeyCryptoSpec cryptoSpec,
+                                      List<SessionKey> sessionKeyList) {
+        super(MessageType.DELEGATED_ACCESS_RESP_WITH_DIST_KEY);
+        this.encryptedDistKey = encryptedDistKey;
+        this.entityNonce = entityNonce;
+        this.cryptoSpec = cryptoSpec;
+        this.sessionKeyID = sessionKeyList.get(0).getID();
+    }
+
     /**
      * Serialize the delegated access response message and encrypt with the specified distribution key.
      * @param distKey A distribution key for encrypting the session key request message.
