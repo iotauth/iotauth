@@ -474,16 +474,18 @@ public abstract class EntityConnectionHandler {
         if (sessionKeyList.isEmpty()) {
             throw new RuntimeException("Auth is trying to send an empty session key response with no session key.");
         }
-        SessionKeyRespMessage sessionKeyResp;
-        boolean hasDistKey = (encryptedDistKey != null);
+
         SessionKey firstSessionKey = sessionKeyList.get(0);
         // Special case of providing the other owner's group information for delegated access.
-        boolean isDelegation = (sessionKeyList.size() == 1 && firstSessionKey.getPurpose().startsWith("Delegation:") &&
-                firstSessionKey.getOwners() != null && firstSessionKey.getOwners().length == 1 &&
-                !firstSessionKey.getOwners()[0].trim().isEmpty());
+        boolean needToSendOtherSessionKeyOwnerGroup = (sessionKeyList.size() == 1
+                && firstSessionKey.getPurpose().startsWith("Delegation:")
+                && firstSessionKey.getOwners() != null
+                && firstSessionKey.getOwners().length == 1
+                && !firstSessionKey.getOwners()[0].trim().isEmpty());
 
-        if (hasDistKey) {
-            if (isDelegation){
+        SessionKeyRespMessage sessionKeyResp;
+        if (encryptedDistKey != null) {
+            if (needToSendOtherSessionKeyOwnerGroup){
                 String owner = firstSessionKey.getOwners()[0];
                 sessionKeyResp = new SessionKeyRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec,
                         sessionKeyList, server.getRegisteredEntity(owner).getGroup());
@@ -494,7 +496,7 @@ public abstract class EntityConnectionHandler {
             }
         }
         else {
-            if (isDelegation) {
+            if (needToSendOtherSessionKeyOwnerGroup) {
                 String owner = firstSessionKey.getOwners()[0];
                 sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList,
                         server.getRegisteredEntity(owner).getGroup());
