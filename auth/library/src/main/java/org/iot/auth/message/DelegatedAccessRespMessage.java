@@ -48,7 +48,7 @@ public class DelegatedAccessRespMessage extends IoTSPMessage  {
     public DelegatedAccessRespMessage(Buffer entityNonce, SymmetricKeyCryptoSpec cryptoSpec,
                                  List<SessionKey> sessionKeyList) {
         super(MessageType.DELEGATED_ACCESS_RESP);
-        encryptedDistKey = null;
+        this.encryptedDistKey = null;
         this.entityNonce = entityNonce;
         this.cryptoSpec = cryptoSpec;
         this.sessionKeyID = sessionKeyList.get(0).getID();

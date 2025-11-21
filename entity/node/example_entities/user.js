@@ -99,6 +99,7 @@ function commandInterpreter() {
             } else {
                 console.log('unrecognized trust level: ' + command);
             }
+
             secureCommClient.getSessionKeyIdForGrantAccess(1, trustLevel);
              
         }

@@ -228,7 +228,7 @@ function handleSessionKeyRespForWebsite(sessionKeyList, otherSessionKeyOwnerGrou
 function handleSessionKeyIdResp(sessionKeyID, receivedDistKey, callbackParameters) {
     if (parameters.migrationEnabled) {
         authFailureCount = 0;
-        console.log('handleSessionKeyForGrantAccessResp: session key request succeeded! authFailureCount: ' + authFailureCount);
+        console.log('handleSessionKeyIdResp: session key request succeeded! authFailureCount: ' + authFailureCount);
     }
     if (receivedDistKey != null) {
         console.log('updating distribution key: ' + util.inspect(receivedDistKey));
