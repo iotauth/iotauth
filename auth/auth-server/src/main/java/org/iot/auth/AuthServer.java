@@ -537,14 +537,6 @@ public class AuthServer {
         return db.getFileSharingInfoByOwner(fileOwner);
     }
 
-    /**
-     * Method for exposing an AuthDB operation, getAgentByOwner
-     * @param user The user of the agent.
-     * @return List of agents' name registered by user
-     */
-    public ArrayList <String> getAgentInfo(String user) {
-        return db.getAgentInfoByUser(user);
-    }
 
     /**
      * Method for exposing an AuthDB operation, getRegisteredEntity
