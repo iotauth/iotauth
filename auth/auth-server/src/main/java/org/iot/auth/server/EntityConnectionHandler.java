@@ -475,14 +475,26 @@ public abstract class EntityConnectionHandler {
             throw new RuntimeException("Auth is trying to send an empty session key response with no session key.");
         }
         SessionKeyRespMessage sessionKeyResp;
-        if (encryptedDistKey != null) {
-            sessionKeyResp = new SessionKeyRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
+        boolean hasDistKey = (encryptedDistKey != null);
+        SessionKey firstSessionKey = sessionKeyList.get(0);
+        // Special case of providing the other owner's group information for delegated access.
+        boolean isDelegation = (sessionKeyList.size() == 1 && firstSessionKey.getPurpose().startsWith("Delegation:") &&
+                firstSessionKey.getOwners() != null && firstSessionKey.getOwners().length == 1 &&
+                !firstSessionKey.getOwners()[0].trim().isEmpty());
+
+        if (hasDistKey) {
+            if (isDelegation){
+                String owner = firstSessionKey.getOwners()[0];
+                sessionKeyResp = new SessionKeyRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec,
+                        sessionKeyList, server.getRegisteredEntity(owner).getGroup());
+            }
+            else {
+                sessionKeyResp = new SessionKeyRespMessage(encryptedDistKey, entityNonce,
+                        sessionCryptoSpec, sessionKeyList);
+            }
         }
         else {
-            SessionKey firstSessionKey = sessionKeyList.get(0);
-            // Special case of providing the other owner's group information for delegated access.
-            if (sessionKeyList.size() == 1 && firstSessionKey.getPurpose().startsWith("Delegation:")
-                    && firstSessionKey.getOwners() != null && firstSessionKey.getOwners().length == 1) {
+            if (isDelegation) {
                 String owner = firstSessionKey.getOwners()[0];
                 sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList,
                         server.getRegisteredEntity(owner).getGroup());

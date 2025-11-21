@@ -120,7 +120,8 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
 
         payload = distKey.encryptAuthenticate(payload);
 
-        if (type == MessageType.SESSION_KEY_RESP_WITH_DIST_KEY) {
+        if (type == MessageType.SESSION_KEY_RESP_WITH_DIST_KEY ||
+                type == MessageType.SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY) {
             Buffer newPayload = new Buffer(encryptedDistKey);
             newPayload.concat(payload);
             payload = newPayload;
