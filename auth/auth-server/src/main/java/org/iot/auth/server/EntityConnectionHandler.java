@@ -206,8 +206,45 @@ public abstract class EntityConnectionHandler {
             close();
         }
         else if (type == MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC) {
-            throw new UnsupportedOperationException("TODO: Impelement handling of DELEGATED_ACCESS_REQ_IN_PUB_ENC.");
-            // getLogger().info("Received delegated access request message encrypted with public key!");
+            // throw new UnsupportedOperationException("TODO: Impelement handling of DELEGATED_ACCESS_REQ_IN_PUB_ENC.");
+            getLogger().info("Received delegated access request message encrypted with public key!");
+            Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
+            getLogger().debug("Encrypted data ({}): {}", encPayload.length(), encPayload.toHexString());
+            Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
+            Buffer decPayload = server.getCrypto().authPrivateDecrypt(encPayload);
+
+            getLogger().debug("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
+            DelegatedAccessReqMessage delegatedAccessReqMessage = new DelegatedAccessReqMessage(type, decPayload);
+
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(delegatedAccessReqMessage.getEntityName());
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ_IN_PUB_ENC: Session key requester is not found!");
+            }
+            try {
+                if (!server.getCrypto().verifySignedData(encPayload, signature, requestingEntity.getPublicKey())) {
+                    throw new InvalidSignatureException("Entity signature verification failed!!");
+                }
+                else {
+                    getLogger().debug("Entity signature is correct!");
+                }
+            }
+            catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+                throw new InvalidSignatureException("Entity signature verification failed!!");
+            }
+            SessionKeysAndSpec ret =
+                    processSessionKeyReq(requestingEntity,
+                            new SessionKeyReqInternal(delegatedAccessReqMessage.getEntityName(), delegatedAccessReqMessage.getAuthNonce(),
+                                    delegatedAccessReqMessage.getNumKeys(), delegatedAccessReqMessage.getPurpose()), authNonce);
+            List<SessionKey> sessionKeyList = ret.getSessionKeys();
+            SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
+            DistributionKeyInfo distributionKey = GenerateDistributionKey(requestingEntity, delegatedAccessReqMessage.getDiffieHellmanParam());
+            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKey.getDistributionKeyInfoBuffer(),
+                    requestingEntity.getPublicKey());
+            encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
+
+            sendDelegatedAccessResp(distributionKey.getDistributionKey(), delegatedAccessReqMessage.getEntityNonce(),
+                    sessionKeyList, sessionCryptoSpec, encryptedDistKey);
+            close();
 
         }
         else if (type == MessageType.DELEGATED_ACCESS_REQ){
