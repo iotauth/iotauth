@@ -52,7 +52,6 @@ public class CommunicationPolicyChecker {
         }
         String targetType = purposeTokens[0];
         String target = purposeTokens[1];
-
         if (Arrays.asList(sessionKey.getOwners()).contains(requestingEntityName)) {
             logger.error("Requesting entity ({}) is already an owner of this session key.",
                     requestingEntityName);

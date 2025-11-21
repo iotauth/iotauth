@@ -90,7 +90,6 @@ public abstract class EntityConnectionHandler {
             return distributionKey;
         }
     }
-
     private class SessionKeyReqInternal {
         private String entityName;
         private Buffer authNonce;
@@ -482,7 +481,6 @@ public abstract class EntityConnectionHandler {
                 && firstSessionKey.getOwners() != null
                 && firstSessionKey.getOwners().length == 1
                 && !firstSessionKey.getOwners()[0].trim().isEmpty());
-
         SessionKeyRespMessage sessionKeyResp;
         if (encryptedDistKey != null) {
             if (needToSendOtherSessionKeyOwnerGroup){
@@ -507,6 +505,7 @@ public abstract class EntityConnectionHandler {
         }
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }
+
     /**
      * Send an add reader response to the requesting entity
      * @param distributionKey Distribution key used for sending session key response
@@ -527,8 +526,8 @@ public abstract class EntityConnectionHandler {
             addReaderResp = new AddReaderRespMessage(entityNonce);
         }
         writeToSocket(addReaderResp.serializeAndEncrypt(distributionKey).getRawBytes());
-    } 
-    
+    }
+
     /**
      * Send a delegate access response to the requesting entity
      * @param distributionKey Distribution key used for sending session key response
@@ -549,7 +548,6 @@ public abstract class EntityConnectionHandler {
         DelegatedAccessRespMessage delegatedAccessRespMessage =
                 new DelegatedAccessRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
         if (encryptedDistKey != null) {
-            // TODO
             delegatedAccessRespMessage =
                             new DelegatedAccessRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
         }
@@ -720,7 +718,6 @@ public abstract class EntityConnectionHandler {
                 sessionKeyList = server.generateSessionKeysForDelegation(
                         sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose,
                         ((String)reqPurpose.getTarget()).split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM));
-                // TODO
                 break;
             }
             default: {
@@ -802,7 +799,6 @@ public abstract class EntityConnectionHandler {
         // String reader = reqPurpose.nextToken();
         server.addFileReader(requestingEntity.getGroup(),objPurpose.getTarget().toString());
     }
-
 
     /**
      * Decrypt the input buffer with distribution key and get the requesting entity information.

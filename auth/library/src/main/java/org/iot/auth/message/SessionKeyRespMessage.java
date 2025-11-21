@@ -71,7 +71,6 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
         this.sessionKeyList = sessionKeyList;
     }
 
-
     public SessionKeyRespMessage(Buffer encryptedDistKey, Buffer entityNonce, SymmetricKeyCryptoSpec cryptoSpec,
                                  List<SessionKey> sessionKeyList, String otherSessionKeyOwnerGroup) {
         super(MessageType.SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY);

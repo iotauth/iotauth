@@ -168,6 +168,5 @@ public class CachedSessionKeyTable {
     private String sessionCryptoSpec;
 
     private byte[] keyVal;
-
     private String expectedOwnerGroups;
 }

@@ -155,7 +155,6 @@ public class SessionKey extends SymmetricKey {
         return expectedOwnerGroups;
     }
 
-
     private long id;
     private String[] owners;
 
@@ -163,6 +162,5 @@ public class SessionKey extends SymmetricKey {
     private String purpose;
 
     private long relValidity;
-
     private String[] expectedOwnerGroups;
 }

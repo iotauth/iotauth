@@ -409,7 +409,6 @@ public class AuthServer {
         return db.addFileReader(owner, reader);
     }
 
-
     public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {
         try {
             db.insertCommunicationPolicy(newCommunicationPolicyTable);
@@ -536,7 +535,6 @@ public class AuthServer {
     public ArrayList <String> getFileSharingInfo(String fileOwner) {
         return db.getFileSharingInfoByOwner(fileOwner);
     }
-
 
     /**
      * Method for exposing an AuthDB operation, getRegisteredEntity

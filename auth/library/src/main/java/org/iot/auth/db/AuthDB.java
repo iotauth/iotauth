@@ -245,7 +245,6 @@ public class AuthDB {
         return sqLiteConnector.appendFileReader(groupOwner, reader);
     }
 
-
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
         sqLiteConnector.deleteExpiredCahcedSessionKeys();
     }
