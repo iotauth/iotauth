@@ -57,7 +57,6 @@ public class CommunicationPolicyChecker {
                     requestingEntityName);
             return false;
         }
-
         switch (targetType) {
             case "Group":
                 if (!target.equals(requestingEntityGroup)) {

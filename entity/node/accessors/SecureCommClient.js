@@ -160,10 +160,8 @@ function handleSessionKeyRespForGrantAccess(sessionKeyList, receivedDistKey, cal
         console.log('handleSessionKeyRespForGrantAccess: session key request succeeded! authFailureCount: ' + authFailureCount);
     }
     if (receivedDistKey != null) {
-        // console.log('updating distribution key: ' + util.inspect(receivedDistKey));
         currentDistributionKey = receivedDistKey;
     }
-    // console.log('received ' + sessionKeyList.length + ' keys');
 
     var sessionKeys = sessionKeyList[0];
     let keys = Array.isArray(sessionKeys) ? sessionKeys : [ sessionKeys ];

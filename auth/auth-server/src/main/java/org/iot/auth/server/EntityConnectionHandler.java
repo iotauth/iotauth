@@ -205,7 +205,6 @@ public abstract class EntityConnectionHandler {
             close();
         }
         else if (type == MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC) {
-            // throw new UnsupportedOperationException("TODO: Impelement handling of DELEGATED_ACCESS_REQ_IN_PUB_ENC.");
             getLogger().info("Received delegated access request message encrypted with public key!");
             Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
             getLogger().debug("Encrypted data ({}): {}", encPayload.length(), encPayload.toHexString());
@@ -473,7 +472,6 @@ public abstract class EntityConnectionHandler {
         if (sessionKeyList.isEmpty()) {
             throw new RuntimeException("Auth is trying to send an empty session key response with no session key.");
         }
-
         SessionKey firstSessionKey = sessionKeyList.get(0);
         // Special case of providing the other owner's group information for delegated access.
         boolean needToSendOtherSessionKeyOwnerGroup = (sessionKeyList.size() == 1
@@ -505,7 +503,6 @@ public abstract class EntityConnectionHandler {
         }
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }
-
     /**
      * Send an add reader response to the requesting entity
      * @param distributionKey Distribution key used for sending session key response
