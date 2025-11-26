@@ -45,7 +45,7 @@ function receivedHandler(data) {
     }
 }
 
-var configFilePath = 'configs/net1/highTrustAgent.config';
+var configFilePath = 'configs/net1/website.config';
 if (process.argv.length > 2) {
     configFilePath = process.argv[2];
 }

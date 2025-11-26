@@ -111,23 +111,6 @@ function commandInterpreter() {
             console.log('showSocket command. current secure client socket: ');
             console.log(secureCommClient.showSocket());
         }
-        else if (command == 'send') {
-            console.log('send command');
-            if (message == undefined) {
-                console.log('no message!');
-                return;
-            }
-            secureCommClient.provideInput('toSend', Buffer.from(message));
-        }
-        else if (command == 'skReq') {
-            console.log('skReq (Session key request for cached keys that will be used to connect to servers) command');
-            var numKeys = 3;
-            if (message != undefined) {
-                numKeys = parseInt(message);
-            }
-            secureCommClient.getSessionKeysForCaching(numKeys);
-             
-        }
         else if (command == 'numKeys') {
             console.log('numKeys (Set number of session keys per request) command');
             var numKeys = 3;
