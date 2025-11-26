@@ -31,6 +31,9 @@ public class SessionKeyPurpose {
         else if (targetType == CommunicationTargetType.FILE_SHARING_TEAM) {
             this.targetType = "FileSharing";
         }
+        else if (targetType == CommunicationTargetType.DELEGATION) {
+            this.targetType = "Delegation";
+        }
         else {
             throw new RuntimeException("Unrecognized communication target type for SessionKeyPurpose");
         }

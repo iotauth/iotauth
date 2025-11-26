@@ -268,13 +268,14 @@ public class SQLiteConnector {
         statement = connection.createStatement();
         sql = "CREATE TABLE IF NOT EXISTS " + CachedSessionKeyTable.T_CACHED_SESSION_KEY + "(";
         sql += CachedSessionKeyTable.c.ID.name() + " INT NOT NULL PRIMARY KEY,";
-        sql += CachedSessionKeyTable.c.Owners.name() + " TEXT NOT NULL,";
+        sql += CachedSessionKeyTable.c.Owners.name() + " TEXT,";
         sql += CachedSessionKeyTable.c.MaxNumOwners.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.Purpose.name() + " TEXT NOT NULL,";
         sql += CachedSessionKeyTable.c.ExpirationTime.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.RelValidity.name() + " INT NOT NULL,";
         sql += CachedSessionKeyTable.c.CryptoSpec.name() + " TEXT NOT NULL,";
-        sql += CachedSessionKeyTable.c.KeyVal.name() + " BLOB NOT NULL)";
+        sql += CachedSessionKeyTable.c.KeyVal.name() + " BLOB NOT NULL,";
+        sql += CachedSessionKeyTable.c.ExpectedOwnerGroups.name() + " TEXT)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", CachedSessionKeyTable.T_CACHED_SESSION_KEY);
@@ -536,8 +537,9 @@ public class SQLiteConnector {
         sql += CachedSessionKeyTable.c.ExpirationTime.name() + ",";
         sql += CachedSessionKeyTable.c.RelValidity.name() + ",";
         sql += CachedSessionKeyTable.c.CryptoSpec.name() + ",";
-        sql += CachedSessionKeyTable.c.KeyVal.name() + ")";
-        sql += " VALUES(?,?,?,?,?,?,?,?)";
+        sql += CachedSessionKeyTable.c.KeyVal.name() + ",";
+        sql += CachedSessionKeyTable.c.ExpectedOwnerGroups.name()  + ")";
+        sql += " VALUES(?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setLong(index++,cachedSessionKey.getID());
@@ -548,6 +550,7 @@ public class SQLiteConnector {
         preparedStatement.setLong(index++,cachedSessionKey.getRelValidity());
         preparedStatement.setString(index++,cachedSessionKey.getSessionCryptoSpec());
         preparedStatement.setBytes(index++,cachedSessionKey.getKeyVal());
+        preparedStatement.setString(index++,cachedSessionKey.getExpectedOwnerGroups());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -852,9 +855,21 @@ public class SQLiteConnector {
      * or an argument is supplied to this method
      */
     public boolean appendSessionKeyOwner(long keyID, String newOwner) throws SQLException {
+        // Adding the comma separator only when there is already an owner.
+        //
+        // UPDATE your_table
+        // SET owner =
+        //     CASE
+        //         WHEN owner IS NULL OR TRIM(owner) = '' THEN 'OwnerN'
+        //         ELSE owner || ',' || 'OwnerN'
+        //     END
+        // WHERE <condition>;
+
         String sql = "UPDATE " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
-        sql += " SET " + CachedSessionKeyTable.c.Owners.name() + " = ";
-        sql += CachedSessionKeyTable.c.Owners.name() + "|| ',' || " + "'" + newOwner + "'";
+        sql += " SET " + CachedSessionKeyTable.c.Owners.name() + " = CASE WHEN ";
+        sql += CachedSessionKeyTable.c.Owners.name() + " IS NULL OR TRIM(";
+        sql += CachedSessionKeyTable.c.Owners.name() + ") = '' THEN '" + newOwner + "'";
+        sql += " ELSE " + CachedSessionKeyTable.c.Owners.name() + " || ',' || '" + newOwner + "' END";
         sql += " WHERE " + CachedSessionKeyTable.c.ID.name() + " = " + keyID;
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);

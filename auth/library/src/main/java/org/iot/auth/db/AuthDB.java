@@ -172,7 +172,7 @@ public class AuthDB {
      * Generate session keys and cache the generaged session keys.
      *
      * @param authID ID of the Auth who generates the session keys
-     * @param owner Name of the owner (entity) for the generated session keys
+     * @param owner Name of the owner (entity) for the generated session keys, can be null
      * @param numKeys Number of keys to be generated
      * @param communicationPolicy Corresponding communication policy for the generated session keys
      * @param sessionKeyPurpose Purpose specified by session key request
@@ -183,7 +183,7 @@ public class AuthDB {
      */
     public List<SessionKey> generateSessionKeys(int authID, String owner, int numKeys,
                                                 CommunicationPolicy communicationPolicy,
-                                                SessionKeyPurpose sessionKeyPurpose)
+                                                SessionKeyPurpose sessionKeyPurpose, String[] expectedOwnerGroups)
             throws IOException, SQLException, ClassNotFoundException
     {
         List<SessionKey> sessionKeyList = new LinkedList<>();
@@ -196,10 +196,12 @@ public class AuthDB {
             long curSessionKeyIndex = sessionKeyCount + i;
             // TODO: work on authID encoding
             long sessionKeyID = encodeSessionKeyID(authID, curSessionKeyIndex);
-            SessionKey sessionKey = new SessionKey(sessionKeyID, owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
+            SessionKey sessionKey = new SessionKey(sessionKeyID,
+                    owner == null ? null : owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
                     communicationPolicy.getMaxNumSessionKeyOwners(), sessionKeyPurpose.toString(),
                     new Date().getTime() + communicationPolicy.getAbsValidity(), communicationPolicy.getRelValidity(),
-                    communicationPolicy.getSessionCryptoSpec());
+                    communicationPolicy.getSessionCryptoSpec(),
+                    expectedOwnerGroups);
             sessionKeyList.add(sessionKey);
         }
         sessionKeyCount += numKeys;

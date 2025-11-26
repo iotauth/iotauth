@@ -90,6 +90,30 @@ public abstract class EntityConnectionHandler {
             return distributionKey;
         }
     }
+    private class SessionKeyReqInternal {
+        private String entityName;
+        private Buffer authNonce;
+        private int numKeys;
+        private JSONObject purpose;
+        public SessionKeyReqInternal(String entityName, Buffer authNonce, int numKeys, JSONObject purpose) {
+            this.entityName = entityName;
+            this.authNonce = authNonce;
+            this.numKeys = numKeys;
+            this.purpose = purpose;
+        }
+        public String getEntityName() {
+            return entityName;
+        }
+        public Buffer getAuthNonce() {
+            return authNonce;
+        }
+        public int getNumKeys() {
+            return numKeys;
+        }
+        public JSONObject getPurpose() {
+            return purpose;
+        }
+     }
     protected EntityConnectionHandler(AuthServer server) {
         this.server = server;
     }
@@ -150,7 +174,9 @@ public abstract class EntityConnectionHandler {
             }
 
             SessionKeysAndSpec ret =
-                    processSessionKeyReq(requestingEntity, sessionKeyReqMessage, authNonce);
+                    processSessionKeyReq(requestingEntity,
+                        new SessionKeyReqInternal(sessionKeyReqMessage.getEntityName(), sessionKeyReqMessage.getAuthNonce(), 
+                        sessionKeyReqMessage.getNumKeys(), sessionKeyReqMessage.getPurpose()), authNonce);
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
@@ -169,11 +195,66 @@ public abstract class EntityConnectionHandler {
             SessionKeyReqMessage sessionKeyReqMessage = new SessionKeyReqMessage(type, dec.getPayload());
 
             SessionKeysAndSpec ret =
-                    processSessionKeyReq(dec.getRegisteredEntity(), sessionKeyReqMessage, authNonce);
+                    processSessionKeyReq(dec.getRegisteredEntity(), new SessionKeyReqInternal(sessionKeyReqMessage.getEntityName(), sessionKeyReqMessage.getAuthNonce(), 
+                        sessionKeyReqMessage.getNumKeys(), sessionKeyReqMessage.getPurpose()), authNonce);
             List<SessionKey> sessionKeyList = ret.getSessionKeys();
             SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
 
             sendSessionKeyResp(dec.getRegisteredEntity().getDistributionKey(), sessionKeyReqMessage.getEntityNonce(),
+                    sessionKeyList, sessionCryptoSpec, null);
+            close();
+        }
+        else if (type == MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC) {
+            getLogger().info("Received delegated access request message encrypted with public key!");
+            Buffer encPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
+            getLogger().debug("Encrypted data ({}): {}", encPayload.length(), encPayload.toHexString());
+            Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
+            Buffer decPayload = server.getCrypto().authPrivateDecrypt(encPayload);
+
+            getLogger().debug("Decrypted data ({}): {}", decPayload.length(), decPayload.toHexString());
+            DelegatedAccessReqMessage delegatedAccessReqMessage = new DelegatedAccessReqMessage(type, decPayload);
+
+            RegisteredEntity requestingEntity = server.getRegisteredEntity(delegatedAccessReqMessage.getEntityName());
+            if (requestingEntity == null) {
+                throw new UnrecognizedEntityException("Error in SESSION_KEY_REQ_IN_PUB_ENC: Session key requester is not found!");
+            }
+            try {
+                if (!server.getCrypto().verifySignedData(encPayload, signature, requestingEntity.getPublicKey())) {
+                    throw new InvalidSignatureException("Entity signature verification failed!!");
+                }
+                else {
+                    getLogger().debug("Entity signature is correct!");
+                }
+            }
+            catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+                throw new InvalidSignatureException("Entity signature verification failed!!");
+            }
+            SessionKeysAndSpec ret =
+                    processSessionKeyReq(requestingEntity,
+                            new SessionKeyReqInternal(delegatedAccessReqMessage.getEntityName(), delegatedAccessReqMessage.getAuthNonce(),
+                                    delegatedAccessReqMessage.getNumKeys(), delegatedAccessReqMessage.getPurpose()), authNonce);
+            List<SessionKey> sessionKeyList = ret.getSessionKeys();
+            SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
+            DistributionKeyInfo distributionKey = GenerateDistributionKey(requestingEntity, delegatedAccessReqMessage.getDiffieHellmanParam());
+            Buffer encryptedDistKey = server.getCrypto().authPublicEncrypt(distributionKey.getDistributionKeyInfoBuffer(),
+                    requestingEntity.getPublicKey());
+            encryptedDistKey.concat(server.getCrypto().signWithPrivateKey(encryptedDistKey));
+
+            sendDelegatedAccessResp(distributionKey.getDistributionKey(), delegatedAccessReqMessage.getEntityNonce(),
+                    sessionKeyList, sessionCryptoSpec, encryptedDistKey);
+            close();
+
+        }
+        else if (type == MessageType.DELEGATED_ACCESS_REQ){
+            DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
+            DelegatedAccessReqMessage delegatedAccessReqMessage = new DelegatedAccessReqMessage(type, dec.getPayload());
+            SessionKeysAndSpec ret =
+                    processSessionKeyReq(dec.getRegisteredEntity(), new SessionKeyReqInternal(delegatedAccessReqMessage.getEntityName(), delegatedAccessReqMessage.getAuthNonce(), 
+                        delegatedAccessReqMessage.getNumKeys(), delegatedAccessReqMessage.getPurpose()), authNonce);
+            List<SessionKey> sessionKeyList = ret.getSessionKeys();
+            SymmetricKeyCryptoSpec sessionCryptoSpec = ret.getSpec();
+
+            sendDelegatedAccessResp(dec.getRegisteredEntity().getDistributionKey(), delegatedAccessReqMessage.getEntityNonce(),
                     sessionKeyList, sessionCryptoSpec, null);
             close();
         }
@@ -388,12 +469,37 @@ public abstract class EntityConnectionHandler {
                                     Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException,
                                     InvalidSymmetricKeyOperationException
     {
+        if (sessionKeyList.isEmpty()) {
+            throw new RuntimeException("Auth is trying to send an empty session key response with no session key.");
+        }
+        SessionKey firstSessionKey = sessionKeyList.get(0);
+        // Special case of providing the other owner's group information for delegated access.
+        boolean needToSendOtherSessionKeyOwnerGroup = (sessionKeyList.size() == 1
+                && firstSessionKey.getPurpose().startsWith("Delegation:")
+                && firstSessionKey.getOwners() != null
+                && firstSessionKey.getOwners().length == 1
+                && !firstSessionKey.getOwners()[0].trim().isEmpty());
         SessionKeyRespMessage sessionKeyResp;
         if (encryptedDistKey != null) {
-            sessionKeyResp = new SessionKeyRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
+            if (needToSendOtherSessionKeyOwnerGroup){
+                String owner = firstSessionKey.getOwners()[0];
+                sessionKeyResp = new SessionKeyRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec,
+                        sessionKeyList, server.getRegisteredEntity(owner).getGroup());
+            }
+            else {
+                sessionKeyResp = new SessionKeyRespMessage(encryptedDistKey, entityNonce,
+                        sessionCryptoSpec, sessionKeyList);
+            }
         }
         else {
-            sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
+            if (needToSendOtherSessionKeyOwnerGroup) {
+                String owner = firstSessionKey.getOwners()[0];
+                sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList,
+                        server.getRegisteredEntity(owner).getGroup());
+            }
+            else {
+                sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
+            }
         }
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }
@@ -417,13 +523,39 @@ public abstract class EntityConnectionHandler {
             addReaderResp = new AddReaderRespMessage(entityNonce);
         }
         writeToSocket(addReaderResp.serializeAndEncrypt(distributionKey).getRawBytes());
-    }    
+    }
+
+    /**
+     * Send a delegate access response to the requesting entity
+     * @param distributionKey Distribution key used for sending session key response
+     * @param entityNonce Random number generated by the requesting entity, to be included in the response
+     * @param sessionKeyList A list of session keys to be included in the response
+     * @param sessionCryptoSpec Cryptography specification for the session keys in the response
+     * @param encryptedDistKey Can be null. If not null, it is the distribution key encrypted using public key
+     *                         cryptography. If null, it means the session key request was encrypted with a distribution
+     *                         key that is shared a priory, so no need to include it.
+     * @throws IOException If TCP socket IO fails.
+     * @throws UseOfExpiredKeyException When an expired key is used.
+     */
+    private void sendDelegatedAccessResp(DistributionKey distributionKey, Buffer entityNonce,
+                                    List<SessionKey> sessionKeyList, SymmetricKeyCryptoSpec sessionCryptoSpec,
+                                    Buffer encryptedDistKey) throws IOException, UseOfExpiredKeyException,
+                                    InvalidSymmetricKeyOperationException
+    {
+        DelegatedAccessRespMessage delegatedAccessRespMessage =
+                new DelegatedAccessRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
+        if (encryptedDistKey != null) {
+            delegatedAccessRespMessage =
+                            new DelegatedAccessRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
+        }
+        writeToSocket(delegatedAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
+    } 
 
     /**
      * Interpret a session key request from the entity, and process it. The process includes communication policy
      * checking, session key generation, and communicating with a trusted Auth to get the session key.
      * @param requestingEntity The entity who sent the session key request.
-     * @param sessionKeyReqMessage The session key request message object.
+     * @param sessionKeyReq The session key request message object.
      * @param authNonce Auth nonce to be checked with the nonce in the session key request message.
      * @return A pair of resulting session key list and usage (cryptography) specification for the session keys. The
      * session keys can be either generated or retrieved from a trusted Auth.
@@ -435,23 +567,23 @@ public abstract class EntityConnectionHandler {
      * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
      */
     private SessionKeysAndSpec processSessionKeyReq(
-            RegisteredEntity requestingEntity, SessionKeyReqMessage sessionKeyReqMessage, Buffer authNonce)
+            RegisteredEntity requestingEntity, SessionKeyReqInternal sessionKeyReq, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
             TooManySessionKeysRequestedException, InvalidNonceException {
-        getLogger().debug("Sender entity: {}", sessionKeyReqMessage.getEntityName());
+        getLogger().debug("Sender entity: {}", sessionKeyReq.getEntityName());
 
-        getLogger().debug("Received auth nonce: {}", sessionKeyReqMessage.getAuthNonce().toHexString());
-        if (!authNonce.equals(sessionKeyReqMessage.getAuthNonce())) {
+        getLogger().debug("Received auth nonce: {}", sessionKeyReq.getAuthNonce().toHexString());
+        if (!authNonce.equals(sessionKeyReq.getAuthNonce())) {
             throw new InvalidNonceException("Auth nonce does not match!");
         }
         else {
             getLogger().debug("Auth nonce is correct!");
         }
-        if (sessionKeyReqMessage.getNumKeys() > requestingEntity.getMaxSessionKeysPerRequest()) {
+        if (sessionKeyReq.getNumKeys() > requestingEntity.getMaxSessionKeysPerRequest()) {
             throw new TooManySessionKeysRequestedException("More session keys than allowed are requested!");
         }
 
-        JSONObject purpose = sessionKeyReqMessage.getPurpose();
+        JSONObject purpose = sessionKeyReq.getPurpose();
         SessionKeyReqPurpose reqPurpose = new SessionKeyReqPurpose(purpose);
 
         SymmetricKeyCryptoSpec cryptoSpec = null;
@@ -470,9 +602,9 @@ public abstract class EntityConnectionHandler {
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
                         new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
-                getLogger().debug("numKeys {}", sessionKeyReqMessage.getNumKeys());
+                getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
                 sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
-                        sessionKeyReqMessage.getNumKeys(), communicationPolicy, sessionKeyPurpose);
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
                 break;
             }
             // If a subscribe-topic is specified, derive the keys from DB
@@ -549,7 +681,7 @@ public abstract class EntityConnectionHandler {
                 }
 
                 if (authID == server.getAuthID()) {
-                    getLogger().info("numKeys {}", sessionKeyReqMessage.getNumKeys());
+                    getLogger().info("numKeys {}", sessionKeyReq.getNumKeys());
                     SessionKeyPurpose sessionKeyPurpose =
                             new SessionKeyPurpose(CommunicationTargetType.TARGET_GROUP, requestingEntity.getGroup());
                     // get cached keys for this group
@@ -567,6 +699,22 @@ public abstract class EntityConnectionHandler {
                             requestingEntity.getName(), requestingEntity.getGroup(), authID);
                     return sendAuthSessionKeyReq(authID, authSessionKeyReqMessage);
                 }
+                break;
+            }
+            case DELEGATION: {
+                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
+                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                if (communicationPolicy == null) {
+                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
+                }
+                cryptoSpec = communicationPolicy.getSessionCryptoSpec();
+                // generate session keys
+                SessionKeyPurpose sessionKeyPurpose =
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
+                sessionKeyList = server.generateSessionKeysForDelegation(
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose,
+                        ((String)reqPurpose.getTarget()).split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM));
                 break;
             }
             default: {

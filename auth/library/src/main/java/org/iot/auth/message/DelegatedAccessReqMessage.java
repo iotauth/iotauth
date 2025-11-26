@@ -24,9 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class for a session key req message from an entity.
+ * A class for a delegated access req message from an entity.
  * <pre>
- * SessionKeyReq Format
+ * DelegatedAccessReqMessage Format
  * {
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
  *      authNonce:    /Buffer/, (AUTH_NONCE_SIZE)
@@ -35,16 +35,16 @@ import org.slf4j.LoggerFactory;
  *      purpose: JSON,
  *      dhParam: /Buffer/ (optional, Diffie-Hellman parameter)
  * } </pre>
- * @author Hokeun Kim
+ * @author Sunyoung Kim
  */
-public class SessionKeyReqMessage extends IoTSPMessage {
+public class DelegatedAccessReqMessage extends IoTSPMessage {
     /**
-     * Constructor to construct a session key request message from message payload.
-     * @param type Message type of the session key request.
+     * Constructor to construct a delegated access request message from message payload.
+     * @param type Message type of the delegated access request.
      * @param decPayload Payload of the message in Buffer.
      * @throws ParseException When JSON parser fails
      */
-    public SessionKeyReqMessage(MessageType type, Buffer decPayload) throws ParseException {
+    public DelegatedAccessReqMessage(MessageType type, Buffer decPayload) throws ParseException {
         super(type);
         int curIndex = 0;
         this.entityNonce = decPayload.slice(curIndex, curIndex + ENTITY_NONCE_SIZE);
@@ -92,13 +92,13 @@ public class SessionKeyReqMessage extends IoTSPMessage {
     public Buffer getDiffieHellmanParam() {
         return diffieHellmanParam;
     }
-
+    
     private Buffer entityNonce;
     private Buffer authNonce;
-    private int numKeys;
     private String entityName;
+    private int numKeys;
     private JSONObject purpose;
     private Buffer diffieHellmanParam;
 
-    private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);
+    private static final Logger logger = LoggerFactory.getLogger(DelegatedAccessReqMessage.class);
 }

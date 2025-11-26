@@ -1,0 +1,487 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901,
+			"callbackPort": 21903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		},
+		{
+			"id": 102,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 22900,
+			"udpPort": 22902,
+			"authPort": 22901,
+			"callbackPort": 22903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		}
+	],
+	"authTrusts": [
+		{
+			"id1": 101,
+			"id2": 102
+		}
+	],
+	"assignments": {
+		"net1.user": 101,
+		"net1.rcUser": 101,
+		"net1.website": 101,
+		"net1.highTrustAgent": 101,
+		"net1.mediumTrustAgent": 101,
+		"net1.lowTrustAgent": 101,
+		"net1.rcWebsite": 101,
+		"net1.rcHighTrustAgent": 101,
+		"net1.rcMediumTrustAgent": 101,
+		"net1.rcLowTrustAgent": 101,
+		"net2.user": 102,
+		"net2.rcUser": 102,
+		"net2.website": 102,
+		"net2.highTrustAgent": 102,
+		"net2.mediumTrustAgent": 102,
+		"net2.lowTrustAgent": 102,
+		"net2.rcWebsite": 102,
+		"net2.rcHighTrustAgent": 102,
+		"net2.rcMediumTrustAgent": 102,
+		"net2.rcLowTrustAgent": 102
+	},
+	"entityList": [
+		{
+			"group": "Users",
+			"name": "net1.user",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.User",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Users",
+			"name": "net1.rcUser",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcUser",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Website",
+			"name": "net1.website",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Website",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "HighTrustAgents",
+			"name": "net1.highTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.HighTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "MediumTrustAgents",
+			"name": "net1.mediumTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.MediumTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "LowTrustAgents",
+			"name": "net1.lowTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.LowTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Website",
+			"name": "net1.rcWebsite",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcWebsite",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "HighTrustAgents",
+			"name": "net1.rcHighTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "4*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcHighTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "MediumTrustAgents",
+			"name": "net1.rcMediumTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "2*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcMediumTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "LowTrustAgents",
+			"name": "net1.rcLowTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.RcLowTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Users",
+			"name": "net2.user",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.User",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Users",
+			"name": "net2.rcUser",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcUser",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Website",
+			"name": "net2.website",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net2",
+			"credentialPrefix": "Net2.Website",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "HighTrustAgents",
+			"name": "net2.highTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "4*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.HighTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "MediumTrustAgents",
+			"name": "net2.mediumTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "2*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.MediumTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "LowTrustAgents",
+			"name": "net2.lowTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net2",
+			"credentialPrefix": "Net2.LowTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				101
+			]
+		},
+				{
+			"group": "Website",
+			"name": "net2.rcWebsite",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcWebsite",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "HighTrustAgents",
+			"name": "net2.rcHighTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "4*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcHighTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "MediumTrustAgents",
+			"name": "net2.rcMediumTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "2*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcMediumTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				101
+			]
+		},
+		{
+			"group": "LowTrustAgents",
+			"name": "net2.rcLowTrustAgent",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net2",
+			"credentialPrefix": "Net2.RcLowTrustAgent",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				101
+			]
+		}  
+	],
+	"filesharingLists": []
+}

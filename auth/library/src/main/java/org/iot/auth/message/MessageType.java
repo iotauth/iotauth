@@ -28,12 +28,14 @@ public enum MessageType {
     AUTH_SESSION_KEY_REQ((byte)10),
     AUTH_SESSION_KEY_RESP((byte)11),
     SESSION_KEY_REQ_IN_PUB_ENC((byte)20),
-    /** Includes distribution message (session keys) */
+    /** Includes distribution key as well as session keys */
     SESSION_KEY_RESP_WITH_DIST_KEY((byte)21),
-    /** Distribution message */
     SESSION_KEY_REQ((byte)22),
-    /** Distribution message */
+    /** Distribution message including session keys */
     SESSION_KEY_RESP((byte)23),
+    SESSION_KEY_RESP_FOR_DELEGATION((byte) 24),
+    SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY((byte) 25),
+    /** Handshake for initializing secure communication. */
     SKEY_HANDSHAKE_1((byte)30),
     SKEY_HANDSHAKE_2((byte)31),
     SKEY_HANDSHAKE_3((byte)32),
@@ -50,6 +52,11 @@ public enum MessageType {
     ADD_READER_RESP_WITH_DIST_KEY((byte)61),
     ADD_READER_REQ((byte)62),
     ADD_READER_RESP((byte)63),
+    /** For delegated access **/
+    DELEGATED_ACCESS_REQ_IN_PUB_ENC((byte)70),
+    DELEGATED_ACCESS_RESP_WITH_DIST_KEY((byte)71),
+    DELEGATED_ACCESS_REQ((byte) 72),
+    DELEGATED_ACCESS_RESP((byte) 73),
     AUTH_ALERT((byte)100);
 
     public static MessageType fromByte(byte value) {

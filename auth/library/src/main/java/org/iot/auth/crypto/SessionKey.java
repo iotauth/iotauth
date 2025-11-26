@@ -48,31 +48,36 @@ public class SessionKey extends SymmetricKey {
         ExpirationTime,
         RelValidity,
         CryptoSpec,
-        KeyVal
+        KeyVal,
+        ExpectedOwnerGroups
     }
 
     public SessionKey(long id, String[] owners, int maxNumOwners, String purpose,
                       long expirationTime, long relValidity,
-                      SymmetricKeyCryptoSpec cryptoSpec, Buffer serializedKeyVal)
+                      SymmetricKeyCryptoSpec cryptoSpec, Buffer serializedKeyVal,
+                      String[] expectedOwnerGroups)
     {
         super(cryptoSpec, expirationTime, serializedKeyVal);
         this.id = id;
-        this.owners = owners;
+        this.owners = owners != null ? owners : new String[0];
         this.maxNumOwners = maxNumOwners;
         this.purpose = purpose;
         this.relValidity = relValidity;
+        this.expectedOwnerGroups = expectedOwnerGroups != null ? expectedOwnerGroups : new String[0];
     }
 
     public SessionKey(long id, String[] owners, int maxNumOwners, String purpose,
                       long expirationTime, long relValidity,
-                      SymmetricKeyCryptoSpec cryptoSpec)
+                      SymmetricKeyCryptoSpec cryptoSpec,
+                      String[] expectedOwnerGroups)
     {
         super(cryptoSpec, expirationTime);
         this.id = id;
-        this.owners = owners;
+        this.owners = owners != null ? owners : new String[0];
         this.maxNumOwners = maxNumOwners;
         this.purpose = purpose;
         this.relValidity = relValidity;
+        this.expectedOwnerGroups = expectedOwnerGroups != null ? expectedOwnerGroups : new String[0];
     }
 
     public String toString() {
@@ -107,6 +112,7 @@ public class SessionKey extends SymmetricKey {
         jsonObject.put(key.RelValidity, relValidity);
         jsonObject.put(key.CryptoSpec, getCryptoSpec().toJSONObject());
         jsonObject.put(key.KeyVal, getSerializedKeyVal().toBase64());
+        jsonObject.put(key.ExpectedOwnerGroups, String.join(SESSION_KEY_OWNER_NAME_DELIM, expectedOwnerGroups));
         return jsonObject;
     }
 
@@ -120,7 +126,8 @@ public class SessionKey extends SymmetricKey {
                 Long.parseLong(jsonObject.get(key.RelValidity.name()).toString()),
                 SymmetricKeyCryptoSpec.fromJSONObject(
                         (JSONObject) new JSONParser().parse(jsonObject.get(key.CryptoSpec.name()).toString())),
-                Buffer.fromBase64(jsonObject.get(key.KeyVal.name()).toString())
+                Buffer.fromBase64(jsonObject.get(key.KeyVal.name()).toString()),
+                jsonObject.get(key.ExpectedOwnerGroups.name()).toString().split(SESSION_KEY_OWNER_NAME_DELIM)
         );
         return sessionKey;
     }
@@ -144,6 +151,9 @@ public class SessionKey extends SymmetricKey {
         return relValidity;
     }
 
+    public String[] getExpectedOwnerGroups() {
+        return expectedOwnerGroups;
+    }
 
     private long id;
     private String[] owners;
@@ -152,4 +162,5 @@ public class SessionKey extends SymmetricKey {
     private String purpose;
 
     private long relValidity;
+    private String[] expectedOwnerGroups;
 }

@@ -34,6 +34,7 @@ public class SessionKeyReqPurpose {
         final String keyId = "keyId";
         final String cachedKeys = "cachedKeys";
         final String fileSharing = "FileSharing";
+        final String delegation = "delegation";
 
         // TODO: match JSON string (group, pubTopic, subTopic) and CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
         Object objTarget = null;
@@ -70,6 +71,11 @@ public class SessionKeyReqPurpose {
             objTarget = purpose.get(fileSharing);
             if (objTarget.getClass() == String.class) {
                 this.targetType = CommunicationTargetType.FILE_SHARING_TEAM;
+            }
+        } else if (purpose.containsKey(delegation)) {
+            objTarget = purpose.get(delegation);
+            if (objTarget.getClass() == String.class) {
+                this.targetType = CommunicationTargetType.DELEGATION;
             }
         }
 
