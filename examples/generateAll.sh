@@ -61,7 +61,7 @@ if [ "$SHOW_HELP" = true ] ; then
 	echo "  -gd,--gen-db-only               Generate Auth databases only."
 	echo "                                  (Skip generation of credentials and configuration files.)"
 	echo "  -lc,--leave-cred-config         Leave credentials and config files after DB generation."
-	echo "  -p|--password                   Password passed for credential generation."
+	echo "  -p,--password                   Password passed for credential generation."
 	echo "                                  (Must not be used for actual deployment.)"
 	echo "  -h,--help                       Show this help."
 	exit 1
