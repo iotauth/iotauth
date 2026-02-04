@@ -59,19 +59,21 @@ See README.md under *examples/* for details.
 
 1. Run `git submodule update --remote` to update the `sst-c-api` submodule.
 
-2. Change directories to `$ROOT/entity/c/examples/ipfs_examples/c`
+2. Change directories to `$ROOT/entity/c/examples/ipfs_examples/`
  
 3. Create a non-empty test file named `plain_text` in `$ROOT/entity/c/examples/ipfs_examples/` (e.g., by running the following command from this directory): `echo "hello from uploader" > plain_text`
 
-4. Run `mkdir build && cd build`
+4. Change directories to `$ROOT/entity/c/examples/ipfs_examples/c`
 
-5. Run `cmake ../` to make the Makefile to build.
+5. Run `mkdir build && cd build`
 
-6. Run `make` 
+6. Run `cmake ../` to make the Makefile to build.
 
-7. Run `./entity_uploader ../../uploader.config ../../plain_text ../../addReader.txt` in a separate terminal, to execute net1.uploader.
+7. Run `make` 
 
-8. Run `./entity_downloader ../../downloader.config`, to execute net1.downloader.
+8. Run `./entity_uploader ../../uploader.config ../../plain_text ../../addReader.txt` in a separate terminal, to execute net1.uploader.
+
+9. Run `./entity_downloader ../../downloader.config`, to execute net1.downloader.
 
 # Security for File System Manager
 ---
