@@ -59,9 +59,9 @@ See README.md under *examples/* for details.
 
 1. Run `git submodule update --remote` to update the `sst-c-api` submodule.
 
-2. Create a non-empty test file named `plain_text` in `$ROOT/entity/c/examples/ipfs_examples/` (run the following command from this directory): `echo "hello from uploader" > plain_text`
-
-3. Change directories to `$ROOT/entity/c/examples/ipfs_examples/c`
+2. Change directories to `$ROOT/entity/c/examples/ipfs_examples/c`
+ 
+3. Create a non-empty test file named `plain_text` in `$ROOT/entity/c/examples/ipfs_examples/` (e.g., by running the following command from this directory): `echo "hello from uploader" > plain_text`
 
 4. Run `mkdir build && cd build`
 
