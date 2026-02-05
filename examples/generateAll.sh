@@ -88,17 +88,17 @@ if [ "$GEN_CRED_CONFIG" = true ] ; then
 	echo "Generating credentials ..."
 	node credentialGenerator.js $GRAPH_FILE $PASSWORD_FOR_CRED_GENERATION
 	if [ $? -ne 0  ] ; then
-		echo "[Error] Script finished with problems! exiting..." ; exit 1
+		echo "[Error] Script finished with problems! credentialGenerator.js failed. exiting..." ;  exit 1
 	fi
 	echo "Generating entity configuration files..."
 	node entityConfigGenerator.js $GRAPH_FILE
 	if [ $? -ne 0  ] ; then
-		echo "[Error] Script finished with problems! exiting..." ; exit 1
+		echo "[Error] Script finished with problems! entityConfigGenerator.js failed. exiting..." ; exit 1
 	fi
 	echo "Generating Auth configuration files..."
 	node authConfigGenerator.js $GRAPH_FILE
 	if [ $? -ne 0  ] ; then
-		echo "[Error] Script finished with problems! exiting..." ; exit 1
+		echo "[Error] Script finished with problems! authConfigGenerator.js failed. exiting..." ; exit 1
 	fi
 fi
 
@@ -107,6 +107,6 @@ if [ "$GEN_AUTH_DB" = true ] ; then
 	# generate Auth DBs
 	node authDBGenerator.js $GRAPH_FILE $REMOVE_FILES_AFTER_DB_GEN
 	if [ $? -ne 0  ] ; then
-		echo "[Error] Script finished with problems! exiting..." ; exit 1
+		echo "[Error] Script finished with problems! authDBGenerator.js failed. exiting..." ; exit 1
 	fi
 fi
