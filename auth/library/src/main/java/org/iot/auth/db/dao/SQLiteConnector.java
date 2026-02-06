@@ -307,6 +307,20 @@ public class SQLiteConnector {
             logger.info("Table {} already exists", FileSharingTable.T_File_Sharing);
         closeStatement();
 
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + PrivilegeTable.T_PRIVILEGE + "(";
+        sql += PrivilegeTable.c.PrivilegeType.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.PrivilegedEntity.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.Validity.name() + " TEXT NOT NULL)";
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", PrivilegeTable.T_PRIVILEGE);
+        else
+            logger.info("Table {} already exists", PrivilegeTable.T_PRIVILEGE);
+        closeStatement();
+
         closeConnection();
     }
 
@@ -609,6 +623,42 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,fileSharing.getReaderType());
         preparedStatement.setString(index++,fileSharing.getReader());
         logger.info("{} {} {}", fileSharing.getOwner(), fileSharing.getReaderType(), fileSharing.getReader() );
+        if (DEBUG) logger.info("{}",preparedStatement);
+        boolean result = preparedStatement.execute();
+        preparedStatement.close();
+        closeConnection();
+        return result;
+    }
+
+    /**
+     * Inserts the privilege information into the privilege table.
+     *
+     * @param privilege the object container of the information in privilege table
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @see PrivilegeTable
+     */
+    public boolean insertRecords(PrivilegeTable privilege) throws SQLException {
+        String sql = "INSERT INTO " + PrivilegeTable.T_PRIVILEGE + "(";
+        sql += PrivilegeTable.c.PrivilegeType.name() + ",";
+        sql += PrivilegeTable.c.PrivilegedEntity.name() + ",";
+        sql += PrivilegeTable.c.Subject.name() + ",";
+        sql += PrivilegeTable.c.Object.name() + ",";
+        sql += PrivilegeTable.c.Validity.name() + ")";
+        sql += " VALUES (?,?,?,?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setString(index++,privilege.getPrivilegeType());
+        preparedStatement.setString(index++,privilege.getPrivilegedEntity());
+        preparedStatement.setString(index++,privilege.getSubject());
+        preparedStatement.setString(index++,privilege.getObject());
+        preparedStatement.setString(index++,privilege.getValidity());
+        logger.info("{} {} {} {} {}",
+                privilege.getPrivilegeType(), privilege.getPrivilegedEntity(), privilege.getSubject(),
+                privilege.getObject(), privilege.getValidity() );
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
