@@ -558,15 +558,15 @@
 		{
 			"privilegeType": "delegation",
 			"privilegedEntity": "net1.Alex",
-			"subject": "net1.alexAgent",
-			"object": "net1.highTrustAgent,net1.resourceA",
+			"subject": "MyAgents",
+			"object": "ExternalAgents,ResourceA",
 			"validity": "1*day"
 		},
 		{
 			"privilegeType": "delegation",
 			"privilegedEntity": "net2.Bailey",
-			"subject": "net2.baileyAgent",
-			"object": "net2.lowTrustAgent,net2.resourceBB",
+			"subject": "MyAgents",
+			"object": "ExternalAgents,ResourceB",
 			"validity": "2*day"
 		}
 	]
