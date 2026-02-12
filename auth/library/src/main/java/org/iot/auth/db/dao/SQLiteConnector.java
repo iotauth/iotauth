@@ -313,7 +313,11 @@ public class SQLiteConnector {
         sql += PrivilegeTable.c.PrivilegedEntity.name() + " TEXT NOT NULL,";
         sql += PrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
         sql += PrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
-        sql += PrivilegeTable.c.Validity.name() + " TEXT NOT NULL)";
+        sql += PrivilegeTable.c.Validity.name() + " TEXT NOT NULL,";
+        sql += "PRIMARY KEY (" + PrivilegeTable.c.PrivilegeType.name() + ",";
+        sql += PrivilegeTable.c.PrivilegedEntity.name() + ",";
+        sql += PrivilegeTable.c.Subject.name() + ",";
+        sql += PrivilegeTable.c.Object.name() + "))";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", PrivilegeTable.T_PRIVILEGE);
@@ -860,6 +864,53 @@ public class SQLiteConnector {
         catch (Exception e)
         {
             e.printStackTrace();
+        }
+        return result;
+    }
+
+    /**
+     * Selects all privilege lists.
+     *
+     * @return a list of all privilieges.
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public List<PrivilegeTable> selectAllPrivilege() throws SQLException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        List<PrivilegeTable> privilegeTableList = new LinkedList<>();
+        while (resultSet.next()) {
+            PrivilegeTable privilege = PrivilegeTable.createRecord(resultSet);
+            if (DEBUG) logger.info(privilege.toJSONObject().toJSONString());
+            privilegeTableList.add(privilege);
+        }
+        return privilegeTableList;
+    }
+
+    /**
+     * Select privileges of the requesting entity.
+     * @param requestingEntityName the name of the requesting entity who wants to perform privilege.
+     * @param privilegeType the given type of the privilege
+     * @return returns the list of privileges.
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public List<PrivilegeTable> selectPrivilegeByUser(String requestingEntityName)
+            throws SQLException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
+        sql += " WHERE " + PrivilegeTable.c.PrivilegedEntity.name() + " = " + "'" + requestingEntityName + "'";
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        List<PrivilegeTable> result = new LinkedList<>();
+        while (resultSet.next()) {
+            PrivilegeTable privilege = PrivilegeTable.createRecord(resultSet);
+            if (DEBUG) logger.info(privilege.toJSONObject().toJSONString());
+            result.add(privilege);
         }
         return result;
     }
