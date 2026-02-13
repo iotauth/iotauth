@@ -307,7 +307,7 @@ public class AppTest {
         sqLiteConnector.insertRecords(trustedAuth);
 
         // Test Select All.
-        sqLiteConnector.selectAllTrustedAuth();
+        sqLiteConnector.selectAllTrustedAuths();
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
     }

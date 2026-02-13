@@ -285,7 +285,7 @@ public class AuthDB {
     public String sessionKeysToString() throws SQLException, ClassNotFoundException {
         StringBuilder sb = new StringBuilder();
 
-        List<CachedSessionKeyTable> cachedSessionKeyList = sqLiteConnector.selectAllCachedSessionKey();
+        List<CachedSessionKeyTable> cachedSessionKeyList = sqLiteConnector.selectAllCachedSessionKeys();
         boolean init = true;
         for (CachedSessionKeyTable cachedSessionKey: cachedSessionKeyList) {
             if (init) {
@@ -405,7 +405,7 @@ public class AuthDB {
         trustStoreForTrustedAuths = KeyStore.getInstance(KeyStore.getDefaultType());
         trustStoreForTrustedAuths.load(null, trustStorePassword.toCharArray());
 
-        for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuth()) {
+        for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuths()) {
             TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(), t.getEntityHost(),
                     t.getPort(),
                     t.getHeartbeatPeriod(),
