@@ -297,6 +297,18 @@ function sendMigrationRequest() {
         iotAuth.migrateToTrustedAuth(options, handleMigrationResp, eventHandlers);
     }
 }
+
+function handlePrivilegeResp(){
+    console.log('Finished privilege request');
+}
+function sendPrivilegeRequest(type, subject, target1, target2) {
+    var options = iotAuth.getPrivilegeReqOptions(entityConfig, type, subject, target1, target2);
+    var eventHandlers = {
+        onError: onError
+    };
+    iotAuth.privilegeRequest(options, handlePrivilegeResp, eventHandlers);
+}
+
 /*
 serverHostPort = {
 	host: 'localhost',
@@ -438,6 +450,10 @@ SecureCommClient.prototype.getSessionKeysForWebsite = function(keyID) {
 
 SecureCommClient.prototype.migrateToTrustedAuth = function() {
     sendMigrationRequest();
+}
+
+SecureCommClient.prototype.performPrivilege = function(type, subject, target1, target2) {
+    sendPrivilegeRequest(type, subject, target1, target2);
 }
 
 SecureCommClient.prototype.setEntityInfo = function(key, value) {

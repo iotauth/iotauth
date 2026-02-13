@@ -28,6 +28,8 @@ import org.iot.auth.message.*;
 import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import org.iot.auth.db.bean.PrivilegeTable;
+import org.iot.auth.db.bean.CommunicationPolicyTable;
 
 import java.io.IOException;
 import java.security.*;
@@ -374,6 +376,17 @@ public abstract class EntityConnectionHandler {
             AddReaderReqMessage addReaderReqMessage = new AddReaderReqMessage(type, dec.getPayload());
             processAddReaderReq(dec.getRegisteredEntity(), addReaderReqMessage, authNonce);
             sendAddReaderResp(dec.getRegisteredEntity().getDistributionKey(), addReaderReqMessage.getEntityNonce(), null);
+        }
+        else if (type == MessageType.PRIVILEGED_REQ){
+            Buffer decPayload = payload.slice(0, payload.length() - RSA_KEY_SIZE);
+            Buffer signature = payload.slice(payload.length() - RSA_KEY_SIZE);
+            getLogger().info("Decrypted data (" + decPayload.length() + "): " + decPayload.toHexString());
+
+
+//            DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
+//            PrivilegeReqMessage privilegeReqMessage = new PrivilegeReqMessage(type, dec.getPayload());
+//            processPrivilegeReq(dec.getRegisteredEntity(), privilegeReqMessage, authNonce);
+//            sendPrivilegeResp(dec.getRegisteredEntity(), addReaderReqMessage.getEntityNonce(), null);
         }
         else {
             getLogger().info("Received unrecognized message from the entity!");
@@ -795,6 +808,40 @@ public abstract class EntityConnectionHandler {
         // String ownerGroup = reqPurpose.nextToken();
         // String reader = reqPurpose.nextToken();
         server.addFileReader(requestingEntity.getGroup(),objPurpose.getTarget().toString());
+    }
+
+    /**
+     * Interpret a privilege request from the entity, and process it.
+     * @param requestingEntity The entity who sent the privilege request.
+     * @param privilegeReqMessage The privilege request message object.
+     * @param authNonce Auth nonce to be checked with the nonce in the add reader request message.
+     * @throws IOException If IO fails.
+     * @throws ParseException If JSON parsing fails.
+     * @throws SQLException When there is a problem in SQL
+     * @throws ClassNotFoundException When class is not found.
+     * @throws InvalidSessionKeyTargetException If the target of add reader request is not valid.
+     * @throws InvalidNonceException If nonce does not match.
+     */
+    private void processPrivilegeReq(
+            RegisteredEntity requestingEntity, PrivilegeReqMessage privilegeReqMessage, Buffer authNonce)
+            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
+            InvalidNonceException {
+        getLogger().debug("Sender entity: {}", privilegeReqMessage.getEntityName());
+
+        getLogger().debug("Received auth nonce: {}", privilegeReqMessage.getAuthNonce().toHexString());
+        if (!authNonce.equals(privilegeReqMessage.getAuthNonce())) {
+            throw new InvalidNonceException("Auth nonce does not match!");
+        }
+        else {
+            getLogger().debug("Auth nonce is correct!");
+        }
+        List<PrivilegeTable> privilegeTableList = server.getPrivilegesByUser(privilegeReqMessage.getEntityName());
+
+        JSONObject purpose = privilegeReqMessage.getPurpose();
+
+//
+//        CommunicationPolicyTable newCommunicationPolicyTable;
+//        server.addCommunicationPolicy(newCommunicationPolicyTable);
     }
 
     /**
