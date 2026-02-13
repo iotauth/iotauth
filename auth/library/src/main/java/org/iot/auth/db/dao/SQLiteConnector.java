@@ -749,7 +749,7 @@ public class SQLiteConnector {
      * or an argument is supplied to this method
      * @throws CertificateEncodingException If there is a problem in certificate encoding.
      */
-    public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, CertificateEncodingException {
+    public List<TrustedAuthTable> selectAllTrustedAuths() throws SQLException, CertificateEncodingException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + TrustedAuthTable.T_TRUSTED_AUTH;
         if (DEBUG) logger.info(sql);
@@ -771,7 +771,7 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public List<CachedSessionKeyTable> selectAllCachedSessionKey() throws SQLException {
+    public List<CachedSessionKeyTable> selectAllCachedSessionKeys() throws SQLException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
@@ -871,12 +871,12 @@ public class SQLiteConnector {
     /**
      * Selects all privilege lists.
      *
-     * @return a list of all privilieges.
+     * @return a list of all privileges.
      * @throws SQLException  if a database access error occurs;
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public List<PrivilegeTable> selectAllPrivilege() throws SQLException {
+    public List<PrivilegeTable> selectAllPrivileges() throws SQLException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
         if (DEBUG) logger.info(sql);
