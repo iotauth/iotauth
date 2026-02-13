@@ -1032,5 +1032,7 @@
 				101
 			]
 		}
-	]
+	], 
+	"filesharingLists": [],
+	"privilegeList": []
 }

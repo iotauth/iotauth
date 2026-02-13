@@ -556,14 +556,28 @@
 	"filesharingLists": [],
 	"privilegeList": [
 		{
-			"privilegeType": "delegation",
+			"privilegeType": "DelegationGrant",
 			"privilegedEntity": "net1.Alex",
 			"subject": "MyAgents",
 			"object": "ExternalAgents,ResourceA",
 			"validity": "1*day"
 		},
 		{
-			"privilegeType": "delegation",
+			"privilegeType": "DelegationRevoke",
+			"privilegedEntity": "net1.Alex",
+			"subject": "MyAgents",
+			"object": "ExternalAgents,ResourceA",
+			"validity": "1*day"
+		},
+		{
+			"privilegeType": "DelegationGrant",
+			"privilegedEntity": "net2.Bailey",
+			"subject": "MyAgents",
+			"object": "ExternalAgents,ResourceB",
+			"validity": "2*day"
+		},
+		{
+			"privilegeType": "DelegationRevoke",
 			"privilegedEntity": "net2.Bailey",
 			"subject": "MyAgents",
 			"object": "ExternalAgents,ResourceB",
