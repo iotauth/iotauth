@@ -893,7 +893,6 @@ public class SQLiteConnector {
     /**
      * Select privileges of the requesting entity.
      * @param requestingEntityName the name of the requesting entity who wants to perform privilege.
-     * @param privilegeType the given type of the privilege
      * @return returns the list of privileges.
      * @throws SQLException if a database access error occurs;
      * this method is called on a closed <code>PreparedStatement</code>
