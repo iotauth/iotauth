@@ -169,7 +169,7 @@ public class AuthDB {
     }
 
     /**
-     * Generate session keys and cache the generaged session keys.
+     * Generate session keys and cache the generated session keys.
      *
      * @param authID ID of the Auth who generates the session keys
      * @param owner Name of the owner (entity) for the generated session keys, can be null
@@ -237,8 +237,13 @@ public class AuthDB {
         return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
     }
 
-    public List<PrivilegeTable> selectPrivilegeByUser(String requestingEntityName) throws SQLException{
-        return sqLiteConnector.selectPrivilegeByUser(requestingEntityName);
+    public List<Privilege> selectPrivilegeByUser(String requestingEntityName) throws SQLException{
+        List<PrivilegeTable> privilegeTableList = sqLiteConnector.selectPrivilegeByUser(requestingEntityName);
+        List<Privilege> privileges = new ArrayList<>(privilegeTableList.size());
+        for (PrivilegeTable privilegeTable : privilegeTableList){
+            privileges.add(new Privilege(privilegeTable));
+        }
+        return privileges;
     }
 
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
