@@ -409,6 +409,18 @@ public class AuthServer {
         return db.addFileReader(owner, reader);
     }
 
+    /**
+     * Method for exposing an AuthDB operation, getPrivilegesByType.
+     * @param requestingEntityName The name of the requester entity.
+     * @return A list of privileges.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
+     */
+    public List<Privilege> getPrivilegesByUser(String requestingEntityName)
+            throws SQLException, ClassNotFoundException {
+        return db.selectPrivilegeByUser(requestingEntityName);
+    }
+
     public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {
         try {
             db.insertCommunicationPolicy(newCommunicationPolicyTable);

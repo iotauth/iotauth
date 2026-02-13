@@ -49,10 +49,10 @@ public class FileSharingTable {
         return object;
     }
     public static FileSharingTable createRecord(ResultSet resultSet) throws SQLException {
-        FileSharingTable FileSharing = new FileSharingTable();
-        FileSharing.setOwner(resultSet.getString(c.Owner.name()));
-        FileSharing.setReader(resultSet.getString(c.Reader.name()));
-        FileSharing.setReaderType(resultSet.getString(c.ReaderType.name()));
-        return FileSharing;
+        FileSharingTable fileSharingTable = new FileSharingTable();
+        fileSharingTable.setOwner(resultSet.getString(c.Owner.name()));
+        fileSharingTable.setReader(resultSet.getString(c.Reader.name()));
+        fileSharingTable.setReaderType(resultSet.getString(c.ReaderType.name()));
+        return fileSharingTable;
     }
 }

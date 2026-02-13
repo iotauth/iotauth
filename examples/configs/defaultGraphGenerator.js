@@ -196,7 +196,8 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
         authTrusts: authTrusts,
         assignments: assignments,
         entityList: entityList,
-        filesharingLists: filesharingLists
+        filesharingLists: filesharingLists,
+        privilegeList: []
     };
     return graph;
 }

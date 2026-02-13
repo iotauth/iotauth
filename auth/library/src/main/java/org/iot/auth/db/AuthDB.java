@@ -169,7 +169,7 @@ public class AuthDB {
     }
 
     /**
-     * Generate session keys and cache the generaged session keys.
+     * Generate session keys and cache the generated session keys.
      *
      * @param authID ID of the Auth who generates the session keys
      * @param owner Name of the owner (entity) for the generated session keys, can be null
@@ -237,6 +237,15 @@ public class AuthDB {
         return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
     }
 
+    public List<Privilege> selectPrivilegeByUser(String requestingEntityName) throws SQLException{
+        List<PrivilegeTable> privilegeTableList = sqLiteConnector.selectPrivilegeByUser(requestingEntityName);
+        List<Privilege> privileges = new ArrayList<>(privilegeTableList.size());
+        for (PrivilegeTable privilegeTable : privilegeTableList){
+            privileges.add(new Privilege(privilegeTable));
+        }
+        return privileges;
+    }
+
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         return sqLiteConnector.appendSessionKeyOwner(keyID, newOwner);
     }
@@ -281,7 +290,7 @@ public class AuthDB {
     public String sessionKeysToString() throws SQLException, ClassNotFoundException {
         StringBuilder sb = new StringBuilder();
 
-        List<CachedSessionKeyTable> cachedSessionKeyList = sqLiteConnector.selectAllCachedSessionKey();
+        List<CachedSessionKeyTable> cachedSessionKeyList = sqLiteConnector.selectAllCachedSessionKeys();
         boolean init = true;
         for (CachedSessionKeyTable cachedSessionKey: cachedSessionKeyList) {
             if (init) {
@@ -401,7 +410,7 @@ public class AuthDB {
         trustStoreForTrustedAuths = KeyStore.getInstance(KeyStore.getDefaultType());
         trustStoreForTrustedAuths.load(null, trustStorePassword.toCharArray());
 
-        for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuth()) {
+        for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuths()) {
             TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(), t.getEntityHost(),
                     t.getPort(),
                     t.getHeartbeatPeriod(),

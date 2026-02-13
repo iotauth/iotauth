@@ -131,6 +131,38 @@ function generateFileSharingInfoTables() {
     }
 }
 
+// generate delegation grant policy table
+function getPrivilegePolicy(entity){
+    var delegationGrantPolicy = {
+        PrivilegeType: entity.privilegeType,
+        PrivilegedEntity: entity.privilegedEntity,
+        Subject: entity.subject,
+        Object: entity.object,
+        Validity: entity.validity
+    }
+    return delegationGrantPolicy;
+}
+
+function generatePrivilegeTables(){
+    var privilegeTables = {};
+    for (var i = 0; i < authList.length; i++){
+        var auth = authList[i];
+        privilegeTables[auth.id] = [];
+    }
+    var assignments = graph.assignments;
+    var entityList = graph.privilegeList;
+    for (var i = 0; i < entityList.length; i++) {
+        var entity = entityList[i];
+        privilegeTables[assignments[entity.privilegedEntity]].push(getPrivilegePolicy(entity));
+    }
+    for (var i = 0; i < authList.length; i++) {
+        var auth = authList[i];
+        var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'PrivilegeTable.config';
+        console.log('Writing Auth config to ' + configFilePath + ' ...');
+        fs.writeFileSync(configFilePath, JSON2.stringify(privilegeTables[auth.id], null, '\t'), 'utf8');
+    }
+}
+
 // generate client policy tables
 function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
     list.push({
@@ -265,9 +297,15 @@ function generateCommunicationPolicyTables() {
     addComputeCompactionCTRPolicy(policyList, 'ComputeNodesCTR', 'CompactionNodesCTR', '1*day', '2*hour');
     addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
     addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
-    addDelegationPolicy(policyList, 'Users', 'HighTrustAgents,Website', '1*day', '2*hour')
-    addDelegationPolicy(policyList, 'Users', 'MediumTrustAgents,Website', '1*day', '1*hour')
-    addDelegationPolicy(policyList, 'Users', 'LowTrustAgents,Website', '1*day', '300*sec')
+    addDelegationPolicy(policyList, 'Users', 'HighTrustAgents,Website', '1*day', '2*hour');
+    addDelegationPolicy(policyList, 'Users', 'MediumTrustAgents,Website', '1*day', '1*hour');
+    addDelegationPolicy(policyList, 'Users', 'LowTrustAgents,Website', '1*day', '300*sec');
+    addServerClientPolicy(policyList, 'Users', 'ResourceA', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'Users', 'ResourceB', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'Users', 'ResourceC', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'MyAgents', 'ResourceA', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'MyAgents', 'ResourceB', '1*day', '2*hour');
+    addDelegationPolicy(policyList, 'MyAgents', 'ExternalAgents,ResourceA', '30*min', '10*min');
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';
@@ -358,3 +396,4 @@ generateCommunicationPolicyTables();
 generateTrustedAuthTables();
 generatePropertiesFiles();
 generateFileSharingInfoTables();
+generatePrivilegeTables();

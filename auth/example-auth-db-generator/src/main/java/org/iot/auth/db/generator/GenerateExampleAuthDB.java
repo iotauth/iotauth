@@ -23,6 +23,7 @@ import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.bean.FileSharingTable;
+import org.iot.auth.db.bean.PrivilegeTable;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.exception.InvalidDBDataTypeException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
@@ -115,6 +116,8 @@ public class GenerateExampleAuthDB {
                 authDatabaseDir + "configs/Auth" + authID + "TrustedAuthTable.config");
         initFileSharingInfoTable(sqLiteConnector, 
                 authDatabaseDir + "configs/Auth" + authID + "FileSharingInfoTable.config");
+        initPrivilegeTable(sqLiteConnector,
+                authDatabaseDir + "configs/Auth" + authID + "PrivilegeTable.config");
         sqLiteConnector.close();
     }
 
@@ -286,6 +289,31 @@ public class GenerateExampleAuthDB {
                 FileSharing.setReader((String)jsonObject.get(FileSharingTable.c.Reader.name()));
                 FileSharing.setReaderType((String)jsonObject.get(FileSharingTable.c.ReaderType.name()));
                 sqLiteConnector.insertRecords(FileSharing);
+            }
+        }
+        catch (ParseException e) {
+            logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
+    }
+
+    private static void initPrivilegeTable(SQLiteConnector sqLiteConnector,
+                                                 String tableConfigFilePath)
+            throws ClassNotFoundException, SQLException, IOException
+    {
+        JSONParser parser = new JSONParser();
+        try {
+            JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
+
+            for (Object objElement : jsonArray) {
+                JSONObject jsonObject =  (JSONObject)objElement;
+                PrivilegeTable privilege = new PrivilegeTable();
+
+                privilege.setPrivilegeType((String)jsonObject.get(PrivilegeTable.c.PrivilegeType.name()));
+                privilege.setPrivilegedEntity((String)jsonObject.get(PrivilegeTable.c.PrivilegedEntity.name()));
+                privilege.setSubject((String)jsonObject.get(PrivilegeTable.c.Subject.name()));
+                privilege.setObject((String)jsonObject.get(PrivilegeTable.c.Object.name()));
+                privilege.setValidity((String)jsonObject.get(PrivilegeTable.c.Validity.name()));
+                sqLiteConnector.insertRecords(privilege);
             }
         }
         catch (ParseException e) {

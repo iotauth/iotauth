@@ -307,6 +307,24 @@ public class SQLiteConnector {
             logger.info("Table {} already exists", FileSharingTable.T_File_Sharing);
         closeStatement();
 
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + PrivilegeTable.T_PRIVILEGE + "(";
+        sql += PrivilegeTable.c.PrivilegeType.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.PrivilegedEntity.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.Validity.name() + " TEXT NOT NULL,";
+        sql += "PRIMARY KEY (" + PrivilegeTable.c.PrivilegeType.name() + ",";
+        sql += PrivilegeTable.c.PrivilegedEntity.name() + ",";
+        sql += PrivilegeTable.c.Subject.name() + ",";
+        sql += PrivilegeTable.c.Object.name() + "))";
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", PrivilegeTable.T_PRIVILEGE);
+        else
+            logger.info("Table {} already exists", PrivilegeTable.T_PRIVILEGE);
+        closeStatement();
+
         closeConnection();
     }
 
@@ -617,6 +635,42 @@ public class SQLiteConnector {
     }
 
     /**
+     * Inserts the privilege information into the privilege table.
+     *
+     * @param privilege the object container of the information in privilege table
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @see PrivilegeTable
+     */
+    public boolean insertRecords(PrivilegeTable privilege) throws SQLException {
+        String sql = "INSERT INTO " + PrivilegeTable.T_PRIVILEGE + "(";
+        sql += PrivilegeTable.c.PrivilegeType.name() + ",";
+        sql += PrivilegeTable.c.PrivilegedEntity.name() + ",";
+        sql += PrivilegeTable.c.Subject.name() + ",";
+        sql += PrivilegeTable.c.Object.name() + ",";
+        sql += PrivilegeTable.c.Validity.name() + ")";
+        sql += " VALUES (?,?,?,?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setString(index++,privilege.getPrivilegeType());
+        preparedStatement.setString(index++,privilege.getPrivilegedEntity());
+        preparedStatement.setString(index++,privilege.getSubject());
+        preparedStatement.setString(index++,privilege.getObject());
+        preparedStatement.setString(index++,privilege.getValidity());
+        logger.info("{} {} {} {} {}",
+                privilege.getPrivilegeType(), privilege.getPrivilegedEntity(), privilege.getSubject(),
+                privilege.getObject(), privilege.getValidity() );
+        if (DEBUG) logger.info("{}",preparedStatement);
+        boolean result = preparedStatement.execute();
+        preparedStatement.close();
+        closeConnection();
+        return result;
+    }
+
+    /**
      * Selects all policies record from the table communication policy.
      * @return a list of all policies stored in the database
      * @throws SQLException  if a database access error occurs;
@@ -695,7 +749,7 @@ public class SQLiteConnector {
      * or an argument is supplied to this method
      * @throws CertificateEncodingException If there is a problem in certificate encoding.
      */
-    public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, CertificateEncodingException {
+    public List<TrustedAuthTable> selectAllTrustedAuths() throws SQLException, CertificateEncodingException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + TrustedAuthTable.T_TRUSTED_AUTH;
         if (DEBUG) logger.info(sql);
@@ -717,7 +771,7 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public List<CachedSessionKeyTable> selectAllCachedSessionKey() throws SQLException {
+    public List<CachedSessionKeyTable> selectAllCachedSessionKeys() throws SQLException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
@@ -810,6 +864,52 @@ public class SQLiteConnector {
         catch (Exception e)
         {
             e.printStackTrace();
+        }
+        return result;
+    }
+
+    /**
+     * Selects all privilege lists.
+     *
+     * @return a list of all privileges.
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public List<PrivilegeTable> selectAllPrivileges() throws SQLException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        List<PrivilegeTable> privilegeTableList = new LinkedList<>();
+        while (resultSet.next()) {
+            PrivilegeTable privilege = PrivilegeTable.createRecord(resultSet);
+            if (DEBUG) logger.info(privilege.toJSONObject().toJSONString());
+            privilegeTableList.add(privilege);
+        }
+        return privilegeTableList;
+    }
+
+    /**
+     * Select privileges of the requesting entity.
+     * @param requestingEntityName the name of the requesting entity who wants to perform privilege.
+     * @return returns the list of privileges.
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public List<PrivilegeTable> selectPrivilegeByUser(String requestingEntityName)
+            throws SQLException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
+        sql += " WHERE " + PrivilegeTable.c.PrivilegedEntity.name() + " = " + "'" + requestingEntityName + "'";
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        List<PrivilegeTable> result = new LinkedList<>();
+        while (resultSet.next()) {
+            PrivilegeTable privilege = PrivilegeTable.createRecord(resultSet);
+            if (DEBUG) logger.info(privilege.toJSONObject().toJSONString());
+            result.add(privilege);
         }
         return result;
     }
