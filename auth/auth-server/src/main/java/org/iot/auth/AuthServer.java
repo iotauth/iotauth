@@ -41,6 +41,7 @@ import org.iot.auth.crypto.DistributionKey;
 import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.*;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
+import org.iot.auth.db.bean.PrivilegeTable;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.message.*;
 import org.iot.auth.db.CommunicationTargetType;
@@ -407,6 +408,19 @@ public class AuthServer {
      */
     public boolean addFileReader(String owner, String reader) throws SQLException, ClassNotFoundException {
         return db.addFileReader(owner, reader);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getPrivilegesByType.
+     * @param requestingEntityName The name of the requester entity.
+     * @param privilegeType The type of the privilege.
+     * @return A list of privileges.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
+     */
+    public List<PrivilegeTable> getPrivilegesByUser(String requestingEntityName)
+            throws SQLException, ClassNotFoundException {
+        return db.selectPrivilegeByUser(requestingEntityName);
     }
 
     public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {
