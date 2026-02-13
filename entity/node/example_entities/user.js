@@ -103,6 +103,17 @@ function commandInterpreter() {
             secureCommClient.getSessionKeyIdForGrantAccess(1, trustLevel);
              
         }
+        else if (command == "delegateAuthority"){
+            console.log('delegateAuthority (Perform privilege to grant delegation authority) command');
+            console.log('Enter the delegate(subject) target1(object) target2');
+            var spec = message.split(' ');
+            var subject = spec[0];
+            var target1 = spec[1];
+            var target2 = spec[2];
+
+            console.log(spec + " / " + subject + " / " + target1 + " / " + target2);
+            secureCommClient.performPrivilege("delegation", subject, target1, target2);
+        }
         else if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');
             console.log(secureCommClient.showKeys());

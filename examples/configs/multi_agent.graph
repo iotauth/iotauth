@@ -61,7 +61,7 @@
 			"group": "MyAgents",
 			"name": "net1.alexAgent",
 			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
+			"usePermanentDistKey": true,
 			"distKeyValidityPeriod": "365*day",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
