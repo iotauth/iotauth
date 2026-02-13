@@ -847,7 +847,7 @@ public abstract class EntityConnectionHandler {
     /**
      * Decrypt the input buffer with distribution key and get the requesting entity information.
      * @param payload input buffer to decrypt.
-     * @return Decrypted input buffer and entity information requesting distribution key.
+     * @return Decrypted input buffer and entity information sending this request.
      */
     private DecPayloadAndRegisteredEntity decryptPayloadWithDistKey(
             Buffer payload) throws NoAvailableDistributionKeyException, UseOfExpiredKeyException, UnrecognizedEntityException, InvalidSignatureException, InvalidSymmetricKeyOperationException
