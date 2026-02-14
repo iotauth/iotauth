@@ -298,11 +298,12 @@ function sendMigrationRequest() {
     }
 }
 
-function handlePrivilegeResp(){
+function handlePrivilegeResp(result){
     console.log('Finished privilege request');
+    console.log(result)
 }
-function sendPrivilegeRequest(type, subject, target1, target2) {
-    var options = iotAuth.getPrivilegeReqOptions(entityConfig, type, subject, target1, target2);
+function sendPrivilegeRequest(type, subject, target1, target2, validity) {
+    var options = iotAuth.getPrivilegeReqOptions(entityConfig, type, subject, target1, target2, validity);
     var eventHandlers = {
         onError: onError
     };
@@ -452,8 +453,8 @@ SecureCommClient.prototype.migrateToTrustedAuth = function() {
     sendMigrationRequest();
 }
 
-SecureCommClient.prototype.performPrivilege = function(type, subject, target1, target2) {
-    sendPrivilegeRequest(type, subject, target1, target2);
+SecureCommClient.prototype.performPrivilege = function(type, subject, target1, target2, validity) {
+    sendPrivilegeRequest(type, subject, target1, target2, validity);
 }
 
 SecureCommClient.prototype.setEntityInfo = function(key, value) {

@@ -305,7 +305,6 @@ function generateCommunicationPolicyTables() {
     addServerClientPolicy(policyList, 'Users', 'ResourceC', '1*day', '2*hour');
     addServerClientPolicy(policyList, 'MyAgents', 'ResourceA', '1*day', '2*hour');
     addServerClientPolicy(policyList, 'MyAgents', 'ResourceB', '1*day', '2*hour');
-    addDelegationPolicy(policyList, 'MyAgents', 'ExternalAgents,ResourceA', '30*min', '10*min');
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';

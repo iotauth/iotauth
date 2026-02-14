@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
  *      nonce: /Buffer/, (AUTH_NONCE_SIZE)
  *      replyNonce:    /Buffer/, (AUTH_NONCE_SIZE)
- *      purpose: JSON,
+ *      payload: JSON,
  *      dhParam: /Buffer/ (optional, Diffie-Hellman parameter)
  * } </pre>
  * @author Sunyoung Kim
@@ -59,7 +59,7 @@ public class PrivilegeReqMessage extends IoTSPMessage {
         bufStr = decPayload.getBufferedString(curIndex);
         String msg = bufStr.getString();
         logger.info("Received JSON: {}", msg);
-        this.purpose = (JSONObject) new JSONParser().parse(msg);
+        this.payload = (JSONObject) new JSONParser().parse(msg);
         curIndex += bufStr.length();
 
         if (curIndex < decPayload.length()) {
@@ -79,8 +79,8 @@ public class PrivilegeReqMessage extends IoTSPMessage {
     public String getEntityName() {
         return entityName;
     }
-    public JSONObject getPurpose() {
-        return purpose;
+    public JSONObject getPayload() {
+        return payload;
     }
     public Buffer getDiffieHellmanParam() {
         return diffieHellmanParam;
@@ -89,7 +89,7 @@ public class PrivilegeReqMessage extends IoTSPMessage {
     private Buffer entityNonce;
     private Buffer authNonce;
     private String entityName;
-    private JSONObject purpose;
+    private JSONObject payload;
     private Buffer diffieHellmanParam;
 
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);

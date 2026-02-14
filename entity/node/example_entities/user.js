@@ -110,9 +110,10 @@ function commandInterpreter() {
             var subject = spec[0];
             var target1 = spec[1];
             var target2 = spec[2];
+            var validity = spec[3];
 
-            console.log(spec + " / " + subject + " / " + target1 + " / " + target2);
-            secureCommClient.performPrivilege("delegation", subject, target1, target2);
+            console.log(spec + " / " + subject + " / " + target1 + " / " + target2 + " / " + validity);
+            secureCommClient.performPrivilege("DelegationGrant", subject, target1, target2, validity);
         }
         else if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');
