@@ -31,7 +31,6 @@ import org.iot.auth.message.*;
 import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
-import org.iot.auth.db.bean.PrivilegeTable;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 
 import java.io.IOException;
@@ -390,7 +389,6 @@ public abstract class EntityConnectionHandler {
             DecPayloadAndRegisteredEntity dec = decryptPayloadWithDistKey(payload);
             PrivilegeReqMessage privilegeReqMessage = new PrivilegeReqMessage(type, dec.getPayload());
 
-            // privilegeResult = true if successfully added new communication policy.
             JSONObject communicationPolicy = processPrivilegeReq(dec.getRegisteredEntity(), privilegeReqMessage, authNonce);
             sendPrivilegeResp(dec.getRegisteredEntity().getDistributionKey(), privilegeReqMessage.getEntityNonce(),
                     null, communicationPolicy);
@@ -869,7 +867,7 @@ public abstract class EntityConnectionHandler {
         JSONObject payload = privilegeReqMessage.getPayload();
 
         // Get privilege information from privilegeReqMessage
-        // e.g. {"privilegeType":"DelegationGrant","subject":"a","object":["b","c"],"validity":"1"}
+        // e.g. {"privilegeType":"DelegationGrant","subject":"a","object":["b","c"],"validity":"1","info":"AES-128-CBC:SHA256,1*day,1*hour"}
         String subject = (String) payload.get("subject");
         org.json.simple.JSONArray objectArr = (org.json.simple.JSONArray) payload.get("object");
         String object = objectArr.get(0) + "," + objectArr.get(1);
@@ -888,6 +886,7 @@ public abstract class EntityConnectionHandler {
                 } else {
                     expiration = validity;
                 }
+                String[] info = p.getInfo().split(",");
 
                 CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
                         .setReqGroup(subject)
@@ -895,10 +894,9 @@ public abstract class EntityConnectionHandler {
                         .setTargetType(CommunicationTargetType.fromStringValue("Delegation"))
                         .setTarget(object)
                         .setMaxNumSessionKeyOwners(2)
-                        // TODO-SY: Add to privilege tables (Additional info column) as JSON
-                        .setSessionCryptoSpec("AES-128-CBC:SHA256")
-                        .setAbsValidityStr("1*day")
-                        .setRelValidityStr("1*hour");
+                        .setSessionCryptoSpec(info[0])
+                        .setAbsValidityStr(info[1])
+                        .setRelValidityStr(info[2]);
                 if (server.addCommunicationPolicy(newCommunicationPolicyTable))
                     return newCommunicationPolicyTable.toJSONObject();
             }

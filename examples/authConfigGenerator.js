@@ -133,14 +133,15 @@ function generateFileSharingInfoTables() {
 
 // generate delegation grant policy table
 function getPrivilegePolicy(entity){
-    var delegationGrantPolicy = {
+    var privilegePolicy = {
         PrivilegeType: entity.privilegeType,
         PrivilegedEntity: entity.privilegedEntity,
         Subject: entity.subject,
         Object: entity.object,
-        Validity: entity.validity
+        Validity: entity.validity,
+        Info: entity.info
     }
-    return delegationGrantPolicy;
+    return privilegePolicy;
 }
 
 function generatePrivilegeTables(){

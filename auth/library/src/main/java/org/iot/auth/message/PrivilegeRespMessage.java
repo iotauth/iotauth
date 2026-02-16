@@ -16,9 +16,6 @@
 package org.iot.auth.message;
 
 import org.iot.auth.crypto.DistributionKey;
-import org.iot.auth.crypto.SessionKey;
-import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
-import org.iot.auth.db.CommunicationPolicy;
 import org.iot.auth.exception.InvalidSymmetricKeyOperationException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
 import org.iot.auth.io.Buffer;
@@ -27,7 +24,6 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 
 /**
  * A class for a privilege response message to an entity who performed privilege.

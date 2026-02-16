@@ -14,13 +14,16 @@ public class PrivilegeTable {
         PrivilegedEntity,
         Subject,
         Object,
-        Validity
+        Validity,
+        Info
     }
     private String privilegeType;
     private String privilegedEntity;
     private String subject;
     private String object;
     private String validity;
+    private String info;
+    // TODO-SY set info as JSON object as {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 
     public String getPrivilegeType() {
         return privilegeType;
@@ -55,6 +58,12 @@ public class PrivilegeTable {
         this.validity = validity;
     }
 
+    public String getInfo() {
+        return info;
+    }
+    public void setInfo(String info) { this.info = info;}
+
+
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
@@ -63,6 +72,7 @@ public class PrivilegeTable {
         object.put(c.Subject.name(), getSubject());
         object.put(c.Object.name(), getObject());
         object.put(c.Validity.name(), getValidity());
+        object.put(c.Info.name(), getInfo());
         return object;
     }
     public static PrivilegeTable createRecord(ResultSet resultSet) throws SQLException {
@@ -72,6 +82,7 @@ public class PrivilegeTable {
         Privilege.setSubject(resultSet.getString(c.Subject.name()));
         Privilege.setObject(resultSet.getString(c.Object.name()));
         Privilege.setValidity(resultSet.getString(c.Validity.name()));
+        Privilege.setInfo(resultSet.getString(c.Info.name()));
         return Privilege;
     }
 }

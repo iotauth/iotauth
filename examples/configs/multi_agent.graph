@@ -560,28 +560,32 @@
 			"privilegedEntity": "net1.Alex",
 			"subject": "MyAgents",
 			"object": "ExternalAgents,ResourceA",
-			"validity": "1*day"
+			"validity": "1*day",
+			"info": "AES-128-CBC:SHA256,1*day,1*hour"
 		},
 		{
 			"privilegeType": "DelegationRevoke",
 			"privilegedEntity": "net1.Alex",
 			"subject": "MyAgents",
 			"object": "ExternalAgents,ResourceA",
-			"validity": "1*day"
+			"validity": "1*day",
+			"info": "AES-128-CBC:SHA256,1*day,1*hour"
 		},
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedEntity": "net2.Bailey",
 			"subject": "MyAgents",
 			"object": "ExternalAgents,ResourceB",
-			"validity": "2*day"
+			"validity": "2*day",
+			"info": "AES-128-CBC:SHA256,1*day,1*hour"
 		},
 		{
 			"privilegeType": "DelegationRevoke",
 			"privilegedEntity": "net2.Bailey",
 			"subject": "MyAgents",
 			"object": "ExternalAgents,ResourceB",
-			"validity": "2*day"
+			"validity": "2*day",
+			"info": "AES-128-CBC:SHA256,1*day,1*hour"
 		}
 	]
 }

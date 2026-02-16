@@ -314,6 +314,7 @@ public class SQLiteConnector {
         sql += PrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
         sql += PrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
         sql += PrivilegeTable.c.Validity.name() + " TEXT NOT NULL,";
+        sql += PrivilegeTable.c.Info.name() + " TEXT NOT NULL,";
         sql += "PRIMARY KEY (" + PrivilegeTable.c.PrivilegeType.name() + ",";
         sql += PrivilegeTable.c.PrivilegedEntity.name() + ",";
         sql += PrivilegeTable.c.Subject.name() + ",";
@@ -651,8 +652,9 @@ public class SQLiteConnector {
         sql += PrivilegeTable.c.PrivilegedEntity.name() + ",";
         sql += PrivilegeTable.c.Subject.name() + ",";
         sql += PrivilegeTable.c.Object.name() + ",";
-        sql += PrivilegeTable.c.Validity.name() + ")";
-        sql += " VALUES (?,?,?,?,?)";
+        sql += PrivilegeTable.c.Validity.name() + ",";
+        sql += PrivilegeTable.c.Info.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setString(index++,privilege.getPrivilegeType());
@@ -660,9 +662,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,privilege.getSubject());
         preparedStatement.setString(index++,privilege.getObject());
         preparedStatement.setString(index++,privilege.getValidity());
-        logger.info("{} {} {} {} {}",
+        preparedStatement.setString(index++,privilege.getInfo());
+        logger.info("{} {} {} {} {} {}",
                 privilege.getPrivilegeType(), privilege.getPrivilegedEntity(), privilege.getSubject(),
-                privilege.getObject(), privilege.getValidity() );
+                privilege.getObject(), privilege.getValidity(), privilege.getInfo() );
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();

@@ -29,6 +29,7 @@ public class Privilege {
         this.subject = privilegeTable.getSubject();
         this.object = privilegeTable.getObject();
         this.validity = privilegeTable.getValidity();
+        this.info = privilegeTable.getInfo();
     }
 
     public String getPrivilegeType() {
@@ -46,10 +47,13 @@ public class Privilege {
     public String getValidity() {
         return validity;
     }
+    public String getInfo() {
+        return info;
+    }
 
     public String toString() {
         return "PrivilegeType: " + privilegeType + "\tPrivilegedEntity: " + privilegedEntity + "\tSubject: " + subject +
-                "\tObject: " + object + "\tValidity: " + validity;
+                "\tObject: " + object + "\tValidity: " + validity + "\tInfo: " + info ;
     }
 
 
@@ -58,4 +62,5 @@ public class Privilege {
     private String subject;
     private String object;
     private String validity;
+    private String info;
 }
