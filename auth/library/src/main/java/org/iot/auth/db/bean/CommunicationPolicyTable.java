@@ -40,7 +40,8 @@ public class CommunicationPolicyTable {
         MaxNumSessionKeyOwners,
         SessionCryptoSpec,
         AbsoluteValidity,
-        RelativeValidity
+        RelativeValidity,
+        Expiration,
     }
 
     private String reqGroup;
@@ -53,6 +54,7 @@ public class CommunicationPolicyTable {
     private long relValidity;
     private String relValidityStr;
     private String sessionCryptoSpec;
+    private long expiration;
 
     /**
      * Gets the requesting group type
@@ -173,6 +175,15 @@ public class CommunicationPolicyTable {
         return this;
     }
 
+    public long getExpiration() {
+        return expiration;
+    }
+
+    public CommunicationPolicyTable setExpiration(long expiration) {
+        this.expiration = expiration;
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject(){
         JSONObject object = new JSONObject();
@@ -184,6 +195,7 @@ public class CommunicationPolicyTable {
         object.put(c.RelativeValidity.name()+"Str", getRelValidityStr());
         object.put(c.AbsoluteValidity.name(), getAbsValidity());
         object.put(c.RelativeValidity.name(), getRelValidity());
+        object.put(c.Expiration.name(), getExpiration());
         return object;
     }
 
@@ -197,6 +209,7 @@ public class CommunicationPolicyTable {
         policy.setSessionCryptoSpec(r.getString(c.SessionCryptoSpec.name()));
         policy.setAbsValidity(DateHelper.parseTimePeriod(r.getString(c.AbsoluteValidity.name())));
         policy.setRelValidity(DateHelper.parseTimePeriod(r.getString(c.RelativeValidity.name())));
+        policy.setExpiration(r.getLong(c.Expiration.name()));
         return policy;
     }
 }

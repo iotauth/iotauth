@@ -173,7 +173,8 @@ function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, 
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity"
     });
 }
 function addPubSubPolicy(list, requestingGroup, isPub) {
@@ -184,7 +185,8 @@ function addPubSubPolicy(list, requestingGroup, isPub) {
         MaxNumSessionKeyOwners: 64,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: '6*hour',
-        RelativeValidity: '3*hour'
+        RelativeValidity: '3*hour',
+        Expiration: "Infinity"
     });
 }
 // Add policy for upload and download files
@@ -196,7 +198,8 @@ function addUploadDownloadlPolicy(list, requestingGroup, target) {
         MaxNumSessionKeyOwners: 10,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: '365*day',
-        RelativeValidity: '365*day'
+        RelativeValidity: '365*day',
+        Expiration: "Infinity"
     });    
 }
 // generate client policy tables
@@ -208,7 +211,8 @@ function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-CTR:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity"
     });
     list.push({
         RequestingGroup: target,
@@ -217,7 +221,8 @@ function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-CTR:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity"
     });
 }
 
@@ -230,7 +235,8 @@ function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-GCM:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity"
     });
     list.push({
         RequestingGroup: target,
@@ -239,7 +245,8 @@ function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-GCM:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity"
     });
 }
 
@@ -252,7 +259,8 @@ function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-CBC:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity"
     });
     list.push({
         RequestingGroup: target,
@@ -261,7 +269,8 @@ function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-CBC:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity"
     });
 }
 function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
@@ -272,7 +281,8 @@ function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, re
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity"
     });
 }
 

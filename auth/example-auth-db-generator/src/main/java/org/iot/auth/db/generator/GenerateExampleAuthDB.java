@@ -262,6 +262,12 @@ public class GenerateExampleAuthDB {
                 communicationPolicyTable.setSessionCryptoSpec((String)jsonObject.get(CommunicationPolicyTable.c.SessionCryptoSpec.name()));
                 communicationPolicyTable.setAbsValidityStr((String)jsonObject.get(CommunicationPolicyTable.c.AbsoluteValidity.name()));
                 communicationPolicyTable.setRelValidityStr((String)jsonObject.get(CommunicationPolicyTable.c.RelativeValidity.name()));
+                String expiration = (String)jsonObject.get(CommunicationPolicyTable.c.Expiration.name());
+                if (expiration.equals("Infinity")){
+                    communicationPolicyTable.setExpiration(9223372036854775807L);
+                } else{
+                    communicationPolicyTable.setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration));
+                }
                 sqLiteConnector.insertRecords(communicationPolicyTable);
             }
         }
