@@ -486,12 +486,13 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, getSessionKeyByID
+     * This method is protected by "synchronized" keyword to avoid concurrent access 
      * @param keyID ID of the session key to be found.
      * @return Session key specified by keyID, or {@code null} if there is no such session.
      * @throws SQLException if database error occurs.
      * @throws ClassNotFoundException if the class cannot be located.
      */
-    public SessionKey getSessionKeyByID(long keyID) throws SQLException, ClassNotFoundException {
+    public synchronized SessionKey getSessionKeyByID(long keyID) throws SQLException, ClassNotFoundException {
         return db.getSessionKeyByID(keyID);
     }
 
