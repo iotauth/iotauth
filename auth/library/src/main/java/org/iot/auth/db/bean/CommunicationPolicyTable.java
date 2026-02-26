@@ -42,6 +42,7 @@ public class CommunicationPolicyTable {
         AbsoluteValidity,
         RelativeValidity,
         Expiration,
+        IsDelegated,
     }
 
     private String reqGroup;
@@ -55,6 +56,7 @@ public class CommunicationPolicyTable {
     private String relValidityStr;
     private String sessionCryptoSpec;
     private long expiration;
+    private int isDelegated;
 
     /**
      * Gets the requesting group type
@@ -184,6 +186,15 @@ public class CommunicationPolicyTable {
         return this;
     }
 
+    public int getIsDelegated() {
+        return isDelegated;
+    }
+
+    public CommunicationPolicyTable setIsDelegated(int isDelegated) {
+        this.isDelegated = isDelegated;
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject(){
         JSONObject object = new JSONObject();
@@ -196,6 +207,7 @@ public class CommunicationPolicyTable {
         object.put(c.AbsoluteValidity.name(), getAbsValidity());
         object.put(c.RelativeValidity.name(), getRelValidity());
         object.put(c.Expiration.name(), getExpiration());
+        object.put(c.IsDelegated.name(), getIsDelegated());
         return object;
     }
 
@@ -210,6 +222,7 @@ public class CommunicationPolicyTable {
         policy.setAbsValidity(DateHelper.parseTimePeriod(r.getString(c.AbsoluteValidity.name())));
         policy.setRelValidity(DateHelper.parseTimePeriod(r.getString(c.RelativeValidity.name())));
         policy.setExpiration(r.getLong(c.Expiration.name()));
+        policy.setIsDelegated(r.getInt(c.IsDelegated.name()));
         return policy;
     }
 }

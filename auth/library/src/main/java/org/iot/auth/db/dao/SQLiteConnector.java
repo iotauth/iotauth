@@ -213,6 +213,7 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.Expiration.name() + " INT NOT NULL,";
+        sql += CommunicationPolicyTable.c.IsDelegated.name() + " INT NOT NULL,";
         sql += "PRIMARY KEY (" + CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
         sql += CommunicationPolicyTable.c.Target.name() + "))";
@@ -350,8 +351,9 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.SessionCryptoSpec.name() + ",";
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + ",";
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + ",";
-        sql += CommunicationPolicyTable.c.Expiration.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?)";
+        sql += CommunicationPolicyTable.c.Expiration.name() + ",";
+        sql += CommunicationPolicyTable.c.IsDelegated.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?)";
         int index = 1;
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         preparedStatement.setString(index++,policy.getReqGroup());
@@ -362,6 +364,7 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,policy.getAbsValidityStr());
         preparedStatement.setString(index++,policy.getRelValidityStr());
         preparedStatement.setLong(index++,policy.getExpiration());
+        preparedStatement.setLong(index++,policy.getIsDelegated());
         if (DEBUG) logger.info(preparedStatement.toString());
         boolean result = preparedStatement.execute();
         preparedStatement.close();

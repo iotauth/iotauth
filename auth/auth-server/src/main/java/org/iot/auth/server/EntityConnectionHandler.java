@@ -897,7 +897,8 @@ public abstract class EntityConnectionHandler {
                         .setSessionCryptoSpec(info[0])
                         .setAbsValidityStr(info[1])
                         .setRelValidityStr(info[2])
-                        .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration));
+                        .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration))
+                        .setIsDelegated(1);
                 if (server.addCommunicationPolicy(newCommunicationPolicyTable))
                     return newCommunicationPolicyTable.toJSONObject();
             }
