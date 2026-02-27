@@ -21,23 +21,27 @@ public class DelegationInfoTable {
     private long revokedTime;
 
     public int getId() { return id; }
-    public void setId(int id) {
+    public DelegationInfoTable setId(int id) {
         this.id = id;
+        return this;
     }
 
     public String getParent() { return parent; }
-    public void setParent(String parent) {
+    public DelegationInfoTable setParent(String parent) {
         this.parent = parent;
+        return this;
     }
 
     public long getDelegatedTime() { return delegatedTime;}
-    public void setDelegatedTime(long delegatedTime) {
+    public DelegationInfoTable setDelegatedTime(long delegatedTime) {
         this.delegatedTime = delegatedTime;
+        return this;
     }
 
     public long getRevokedTime() { return revokedTime;}
-    public void setRevokedTime(long revokedTime) {
+    public DelegationInfoTable setRevokedTime(long revokedTime) {
         this.revokedTime = revokedTime;
+        return this;
     }
 
 

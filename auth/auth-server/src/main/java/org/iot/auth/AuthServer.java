@@ -41,6 +41,7 @@ import org.iot.auth.crypto.DistributionKey;
 import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.*;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
+import org.iot.auth.db.bean.DelegationInfoTable;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.message.*;
 import org.iot.auth.db.CommunicationTargetType;
@@ -419,6 +420,16 @@ public class AuthServer {
     public List<Privilege> getPrivilegesByUser(String requestingEntityName)
             throws SQLException, ClassNotFoundException {
         return db.selectPrivilegeByUser(requestingEntityName);
+    }
+
+    public boolean addDelegationInfo(DelegationInfoTable delegationInfoTable){
+        try {
+            db.insertDelegationInfo(delegationInfoTable);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {

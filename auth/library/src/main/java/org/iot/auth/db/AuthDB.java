@@ -461,4 +461,8 @@ public class AuthDB {
     public void insertCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) throws SQLException, ClassNotFoundException {
         sqLiteConnector.insertRecords(newCommunicationPolicyTable);
     }
+
+    public void insertDelegationInfo(DelegationInfoTable delegationInfoTable) throws SQLException, ClassNotFoundException {
+        sqLiteConnector.insertRecords(delegationInfoTable);
+    }
 }

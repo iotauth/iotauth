@@ -559,7 +559,15 @@
 			"privilegeType": "DelegationGrant",
 			"privilegedEntity": "net1.Alex",
 			"subject": "MyAgents",
-			"object": "ExternalAgents,ResourceA",
+			"object": "ResourceA",
+			"validity": "1*day",
+			"info": "AES-128-CBC:SHA256,1*day,1*hour"
+		},
+		{
+			"privilegeType": "DelegationGrant",
+			"privilegedEntity": "net1.alexAgent",
+			"subject": "ExternalAgents",
+			"object": "ResourceA",
 			"validity": "1*day",
 			"info": "AES-128-CBC:SHA256,1*day,1*hour"
 		},
@@ -567,7 +575,7 @@
 			"privilegeType": "DelegationRevoke",
 			"privilegedEntity": "net1.Alex",
 			"subject": "MyAgents",
-			"object": "ExternalAgents,ResourceA",
+			"object": "ResourceA",
 			"validity": "1*day",
 			"info": "AES-128-CBC:SHA256,1*day,1*hour"
 		},
@@ -575,7 +583,7 @@
 			"privilegeType": "DelegationGrant",
 			"privilegedEntity": "net2.Bailey",
 			"subject": "MyAgents",
-			"object": "ExternalAgents,ResourceB",
+			"object": "ResourceB",
 			"validity": "2*day",
 			"info": "AES-128-CBC:SHA256,1*day,1*hour"
 		},
@@ -583,7 +591,7 @@
 			"privilegeType": "DelegationRevoke",
 			"privilegedEntity": "net2.Bailey",
 			"subject": "MyAgents",
-			"object": "ExternalAgents,ResourceB",
+			"object": "ResourceB",
 			"validity": "2*day",
 			"info": "AES-128-CBC:SHA256,1*day,1*hour"
 		}

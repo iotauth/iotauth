@@ -108,12 +108,11 @@ function commandInterpreter() {
             console.log('Enter the delegate(subject) target1(object) target2');
             var spec = message.split(' ');
             var subject = spec[0];
-            var target1 = spec[1];
-            var target2 = spec[2];
-            var validity = spec[3];
+            var object = spec[1];
+            var validity = spec[2];
 
-            console.log(spec + " / " + subject + " / " + target1 + " / " + target2 + " / " + validity);
-            secureCommClient.performPrivilege("DelegationGrant", subject, target1, target2, validity);
+            console.log(spec + " / " + subject + " / " + object + " / " + validity);
+            secureCommClient.performPrivilege("DelegationGrant", subject, object, validity);
         }
         else if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');

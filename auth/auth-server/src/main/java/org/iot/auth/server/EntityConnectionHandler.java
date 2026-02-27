@@ -18,6 +18,7 @@ package org.iot.auth.server;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.iot.auth.config.constants.C;
 import org.iot.auth.crypto.*;
+import org.iot.auth.db.bean.DelegationInfoTable;
 import org.iot.auth.exception.*;
 import org.iot.auth.util.DateHelper;
 import org.json.simple.JSONArray;
@@ -867,10 +868,9 @@ public abstract class EntityConnectionHandler {
         JSONObject payload = privilegeReqMessage.getPayload();
 
         // Get privilege information from privilegeReqMessage
-        // e.g. {"privilegeType":"DelegationGrant","subject":"a","object":["b","c"],"validity":"1","info":"AES-128-CBC:SHA256,1*day,1*hour"}
+        // e.g. {"privilegeType":"DelegationGrant","subject":"a","object": "b","validity":"1","info":"AES-128-CBC:SHA256,1*day,1*hour"}
         String subject = (String) payload.get("subject");
-        org.json.simple.JSONArray objectArr = (org.json.simple.JSONArray) payload.get("object");
-        String object = objectArr.get(0) + "," + objectArr.get(1);
+        String object = (String) payload.get("object");
         String privilegeType = (String) payload.get("privilegeType");
         String validity = (String) payload.get("validity");
 
@@ -878,6 +878,8 @@ public abstract class EntityConnectionHandler {
             if (!p.getPrivilegeType().equals(privilegeType))
                 continue;
             if (p.getSubject().equals(subject) && p.getObject().equals(object)){
+                CommunicationPolicy parent = server.getCommunicationPolicy(subject,CommunicationTargetType.fromStringValue("Group"), object);
+                // if parent == null, we should not delegate
                 long reqValidity = DateHelper.parseTimePeriod(validity);
                 long privilegeValidity = DateHelper.parseTimePeriod(p.getValidity());
                 String expiration = "";
@@ -890,8 +892,8 @@ public abstract class EntityConnectionHandler {
 
                 CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
                         .setReqGroup(subject)
-                        .setTargetTypeVal("Delegation")
-                        .setTargetType(CommunicationTargetType.fromStringValue("Delegation"))
+                        .setTargetTypeVal("Group")
+                        .setTargetType(CommunicationTargetType.fromStringValue("Group"))
                         .setTarget(object)
                         .setMaxNumSessionKeyOwners(2)
                         .setSessionCryptoSpec(info[0])
@@ -899,7 +901,15 @@ public abstract class EntityConnectionHandler {
                         .setRelValidityStr(info[2])
                         .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration))
                         .setIsDelegated(1);
+                DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
+                        .setId(0)
+                        .setParent(subject+","+"Group"+","+object)
+                        .setDelegatedTime(new Date().getTime())
+                        .setRevokedTime(0);
                 if (server.addCommunicationPolicy(newCommunicationPolicyTable))
+                    if (!server.addDelegationInfo(newDelegationInfoTable)){
+                        getLogger().info("Failed to add delegation info");
+                    }
                     return newCommunicationPolicyTable.toJSONObject();
             }
         }
