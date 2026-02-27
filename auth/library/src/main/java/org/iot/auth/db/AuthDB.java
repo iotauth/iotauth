@@ -246,6 +246,11 @@ public class AuthDB {
         return privileges;
     }
 
+    public String selectParentById(String delegationInfoTableId) throws SQLException{
+        String parent = sqLiteConnector.selectParentById(delegationInfoTableId);
+        return parent;
+    }
+
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         return sqLiteConnector.appendSessionKeyOwner(keyID, newOwner);
     }

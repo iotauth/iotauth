@@ -328,6 +328,20 @@ public class SQLiteConnector {
             logger.info("Table {} already exists", PrivilegeTable.T_PRIVILEGE);
         closeStatement();
 
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + DelegationInfoTable.T_DELEGATIONINFO + "(";
+        sql += DelegationInfoTable.c.Id.name() + " INT NOT NULL,";
+        sql += DelegationInfoTable.c.Parent.name() + " TEXT NOT NULL,";
+        sql += DelegationInfoTable.c.DelegatedTime.name() + " INT,";
+        sql += DelegationInfoTable.c.RevokedTime.name() + " INT,";
+        sql += "PRIMARY KEY (" + DelegationInfoTable.c.Id.name() + "))";
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", DelegationInfoTable.T_DELEGATIONINFO);
+        else
+            logger.info("Table {} already exists", DelegationInfoTable.T_DELEGATIONINFO);
+        closeStatement();
+
         closeConnection();
     }
 
@@ -680,6 +694,40 @@ public class SQLiteConnector {
     }
 
     /**
+     * Inserts the delegated policy information into the delegation_info table.
+     *
+     * @param delegationInfoTable the object container of the information in delegation_info table
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @see DelegationInfoTable
+     */
+    public boolean insertRecords(DelegationInfoTable delegationInfoTable) throws SQLException {
+        String sql = "INSERT INTO " + DelegationInfoTable.T_DELEGATIONINFO + "(";
+        sql += DelegationInfoTable.c.Id.name() + ",";
+        sql += DelegationInfoTable.c.Parent.name() + ",";
+        sql += DelegationInfoTable.c.DelegatedTime.name() + ",";
+        sql += DelegationInfoTable.c.RevokedTime.name() + ")";
+        sql += " VALUES (?,?,?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setInt(index++,delegationInfoTable.getId());
+        preparedStatement.setString(index++,delegationInfoTable.getParent());
+        preparedStatement.setLong(index++,delegationInfoTable.getDelegatedTime());
+        preparedStatement.setLong(index++,delegationInfoTable.getRevokedTime());
+        logger.info("{} {} {} {}",
+                delegationInfoTable.getId(), delegationInfoTable.getParent(),
+                delegationInfoTable.getDelegatedTime(), delegationInfoTable.getRevokedTime());
+        if (DEBUG) logger.info("{}",preparedStatement);
+        boolean result = preparedStatement.execute();
+        preparedStatement.close();
+        closeConnection();
+        return result;
+    }
+
+    /**
      * Selects all policies record from the table communication policy.
      * @return a list of all policies stored in the database
      * @throws SQLException  if a database access error occurs;
@@ -921,6 +969,25 @@ public class SQLiteConnector {
             result.add(privilege);
         }
         return result;
+    }
+
+    /**
+     * Select parent of the delegationInfoId.
+     * @param delegationInfoTableId the id of delegationInfoTableId.
+     * @return returns the parent id.
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public String selectParentById(String delegationInfoTableId)
+            throws SQLException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + DelegationInfoTable.T_DELEGATIONINFO;
+        sql += " WHERE " + DelegationInfoTable.c.Id.name() + " = " + "'" + delegationInfoTableId + "'";
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        String parent = resultSet.getString("Parent");
+        return parent;
     }
 
     /**
