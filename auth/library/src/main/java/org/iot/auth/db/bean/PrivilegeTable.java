@@ -1,6 +1,8 @@
 package org.iot.auth.db.bean;
 
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,7 +24,7 @@ public class PrivilegeTable {
     private String subject;
     private String object;
     private String validity;
-    private String info;
+    private JSONObject info;
     // TODO-SY set info as JSON object as {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 
     public String getPrivilegeType() {
@@ -58,10 +60,16 @@ public class PrivilegeTable {
         this.validity = validity;
     }
 
-    public String getInfo() {
+    public JSONObject getInfo() {
         return info;
     }
-    public void setInfo(String info) { this.info = info;}
+    public void setInfo(String info) {
+        try {
+            this.info = (JSONObject) new JSONParser().parse(info);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Invalid JSON in Info column: " + info, e);
+        }
+    }
 
 
     @SuppressWarnings("unchecked")
@@ -75,7 +83,7 @@ public class PrivilegeTable {
         object.put(c.Info.name(), getInfo());
         return object;
     }
-    public static PrivilegeTable createRecord(ResultSet resultSet) throws SQLException {
+    public static PrivilegeTable createRecord(ResultSet resultSet) throws SQLException, ParseException {
         PrivilegeTable Privilege = new PrivilegeTable();
         Privilege.setPrivilegeType(resultSet.getString(c.PrivilegeType.name()));
         Privilege.setPrivilegedEntity(resultSet.getString(c.PrivilegedEntity.name()));
@@ -84,5 +92,6 @@ public class PrivilegeTable {
         Privilege.setValidity(resultSet.getString(c.Validity.name()));
         Privilege.setInfo(resultSet.getString(c.Info.name()));
         return Privilege;
+
     }
 }

@@ -418,7 +418,7 @@ public class AuthServer {
      * @throws ClassNotFoundException if the class cannot be located.
      */
     public List<Privilege> getPrivilegesByUser(String requestingEntityName)
-            throws SQLException, ClassNotFoundException {
+            throws SQLException, org.json.simple.parser.ParseException {
         return db.selectPrivilegeByUser(requestingEntityName);
     }
 

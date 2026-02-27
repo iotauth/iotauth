@@ -16,6 +16,7 @@
 package org.iot.auth.db;
 
 import org.iot.auth.db.bean.PrivilegeTable;
+import org.json.simple.JSONObject;
 
 /**
  * A class for describing the privilege.
@@ -47,7 +48,7 @@ public class Privilege {
     public String getValidity() {
         return validity;
     }
-    public String getInfo() {
+    public JSONObject getInfo() {
         return info;
     }
 
@@ -62,5 +63,5 @@ public class Privilege {
     private String subject;
     private String object;
     private String validity;
-    private String info;
+    private JSONObject info;
 }

@@ -22,6 +22,7 @@ import org.iot.auth.db.bean.*;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.util.ExceptionToString;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,7 +238,7 @@ public class AuthDB {
         return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
     }
 
-    public List<Privilege> selectPrivilegeByUser(String requestingEntityName) throws SQLException{
+    public List<Privilege> selectPrivilegeByUser(String requestingEntityName) throws SQLException, ParseException {
         List<PrivilegeTable> privilegeTableList = sqLiteConnector.selectPrivilegeByUser(requestingEntityName);
         List<Privilege> privileges = new ArrayList<>(privilegeTableList.size());
         for (PrivilegeTable privilegeTable : privilegeTableList){

@@ -561,7 +561,7 @@
 			"subject": "MyAgents",
 			"object": "ResourceA",
 			"validity": "1*day",
-			"info": "AES-128-CBC:SHA256,1*day,1*hour"
+			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 		},
 		{
 			"privilegeType": "DelegationGrant",
@@ -569,7 +569,7 @@
 			"subject": "ExternalAgents",
 			"object": "ResourceA",
 			"validity": "1*day",
-			"info": "AES-128-CBC:SHA256,1*day,1*hour"
+			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 		},
 		{
 			"privilegeType": "DelegationRevoke",
@@ -577,7 +577,7 @@
 			"subject": "MyAgents",
 			"object": "ResourceA",
 			"validity": "1*day",
-			"info": "AES-128-CBC:SHA256,1*day,1*hour"
+			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 		},
 		{
 			"privilegeType": "DelegationGrant",
@@ -585,7 +585,7 @@
 			"subject": "MyAgents",
 			"object": "ResourceB",
 			"validity": "2*day",
-			"info": "AES-128-CBC:SHA256,1*day,1*hour"
+			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 		},
 		{
 			"privilegeType": "DelegationRevoke",
@@ -593,7 +593,7 @@
 			"subject": "MyAgents",
 			"object": "ResourceB",
 			"validity": "2*day",
-			"info": "AES-128-CBC:SHA256,1*day,1*hour"
+			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 		}
 	]
 }

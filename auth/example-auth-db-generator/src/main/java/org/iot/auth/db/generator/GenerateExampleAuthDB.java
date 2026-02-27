@@ -322,7 +322,7 @@ public class GenerateExampleAuthDB {
                 privilege.setSubject((String)jsonObject.get(PrivilegeTable.c.Subject.name()));
                 privilege.setObject((String)jsonObject.get(PrivilegeTable.c.Object.name()));
                 privilege.setValidity((String)jsonObject.get(PrivilegeTable.c.Validity.name()));
-                privilege.setInfo((String)jsonObject.get(PrivilegeTable.c.Info.name()));
+                privilege.setInfo(String.valueOf(jsonObject.get(PrivilegeTable.c.Info.name())));
                 sqLiteConnector.insertRecords(privilege);
             }
         }

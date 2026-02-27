@@ -848,12 +848,11 @@ public abstract class EntityConnectionHandler {
      * @throws ParseException If JSON parsing fails.
      * @throws SQLException When there is a problem in SQL
      * @throws ClassNotFoundException When class is not found.
-     * @throws InvalidSessionKeyTargetException If the target of add reader request is not valid.
      * @throws InvalidNonceException If nonce does not match.
      */
     private JSONObject processPrivilegeReq(
             RegisteredEntity requestingEntity, PrivilegeReqMessage privilegeReqMessage, Buffer authNonce)
-            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
+            throws IOException, ParseException, SQLException, ClassNotFoundException,
             InvalidNonceException {
         getLogger().debug("Sender entity: {}", privilegeReqMessage.getEntityName());
 
@@ -874,12 +873,19 @@ public abstract class EntityConnectionHandler {
         String privilegeType = (String) payload.get("privilegeType");
         String validity = (String) payload.get("validity");
 
+        String requestingGroup = requestingEntity.getGroup();
+
         for (Privilege p : privileges){
             if (!p.getPrivilegeType().equals(privilegeType))
                 continue;
             if (p.getSubject().equals(subject) && p.getObject().equals(object)){
-                CommunicationPolicy parent = server.getCommunicationPolicy(subject,CommunicationTargetType.fromStringValue("Group"), object);
+                if (server.getCommunicationPolicy(requestingGroup,CommunicationTargetType.fromStringValue("Group"), object) == null){
+                    getLogger().info("There's no parent policy!");
+                    return null;
+                }
+                CommunicationPolicy parent = server.getCommunicationPolicy(requestingGroup,CommunicationTargetType.fromStringValue("Group"), object);
                 // if parent == null, we should not delegate
+                getLogger().info(parent.toString());
                 long reqValidity = DateHelper.parseTimePeriod(validity);
                 long privilegeValidity = DateHelper.parseTimePeriod(p.getValidity());
                 String expiration = "";
@@ -888,7 +894,7 @@ public abstract class EntityConnectionHandler {
                 } else {
                     expiration = validity;
                 }
-                String[] info = p.getInfo().split(",");
+                JSONObject info = p.getInfo();
 
                 CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
                         .setReqGroup(subject)
@@ -896,23 +902,33 @@ public abstract class EntityConnectionHandler {
                         .setTargetType(CommunicationTargetType.fromStringValue("Group"))
                         .setTarget(object)
                         .setMaxNumSessionKeyOwners(2)
-                        .setSessionCryptoSpec(info[0])
-                        .setAbsValidityStr(info[1])
-                        .setRelValidityStr(info[2])
+                        .setSessionCryptoSpec((String) info.get("cryptoSpec"))
+                        .setAbsValidityStr((String) info.get("absValidity"))
+                        .setRelValidityStr((String) info.get("relValidity"))
                         .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration))
                         .setIsDelegated(1);
                 DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
                         .setId(0)
-                        .setParent(subject+","+"Group"+","+object)
+                        .setParent(subject+","+CommunicationTargetType.fromStringValue("Group")+","+object)
                         .setDelegatedTime(new Date().getTime())
                         .setRevokedTime(0);
-                if (server.addCommunicationPolicy(newCommunicationPolicyTable))
-                    if (!server.addDelegationInfo(newDelegationInfoTable)){
-                        getLogger().info("Failed to add delegation info");
-                    }
-                    return newCommunicationPolicyTable.toJSONObject();
+
+                boolean addNewCommunicationPolicy = server.addCommunicationPolicy(newCommunicationPolicyTable);
+                boolean addNewDelegationInfo = server.addDelegationInfo(newDelegationInfoTable);
+
+                if (!addNewCommunicationPolicy){
+                    getLogger().info("Failed to add new Communication Policy!");
+                    return null;
+                }
+                if (!addNewDelegationInfo){
+                    getLogger().info("Failed to add new Delegation Info!");
+                    return null;
+                }
+
+                return newCommunicationPolicyTable.toJSONObject();
             }
         }
+        getLogger().info("There's no corresponding privilege!");
         return null;
     }
 

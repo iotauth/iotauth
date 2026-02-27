@@ -26,6 +26,7 @@ import org.iot.auth.io.Buffer;
 import org.iot.auth.io.FileIOHelper;
 import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -682,7 +683,7 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,privilege.getSubject());
         preparedStatement.setString(index++,privilege.getObject());
         preparedStatement.setString(index++,privilege.getValidity());
-        preparedStatement.setString(index++,privilege.getInfo());
+        preparedStatement.setString(index++,String.valueOf(privilege.getInfo()));
         logger.info("{} {} {} {} {} {}",
                 privilege.getPrivilegeType(), privilege.getPrivilegedEntity(), privilege.getSubject(),
                 privilege.getObject(), privilege.getValidity(), privilege.getInfo() );
@@ -933,7 +934,7 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public List<PrivilegeTable> selectAllPrivileges() throws SQLException {
+    public List<PrivilegeTable> selectAllPrivileges() throws SQLException, ParseException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
         if (DEBUG) logger.info(sql);
@@ -956,7 +957,7 @@ public class SQLiteConnector {
      * or an argument is supplied to this method
      */
     public List<PrivilegeTable> selectPrivilegeByUser(String requestingEntityName)
-            throws SQLException {
+            throws SQLException, ParseException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
         sql += " WHERE " + PrivilegeTable.c.PrivilegedEntity.name() + " = " + "'" + requestingEntityName + "'";
