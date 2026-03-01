@@ -917,7 +917,7 @@ public abstract class EntityConnectionHandler {
                         .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration))
                         .setIsDelegated(1);
                 DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
-                        .setId(curCommPolicyCount+1)
+                        .setCPTId(curCommPolicyCount+1)
                         .setParent(parentPolicy.getId())
                         .setDelegatedTime(new Date().getTime())
                         .setRevokedTime(0);

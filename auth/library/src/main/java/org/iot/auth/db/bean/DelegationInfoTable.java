@@ -10,19 +10,19 @@ public class DelegationInfoTable {
     public static final String T_DELEGATIONINFO = "delegation_info";
 
     public enum c {
-        ID,
+        CPTID,
         Parent,
         DelegatedTime,
         RevokedTime
     }
-    private long id;
+    private long CPTId;
     private long parent;
     private long delegatedTime;
     private long revokedTime;
 
-    public long getId() { return id; }
-    public DelegationInfoTable setId(long id) {
-        this.id = id;
+    public long getCPTId() { return CPTId; }
+    public DelegationInfoTable setCPTId(long CPTId) {
+        this.CPTId = CPTId;
         return this;
     }
 
@@ -48,7 +48,7 @@ public class DelegationInfoTable {
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
-        object.put(c.ID.name(), getId());
+        object.put(c.CPTID.name(), getCPTId());
         object.put(c.Parent.name(), getParent());
         object.put(c.DelegatedTime.name(), getDelegatedTime());
         object.put(c.RevokedTime.name(), getRevokedTime());
@@ -56,7 +56,7 @@ public class DelegationInfoTable {
     }
     public static DelegationInfoTable createRecord(ResultSet resultSet) throws SQLException {
         DelegationInfoTable delegationInfoTable = new DelegationInfoTable();
-        delegationInfoTable.setId(resultSet.getLong(c.ID.name()));
+        delegationInfoTable.setCPTId(resultSet.getLong(c.CPTID.name()));
         delegationInfoTable.setParent(resultSet.getLong(c.Parent.name()));
         delegationInfoTable.setDelegatedTime(resultSet.getLong(c.DelegatedTime.name()));
         delegationInfoTable.setRevokedTime(resultSet.getLong(c.RevokedTime.name()));

@@ -332,11 +332,11 @@ public class SQLiteConnector {
 
         statement = connection.createStatement();
         sql = "CREATE TABLE IF NOT EXISTS " + DelegationInfoTable.T_DELEGATIONINFO + "(";
-        sql += DelegationInfoTable.c.ID.name() + " INT NOT NULL,";
+        sql += DelegationInfoTable.c.CPTID.name() + " INT NOT NULL,";
         sql += DelegationInfoTable.c.Parent.name() + " TEXT NOT NULL,";
         sql += DelegationInfoTable.c.DelegatedTime.name() + " INT,";
         sql += DelegationInfoTable.c.RevokedTime.name() + " INT,";
-        sql += "PRIMARY KEY (" + DelegationInfoTable.c.ID.name() + "))";
+        sql += "PRIMARY KEY (" + DelegationInfoTable.c.CPTID.name() + "))";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", DelegationInfoTable.T_DELEGATIONINFO);
@@ -711,19 +711,19 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(DelegationInfoTable delegationInfoTable) throws SQLException {
         String sql = "INSERT INTO " + DelegationInfoTable.T_DELEGATIONINFO + "(";
-        sql += DelegationInfoTable.c.ID.name() + ",";
+        sql += DelegationInfoTable.c.CPTID.name() + ",";
         sql += DelegationInfoTable.c.Parent.name() + ",";
         sql += DelegationInfoTable.c.DelegatedTime.name() + ",";
         sql += DelegationInfoTable.c.RevokedTime.name() + ")";
         sql += " VALUES (?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
-        preparedStatement.setLong(index++,delegationInfoTable.getId());
+        preparedStatement.setLong(index++,delegationInfoTable.getCPTId());
         preparedStatement.setLong(index++,delegationInfoTable.getParent());
         preparedStatement.setLong(index++,delegationInfoTable.getDelegatedTime());
         preparedStatement.setLong(index++,delegationInfoTable.getRevokedTime());
         logger.info("{} {} {} {}",
-                delegationInfoTable.getId(), delegationInfoTable.getParent(),
+                delegationInfoTable.getCPTId(), delegationInfoTable.getParent(),
                 delegationInfoTable.getDelegatedTime(), delegationInfoTable.getRevokedTime());
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
@@ -988,7 +988,7 @@ public class SQLiteConnector {
             throws SQLException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + DelegationInfoTable.T_DELEGATIONINFO;
-        sql += " WHERE " + DelegationInfoTable.c.ID.name() + " = " + "'" + delegationInfoTableId + "'";
+        sql += " WHERE " + DelegationInfoTable.c.CPTID.name() + " = " + "'" + delegationInfoTableId + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
         String parent = resultSet.getString("Parent");
