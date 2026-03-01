@@ -23,7 +23,7 @@ import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.bean.FileSharingTable;
-import org.iot.auth.db.bean.PrivilegeTable;
+import org.iot.auth.db.bean.DelegationPrivilegeTable;
 import org.iot.auth.db.bean.DelegationInfoTable;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.exception.InvalidDBDataTypeException;
@@ -117,8 +117,8 @@ public class GenerateExampleAuthDB {
                 authDatabaseDir + "configs/Auth" + authID + "TrustedAuthTable.config");
         initFileSharingInfoTable(sqLiteConnector, 
                 authDatabaseDir + "configs/Auth" + authID + "FileSharingInfoTable.config");
-        initPrivilegeTable(sqLiteConnector,
-                authDatabaseDir + "configs/Auth" + authID + "PrivilegeTable.config");
+        initDelegationPrivilegeTable(sqLiteConnector,
+                authDatabaseDir + "configs/Auth" + authID + "DelegationPrivilegeTable.config");
         sqLiteConnector.close();
     }
 
@@ -305,7 +305,7 @@ public class GenerateExampleAuthDB {
         }
     }
 
-    private static void initPrivilegeTable(SQLiteConnector sqLiteConnector,
+    private static void initDelegationPrivilegeTable(SQLiteConnector sqLiteConnector,
                                                  String tableConfigFilePath)
             throws ClassNotFoundException, SQLException, IOException
     {
@@ -315,15 +315,15 @@ public class GenerateExampleAuthDB {
 
             for (Object objElement : jsonArray) {
                 JSONObject jsonObject =  (JSONObject)objElement;
-                PrivilegeTable privilege = new PrivilegeTable();
+                DelegationPrivilegeTable delegationPrivilegeTable = new DelegationPrivilegeTable();
 
-                privilege.setPrivilegeType((String)jsonObject.get(PrivilegeTable.c.PrivilegeType.name()));
-                privilege.setPrivilegedEntity((String)jsonObject.get(PrivilegeTable.c.PrivilegedEntity.name()));
-                privilege.setSubject((String)jsonObject.get(PrivilegeTable.c.Subject.name()));
-                privilege.setObject((String)jsonObject.get(PrivilegeTable.c.Object.name()));
-                privilege.setValidity((String)jsonObject.get(PrivilegeTable.c.Validity.name()));
-                privilege.setInfo(String.valueOf(jsonObject.get(PrivilegeTable.c.Info.name())));
-                sqLiteConnector.insertRecords(privilege);
+                delegationPrivilegeTable.setPrivilegeType((String)jsonObject.get(DelegationPrivilegeTable.c.PrivilegeType.name()));
+                delegationPrivilegeTable.setprivilegedGroup((String)jsonObject.get(DelegationPrivilegeTable.c.PrivilegedGroup.name()));
+                delegationPrivilegeTable.setSubject((String)jsonObject.get(DelegationPrivilegeTable.c.Subject.name()));
+                delegationPrivilegeTable.setObject((String)jsonObject.get(DelegationPrivilegeTable.c.Object.name()));
+                delegationPrivilegeTable.setValidity((String)jsonObject.get(DelegationPrivilegeTable.c.Validity.name()));
+                delegationPrivilegeTable.setInfo(String.valueOf(jsonObject.get(DelegationPrivilegeTable.c.Info.name())));
+                sqLiteConnector.insertRecords(delegationPrivilegeTable);
             }
         }
         catch (ParseException e) {

@@ -135,7 +135,7 @@ function generateFileSharingInfoTables() {
 function getPrivilegePolicy(entity){
     var privilegePolicy = {
         PrivilegeType: entity.privilegeType,
-        PrivilegedEntity: entity.privilegedEntity,
+        PrivilegedGroup: entity.privilegedGroup,
         Subject: entity.subject,
         Object: entity.object,
         Validity: entity.validity,
@@ -144,23 +144,19 @@ function getPrivilegePolicy(entity){
     return privilegePolicy;
 }
 
-function generatePrivilegeTables(){
-    var privilegeTables = {};
-    for (var i = 0; i < authList.length; i++){
-        var auth = authList[i];
-        privilegeTables[auth.id] = [];
-    }
-    var assignments = graph.assignments;
-    var entityList = graph.privilegeList;
-    for (var i = 0; i < entityList.length; i++) {
-        var entity = entityList[i];
-        privilegeTables[assignments[entity.privilegedEntity]].push(getPrivilegePolicy(entity));
+function generateDelegationPrivilegeTables(){
+    var delegationPolicyList = [];
+
+    var privilegeList = graph.privilegeList;
+    for (var i = 0; i < privilegeList.length; i++) {
+        var privilegeListElement = privilegeList[i];
+        delegationPolicyList.push(getPrivilegePolicy(privilegeListElement));
     }
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
-        var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'PrivilegeTable.config';
+        var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'DelegationPrivilegeTable.config';
         console.log('Writing Auth config to ' + configFilePath + ' ...');
-        fs.writeFileSync(configFilePath, JSON2.stringify(privilegeTables[auth.id], null, '\t'), 'utf8');
+        fs.writeFileSync(configFilePath, JSON2.stringify(delegationPolicyList, null, '\t'), 'utf8');
     }
 }
 
@@ -414,4 +410,4 @@ generateCommunicationPolicyTables();
 generateTrustedAuthTables();
 generatePropertiesFiles();
 generateFileSharingInfoTables();
-generatePrivilegeTables();
+generateDelegationPrivilegeTables();

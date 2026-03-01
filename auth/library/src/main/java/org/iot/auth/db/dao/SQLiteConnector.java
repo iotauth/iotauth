@@ -311,22 +311,22 @@ public class SQLiteConnector {
         closeStatement();
 
         statement = connection.createStatement();
-        sql = "CREATE TABLE IF NOT EXISTS " + PrivilegeTable.T_PRIVILEGE + "(";
-        sql += PrivilegeTable.c.PrivilegeType.name() + " TEXT NOT NULL,";
-        sql += PrivilegeTable.c.PrivilegedEntity.name() + " TEXT NOT NULL,";
-        sql += PrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
-        sql += PrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
-        sql += PrivilegeTable.c.Validity.name() + " TEXT NOT NULL,";
-        sql += PrivilegeTable.c.Info.name() + " TEXT NOT NULL,";
-        sql += "PRIMARY KEY (" + PrivilegeTable.c.PrivilegeType.name() + ",";
-        sql += PrivilegeTable.c.PrivilegedEntity.name() + ",";
-        sql += PrivilegeTable.c.Subject.name() + ",";
-        sql += PrivilegeTable.c.Object.name() + "))";
+        sql = "CREATE TABLE IF NOT EXISTS " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE + "(";
+        sql += DelegationPrivilegeTable.c.PrivilegeType.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.Validity.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.Info.name() + " TEXT NOT NULL,";
+        sql += "PRIMARY KEY (" + DelegationPrivilegeTable.c.PrivilegeType.name() + ",";
+        sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
+        sql += DelegationPrivilegeTable.c.Subject.name() + ",";
+        sql += DelegationPrivilegeTable.c.Object.name() + "))";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
-            logger.info("Table {} created", PrivilegeTable.T_PRIVILEGE);
+            logger.info("Table {} created", DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE);
         else
-            logger.info("Table {} already exists", PrivilegeTable.T_PRIVILEGE);
+            logger.info("Table {} already exists", DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE);
         closeStatement();
 
         statement = connection.createStatement();
@@ -659,34 +659,35 @@ public class SQLiteConnector {
     /**
      * Inserts the privilege information into the privilege table.
      *
-     * @param privilege the object container of the information in privilege table
+     * @param delegationPrivilegeTable the object container of the information in delegation_privilege table
      * @return <code>true</code> if the insertion has been successful
      *         <code>false</code> if the insertion has failed
      * @throws SQLException  if a database access error occurs;
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
-     * @see PrivilegeTable
+     * @see DelegationPrivilegeTable
      */
-    public boolean insertRecords(PrivilegeTable privilege) throws SQLException {
-        String sql = "INSERT INTO " + PrivilegeTable.T_PRIVILEGE + "(";
-        sql += PrivilegeTable.c.PrivilegeType.name() + ",";
-        sql += PrivilegeTable.c.PrivilegedEntity.name() + ",";
-        sql += PrivilegeTable.c.Subject.name() + ",";
-        sql += PrivilegeTable.c.Object.name() + ",";
-        sql += PrivilegeTable.c.Validity.name() + ",";
-        sql += PrivilegeTable.c.Info.name() + ")";
+    public boolean insertRecords(DelegationPrivilegeTable delegationPrivilegeTable) throws SQLException {
+        String sql = "INSERT INTO " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE + "(";
+        sql += DelegationPrivilegeTable.c.PrivilegeType.name() + ",";
+        sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
+        sql += DelegationPrivilegeTable.c.Subject.name() + ",";
+        sql += DelegationPrivilegeTable.c.Object.name() + ",";
+        sql += DelegationPrivilegeTable.c.Validity.name() + ",";
+        sql += DelegationPrivilegeTable.c.Info.name() + ")";
         sql += " VALUES (?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
-        preparedStatement.setString(index++,privilege.getPrivilegeType());
-        preparedStatement.setString(index++,privilege.getPrivilegedEntity());
-        preparedStatement.setString(index++,privilege.getSubject());
-        preparedStatement.setString(index++,privilege.getObject());
-        preparedStatement.setString(index++,privilege.getValidity());
-        preparedStatement.setString(index++,String.valueOf(privilege.getInfo()));
+        preparedStatement.setString(index++,delegationPrivilegeTable.getPrivilegeType());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getPrivilegedGroup());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getSubject());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getObject());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getValidity());
+        preparedStatement.setString(index++,String.valueOf(delegationPrivilegeTable.getInfo()));
         logger.info("{} {} {} {} {} {}",
-                privilege.getPrivilegeType(), privilege.getPrivilegedEntity(), privilege.getSubject(),
-                privilege.getObject(), privilege.getValidity(), privilege.getInfo() );
+                delegationPrivilegeTable.getPrivilegeType(), delegationPrivilegeTable.getPrivilegedGroup(),
+                delegationPrivilegeTable.getSubject(), delegationPrivilegeTable.getObject(),
+                delegationPrivilegeTable.getValidity(), delegationPrivilegeTable.getInfo() );
         if (DEBUG) logger.info("{}",preparedStatement);
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -927,25 +928,25 @@ public class SQLiteConnector {
     }
 
     /**
-     * Selects all privilege lists.
+     * Selects all delegationPrivilege lists.
      *
      * @return a list of all privileges.
      * @throws SQLException  if a database access error occurs;
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public List<PrivilegeTable> selectAllPrivileges() throws SQLException, ParseException {
+    public List<DelegationPrivilegeTable> selectAllPrivileges() throws SQLException, ParseException {
         statement = connection.createStatement();
-        String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
+        String sql = "SELECT * FROM " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        List<PrivilegeTable> privilegeTableList = new LinkedList<>();
+        List<DelegationPrivilegeTable> delegationPrivilegeTableList = new LinkedList<>();
         while (resultSet.next()) {
-            PrivilegeTable privilege = PrivilegeTable.createRecord(resultSet);
-            if (DEBUG) logger.info(privilege.toJSONObject().toJSONString());
-            privilegeTableList.add(privilege);
+            DelegationPrivilegeTable delegationPrivilegeTable = DelegationPrivilegeTable.createRecord(resultSet);
+            if (DEBUG) logger.info(delegationPrivilegeTable.toJSONObject().toJSONString());
+            delegationPrivilegeTableList.add(delegationPrivilegeTable);
         }
-        return privilegeTableList;
+        return delegationPrivilegeTableList;
     }
 
     /**
@@ -956,18 +957,18 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public List<PrivilegeTable> selectPrivilegeByUser(String requestingEntityName)
+    public List<DelegationPrivilegeTable> selectPrivilegeByUser(String requestingEntityName)
             throws SQLException, ParseException {
         statement = connection.createStatement();
-        String sql = "SELECT * FROM " + PrivilegeTable.T_PRIVILEGE;
-        sql += " WHERE " + PrivilegeTable.c.PrivilegedEntity.name() + " = " + "'" + requestingEntityName + "'";
+        String sql = "SELECT * FROM " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE;
+        sql += " WHERE " + DelegationPrivilegeTable.c.PrivilegedGroup.name() + " = " + "'" + requestingEntityName + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        List<PrivilegeTable> result = new LinkedList<>();
+        List<DelegationPrivilegeTable> result = new LinkedList<>();
         while (resultSet.next()) {
-            PrivilegeTable privilege = PrivilegeTable.createRecord(resultSet);
-            if (DEBUG) logger.info(privilege.toJSONObject().toJSONString());
-            result.add(privilege);
+            DelegationPrivilegeTable delegationPrivilegeTable = DelegationPrivilegeTable.createRecord(resultSet);
+            if (DEBUG) logger.info(delegationPrivilegeTable.toJSONObject().toJSONString());
+            result.add(delegationPrivilegeTable);
         }
         return result;
     }

@@ -238,11 +238,11 @@ public class AuthDB {
         return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
     }
 
-    public List<Privilege> selectPrivilegeByUser(String requestingEntityName) throws SQLException, ParseException {
-        List<PrivilegeTable> privilegeTableList = sqLiteConnector.selectPrivilegeByUser(requestingEntityName);
-        List<Privilege> privileges = new ArrayList<>(privilegeTableList.size());
-        for (PrivilegeTable privilegeTable : privilegeTableList){
-            privileges.add(new Privilege(privilegeTable));
+    public List<DelegationPrivilege> selectPrivilegeByUser(String requestingEntityName) throws SQLException, ParseException {
+        List<DelegationPrivilegeTable> privilegeTableList = sqLiteConnector.selectPrivilegeByUser(requestingEntityName);
+        List<DelegationPrivilege> privileges = new ArrayList<>(privilegeTableList.size());
+        for (DelegationPrivilegeTable delegationPrivilegeTable : privilegeTableList){
+            privileges.add(new DelegationPrivilege(delegationPrivilegeTable));
         }
         return privileges;
     }

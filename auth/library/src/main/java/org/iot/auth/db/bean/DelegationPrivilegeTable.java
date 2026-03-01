@@ -8,24 +8,23 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 
-public class PrivilegeTable {
-    public static final String T_PRIVILEGE = "privilege";
+public class DelegationPrivilegeTable {
+    public static final String T_DELEGATION_PRIVILEGE = "delegation_privilege";
 
     public enum c {
         PrivilegeType,
-        PrivilegedEntity,
+        PrivilegedGroup,
         Subject,
         Object,
         Validity,
         Info
     }
     private String privilegeType;
-    private String privilegedEntity;
+    private String privilegedGroup;
     private String subject;
     private String object;
     private String validity;
     private JSONObject info;
-    // TODO-SY set info as JSON object as {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 
     public String getPrivilegeType() {
         return privilegeType;
@@ -34,11 +33,11 @@ public class PrivilegeTable {
         this.privilegeType = privilegeType;
     }
 
-    public String getPrivilegedEntity() {
-        return privilegedEntity;
+    public String getPrivilegedGroup() {
+        return privilegedGroup;
     }
-    public void setPrivilegedEntity(String privilegedEntity) {
-        this.privilegedEntity = privilegedEntity;
+    public void setprivilegedGroup(String privilegedGroup) {
+        this.privilegedGroup = privilegedGroup;
     }
 
     public String getSubject() { return subject;}
@@ -76,22 +75,22 @@ public class PrivilegeTable {
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
         object.put(c.PrivilegeType.name(), getPrivilegeType());
-        object.put(c.PrivilegedEntity.name(), getPrivilegedEntity());
+        object.put(c.PrivilegedGroup.name(), getPrivilegedGroup());
         object.put(c.Subject.name(), getSubject());
         object.put(c.Object.name(), getObject());
         object.put(c.Validity.name(), getValidity());
         object.put(c.Info.name(), getInfo());
         return object;
     }
-    public static PrivilegeTable createRecord(ResultSet resultSet) throws SQLException, ParseException {
-        PrivilegeTable Privilege = new PrivilegeTable();
-        Privilege.setPrivilegeType(resultSet.getString(c.PrivilegeType.name()));
-        Privilege.setPrivilegedEntity(resultSet.getString(c.PrivilegedEntity.name()));
-        Privilege.setSubject(resultSet.getString(c.Subject.name()));
-        Privilege.setObject(resultSet.getString(c.Object.name()));
-        Privilege.setValidity(resultSet.getString(c.Validity.name()));
-        Privilege.setInfo(resultSet.getString(c.Info.name()));
-        return Privilege;
+    public static DelegationPrivilegeTable createRecord(ResultSet resultSet) throws SQLException, ParseException {
+        DelegationPrivilegeTable delegationPrivilegeTable = new DelegationPrivilegeTable();
+        delegationPrivilegeTable.setPrivilegeType(resultSet.getString(c.PrivilegeType.name()));
+        delegationPrivilegeTable.setprivilegedGroup(resultSet.getString(c.PrivilegedGroup.name()));
+        delegationPrivilegeTable.setSubject(resultSet.getString(c.Subject.name()));
+        delegationPrivilegeTable.setObject(resultSet.getString(c.Object.name()));
+        delegationPrivilegeTable.setValidity(resultSet.getString(c.Validity.name()));
+        delegationPrivilegeTable.setInfo(resultSet.getString(c.Info.name()));
+        return delegationPrivilegeTable;
 
     }
 }

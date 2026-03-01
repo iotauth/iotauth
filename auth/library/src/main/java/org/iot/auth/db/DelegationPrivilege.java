@@ -15,29 +15,29 @@
 
 package org.iot.auth.db;
 
-import org.iot.auth.db.bean.PrivilegeTable;
+import org.iot.auth.db.bean.DelegationPrivilegeTable;
 import org.json.simple.JSONObject;
 
 /**
  * A class for describing the privilege.
  * @author Sunyoung Kim
  */
-public class Privilege {
-    public Privilege(PrivilegeTable privilegeTable)
+public class DelegationPrivilege {
+    public DelegationPrivilege(DelegationPrivilegeTable delegationPrivilegeTable)
     {
-        this.privilegeType = privilegeTable.getPrivilegeType();
-        this.privilegedEntity = privilegeTable.getPrivilegedEntity();
-        this.subject = privilegeTable.getSubject();
-        this.object = privilegeTable.getObject();
-        this.validity = privilegeTable.getValidity();
-        this.info = privilegeTable.getInfo();
+        this.privilegeType = delegationPrivilegeTable.getPrivilegeType();
+        this.privilegedGroup = delegationPrivilegeTable.getPrivilegedGroup();
+        this.subject = delegationPrivilegeTable.getSubject();
+        this.object = delegationPrivilegeTable.getObject();
+        this.validity = delegationPrivilegeTable.getValidity();
+        this.info = delegationPrivilegeTable.getInfo();
     }
 
     public String getPrivilegeType() {
         return privilegeType;
     }
-    public String getPrivilegedEntity() {
-        return privilegedEntity;
+    public String getPrivilegedGroup() {
+        return privilegedGroup;
     }
     public String getSubject() {
         return subject;
@@ -53,13 +53,13 @@ public class Privilege {
     }
 
     public String toString() {
-        return "PrivilegeType: " + privilegeType + "\tPrivilegedEntity: " + privilegedEntity + "\tSubject: " + subject +
+        return "PrivilegeType: " + privilegeType + "\tprivilegedGroup: " + privilegedGroup + "\tSubject: " + subject +
                 "\tObject: " + object + "\tValidity: " + validity + "\tInfo: " + info ;
     }
 
 
     private String privilegeType;
-    private String privilegedEntity;
+    private String privilegedGroup;
     private String subject;
     private String object;
     private String validity;

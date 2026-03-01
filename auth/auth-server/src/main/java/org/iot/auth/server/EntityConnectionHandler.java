@@ -863,7 +863,7 @@ public abstract class EntityConnectionHandler {
         else {
             getLogger().debug("Auth nonce is correct!");
         }
-        List<Privilege> privileges = server.getPrivilegesByUser(privilegeReqMessage.getEntityName());
+        List<DelegationPrivilege> privileges = server.getPrivilegesByUser(privilegeReqMessage.getEntityName());
         JSONObject payload = privilegeReqMessage.getPayload();
 
         // Get privilege information from privilegeReqMessage
@@ -875,17 +875,19 @@ public abstract class EntityConnectionHandler {
 
         String requestingGroup = requestingEntity.getGroup();
 
-        for (Privilege p : privileges){
+        for (DelegationPrivilege p : privileges){
             if (!p.getPrivilegeType().equals(privilegeType))
                 continue;
-            if (p.getSubject().equals(subject) && p.getObject().equals(object)){
+            if (p.getSubject().equals(subject)
+                    && p.getObject().equals(object)
+                    && p.getPrivilegedGroup().equals(requestingGroup)){
+                // TODO-SY: Use Parent column in DelegationInfoTable ?
                 if (server.getCommunicationPolicy(requestingGroup,CommunicationTargetType.fromStringValue("Group"), object) == null){
                     getLogger().info("There's no parent policy!");
                     return null;
                 }
-                CommunicationPolicy parent = server.getCommunicationPolicy(requestingGroup,CommunicationTargetType.fromStringValue("Group"), object);
-                // if parent == null, we should not delegate
-                getLogger().info(parent.toString());
+//                CommunicationPolicy parent = server.getCommunicationPolicy(requestingGroup,CommunicationTargetType.fromStringValue("Group"), object);
+//                getLogger().info(parent.toString());
                 long reqValidity = DateHelper.parseTimePeriod(validity);
                 long privilegeValidity = DateHelper.parseTimePeriod(p.getValidity());
                 String expiration = "";

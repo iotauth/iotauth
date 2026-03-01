@@ -557,7 +557,7 @@
 	"privilegeList": [
 		{
 			"privilegeType": "DelegationGrant",
-			"privilegedEntity": "net1.Alex",
+			"privilegedGroup": "Users",
 			"subject": "MyAgents",
 			"object": "ResourceA",
 			"validity": "1*day",
@@ -565,7 +565,7 @@
 		},
 		{
 			"privilegeType": "DelegationGrant",
-			"privilegedEntity": "net1.alexAgent",
+			"privilegedGroup": "MyAgents",
 			"subject": "ExternalAgents",
 			"object": "ResourceA",
 			"validity": "1*day",
@@ -573,7 +573,7 @@
 		},
 		{
 			"privilegeType": "DelegationRevoke",
-			"privilegedEntity": "net1.Alex",
+			"privilegedGroup": "Users",
 			"subject": "MyAgents",
 			"object": "ResourceA",
 			"validity": "1*day",
@@ -581,7 +581,7 @@
 		},
 		{
 			"privilegeType": "DelegationGrant",
-			"privilegedEntity": "net2.Bailey",
+			"privilegedGroup": "Users",
 			"subject": "MyAgents",
 			"object": "ResourceB",
 			"validity": "2*day",
@@ -589,7 +589,7 @@
 		},
 		{
 			"privilegeType": "DelegationRevoke",
-			"privilegedEntity": "net2.Bailey",
+			"privilegedGroup": "Users",
 			"subject": "MyAgents",
 			"object": "ResourceB",
 			"validity": "2*day",
