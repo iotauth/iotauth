@@ -32,7 +32,8 @@ public class MetaDataTable {
     }
     public enum key {
         SessionKeyCount,
-        EncryptedDatabaseKey
+        EncryptedDatabaseKey,
+        CommPolicyCount
     }
     private String key;
     private String value;

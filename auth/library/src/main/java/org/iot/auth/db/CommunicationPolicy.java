@@ -25,6 +25,7 @@ import org.iot.auth.db.bean.CommunicationPolicyTable;
 public class CommunicationPolicy {
     public CommunicationPolicy(CommunicationPolicyTable communicationPolicyTable)
     {
+        this.id = communicationPolicyTable.getID();
         this.reqGroup = communicationPolicyTable.getReqGroup();
         this.targetType = communicationPolicyTable.getTargetType();
         this.target = communicationPolicyTable.getTarget();
@@ -36,6 +37,9 @@ public class CommunicationPolicy {
         this.relValidity = communicationPolicyTable.getRelValidity();
     }
 
+    public long getId() {
+        return id;
+    }
     public String getReqGroup() {
         return reqGroup;
     }
@@ -61,12 +65,13 @@ public class CommunicationPolicy {
     }
 
     public String toString() {
-        return "RequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
+        return "ID" + id + "\tRequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
                 "\t" + sessionCryptoSpec.toString() +
                 "\tAbsoluteValidity: " + absValidity + "\tRelativeValidity: " + relValidity;
     }
 
 
+    private long id;
     private String reqGroup;
     private CommunicationTargetType targetType;
     private String target;

@@ -412,14 +412,28 @@ public class AuthServer {
 
     /**
      * Method for exposing an AuthDB operation, getPrivilegesByType.
-     * @param requestingEntityName The name of the requester entity.
+     * @param requestingEntityGroup The name of the requester entity.
      * @return A list of privileges.
      * @throws SQLException if database error occurs.
      * @throws ClassNotFoundException if the class cannot be located.
      */
-    public List<DelegationPrivilege> getPrivilegesByUser(String requestingEntityName)
+    public List<DelegationPrivilege> getPrivilegesByPrivilegedGroup(String requestingEntityGroup)
             throws SQLException, org.json.simple.parser.ParseException {
-        return db.selectPrivilegeByUser(requestingEntityName);
+        return db.selectPrivilegeByPrivilegedGroup(requestingEntityGroup);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getCommPolicyCountValue.
+     * @return A value of communication policy count.
+     * @throws SQLException if database error occurs.
+     * @throws ClassNotFoundException if the class cannot be located.
+     */
+    public String getCommPolicyCountValue() throws SQLException {
+        return db.getCommPolicyCountValue();
+    }
+
+    public boolean updateCommPolicyCountValue(long newCommPolicyCount) throws SQLException {
+        return db.updateCommPolicyCountValue(newCommPolicyCount);
     }
 
     public boolean addDelegationInfo(DelegationInfoTable delegationInfoTable){

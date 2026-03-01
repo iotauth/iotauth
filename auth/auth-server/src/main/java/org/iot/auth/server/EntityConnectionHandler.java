@@ -19,6 +19,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.iot.auth.config.constants.C;
 import org.iot.auth.crypto.*;
 import org.iot.auth.db.bean.DelegationInfoTable;
+import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.exception.*;
 import org.iot.auth.util.DateHelper;
 import org.json.simple.JSONArray;
@@ -863,7 +864,10 @@ public abstract class EntityConnectionHandler {
         else {
             getLogger().debug("Auth nonce is correct!");
         }
-        List<DelegationPrivilege> privileges = server.getPrivilegesByUser(privilegeReqMessage.getEntityName());
+
+        String requestingGroup = requestingEntity.getGroup();
+
+        List<DelegationPrivilege> privileges = server.getPrivilegesByPrivilegedGroup(requestingGroup);
         JSONObject payload = privilegeReqMessage.getPayload();
 
         // Get privilege information from privilegeReqMessage
@@ -873,16 +877,16 @@ public abstract class EntityConnectionHandler {
         String privilegeType = (String) payload.get("privilegeType");
         String validity = (String) payload.get("validity");
 
-        String requestingGroup = requestingEntity.getGroup();
-
         for (DelegationPrivilege p : privileges){
             if (!p.getPrivilegeType().equals(privilegeType))
                 continue;
             if (p.getSubject().equals(subject)
                     && p.getObject().equals(object)
                     && p.getPrivilegedGroup().equals(requestingGroup)){
-                // TODO-SY: Use Parent column in DelegationInfoTable ?
-                if (server.getCommunicationPolicy(requestingGroup,CommunicationTargetType.fromStringValue("Group"), object) == null){
+                CommunicationPolicy parentPolicy = server.getCommunicationPolicy(
+                        requestingGroup, CommunicationTargetType.fromStringValue("Group"), object);
+
+                if (parentPolicy == null){
                     getLogger().info("There's no parent policy!");
                     return null;
                 }
@@ -897,8 +901,11 @@ public abstract class EntityConnectionHandler {
                     expiration = validity;
                 }
                 JSONObject info = p.getInfo();
+                String commPolicyCountValue = server.getCommPolicyCountValue();
+                long curCommPolicyCount = Long.parseLong(commPolicyCountValue);
 
                 CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
+                        .setID(curCommPolicyCount+1)
                         .setReqGroup(subject)
                         .setTargetTypeVal("Group")
                         .setTargetType(CommunicationTargetType.fromStringValue("Group"))
@@ -910,14 +917,17 @@ public abstract class EntityConnectionHandler {
                         .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration))
                         .setIsDelegated(1);
                 DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
-                        .setId(0)
-                        .setParent(subject+","+CommunicationTargetType.fromStringValue("Group")+","+object)
+                        .setId(curCommPolicyCount)
+                        .setParent(parentPolicy.getId())
                         .setDelegatedTime(new Date().getTime())
                         .setRevokedTime(0);
 
                 boolean addNewCommunicationPolicy = server.addCommunicationPolicy(newCommunicationPolicyTable);
                 boolean addNewDelegationInfo = server.addDelegationInfo(newDelegationInfoTable);
-
+                boolean updateCommPolicyCount = server.updateCommPolicyCountValue(curCommPolicyCount+1);
+                if (updateCommPolicyCount){
+                    getLogger().info("Failed to update new Communication Policy Count number!");
+                }
                 if (!addNewCommunicationPolicy){
                     getLogger().info("Failed to add new Communication Policy!");
                     return null;

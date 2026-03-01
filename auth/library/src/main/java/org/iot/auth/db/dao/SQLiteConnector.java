@@ -204,6 +204,7 @@ public class SQLiteConnector {
      */
     public void createTablesIfNotExists() throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
+        sql += CommunicationPolicyTable.c.ID.name() + " INT NOT NULL PRIMARY KEY,";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.TargetType.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.Target.name() + " TEXT NOT NULL,";
@@ -215,7 +216,7 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.Expiration.name() + " INT NOT NULL,";
         sql += CommunicationPolicyTable.c.IsDelegated.name() + " INT NOT NULL,";
-        sql += "PRIMARY KEY (" + CommunicationPolicyTable.c.RequestingGroup.name() + ",";
+        sql += "UNIQUE (" + CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
         sql += CommunicationPolicyTable.c.Target.name() + "))";
         statement = connection.createStatement();
@@ -331,11 +332,11 @@ public class SQLiteConnector {
 
         statement = connection.createStatement();
         sql = "CREATE TABLE IF NOT EXISTS " + DelegationInfoTable.T_DELEGATIONINFO + "(";
-        sql += DelegationInfoTable.c.Id.name() + " INT NOT NULL,";
+        sql += DelegationInfoTable.c.ID.name() + " INT NOT NULL,";
         sql += DelegationInfoTable.c.Parent.name() + " TEXT NOT NULL,";
         sql += DelegationInfoTable.c.DelegatedTime.name() + " INT,";
         sql += DelegationInfoTable.c.RevokedTime.name() + " INT,";
-        sql += "PRIMARY KEY (" + DelegationInfoTable.c.Id.name() + "))";
+        sql += "PRIMARY KEY (" + DelegationInfoTable.c.ID.name() + "))";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", DelegationInfoTable.T_DELEGATIONINFO);
@@ -359,6 +360,7 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(CommunicationPolicyTable policy) throws SQLException {
         String sql = "INSERT INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
+        sql += CommunicationPolicyTable.c.ID.name() + ",";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
         sql += CommunicationPolicyTable.c.Target.name() + ",";
@@ -368,9 +370,10 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + ",";
         sql += CommunicationPolicyTable.c.Expiration.name() + ",";
         sql += CommunicationPolicyTable.c.IsDelegated.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?)";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?)";
         int index = 1;
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setLong(index++,policy.getID());
         preparedStatement.setString(index++,policy.getReqGroup());
         preparedStatement.setString(index++,policy.getTargetTypeVal());
         preparedStatement.setString(index++,policy.getTarget());
@@ -708,15 +711,15 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(DelegationInfoTable delegationInfoTable) throws SQLException {
         String sql = "INSERT INTO " + DelegationInfoTable.T_DELEGATIONINFO + "(";
-        sql += DelegationInfoTable.c.Id.name() + ",";
+        sql += DelegationInfoTable.c.ID.name() + ",";
         sql += DelegationInfoTable.c.Parent.name() + ",";
         sql += DelegationInfoTable.c.DelegatedTime.name() + ",";
         sql += DelegationInfoTable.c.RevokedTime.name() + ")";
         sql += " VALUES (?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
-        preparedStatement.setInt(index++,delegationInfoTable.getId());
-        preparedStatement.setString(index++,delegationInfoTable.getParent());
+        preparedStatement.setLong(index++,delegationInfoTable.getId());
+        preparedStatement.setLong(index++,delegationInfoTable.getParent());
         preparedStatement.setLong(index++,delegationInfoTable.getDelegatedTime());
         preparedStatement.setLong(index++,delegationInfoTable.getRevokedTime());
         logger.info("{} {} {} {}",
@@ -957,7 +960,7 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public List<DelegationPrivilegeTable> selectPrivilegeByUser(String requestingEntityName)
+    public List<DelegationPrivilegeTable> selectPrivilegeByPrivilegedGroup(String requestingEntityName)
             throws SQLException, ParseException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE;
@@ -985,7 +988,7 @@ public class SQLiteConnector {
             throws SQLException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + DelegationInfoTable.T_DELEGATIONINFO;
-        sql += " WHERE " + DelegationInfoTable.c.Id.name() + " = " + "'" + delegationInfoTableId + "'";
+        sql += " WHERE " + DelegationInfoTable.c.ID.name() + " = " + "'" + delegationInfoTableId + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
         String parent = resultSet.getString("Parent");

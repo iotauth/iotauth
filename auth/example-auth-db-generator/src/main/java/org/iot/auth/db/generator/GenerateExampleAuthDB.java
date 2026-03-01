@@ -132,6 +132,9 @@ public class GenerateExampleAuthDB {
         metaData.setKey(MetaDataTable.key.SessionKeyCount.name());
         metaData.setValue(Long.toString(0));
         sqLiteConnector.insertRecords(metaData);
+        metaData.setKey(MetaDataTable.key.CommPolicyCount.name());
+        metaData.setValue(Long.toString(0));
+        sqLiteConnector.insertRecords(metaData);
 
         PublicKey databasePublicKey = AuthCrypto.loadPublicKeyFromFile(databasePublicKeyPath);
         Buffer encryptedDatabaseKey = AuthCrypto.publicEncrypt(databaseKey.getSerializedKeyVal(), databasePublicKey,
@@ -250,11 +253,14 @@ public class GenerateExampleAuthDB {
         JSONParser parser = new JSONParser();
         try {
             JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
-
+            String commPolicyCountValue = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.CommPolicyCount.name());
+            long curCommPolicyCount = Long.parseLong(commPolicyCountValue);
+            int commPolicyCount = 0;
             for (Object objElement : jsonArray) {
                 JSONObject jsonObject =  (JSONObject)objElement;
                 CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
-
+                commPolicyCount++;
+                communicationPolicyTable.setID(curCommPolicyCount + commPolicyCount);
                 communicationPolicyTable.setReqGroup((String)jsonObject.get(CommunicationPolicyTable.c.RequestingGroup.name()));
                 communicationPolicyTable.setTargetTypeVal((String)jsonObject.get(CommunicationPolicyTable.c.TargetType.name()));
                 communicationPolicyTable.setTarget((String)jsonObject.get(CommunicationPolicyTable.c.Target.name()));
@@ -273,6 +279,7 @@ public class GenerateExampleAuthDB {
                         convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.IsDelegated.name())));
                 sqLiteConnector.insertRecords(communicationPolicyTable);
             }
+            sqLiteConnector.updateMetaData(MetaDataTable.key.CommPolicyCount.name(), Long.toString(curCommPolicyCount + commPolicyCount));
         }
         catch (ParseException e) {
             logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));

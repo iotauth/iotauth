@@ -238,8 +238,8 @@ public class AuthDB {
         return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
     }
 
-    public List<DelegationPrivilege> selectPrivilegeByUser(String requestingEntityName) throws SQLException, ParseException {
-        List<DelegationPrivilegeTable> privilegeTableList = sqLiteConnector.selectPrivilegeByUser(requestingEntityName);
+    public List<DelegationPrivilege> selectPrivilegeByPrivilegedGroup(String requestingEntityGroup) throws SQLException, ParseException {
+        List<DelegationPrivilegeTable> privilegeTableList = sqLiteConnector.selectPrivilegeByPrivilegedGroup(requestingEntityGroup);
         List<DelegationPrivilege> privileges = new ArrayList<>(privilegeTableList.size());
         for (DelegationPrivilegeTable delegationPrivilegeTable : privilegeTableList){
             privileges.add(new DelegationPrivilege(delegationPrivilegeTable));
@@ -252,6 +252,13 @@ public class AuthDB {
         return parent;
     }
 
+    public String getCommPolicyCountValue() throws SQLException {
+        return sqLiteConnector.selectMetaDataValue(MetaDataTable.key.CommPolicyCount.name());
+    }
+    public boolean updateCommPolicyCountValue(long newCommPolicyCount) throws SQLException {
+        return sqLiteConnector.updateMetaData(MetaDataTable.key.CommPolicyCount.name(),
+                Long.toString(newCommPolicyCount));
+    }
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         return sqLiteConnector.appendSessionKeyOwner(keyID, newOwner);
     }
