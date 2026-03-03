@@ -342,6 +342,32 @@ function serverHostPortInputHandler(serverHostPort) {
 	    }
 	}
 }
+function serverHostPortInputHandlerResource(serverHostPort) {
+    if (serverHostPort == null) {
+        console.log('ServerHostPort is null, trying to close previous socket...');
+        if (currentSecureClient) {
+            currentSecureClient.close();
+            currentSecureClient = null;
+        }
+    }
+    else {
+        if (currentSessionKeyList.length > 0) {
+            initSecureCommWithSessionKey(currentSessionKeyList.shift(),
+                serverHostPort.host, serverHostPort.port);
+        }
+        else {
+            // hack to support exp2
+            if (parameters.keyId) {
+                sendSessionKeyRequest({keyId: parameters.keyId}, 1,
+                    handleSessionKeyResp, serverHostPort);
+            }
+            else {
+                sendSessionKeyRequest({group: 'ResourceA'}, parameters.numKeysPerRequest,
+                    handleSessionKeyResp, serverHostPort);
+            }
+        }
+    }
+}
 
 function toSendInputHandler(toSend) {
     if (currentSecureClient && currentState == clientCommState.IN_COMM) {
@@ -387,6 +413,15 @@ SecureCommClient.prototype.provideInput = function(port, input) {
 	else if (port == 'toSend') {
 		toSendInputHandler(input);
 	}
+}
+
+SecureCommClient.prototype.provideInputResource = function(port, input) {
+    if (port == 'serverHostPort') {
+        serverHostPortInputHandlerResource(input);
+    }
+    else if (port == 'toSend') {
+        toSendInputHandler(input);
+    }
 }
 
 SecureCommClient.prototype.setParameter = function(key, value) {

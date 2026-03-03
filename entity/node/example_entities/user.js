@@ -103,6 +103,44 @@ function commandInterpreter() {
             secureCommClient.getSessionKeyIdForGrantAccess(1, trustLevel);
              
         }
+        else if (command == 'initComm') {
+            var targetServerInfoList = secureCommClient.getTargetServerInfoList();
+            var commServerInfo = null;
+            if (message != undefined) {
+                var tokens = message.split(' ');
+                var serverName = tokens[0];
+                for (var i = 0; i < targetServerInfoList.length; i++) {
+                    if (targetServerInfoList[i].name == serverName) {
+                        commServerInfo = targetServerInfoList[i];
+                    }
+                }
+                if (commServerInfo == null) {
+                    console.log('cannot find communication server named ' + serverName);
+                    return;
+                }
+
+                if (tokens.length > 1) {
+                    var serverPort = parseInt(tokens[1]);
+                    console.log('serverPort is explicitly specified: ' + serverPort);
+                    commServerInfo.port = serverPort;
+                }
+            }
+            else {
+                commServerInfo = targetServerInfoList[0];
+            }
+
+            console.log('initComm command targeted to ' + commServerInfo.name);
+            secureCommClient.provideInputResource('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port});
+
+        }
+        else if (command == 'send') {
+            console.log('send command');
+            if (message == undefined) {
+                console.log('no message!');
+                return;
+            }
+            secureCommClient.provideInput('toSend', Buffer.from(message));
+        }
         else if (command == "delegateAuthority"){
             console.log('delegateAuthority (Perform privilege to grant delegation authority) command');
             console.log('Enter the delegate(subject) target1(object) target2');

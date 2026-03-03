@@ -333,10 +333,16 @@ public class SQLiteConnector {
         statement = connection.createStatement();
         sql = "CREATE TABLE IF NOT EXISTS " + DelegationInfoTable.T_DELEGATIONINFO + "(";
         sql += DelegationInfoTable.c.CPTID.name() + " INT NOT NULL,";
-        sql += DelegationInfoTable.c.Parent.name() + " TEXT NOT NULL,";
+        sql += DelegationInfoTable.c.Parent.name() + " INT NOT NULL,";
         sql += DelegationInfoTable.c.DelegatedTime.name() + " INT,";
         sql += DelegationInfoTable.c.RevokedTime.name() + " INT,";
-        sql += "PRIMARY KEY (" + DelegationInfoTable.c.CPTID.name() + "))";
+        sql += "PRIMARY KEY (" + DelegationInfoTable.c.CPTID.name() + ")";
+        sql += "FOREIGN KEY (" + DelegationInfoTable.c.CPTID.name() + ")" +
+                "REFERENCES " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
+                "(" + CommunicationPolicyTable.c.ID.name() + "),";
+        sql += "FOREIGN KEY (" + DelegationInfoTable.c.Parent.name() + ")" +
+                "REFERENCES " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
+                "(" + CommunicationPolicyTable.c.ID.name() + "))";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", DelegationInfoTable.T_DELEGATIONINFO);
