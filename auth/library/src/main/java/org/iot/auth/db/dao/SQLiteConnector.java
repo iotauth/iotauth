@@ -1001,6 +1001,28 @@ public class SQLiteConnector {
         return parent;
     }
 
+    public List<String> getAllChildren(String parentId) throws SQLException {
+        List<String> result = new ArrayList<>();
+        findChildrenCPTs(parentId, result);
+        return result;
+    }
+
+    public void findChildrenCPTs(String parentId, List<String> result) throws SQLException {
+        String sql = "SELECT " + DelegationInfoTable.c.CPTID + " FROM " + DelegationInfoTable.T_DELEGATIONINFO
+                + " WHERE " +   DelegationInfoTable.c.Parent + " = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, parentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String childId = rs.getString("CPTID");
+                    result.add(childId);
+                    findChildrenCPTs(childId, result);
+                }
+            }
+        }
+    }
+
     /**
      * Deletes expired cached session keys from the database.
      * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
@@ -1185,6 +1207,30 @@ public class SQLiteConnector {
         for (int i = 1; i < registeredEntityNameList.size(); i++) {
             sql += " OR " + RegisteredEntityTable.c.Name.name() + " = '" + registeredEntityNameList.get(i) + "'";
         }
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        return preparedStatement.execute();
+    }
+
+    public boolean deleteCommunicationPoliciesByIDs(List<String> targetPolicies) throws SQLException {
+        if (targetPolicies.isEmpty()) {
+            throw new RuntimeException("The list of ID of communication policies to be removed is empty!");
+        }
+        String idList = String.join(",", targetPolicies);
+        String sql = "DELETE FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
+        sql += " WHERE " + CommunicationPolicyTable.c.ID.name() + " IN (" + idList + ")";
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        return preparedStatement.execute();
+    }
+
+    public boolean deleteDelegationInfoByIDs(List<String> CPTIDs) throws SQLException {
+        if (CPTIDs.isEmpty()) {
+            throw new RuntimeException("The list of ID of Delegation Info to be removed is empty!");
+        }
+        String idList = String.join(",", CPTIDs);
+        String sql = "DELETE FROM " + DelegationInfoTable.T_DELEGATIONINFO;
+        sql += " WHERE " + DelegationInfoTable.c.CPTID.name() + " IN (" + idList + ")";
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
         return preparedStatement.execute();

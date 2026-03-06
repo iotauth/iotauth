@@ -143,14 +143,24 @@ function commandInterpreter() {
         }
         else if (command == "delegateAuthority"){
             console.log('delegateAuthority (Perform privilege to grant delegation authority) command');
-            console.log('Enter the delegate(subject) target1(object) target2');
+            console.log('Enter the delegatee(subject) delegated(object) validity');
             var spec = message.split(' ');
             var subject = spec[0];
             var object = spec[1];
             var validity = spec[2];
 
-            console.log(spec + " / " + subject + " / " + object + " / " + validity);
+            console.log(spec + " / subject: " + subject + " / object: " + object + " / validity: " + validity);
             secureCommClient.performPrivilege("DelegationGrant", subject, object, validity);
+        }
+        else if (command == "revoke"){
+            console.log('revoke (Perform privilege to revoke delegation authority) command');
+            console.log('Enter the delegatee(subject) delegated(object)');
+            var spec = message.split(' ');
+            var subject = spec[0];
+            var object = spec[1];
+
+            console.log("Full String: " + spec + " / subject: " + subject + " / object: " + object);
+            secureCommClient.performPrivilege("DelegationRevoke", subject, object, null);
         }
         else if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');

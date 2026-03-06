@@ -41,10 +41,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.SQLException;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -865,82 +862,138 @@ public abstract class EntityConnectionHandler {
             getLogger().debug("Auth nonce is correct!");
         }
 
-        String requestingGroup = requestingEntity.getGroup();
-
-        List<DelegationPrivilege> privileges = server.getPrivilegesByPrivilegedGroup(requestingGroup);
         JSONObject payload = privilegeReqMessage.getPayload();
-
-        // Get privilege information from privilegeReqMessage
-        // e.g. {"privilegeType":"DelegationGrant","subject":"a","object": "b","validity":"1","info":"AES-128-CBC:SHA256,1*day,1*hour"}
-        String subject = (String) payload.get("subject");
-        String object = (String) payload.get("object");
         String privilegeType = (String) payload.get("privilegeType");
-        String validity = (String) payload.get("validity");
+        String requestingGroup = requestingEntity.getGroup();
+        List<DelegationPrivilege> privileges = server.getPrivilegesByPrivilegedGroup(requestingGroup);
 
-        for (DelegationPrivilege p : privileges){
-            if (!p.getPrivilegeType().equals(privilegeType))
-                continue;
-            if (p.getSubject().equals(subject)
-                    && p.getObject().equals(object)
-                    && p.getPrivilegedGroup().equals(requestingGroup)){
-                CommunicationPolicy parentPolicy = server.getCommunicationPolicy(
-                        requestingGroup, CommunicationTargetType.fromStringValue("Group"), object);
+        JSONObject result = new JSONObject();
+        long currentTime = new java.util.Date().getTime();
+        getLogger().debug("Handling privilegeType {} request", privilegeType);
 
-                if (parentPolicy == null){
-                    getLogger().info("There's no parent policy!");
-                    return null;
-                }
-//                CommunicationPolicy parent = server.getCommunicationPolicy(requestingGroup,CommunicationTargetType.fromStringValue("Group"), object);
-//                getLogger().info(parent.toString());
-                long reqValidity = DateHelper.parseTimePeriod(validity);
-                long privilegeValidity = DateHelper.parseTimePeriod(p.getValidity());
-                String expiration = "";
-                if (reqValidity >= privilegeValidity){
-                    expiration = p.getValidity();
-                } else {
-                    expiration = validity;
-                }
-                JSONObject info = p.getInfo();
-                String commPolicyCountValue = server.getCommPolicyCountValue();
-                long curCommPolicyCount = Long.parseLong(commPolicyCountValue);
+        switch (privilegeType) {
+            case ("DelegationGrant"): {
+                // Get privilege information from privilegeReqMessage
+                // e.g. {"privilegeType":"DelegationGrant","subject":"a","object": "b","validity":"1*day","info":"AES-128-CBC:SHA256,1*day,1*hour"}
+                String subject = (String) payload.get("subject");
+                String object = (String) payload.get("object");
+                String validity = (String) payload.get("validity");
 
-                CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
-                        .setID(curCommPolicyCount+1)
-                        .setReqGroup(subject)
-                        .setTargetTypeVal("Group")
-                        .setTargetType(CommunicationTargetType.fromStringValue("Group"))
-                        .setTarget(object)
-                        .setMaxNumSessionKeyOwners(2)
-                        .setSessionCryptoSpec((String) info.get("cryptoSpec"))
-                        .setAbsValidityStr((String) info.get("absValidity"))
-                        .setRelValidityStr((String) info.get("relValidity"))
-                        .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration))
-                        .setIsDelegated(1);
-                DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
-                        .setCPTId(curCommPolicyCount+1)
-                        .setParent(parentPolicy.getId())
-                        .setDelegatedTime(new Date().getTime())
-                        .setRevokedTime(0);
+                for (DelegationPrivilege p : privileges){
+                    if (!p.getPrivilegeType().equals(privilegeType))
+                        continue;
+                    if (p.getSubject().equals(subject)
+                            && p.getObject().equals(object)
+                            && p.getPrivilegedGroup().equals(requestingGroup)){
+                        CommunicationPolicy parentPolicy = server.getCommunicationPolicy(
+                                requestingGroup, CommunicationTargetType.fromStringValue("Group"), object);
 
-                boolean addNewCommunicationPolicy = server.addCommunicationPolicy(newCommunicationPolicyTable);
-                boolean addNewDelegationInfo = server.addDelegationInfo(newDelegationInfoTable);
-                boolean updateCommPolicyCount = server.updateCommPolicyCountValue(curCommPolicyCount+1);
-                if (updateCommPolicyCount){
-                    getLogger().info("Failed to update new Communication Policy Count number!");
-                }
-                if (!addNewCommunicationPolicy){
-                    getLogger().info("Failed to add new Communication Policy!");
-                    return null;
-                }
-                if (!addNewDelegationInfo){
-                    getLogger().info("Failed to add new Delegation Info!");
-                    return null;
-                }
+                        if (parentPolicy == null){
+                            getLogger().info("There's no parent policy!");
+                            return null;
+                        }
+                        if (parentPolicy.getExpiration() < currentTime){
+                            getLogger().info("Parent policy has been expired!");
+                            // TODO remove parent policy
+                            return null;
+                        }
+                        long reqValidity = DateHelper.parseTimePeriod(validity);
+                        long privilegeValidity = DateHelper.parseTimePeriod(p.getValidity());
+                        String expiration = "";
+                        if (reqValidity >= privilegeValidity){
+                            expiration = p.getValidity();
+                        } else {
+                            expiration = validity;
+                        }
+                        JSONObject info = p.getInfo();
+                        String commPolicyCountValue = server.getCommPolicyCountValue();
+                        long curCommPolicyCount = Long.parseLong(commPolicyCountValue);
 
-                return newCommunicationPolicyTable.toJSONObject();
+                        CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
+                                .setID(curCommPolicyCount+1)
+                                .setReqGroup(subject)
+                                .setTargetTypeVal("Group")
+                                .setTargetType(CommunicationTargetType.fromStringValue("Group"))
+                                .setTarget(object)
+                                .setMaxNumSessionKeyOwners(2)
+                                .setSessionCryptoSpec((String) info.get("cryptoSpec"))
+                                .setAbsValidityStr((String) info.get("absValidity"))
+                                .setRelValidityStr((String) info.get("relValidity"))
+                                .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration))
+                                .setIsDelegated(1);
+                        DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
+                                .setCPTId(curCommPolicyCount+1)
+                                .setParent(parentPolicy.getId())
+                                .setDelegatedTime(new Date().getTime())
+                                .setRevokedTime(0);
+
+                        boolean addNewCommunicationPolicy = server.addCommunicationPolicy(newCommunicationPolicyTable);
+                        boolean addNewDelegationInfo = server.addDelegationInfo(newDelegationInfoTable);
+                        boolean updateCommPolicyCount = server.updateCommPolicyCountValue(curCommPolicyCount+1);
+                        if (updateCommPolicyCount){
+                            getLogger().info("Failed to update new Communication Policy Count number!");
+                        }
+                        if (!addNewCommunicationPolicy){
+                            getLogger().info("Failed to add new Communication Policy!");
+                            return null;
+                        }
+                        if (!addNewDelegationInfo){
+                            getLogger().info("Failed to add new Delegation Info!");
+                            return null;
+                        }
+                        result.put("action", "DelegationGrant");
+                        result.put("newCommunicationPolicy", newCommunicationPolicyTable.toJSONObject());
+                        result.put("curCommPolicyCount", server.getCommPolicyCountValue());
+                        return result;
+                    }
+                }
+                getLogger().info("There's no corresponding privilege!");
+                return null;
+            }
+            case ("DelegationRevoke"): {
+                String subject = (String) payload.get("subject");
+                String object = (String) payload.get("object");
+                for (DelegationPrivilege p : privileges) {
+                    if (!p.getPrivilegeType().equals(privilegeType))
+                        continue;
+                    if (p.getSubject().equals(subject) && p.getObject().equals(object)
+                            && p.getPrivilegedGroup().equals(requestingGroup)) {
+                        CommunicationPolicy revokeTargetPolicy = server.getCommunicationPolicy(
+                                subject, CommunicationTargetType.fromStringValue("Group"), object);
+                        if (revokeTargetPolicy == null){
+                            getLogger().info("There's no corresponding policy to revoke!");
+                            return null;
+                        }
+                        String revokeTargetPolicyId = String.valueOf(revokeTargetPolicy.getId());
+                        getLogger().info("Find target policy ID {}", revokeTargetPolicyId);
+                        List<String> targetPolicies = server.getAllChildrenByParentID(revokeTargetPolicyId);
+                        getLogger().info("Find all cascaded policies {}", targetPolicies);
+
+                        List<String> allCPTIDsToBeRemoved = new ArrayList<>();
+                        allCPTIDsToBeRemoved.add(revokeTargetPolicyId);
+                        allCPTIDsToBeRemoved.addAll(targetPolicies);
+
+                        boolean removeCommunicationPolicies = server.removeCommunicationPolicies(allCPTIDsToBeRemoved);
+                        if (!removeCommunicationPolicies){
+                            getLogger().info("Failed to remove Communication Policies!");
+                            return null;
+                        }
+
+                        boolean removeDelegationInfo = server.removeDelegationInfo(allCPTIDsToBeRemoved);
+                        if (!removeDelegationInfo){
+                            getLogger().info("Failed to remove Delegation Info!");
+                            return null;
+                        }
+
+                        String revokedPolicy = revokeTargetPolicy.toString();
+                        result.put("action", "DelegationRevoke");
+                        result.put("revokedTarget", revokedPolicy);
+                        result.put("revokedCascadedPolicyIDs", targetPolicies);
+                        return result;
+                    }
+                }
             }
         }
-        getLogger().info("There's no corresponding privilege!");
         return null;
     }
 

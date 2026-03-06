@@ -35,6 +35,7 @@ public class CommunicationPolicy {
 
         this.absValidity = communicationPolicyTable.getAbsValidity();
         this.relValidity = communicationPolicyTable.getRelValidity();
+        this.expiration = communicationPolicyTable.getExpiration();
     }
 
     public long getId() {
@@ -63,11 +64,14 @@ public class CommunicationPolicy {
     public long getRelValidity() {
         return relValidity;
     }
+    public long getExpiration() {
+        return expiration;
+    }
 
     public String toString() {
-        return "ID" + id + "\tRequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
+        return "ID " + id + "\tRequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
                 "\t" + sessionCryptoSpec.toString() +
-                "\tAbsoluteValidity: " + absValidity + "\tRelativeValidity: " + relValidity;
+                "\tAbsoluteValidity: " + absValidity + "\tRelativeValidity: " + relValidity + "\tExpiration: " + expiration ;
     }
 
 
@@ -81,5 +85,5 @@ public class CommunicationPolicy {
 
     private long absValidity;
     private long relValidity;
-
+    private long expiration;
 }

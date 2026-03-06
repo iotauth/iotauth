@@ -151,6 +151,15 @@ public class AuthDB {
         return null;
     }
 
+    public CommunicationPolicy getCommunicationPolicyByID(long ID) {
+        for (CommunicationPolicy communicationPolicy : communicationPolicyList) {
+            if (communicationPolicy.getId() == ID) {
+                return communicationPolicy;
+            }
+        }
+        return null;
+    }
+
     /**
      * Update the distribution key of the specified entity.
      * @param entityName The name of the entity whose distribution key to be updated.
@@ -250,6 +259,10 @@ public class AuthDB {
     public String selectParentById(String delegationInfoTableId) throws SQLException{
         String parent = sqLiteConnector.selectParentById(delegationInfoTableId);
         return parent;
+    }
+
+    public List<String> getAllChildrenByParentID(String parentID) throws SQLException{
+        return sqLiteConnector.getAllChildren(parentID);
     }
 
     public String getCommPolicyCountValue() throws SQLException {
@@ -469,8 +482,15 @@ public class AuthDB {
     public void insertCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) throws SQLException, ClassNotFoundException {
         sqLiteConnector.insertRecords(newCommunicationPolicyTable);
     }
+    public boolean removeCommunicationPolicies(List<String> targetPolicies) throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.deleteCommunicationPoliciesByIDs(targetPolicies);
+    }
 
     public void insertDelegationInfo(DelegationInfoTable delegationInfoTable) throws SQLException, ClassNotFoundException {
         sqLiteConnector.insertRecords(delegationInfoTable);
+    }
+
+    public boolean removeDelegationInfo(List<String> CPTIDs) throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.deleteDelegationInfoByIDs(CPTIDs);
     }
 }

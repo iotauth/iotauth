@@ -446,6 +446,27 @@ public class AuthServer {
         return true;
     }
 
+    public boolean removeDelegationInfo(List<String> CPTIDs){
+        try {
+            db.removeDelegationInfo(CPTIDs);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public List<String> getAllChildrenByParentID(String parentID){
+        List<String> result = new ArrayList<>();
+        try {
+            result = db.getAllChildrenByParentID(parentID);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return result;
+    }
+
     public boolean addCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) {
         try {
             db.insertCommunicationPolicy(newCommunicationPolicyTable);
@@ -457,6 +478,17 @@ public class AuthServer {
         return true;
     }
 
+    public boolean removeCommunicationPolicies(List<String> targetPolicies) {
+        try {
+            db.removeCommunicationPolicies(targetPolicies);
+            db.reloadCommunicationPolicyDB();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+    
     /**
      * Method for exposing an AuthDB operation, getCommunicationPolicy
      * @param reqGroup The requesting group's name in communication policy.
@@ -466,6 +498,15 @@ public class AuthServer {
      */
     public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
         return db.getCommunicationPolicy(reqGroup, targetType, target);
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, getCommunicationPolicy
+     * @param ID The target communication policy's ID.
+     * @return Communication policy found, or {@code null} if the specified communication policy does not exist.
+     */
+    public CommunicationPolicy getCommunicationPolicyByID(long ID) {
+        return db.getCommunicationPolicyByID(ID);
     }
 
     /**
@@ -1102,7 +1143,6 @@ public class AuthServer {
     public boolean removeRegisteredEntity(String registeredEntityName) {
         List<String> registeredEntityNameList = new ArrayList<>();
         registeredEntityNameList.add(registeredEntityName);
-        registeredEntityNameList.add("net1.udpClient");
         try {
             db.deleteRegisteredEntities(registeredEntityNameList);
             db.reloadRegEntityDB();
