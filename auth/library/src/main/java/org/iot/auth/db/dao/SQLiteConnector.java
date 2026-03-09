@@ -162,6 +162,11 @@ public class SQLiteConnector {
         if (useInMemoryProtection) {
             if (connection == null || connection.isClosed()) {
                 connection = DriverManager.getConnection("jdbc:sqlite:");
+                // Enable SQLite foreign key enforcement (required for ON DELETE CASCADE in DelegationInfoTable)
+                Statement pragmaStmt = connection.createStatement();
+                pragmaStmt.execute("PRAGMA foreign_keys = ON");
+                pragmaStmt.close();
+
                 File dbFile = new File(dbPath);
                 if (dbFile.exists() && !dbFile.isDirectory()) {
                     byte[] encryptedDBBytes = FileIOHelper.readFully(dbPath);
@@ -179,6 +184,9 @@ public class SQLiteConnector {
         else {
             if (connection == null || connection.isClosed()) {
                 connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+                Statement pragmaStmt = connection.createStatement();
+                pragmaStmt.execute("PRAGMA foreign_keys = ON");
+                pragmaStmt.close();
             }
         }
     }
@@ -336,11 +344,11 @@ public class SQLiteConnector {
         sql += DelegationInfoTable.c.Parent.name() + " INT NOT NULL,";
         sql += DelegationInfoTable.c.DelegatedTime.name() + " INT,";
         sql += DelegationInfoTable.c.RevokedTime.name() + " INT,";
-        sql += "PRIMARY KEY (" + DelegationInfoTable.c.CPTID.name() + ")";
-        sql += "FOREIGN KEY (" + DelegationInfoTable.c.CPTID.name() + ")" +
+        sql += "PRIMARY KEY (" + DelegationInfoTable.c.CPTID.name() + "),";
+        sql += "FOREIGN KEY (" + DelegationInfoTable.c.CPTID.name() + ") " +
                 "REFERENCES " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
-                "(" + CommunicationPolicyTable.c.ID.name() + "),";
-        sql += "FOREIGN KEY (" + DelegationInfoTable.c.Parent.name() + ")" +
+                "(" + CommunicationPolicyTable.c.ID.name() + ") ON DELETE CASCADE,";
+        sql += "FOREIGN KEY (" + DelegationInfoTable.c.Parent.name() + ") " +
                 "REFERENCES " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
                 "(" + CommunicationPolicyTable.c.ID.name() + "))";
         if (DEBUG) logger.info(sql);
@@ -1021,6 +1029,34 @@ public class SQLiteConnector {
                 }
             }
         }
+    }
+
+    /**
+     * Deletes expired communication policies from the database.
+     * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public boolean deleteExpiredCommunicationPolicies() throws SQLException {
+        long currentTime = new java.util.Date().getTime();
+        String countSql = "SELECT COUNT(*) FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
+                " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < " + currentTime;
+        ResultSet rs = connection.prepareStatement(countSql).executeQuery();
+        if (rs.next()) {
+            int count = rs.getInt(1);
+            if (count == 0) {
+                logger.info("No expired communication policies.");
+            } else {
+                logger.info("Deleting {} expired communication policies", count);
+            }
+        }
+        String sql = "DELETE FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
+
+        sql += " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < " + currentTime;
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        return preparedStatement.execute();
     }
 
     /**

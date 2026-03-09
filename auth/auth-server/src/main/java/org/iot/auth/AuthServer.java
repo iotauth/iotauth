@@ -322,6 +322,20 @@ public class AuthServer {
             backupRequester.start();
         }
 
+        Timer commPolicyCleanerTimer = new Timer(true);
+        commPolicyCleanerTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    cleanExpiredCommunicationPolicies();
+                    cleanExpiredSessionKeys();
+                    logger.info("Expired communication policies cleaned.");
+                } catch (Exception e) {
+                    logger.error("Failed to clean expired communication policies", e);
+                }
+            }
+        }, 0, 2 * 60 * 1000);
+
         clientForTrustedAuths.start();
 
         serverForTrustedAuths.start();
@@ -641,6 +655,15 @@ public class AuthServer {
      */
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
         db.cleanExpiredSessionKeys();
+    }
+
+    /**
+     * Method for exposing an AuthDB operation, cleanExpiredCommunicationPolicies
+     * @throws SQLException If an error occurs in SQL processing.
+     * @throws ClassNotFoundException If the class is not found.
+     */
+    public void cleanExpiredCommunicationPolicies() throws SQLException, ClassNotFoundException {
+        db.cleanExpiredCommunicationPolicies();
     }
 
     /**
