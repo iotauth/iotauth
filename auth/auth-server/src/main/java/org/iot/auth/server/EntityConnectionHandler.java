@@ -622,6 +622,7 @@ public abstract class EntityConnectionHandler {
         if (sessionKeyReq.getNumKeys() > requestingEntity.getMaxSessionKeysPerRequest()) {
             throw new TooManySessionKeysRequestedException("More session keys than allowed are requested!");
         }
+        long currentTime = new java.util.Date().getTime();
 
         JSONObject purpose = sessionKeyReq.getPurpose();
         SessionKeyReqPurpose reqPurpose = new SessionKeyReqPurpose(purpose);
@@ -638,6 +639,13 @@ public abstract class EntityConnectionHandler {
                 if (communicationPolicy == null) {
                     throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
                 }
+                if (communicationPolicy.getExpiration() < currentTime){
+                    getLogger().info("Communication Policy has been expired!");
+                    String policyId = String.valueOf(communicationPolicy.getId());
+                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    getLogger().info("Expired policy has been removed!");
+                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
+                }
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
@@ -653,6 +661,13 @@ public abstract class EntityConnectionHandler {
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 if (communicationPolicy == null) {
                     throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
+                }
+                if (communicationPolicy.getExpiration() < currentTime){
+                    getLogger().info("Communication Policy has been expired!");
+                    String policyId = String.valueOf(communicationPolicy.getId());
+                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    getLogger().info("Expired policy has been removed!");
+                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 SessionKeyPurpose sessionKeyPurpose =
@@ -747,6 +762,14 @@ public abstract class EntityConnectionHandler {
                 if (communicationPolicy == null) {
                     throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
                 }
+                if (communicationPolicy.getExpiration() < currentTime){
+                    getLogger().info("Communication Policy has been expired!");
+                    String policyId = String.valueOf(communicationPolicy.getId());
+                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    getLogger().info("Expired policy has been removed!");
+                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
+                }
+
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
@@ -894,7 +917,9 @@ public abstract class EntityConnectionHandler {
                         }
                         if (parentPolicy.getExpiration() < currentTime){
                             getLogger().info("Parent policy has been expired!");
-                            // TODO remove parent policy
+                            String policyId = String.valueOf(parentPolicy.getId());
+                            server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                            getLogger().info("Expired policy with Id {} has been removed!", policyId);
                             return null;
                         }
                         long reqValidity = DateHelper.parseTimePeriod(validity);
