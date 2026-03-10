@@ -137,6 +137,7 @@ public class AuthServer {
         if (properties.getQpsThrottlingEnabled()) {
             qpsCalculator = new QPSCalculator(properties.getQpsLimit(), properties.getQpsCalculationBucketSizeInSec());
         }
+        cleanupCycle = properties.getCleanupCycleInMs();
 
         logger.info("Auth server information. Auth ID: " + properties.getAuthID() +
                 ", Entity Ports TCP: " + entityTcpPortServerSocket.getLocalPort() +
@@ -334,7 +335,7 @@ public class AuthServer {
                     logger.error("Failed to clean expired communication policies", e);
                 }
             }
-        }, 0, 2 * 60 * 1000);
+        }, 0, cleanupCycle);
 
         clientForTrustedAuths.start();
 
@@ -1216,4 +1217,5 @@ public class AuthServer {
     private boolean backupEnabled;
     private boolean bluetoothEnabled;
     private QPSCalculator qpsCalculator = null;
+    private long cleanupCycle;
 }

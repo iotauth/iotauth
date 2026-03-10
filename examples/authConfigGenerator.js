@@ -392,7 +392,8 @@ function generatePropertiesFiles() {
             // currently default is false
             'qps_throttling_enabled': auth.capacityQpsLimit == null ? false : true,
             'qps_limit': auth.capacityQpsLimit == null ? 10 : auth.capacityQpsLimit/60.0,
-            'qps_calculation_bucket_size_in_sec': 60
+            'qps_calculation_bucket_size_in_sec': 60,
+            'cleanup_cycle_in_ms': 2*60*1000 // 1 hour 60*60*1000
         };
         var strProperties = '';
         for (var key in properties) {

@@ -62,7 +62,8 @@ public class AuthServerProperties {
 
         qps_throttling_enabled,
         qps_limit,
-        qps_calculation_bucket_size_in_sec
+        qps_calculation_bucket_size_in_sec,
+        cleanup_cycle_in_ms
     }
 
     private Properties prop;
@@ -72,16 +73,16 @@ public class AuthServerProperties {
     private String hostName;
 
     private int entityTcpPort;
-    private long entityTcpPortTimeout;
+    private long entityTcpPortTimeout;          // millisecond
 
     private int entityUdpPort;
-    private long entityUdpPortTimeout;
+    private long entityUdpPortTimeout;          // millisecond
 
     private int trustedAuthPort;
-    private long trustedAuthPortIdleTimeout;
+    private long trustedAuthPortIdleTimeout;    // millisecond
 
     private int contextualCallbackPort;
-    private long contextualCallbackIdleTimeout;
+    private long contextualCallbackIdleTimeout; // millisecond
     private boolean contextualCallbackEnabled;
 
     private String entityKeyStorePath;
@@ -99,6 +100,7 @@ public class AuthServerProperties {
     private boolean qpsThrottlingEnabled;
     private float qpsLimit;
     private int qpsCalculationBucketSizeInSec;
+    private long cleanupCycleInMs;
 
     public AuthServerProperties(String propertyFilePath, String basePath) throws IOException {
         _propertyFilePath = propertyFilePath;
@@ -192,6 +194,9 @@ public class AuthServerProperties {
 
             qpsCalculationBucketSizeInSec = Integer.parseInt(prop.getProperty(key.qps_calculation_bucket_size_in_sec.toString()));
             logger.info("key:value = {}:{}", key.qps_calculation_bucket_size_in_sec.toString(), qpsCalculationBucketSizeInSec);
+
+            cleanupCycleInMs = Long.parseLong(prop.getProperty(key.cleanup_cycle_in_ms.toString()));
+            logger.info("key:value = {}:{}", key.cleanup_cycle_in_ms.toString(), cleanupCycleInMs);
         }
         else {
             throw new FileNotFoundException("property file (" + _propertyFilePath + ") not found in the classpath");
@@ -270,5 +275,8 @@ public class AuthServerProperties {
     }
     public int getQpsCalculationBucketSizeInSec() {
         return qpsCalculationBucketSizeInSec;
+    }
+    public long getCleanupCycleInMs() {
+        return cleanupCycleInMs;
     }
 }
