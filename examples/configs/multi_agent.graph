@@ -599,9 +599,7 @@
 			"privilegeType": "DelegationRevoke",
 			"privilegedGroup": "Users",
 			"subject": "Node1",
-			"object": "ResourceA",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"object": "ResourceA"
 		},
 		{
 			"privilegeType": "DelegationGrant",

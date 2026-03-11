@@ -325,8 +325,8 @@ public class SQLiteConnector {
         sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + " TEXT NOT NULL,";
         sql += DelegationPrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
         sql += DelegationPrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
-        sql += DelegationPrivilegeTable.c.Validity.name() + " TEXT NOT NULL,";
-        sql += DelegationPrivilegeTable.c.Info.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.Validity.name() + " TEXT,";
+        sql += DelegationPrivilegeTable.c.Info.name() + " TEXT,";
         sql += "PRIMARY KEY (" + DelegationPrivilegeTable.c.PrivilegeType.name() + ",";
         sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
         sql += DelegationPrivilegeTable.c.Subject.name() + ",";
@@ -1037,25 +1037,32 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public boolean deleteExpiredCommunicationPolicies() throws SQLException {
+    public List<String> deleteExpiredCommunicationPolicies() throws SQLException {
         long currentTime = new java.util.Date().getTime();
-        String countSql = "SELECT COUNT(*) FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
+        List<String> expiredIds = new ArrayList<>();
+        String selectSql = "SELECT COUNT(*) FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
                 " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < " + currentTime;
-        ResultSet rs = connection.prepareStatement(countSql).executeQuery();
-        if (rs.next()) {
-            int count = rs.getInt(1);
-            if (count == 0) {
-                logger.info("No expired communication policies.");
-            } else {
-                logger.info("Deleting {} expired communication policies", count);
+        try (PreparedStatement ps = connection.prepareStatement(selectSql)) {
+            ps.setLong(1, currentTime);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    expiredIds.add(rs.getString(1));
+                }
             }
+        }
+        if (expiredIds.isEmpty()) {
+            logger.info("No expired communication policies.");
+        } else {
+            logger.info("Deleting {} expired communication policies {}", expiredIds.size(), expiredIds);
         }
         String sql = "DELETE FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
 
         sql += " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < " + currentTime;
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
-        return preparedStatement.execute();
+        preparedStatement.execute();
+        return expiredIds;
     }
 
     /**
