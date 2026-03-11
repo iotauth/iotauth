@@ -930,6 +930,7 @@ public abstract class EntityConnectionHandler {
                         } else {
                             expiration = validity;
                         }
+
                         JSONObject info = p.getInfo();
                         String commPolicyCountValue = server.getCommPolicyCountValue();
                         long curCommPolicyCount = Long.parseLong(commPolicyCountValue);
@@ -944,7 +945,8 @@ public abstract class EntityConnectionHandler {
                                 .setSessionCryptoSpec((String) info.get("cryptoSpec"))
                                 .setAbsValidityStr((String) info.get("absValidity"))
                                 .setRelValidityStr((String) info.get("relValidity"))
-                                .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration))
+                                // Ensure expiration does not exceed parent policy expiration
+                                .setExpiration(Math.min(new Date().getTime() + DateHelper.parseTimePeriod(expiration), parentPolicy.getExpiration()))
                                 .setIsDelegated(1);
                         DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
                                 .setCPTId(curCommPolicyCount+1)
