@@ -36,6 +36,7 @@ public class CommunicationPolicy {
         this.absValidity = communicationPolicyTable.getAbsValidity();
         this.relValidity = communicationPolicyTable.getRelValidity();
         this.expiration = communicationPolicyTable.getExpiration();
+        this.isDelegated = communicationPolicyTable.getIsDelegated();
     }
 
     public long getId() {
@@ -67,6 +68,9 @@ public class CommunicationPolicy {
     public long getExpiration() {
         return expiration;
     }
+    public int getIsDelegated() {
+        return isDelegated;
+    }
 
     public String toString() {
         return "ID " + id + "\tRequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
@@ -86,4 +90,5 @@ public class CommunicationPolicy {
     private long absValidity;
     private long relValidity;
     private long expiration;
+    private int isDelegated;
 }

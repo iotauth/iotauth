@@ -1020,7 +1020,6 @@ public class SQLiteConnector {
                 + " WHERE " +   DelegationInfoTable.c.Parent + " = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, parentId);
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String childId = rs.getString("CPTID");
