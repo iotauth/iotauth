@@ -32,17 +32,17 @@
 		}
 	],
 	"assignments": {
-		"net1.alexAgent": 101,
+		"net1.node1": 101,
 		"net1.Alex": 101,
 		"net1.resourceA": 101,
-		"net1.highTrustAgent": 101,
-		"net1.nodeA": 101,
-		"net1.nodeB": 101,
+		"net1.node2": 101,
+		"net1.node3": 101,
+		"net1.node4": 101,
 		"net1.resourceB": 101,
 		"net1.resourceC": 101,
-		"net1.rcHighTrustAgent": 101,
-		"net1.rcMediumTrustAgent": 101,
-		"net1.rcLowTrustAgent": 101,
+		"net1.node5": 101,
+		"net1.node6": 101,
+		"net1.node7": 101,
 		"net2.baileyAgent": 102,
 		"net2.Bailey": 102,
 		"net2.rcUser": 102,
@@ -58,14 +58,14 @@
 	},
 	"entityList": [
 		{
-			"group": "MyAgents",
-			"name": "net1.alexAgent",
+			"group": "Node1",
+			"name": "net1.node1",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"distKeyValidityPeriod": "365*day",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.AlexAgent",
+			"credentialPrefix": "Net1.Node1",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -123,14 +123,14 @@
 			]
 		},
 		{
-			"group": "ExternalAgents",
-			"name": "net1.highTrustAgent",
+			"group": "Node2",
+			"name": "net1.node2",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
-			"distKeyValidityPeriod": "1*hour",
+			"distKeyValidityPeriod": "30*day",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.HighTrustAgent",
+			"credentialPrefix": "Net1.Node2",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -144,14 +144,14 @@
 			]
 		},
 		{
-			"group": "NodeA",
-			"name": "net1.nodeA",
+			"group": "Node3",
+			"name": "net1.node3",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
-			"distKeyValidityPeriod": "1*hour",
+			"distKeyValidityPeriod": "30*day",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.NodeA",
+			"credentialPrefix": "Net1.Node3",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -165,14 +165,14 @@
 			]
 		},
 		{
-			"group": "NodeB",
-			"name": "net1.nodeB",
+			"group": "Node4",
+			"name": "net1.node4",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
-			"distKeyValidityPeriod": "1*hour",
+			"distKeyValidityPeriod": "30*day",
 			"maxSessionKeysPerRequest": 30,
 			"netName": "net1",
-			"credentialPrefix": "Net1.NodeB",
+			"credentialPrefix": "Net1.Node4",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -232,14 +232,14 @@
 			]
 		},
 		{
-			"group": "ExternalAgents",
-			"name": "net1.rcHighTrustAgent",
+			"group": "Node5",
+			"name": "net1.node5",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
-			"distKeyValidityPeriod": "4*hour",
+			"distKeyValidityPeriod": "30*day",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.RcHighTrustAgent",
+			"credentialPrefix": "Net1.Node5",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -253,14 +253,14 @@
 			]
 		},
 		{
-			"group": "ExternalAgents",
-			"name": "net1.rcMediumTrustAgent",
+			"group": "Node6",
+			"name": "net1.node6",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"distKeyValidityPeriod": "2*hour",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.RcMediumTrustAgent",
+			"credentialPrefix": "Net1.Node6",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -274,14 +274,14 @@
 			]
 		},
 		{
-			"group": "ExternalAgents",
-			"name": "net1.rcLowTrustAgent",
+			"group": "Node7",
+			"name": "net1.node7",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": true,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 30,
 			"netName": "net1",
-			"credentialPrefix": "Net1.RcLowTrustAgent",
+			"credentialPrefix": "Net1.Node7",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -558,31 +558,39 @@
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Users",
-			"subject": "MyAgents",
+			"subject": "Node1",
 			"object": "ResourceA",
 			"validity": "1*day",
 			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 		},
 		{
 			"privilegeType": "DelegationGrant",
-			"privilegedGroup": "MyAgents",
-			"subject": "ExternalAgents",
+			"privilegedGroup": "Node1",
+			"subject": "Node2",
 			"object": "ResourceA",
 			"validity": "1*day",
 			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 		},
 		{
 			"privilegeType": "DelegationGrant",
-			"privilegedGroup": "ExternalAgents",
-			"subject": "NodeA",
+			"privilegedGroup": "Node2",
+			"subject": "Node3",
 			"object": "ResourceA",
 			"validity": "1*day",
 			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
 		},
 		{
 			"privilegeType": "DelegationGrant",
-			"privilegedGroup": "NodeA",
-			"subject": "NodeB",
+			"privilegedGroup": "Node3",
+			"subject": "Node4",
+			"object": "ResourceA",
+			"validity": "1*day",
+			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+		},
+		{
+			"privilegeType": "DelegationGrant",
+			"privilegedGroup": "Node4",
+			"subject": "Node5",
 			"object": "ResourceA",
 			"validity": "1*day",
 			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
@@ -590,7 +598,7 @@
 		{
 			"privilegeType": "DelegationRevoke",
 			"privilegedGroup": "Users",
-			"subject": "MyAgents",
+			"subject": "Node1",
 			"object": "ResourceA",
 			"validity": "1*day",
 			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
