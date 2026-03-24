@@ -284,8 +284,8 @@ public class AuthDB {
         sqLiteConnector.deleteExpiredCahcedSessionKeys();
     }
 
-    public void cleanExpiredCommunicationPolicies() throws SQLException, ClassNotFoundException {
-        sqLiteConnector.deleteExpiredCommunicationPolicies();
+    public List<String> cleanExpiredCommunicationPolicies() throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.deleteExpiredCommunicationPolicies();
     }
 
     public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {

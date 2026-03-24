@@ -30,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -175,13 +176,29 @@ public class AuthCommandLine extends Thread  {
                         logger.info("\n Information of new communication policy was not entered correctly.");
                         continue;
                     }
-                    logger.info("Entered new entity information");
+                    logger.info("Entered new communication policy information");
                     logger.info(newCommunicationPolicy.toString());
                     if (server.addCommunicationPolicy(newCommunicationPolicy)) {
                         logger.info("New communication policy has been added successfully.");
                     }
                     else {
                         logger.error("New communication policy has NOT been added due to errors.");
+                    }
+                }
+                else if (command.equals("remove cp")) {
+                    logger.info("\n Remove the communication policy command");
+                    List<String> toBeRemovedPolicy = getToBeRemovedCommunicationPolicyInformation(br);
+                    if (toBeRemovedPolicy == null) {
+                        logger.info("\n ID of the communication policy to be removed was not entered correctly.");
+                        continue;
+                    }
+                    logger.info("Entered ID of the communication policy to be removed");
+                    logger.info(toBeRemovedPolicy.toString());
+                    if (server.removeCommunicationPolicies(toBeRemovedPolicy)) {
+                        logger.info("The communication policy has been removed successfully.");
+                    }
+                    else {
+                        logger.error("The communication policy has NOT been removed due to errors.");
                     }
                 }
                 else {
@@ -338,6 +355,17 @@ public class AuthCommandLine extends Thread  {
                 .setSessionCryptoSpec(sessionCryptoSpec)
                 .setAbsValidityStr(absoluteValidityString)
                 .setRelValidityStr(relativeValidityString);
+    }
+
+    private List<String> getToBeRemovedCommunicationPolicyInformation(BufferedReader br) throws IOException {
+        List<String> ids = new ArrayList<>();
+        logger.info("\nEnter the ID of communication policy to be removed:");
+        String requestedId = br.readLine();
+        if (requestedId.isEmpty()) {
+            return null;
+        }
+        ids.add(requestedId);
+        return ids;
     }
 
     private AuthServer server;
