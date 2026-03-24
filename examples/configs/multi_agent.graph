@@ -1,0 +1,272 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901,
+			"callbackPort": 21903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		}
+	],
+	"authTrusts": [],
+	"assignments": {
+		"net1.node1": 101,
+		"net1.node0": 101,
+		"net1.resourceA": 101,
+		"net1.node2": 101,
+		"net1.node3": 101,
+		"net1.node4": 101,
+		"net1.resourceB": 101,
+		"net1.resourceC": 101,
+		"net1.resourceD": 101,
+		"net1.node5": 101,
+		"net1.node6": 101
+	},
+	"entityList": [
+		{
+			"group": "Node1",
+			"name": "net1.node1",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Node1",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Node0",
+			"name": "net1.node0",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Node0",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "ResourceA",
+			"name": "net1.resourceA",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.ResourceA",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Node2",
+			"name": "net1.node2",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "30*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Node2",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Node3",
+			"name": "net1.node3",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "30*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Node3",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Node4",
+			"name": "net1.node4",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "30*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Node4",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "ResourceB",
+			"name": "net1.resourceB",
+			"port": 21200,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.ResourceB",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "ResourceC",
+			"name": "net1.resourceC",
+			"port": 21300,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.ResourceC",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "ResourceD",
+			"name": "net1.resourceD",
+			"port": 21400,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "365*day",
+			"maxSessionKeysPerRequest": 30,
+			"netName": "net1",
+			"credentialPrefix": "Net1.ResourceD",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Node5",
+			"name": "net1.node5",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "30*day",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Node5",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Node6",
+			"name": "net1.node6",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": true,
+			"distKeyValidityPeriod": "2*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Node6",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		}
+	],
+	"filesharingLists": []
+}
