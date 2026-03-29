@@ -664,7 +664,15 @@ public class AuthServer {
      * @throws ClassNotFoundException If the class is not found.
      */
     public void cleanExpiredCommunicationPolicies() throws SQLException, ClassNotFoundException {
-        db.cleanExpiredCommunicationPolicies();
+        List<String> expiredIds = db.cleanExpiredCommunicationPolicies();
+        logger.debug("Expired policies {}", expiredIds);
+        // Remove child policies which their parents has been expired.
+        List<String> allCPTIDsToBeRemoved = new ArrayList<>();
+        for (String i : expiredIds){
+            allCPTIDsToBeRemoved.addAll(getAllChildrenByParentID(i));
+        }
+        logger.debug("Child policies of expired policies {}", allCPTIDsToBeRemoved);
+        removeCommunicationPolicies(allCPTIDsToBeRemoved);
     }
 
     /**
