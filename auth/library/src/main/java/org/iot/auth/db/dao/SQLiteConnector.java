@@ -758,6 +758,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllPolicies Table lookup");
         List<CommunicationPolicyTable> policies = new LinkedList<>();
         while(resultSet.next()){
             CommunicationPolicyTable policy = CommunicationPolicyTable.createRecord(resultSet);
@@ -781,6 +782,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllRegEntities Table lookup");
         List<RegisteredEntityTable> entities = new LinkedList<>();
         while(resultSet.next()) {
             RegisteredEntityTable entity = RegisteredEntityTable.createRecord(resultSet);
@@ -830,6 +832,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + TrustedAuthTable.T_TRUSTED_AUTH;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllTrustedAuths Table lookup");
         List<TrustedAuthTable> authList = new LinkedList<>();
         while (resultSet.next()) {
             TrustedAuthTable auth = TrustedAuthTable.createRecord(resultSet);
@@ -852,6 +855,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllCachedSessionKeys Table lookup");
         List<CachedSessionKeyTable> cachedSessionKeyList = new LinkedList<>();
         while (resultSet.next()) {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -875,6 +879,7 @@ public class SQLiteConnector {
         sql += " WHERE " + CachedSessionKeyTable.c.ID.name() + " = " + id;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectCachedSessionKeyByID Table lookup");
         CachedSessionKeyTable cachedSessionKey = null;
         while (resultSet.next()) {
             cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -903,6 +908,7 @@ public class SQLiteConnector {
         sql += " AND " + CachedSessionKeyTable.c.ExpirationTime.name() + " > " + currentTime;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectCachedSessionKeysByPurpose Table lookup");
         List<CachedSessionKeyTable> result = new LinkedList<>();
         while (resultSet.next()) {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -927,6 +933,7 @@ public class SQLiteConnector {
         try {
             statement = connection.createStatement();
             resultSet = statement.executeQuery(sql);
+            logger.info("selectFileSharingInfoByOwner Table lookup");
         }
         catch (Exception e){
             e.printStackTrace();
@@ -957,6 +964,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllPrivileges Table lookup");
         List<DelegationPrivilegeTable> delegationPrivilegeTableList = new LinkedList<>();
         while (resultSet.next()) {
             DelegationPrivilegeTable delegationPrivilegeTable = DelegationPrivilegeTable.createRecord(resultSet);
@@ -981,6 +989,7 @@ public class SQLiteConnector {
         sql += " WHERE " + DelegationPrivilegeTable.c.PrivilegedGroup.name() + " = " + "'" + requestingEntityName + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectPrivilegeByPrivilegedGroup Table lookup");
         List<DelegationPrivilegeTable> result = new LinkedList<>();
         while (resultSet.next()) {
             DelegationPrivilegeTable delegationPrivilegeTable = DelegationPrivilegeTable.createRecord(resultSet);
@@ -1005,6 +1014,7 @@ public class SQLiteConnector {
         sql += " WHERE " + DelegationInfoTable.c.CPTID.name() + " = " + "'" + delegationInfoTableId + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectParentById Table lookup");
         String parent = resultSet.getString("Parent");
         return parent;
     }
@@ -1021,6 +1031,7 @@ public class SQLiteConnector {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, parentId);
             try (ResultSet rs = ps.executeQuery()) {
+                logger.info("findChildrenCPTs Table lookup");
                 while (rs.next()) {
                     String childId = rs.getString("CPTID");
                     result.add(childId);
@@ -1040,12 +1051,15 @@ public class SQLiteConnector {
     public List<String> deleteExpiredCommunicationPolicies() throws SQLException {
         long currentTime = new java.util.Date().getTime();
         List<String> expiredIds = new ArrayList<>();
-        String selectSql = "SELECT COUNT(*) FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
-                " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < " + currentTime;
+        String selectSql = "SELECT " + CommunicationPolicyTable.c.ID.name()
+                + " FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY
+                + " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < ?";
+
         try (PreparedStatement ps = connection.prepareStatement(selectSql)) {
             ps.setLong(1, currentTime);
 
             try (ResultSet rs = ps.executeQuery()) {
+                logger.info("deleteExpiredCommunicationPolicies Table lookup");
                 while (rs.next()) {
                     expiredIds.add(rs.getString(1));
                 }
@@ -1053,15 +1067,17 @@ public class SQLiteConnector {
         }
         if (expiredIds.isEmpty()) {
             logger.info("No expired communication policies.");
+            return expiredIds;
         } else {
             logger.info("Deleting {} expired communication policies {}", expiredIds.size(), expiredIds);
         }
-        String sql = "DELETE FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
-
-        sql += " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < " + currentTime;
-        if (DEBUG) logger.info(sql);
-        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
-        preparedStatement.execute();
+        String deleteSql = "DELETE FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY
+                + " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < ?";
+        if (DEBUG) logger.info(deleteSql);
+        try (PreparedStatement ps = connection.prepareStatement(deleteSql)) {
+            ps.setLong(1, currentTime);
+            ps.executeUpdate();
+        }
         return expiredIds;
     }
 
@@ -1143,6 +1159,7 @@ public class SQLiteConnector {
         sql_deduplication += owner + "' AND " + FileSharingTable.c.ReaderType + "='entity' AND ";
         sql_deduplication += FileSharingTable.c.Reader + "='" + fileReader + "'";
         ResultSet resultSet = statement.executeQuery(sql_deduplication);
+        logger.info("appendFileReader Table lookup");
         if (resultSet.getString("Reader") != null) {
             logger.info("Already registered reader information!");
             return true;
@@ -1173,6 +1190,7 @@ public class SQLiteConnector {
         sql += " WHERE " + MetaDataTable.c.Key.name() + " = '" + key + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectMetaDataValue Table lookup");
         MetaDataTable metaData = null;
         while (resultSet.next()) {
             metaData = MetaDataTable.createRecord(resultSet);

@@ -39,7 +39,7 @@ var currentSecureClient;
 
 // parameters for SecureCommClient
 var parameters =  {
-	numKeysPerRequest: 3,
+	numKeysPerRequest: 1,
     migrationEnabled: false,
     authFailureThreshold: 3,
     migrationFailureThreshold: 3
@@ -95,6 +95,13 @@ function onData(data) {
 	outputs.received = data;
     if (outputHandlers.received) {
     	outputHandlers.received(data);
+    }
+}
+
+function onPrivilege(result) {
+    outputs.privilege = result;
+    if (outputHandlers.privilege) {
+        outputHandlers.privilege(result);
     }
 }
 
@@ -305,7 +312,8 @@ function handlePrivilegeResp(result){
 function sendPrivilegeRequest(type, subject, object, validity) {
     var options = iotAuth.getPrivilegeReqOptions(entityConfig, type, subject, object, validity);
     var eventHandlers = {
-        onError: onError
+        onError: onError,
+        onPrivilege: onPrivilege
     };
     iotAuth.privilegeRequest(options, handlePrivilegeResp, eventHandlers);
 }
@@ -342,7 +350,7 @@ function serverHostPortInputHandler(serverHostPort) {
 	    }
 	}
 }
-function serverHostPortInputHandlerResource(serverHostPort) {
+function serverHostPortInputHandlerResource(serverHostPort, resourceName) {
     if (serverHostPort == null) {
         console.log('ServerHostPort is null, trying to close previous socket...');
         if (currentSecureClient) {
@@ -362,7 +370,7 @@ function serverHostPortInputHandlerResource(serverHostPort) {
                     handleSessionKeyResp, serverHostPort);
             }
             else {
-                sendSessionKeyRequest({group: 'ResourceA'}, parameters.numKeysPerRequest,
+                sendSessionKeyRequest({group: resourceName}, parameters.numKeysPerRequest,
                     handleSessionKeyResp, serverHostPort);
             }
         }
@@ -396,12 +404,14 @@ SecureCommClient.prototype.initialize = function() {
     outputs = {
     	connected: false,
     	error: null,
-    	received: null
+    	received: null,
+        privilege: null
     };
     outputHandlers = {
     	connected: null,
     	error: null,
-    	received: null
+    	received: null,
+        privilege: null
     };
 	console.log('current parameters: ' + util.inspect(parameters));
 }
@@ -415,9 +425,9 @@ SecureCommClient.prototype.provideInput = function(port, input) {
 	}
 }
 
-SecureCommClient.prototype.provideInputResource = function(port, input) {
+SecureCommClient.prototype.provideInputResource = function(port, input, resourceName) {
     if (port == 'serverHostPort') {
-        serverHostPortInputHandlerResource(input);
+        serverHostPortInputHandlerResource(input, resourceName);
     }
     else if (port == 'toSend') {
         toSendInputHandler(input);

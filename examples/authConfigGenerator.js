@@ -320,6 +320,10 @@ function generateCommunicationPolicyTables() {
     addServerClientPolicy(policyList, 'Users', 'ResourceA', '1*day', '2*hour');
     addServerClientPolicy(policyList, 'Users', 'ResourceB', '1*day', '2*hour');
     addServerClientPolicy(policyList, 'Users', 'ResourceC', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'Node0', 'ResourceA', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'Node0', 'ResourceB', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'Node0', 'ResourceC', '1*day', '2*hour');
+    addServerClientPolicy(policyList, 'Node0', 'ResourceD', '1*day', '2*hour');
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';
