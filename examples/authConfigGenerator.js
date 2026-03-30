@@ -32,6 +32,21 @@ if (process.argv.length <= 2) {
 }
 var graphFile = process.argv[2];
 var graph = JSON.parse(fs.readFileSync(graphFile));
+console.log(graph);
+// Optionally read policy file
+let policiesOverride = null;
+const policyIdx = process.argv.indexOf("--policy");
+
+if (policyIdx !== -1) {
+    const policyFile = process.argv[policyIdx + 1];
+
+    // assume user passes it correctly
+    policiesOverride = JSON.parse(
+        fs.readFileSync(policyFile, "utf8")
+    );
+
+    console.log("Loaded policies from:", policyFile);
+}
 
 // basic directories
 const EXAMPLES_DIR = process.cwd() + '/';
@@ -245,29 +260,33 @@ function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, re
 
 function generateCommunicationPolicyTables() {
     var policyList = [];
-    addServerClientPolicy(policyList, 'Clients', 'Servers', '1*day', '2*hour');
-    addServerClientPolicy(policyList, 'PtClients', 'Servers', '1*day', '2*hour');
-    addServerClientPolicy(policyList, 'Clients', 'PtServers', '1*hour', '20*sec');
-    addServerClientPolicy(policyList, 'PtClients', 'PtServers', '2*hour', '20*sec');
-    addPubSubPolicy(policyList, 'Clients', true);
-    addPubSubPolicy(policyList, 'Servers', true);
-    addPubSubPolicy(policyList, 'Clients', false);
-    addPubSubPolicy(policyList, 'Servers', false);
-    addPubSubPolicy(policyList, 'PtPublishers', true);
-    addPubSubPolicy(policyList, 'PtSubscribers', false);
-    addUploadDownloadlPolicy(policyList,'TeamA','TeamB');
-    addUploadDownloadlPolicy(policyList,'TeamB','TeamC');
-    addUploadDownloadlPolicy(policyList,'TeamC','TeamE');
-    addServerClientPolicy(policyList, 'TeamA', 'Servers', '1*day', '2*hour');
-    addServerClientPolicy(policyList, 'TeamA', 'FileManager', '1*day', '2*hour');
-    addServerClientPolicy(policyList, 'TeamB', 'FileManager', '1*day', '2*hour');
-    addServerClientPolicy(policyList, 'TeamC', 'FileManager', '1*day', '2*hour');
-    addComputeCompactionCTRPolicy(policyList, 'ComputeNodesCTR', 'CompactionNodesCTR', '1*day', '2*hour');
-    addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
-    addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
-    addDelegationPolicy(policyList, 'Users', 'HighTrustAgents,Website', '1*day', '2*hour')
-    addDelegationPolicy(policyList, 'Users', 'MediumTrustAgents,Website', '1*day', '1*hour')
-    addDelegationPolicy(policyList, 'Users', 'LowTrustAgents,Website', '1*day', '300*sec')
+    if (policiesOverride) {
+        policyList.push(...policiesOverride);
+    } else {
+        addServerClientPolicy(policyList, 'Clients', 'Servers', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'PtClients', 'Servers', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'Clients', 'PtServers', '1*hour', '20*sec');
+        addServerClientPolicy(policyList, 'PtClients', 'PtServers', '2*hour', '20*sec');
+        addPubSubPolicy(policyList, 'Clients', true);
+        addPubSubPolicy(policyList, 'Servers', true);
+        addPubSubPolicy(policyList, 'Clients', false);
+        addPubSubPolicy(policyList, 'Servers', false);
+        addPubSubPolicy(policyList, 'PtPublishers', true);
+        addPubSubPolicy(policyList, 'PtSubscribers', false);
+        addUploadDownloadlPolicy(policyList, 'TeamA', 'TeamB');
+        addUploadDownloadlPolicy(policyList, 'TeamB', 'TeamC');
+        addUploadDownloadlPolicy(policyList, 'TeamC', 'TeamE');
+        addServerClientPolicy(policyList, 'TeamA', 'Servers', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'TeamA', 'FileManager', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'TeamB', 'FileManager', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'TeamC', 'FileManager', '1*day', '2*hour');
+        addComputeCompactionCTRPolicy(policyList, 'ComputeNodesCTR', 'CompactionNodesCTR', '1*day', '2*hour');
+        addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
+        addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
+        addDelegationPolicy(policyList, 'Users', 'HighTrustAgents,Website', '1*day', '2*hour')
+        addDelegationPolicy(policyList, 'Users', 'MediumTrustAgents,Website', '1*day', '1*hour')
+        addDelegationPolicy(policyList, 'Users', 'LowTrustAgents,Website', '1*day', '300*sec')
+    }
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';
