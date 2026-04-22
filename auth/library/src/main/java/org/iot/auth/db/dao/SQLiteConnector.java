@@ -341,10 +341,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,policy.getAbsValidityStr());
         preparedStatement.setString(index++,policy.getRelValidityStr());
         if (DEBUG) logger.info(preparedStatement.toString());
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert.
     }
 
     public RegisteredEntityTable encryptRecords(RegisteredEntityTable regEntity) {
@@ -427,10 +427,10 @@ public class SQLiteConnector {
 
         preparedStatement.toString();
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert or replace.
     }
 
     /**
@@ -495,10 +495,10 @@ public class SQLiteConnector {
             preparedStatement.setNull(index++, Types.BLOB);
         }
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert.
     }
 
 
@@ -552,10 +552,10 @@ public class SQLiteConnector {
         preparedStatement.setBytes(index++,cachedSessionKey.getKeyVal());
         preparedStatement.setString(index++,cachedSessionKey.getExpectedOwnerGroups());
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert.
     }
 
     /**
@@ -580,10 +580,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++, metaData.getKey());
         preparedStatement.setString(index++, metaData.getValue());
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1;
     }
 
     /**
@@ -610,10 +610,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,fileSharing.getReader());
         logger.info("{} {} {}", fileSharing.getOwner(), fileSharing.getReaderType(), fileSharing.getReader() );
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1; // The result must be 1 for successful insert.
     }
 
     /**
@@ -885,7 +885,7 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public boolean appendFileReader(String owner, String fileReader) throws SQLException {
+    public boolean appendFileReader(final String owner, final String fileReader) throws SQLException {
         statement = connection.createStatement();
         String sql_deduplication = "SELECT * FROM " + FileSharingTable.T_File_Sharing;
         sql_deduplication += " WHERE " + FileSharingTable.c.Owner + "='";
