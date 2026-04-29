@@ -76,13 +76,15 @@ const VAL_DAYS = 730;
 
 // generate CA credentials
 process.chdir('auth/credentials/');
-execFileSync('./generateCACredentials.sh', [CA_PASSWORD]);
+execFileSync('./generateCACredentials.sh', [CA_PASSWORD], { stdio: 'inherit' });
+// Use the parent process's stdin/stdout/stderr so the child script's output
+// and errors are printed directly to the console (useful for debugging).
 
 // generate Auth credentials and directories
 var authList = graph.authList;
 for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
-	execFileSync('./generateExampleAuthCredentials.sh', [auth.id, auth.authHost, CA_PASSWORD, AUTH_PASSWORD]);
+	execFileSync('./generateExampleAuthCredentials.sh', [auth.id, auth.authHost, CA_PASSWORD, AUTH_PASSWORD], { stdio: 'inherit' });
 	var MY_CERTS_DIR = AUTH_DATABASES_DIR + 'auth' + auth.id + '/my_certs/';
 	fs.mkdirSync(MY_CERTS_DIR, {recursive: true});
 	common.safeSpawnSync('mv', ['certs/Auth' + auth.id + '*Cert.pem', '"' + MY_CERTS_DIR + '"']);
