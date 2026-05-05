@@ -628,7 +628,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        logger.info("Table lookup");
+        logger.info("select all policies Table lookup");
         List<CommunicationPolicyTable> policies = new LinkedList<>();
         while(resultSet.next()){
             CommunicationPolicyTable policy = CommunicationPolicyTable.createRecord(resultSet);
@@ -652,7 +652,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        logger.info("Table lookup");
+        logger.info("select all registered entities Table lookup");
         List<RegisteredEntityTable> entities = new LinkedList<>();
         while(resultSet.next()) {
             RegisteredEntityTable entity = RegisteredEntityTable.createRecord(resultSet);
@@ -702,7 +702,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + TrustedAuthTable.T_TRUSTED_AUTH;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        logger.info("Table lookup");
+        logger.info("select all trusted auth Table lookup");
         List<TrustedAuthTable> authList = new LinkedList<>();
         while (resultSet.next()) {
             TrustedAuthTable auth = TrustedAuthTable.createRecord(resultSet);
@@ -725,7 +725,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        logger.info("Table lookup");
+        logger.info("selectAllCachedSessionKey Table lookup");
         List<CachedSessionKeyTable> cachedSessionKeyList = new LinkedList<>();
         while (resultSet.next()) {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -749,7 +749,7 @@ public class SQLiteConnector {
         sql += " WHERE " + CachedSessionKeyTable.c.ID.name() + " = " + id;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        logger.info("Table lookup");
+        logger.info("selectCachedSessionKeyByID Table lookup");
         CachedSessionKeyTable cachedSessionKey = null;
         while (resultSet.next()) {
             cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -778,7 +778,7 @@ public class SQLiteConnector {
         sql += " AND " + CachedSessionKeyTable.c.ExpirationTime.name() + " > " + currentTime;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        logger.info("Table lookup");
+        logger.info("selectCachedSessionKeysByPurpose Table lookup");
         List<CachedSessionKeyTable> result = new LinkedList<>();
         while (resultSet.next()) {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -803,7 +803,7 @@ public class SQLiteConnector {
         try {
             statement = connection.createStatement();
             resultSet = statement.executeQuery(sql);
-            logger.info("Table lookup");
+            logger.info("selectFileSharingInfoByOwner Table lookup");
         }
         catch (Exception e){
             e.printStackTrace();
@@ -899,7 +899,7 @@ public class SQLiteConnector {
         sql_deduplication += owner + "' AND " + FileSharingTable.c.ReaderType + "='entity' AND ";
         sql_deduplication += FileSharingTable.c.Reader + "='" + fileReader + "'";
         ResultSet resultSet = statement.executeQuery(sql_deduplication);
-        logger.info("Table lookup");
+        logger.info("appendFileReader Table lookup");
         if (resultSet.getString("Reader") != null) {
             logger.info("Already registered reader information!");
             return true;
@@ -930,7 +930,7 @@ public class SQLiteConnector {
         sql += " WHERE " + MetaDataTable.c.Key.name() + " = '" + key + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
-        logger.info("Table lookup");
+        logger.info("selectMetaData Table lookup");
         MetaDataTable metaData = null;
         while (resultSet.next()) {
             metaData = MetaDataTable.createRecord(resultSet);

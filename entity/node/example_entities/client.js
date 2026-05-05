@@ -91,6 +91,11 @@ function commandInterpreter() {
             if (message != undefined) {
                 var tokens = message.split(' ');
                 var serverName = tokens[0];
+                if (tokens.length == 2){
+                    var serverGroup = tokens[1];
+                } else{
+                    var serverGroup = null
+                }
                 for (var i = 0; i < targetServerInfoList.length; i++) {
                     if (targetServerInfoList[i].name == serverName) {
                         commServerInfo = targetServerInfoList[i];
@@ -101,8 +106,8 @@ function commandInterpreter() {
                     return;
                 }
 
-                if (tokens.length > 1) {
-                    var serverPort = parseInt(tokens[1]);
+                if (tokens.length > 2) {
+                    var serverPort = parseInt(tokens[2]);
                     console.log('serverPort is explicitly specified: ' + serverPort);
                     commServerInfo.port = serverPort;
                 }
@@ -110,9 +115,9 @@ function commandInterpreter() {
             else {
                 commServerInfo = targetServerInfoList[0];
             }
-            
-            console.log('initComm command targeted to ' + commServerInfo.name);
-            secureCommClient.provideInput('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port});
+
+            console.log('initComm command targeted to ' + commServerInfo.name + " serverGroup " + serverGroup);
+            secureCommClient.provideInput('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, serverGroup);
 
         }
         else if (command == 'finComm' || command == 'f') {

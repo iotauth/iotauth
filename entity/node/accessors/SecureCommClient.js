@@ -39,7 +39,7 @@ var currentSecureClient;
 
 // parameters for SecureCommClient
 var parameters =  {
-	numKeysPerRequest: 3,
+	numKeysPerRequest: 1,
     migrationEnabled: false,
     authFailureThreshold: 3,
     migrationFailureThreshold: 3
@@ -303,31 +303,34 @@ serverHostPort = {
 	port: 21200
 }
 */
-function serverHostPortInputHandler(serverHostPort) {
-	if (serverHostPort == null) {
-		console.log('ServerHostPort is null, trying to close previous socket...');
-		if (currentSecureClient) {
-			currentSecureClient.close();
-			currentSecureClient = null;
-		}
-	}
-	else {
-	    if (currentSessionKeyList.length > 0) {
-	        initSecureCommWithSessionKey(currentSessionKeyList.shift(),
-	            serverHostPort.host, serverHostPort.port);
-	    }
-	    else {
-	    	// hack to support exp2
-	    	if (parameters.keyId) {
-	    		sendSessionKeyRequest({keyId: parameters.keyId}, 1,
-	    			handleSessionKeyResp, serverHostPort);
-	    	}
-	    	else {
-	    		sendSessionKeyRequest({group: 'Servers'}, parameters.numKeysPerRequest,
-	    			handleSessionKeyResp, serverHostPort);
-	    	}
-	    }
-	}
+function serverHostPortInputHandler(serverHostPort, targetName) {
+    if (serverHostPort == null) {
+        console.log('ServerHostPort is null, trying to close previous socket...');
+        if (currentSecureClient) {
+            currentSecureClient.close();
+            currentSecureClient = null;
+        }
+    }
+    else {
+        if (currentSessionKeyList.length > 0) {
+            initSecureCommWithSessionKey(currentSessionKeyList.shift(),
+                serverHostPort.host, serverHostPort.port);
+        }
+        else {
+            // hack to support exp2
+            if (parameters.keyId) {
+                sendSessionKeyRequest({keyId: parameters.keyId}, 1,
+                    handleSessionKeyResp, serverHostPort);
+            }
+            else {
+                if (targetName == null){
+                    targetName = 'Servers';
+                }
+                sendSessionKeyRequest({group: targetName}, parameters.numKeysPerRequest,
+                    handleSessionKeyResp, serverHostPort);
+            }
+        }
+    }
 }
 
 function toSendInputHandler(toSend) {
@@ -367,9 +370,9 @@ SecureCommClient.prototype.initialize = function() {
 	console.log('current parameters: ' + util.inspect(parameters));
 }
 
-SecureCommClient.prototype.provideInput = function(port, input) {
+SecureCommClient.prototype.provideInput = function(port, input, targetName) {
 	if (port == 'serverHostPort') {
-		serverHostPortInputHandler(input);
+		serverHostPortInputHandler(input, targetName);
 	}
 	else if (port == 'toSend') {
 		toSendInputHandler(input);
