@@ -330,7 +330,6 @@ public class AuthServer {
                 try {
                     cleanExpiredCommunicationPolicies();
                     cleanExpiredSessionKeys();
-                    logger.info("Expired communication policies cleaned.");
                 } catch (Exception e) {
                     logger.error("Failed to clean expired communication policies", e);
                 }
@@ -665,6 +664,9 @@ public class AuthServer {
      */
     public void cleanExpiredCommunicationPolicies() throws SQLException, ClassNotFoundException {
         List<String> expiredIds = db.cleanExpiredCommunicationPolicies();
+        if (expiredIds.isEmpty()){
+            return;
+        }
         logger.debug("Expired policies {}", expiredIds);
         // Remove child policies which their parents has been expired.
         List<String> allCPTIDsToBeRemoved = new ArrayList<>();

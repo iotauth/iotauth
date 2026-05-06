@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -357,15 +358,15 @@ public class AuthCommandLine extends Thread  {
                 .setRelValidityStr(relativeValidityString);
     }
 
-    private List<String> getCommunicationPolicyIdsToRemove(BufferedReader br) throws IOException {
-        List<String> policyIdsToRemove = new ArrayList<>();
-        logger.info("\nEnter the IDs of communication policy to be removed:");
-        String requestedId = br.readLine();
-        if (requestedId.isEmpty()) {
+    private List<String> getCommunicationPolicyIdsToRemove(BufferedReader br) throws IOException, NullPointerException {
+        logger.info("\nEnter the IDs of communication policy to be removed: (ex: 1 2 3)");
+        String requestedIds = br.readLine();
+        if (requestedIds.isEmpty()) {
             return null;
         }
-        policyIdsToRemove.add(requestedId);
-        return policyIdsToRemove;
+        String[] ids = requestedIds.trim().split("\\s+");
+
+        return new ArrayList<>(Arrays.asList(ids));
     }
 
     private AuthServer server;
