@@ -187,14 +187,14 @@ public class AuthCommandLine extends Thread  {
                 }
                 else if (command.equals("remove cp")) {
                     logger.info("\n Remove the communication policy command");
-                    List<String> toBeRemovedPolicy = getToBeRemovedCommunicationPolicyInformation(br);
-                    if (toBeRemovedPolicy == null) {
+                    List<String> policyIdsToRemove = getCommunicationPolicyIdsToRemove(br);
+                    if (policyIdsToRemove == null) {
                         logger.info("\n ID of the communication policy to be removed was not entered correctly.");
                         continue;
                     }
                     logger.info("Entered ID of the communication policy to be removed");
-                    logger.info(toBeRemovedPolicy.toString());
-                    if (server.removeCommunicationPolicies(toBeRemovedPolicy)) {
+                    logger.info(policyIdsToRemove.toString());
+                    if (server.removeCommunicationPolicies(policyIdsToRemove)) {
                         logger.info("The communication policy has been removed successfully.");
                     }
                     else {
@@ -357,15 +357,15 @@ public class AuthCommandLine extends Thread  {
                 .setRelValidityStr(relativeValidityString);
     }
 
-    private List<String> getToBeRemovedCommunicationPolicyInformation(BufferedReader br) throws IOException {
-        List<String> ids = new ArrayList<>();
-        logger.info("\nEnter the ID of communication policy to be removed:");
+    private List<String> getCommunicationPolicyIdsToRemove(BufferedReader br) throws IOException {
+        List<String> policyIdsToRemove = new ArrayList<>();
+        logger.info("\nEnter the IDs of communication policy to be removed:");
         String requestedId = br.readLine();
         if (requestedId.isEmpty()) {
             return null;
         }
-        ids.add(requestedId);
-        return ids;
+        policyIdsToRemove.add(requestedId);
+        return policyIdsToRemove;
     }
 
     private AuthServer server;

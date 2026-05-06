@@ -564,7 +564,6 @@ public abstract class EntityConnectionHandler {
         writeToSocket(privilegeRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
     }
 
-
     /**
      * Send a delegate access response to the requesting entity
      * @param distributionKey Distribution key used for sending session key response
@@ -769,7 +768,6 @@ public abstract class EntityConnectionHandler {
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
-
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =

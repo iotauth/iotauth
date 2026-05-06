@@ -264,8 +264,7 @@ public class GenerateExampleAuthDB {
                 communicationPolicyTable.setReqGroup((String)jsonObject.get(CommunicationPolicyTable.c.RequestingGroup.name()));
                 communicationPolicyTable.setTargetTypeVal((String)jsonObject.get(CommunicationPolicyTable.c.TargetType.name()));
                 communicationPolicyTable.setTarget((String)jsonObject.get(CommunicationPolicyTable.c.Target.name()));
-                communicationPolicyTable.setMaxNumSessionKeyOwners(
-                        convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name())));
+                communicationPolicyTable.setMaxNumSessionKeyOwners(convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name())));
                 communicationPolicyTable.setSessionCryptoSpec((String)jsonObject.get(CommunicationPolicyTable.c.SessionCryptoSpec.name()));
                 communicationPolicyTable.setAbsValidityStr((String)jsonObject.get(CommunicationPolicyTable.c.AbsoluteValidity.name()));
                 communicationPolicyTable.setRelValidityStr((String)jsonObject.get(CommunicationPolicyTable.c.RelativeValidity.name()));
@@ -275,8 +274,7 @@ public class GenerateExampleAuthDB {
                 } else{
                     communicationPolicyTable.setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration));
                 }
-                communicationPolicyTable.setIsDelegated(
-                        convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.IsDelegated.name())));
+                communicationPolicyTable.setIsDelegated(convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.IsDelegated.name())));
                 sqLiteConnector.insertRecords(communicationPolicyTable);
             }
             sqLiteConnector.updateMetaData(MetaDataTable.key.CommPolicyCount.name(), Long.toString(curCommPolicyCount + commPolicyCount));
