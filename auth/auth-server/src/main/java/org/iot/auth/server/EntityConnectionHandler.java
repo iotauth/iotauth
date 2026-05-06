@@ -895,7 +895,7 @@ public abstract class EntityConnectionHandler {
         switch (privilegeType) {
             case ("DelegationGrant"): {
                 // Get privilege information from privilegeReqMessage
-                // e.g. {"privilegeType":"DelegationGrant","subject":"a","object": "b","validity":"1*day","info":"AES-128-CBC:SHA256,1*day,1*hour"}
+                // E.g., {"privilegeType":"DelegationGrant","subject":"a","object": "b","validity":"1*day","info":"AES-128-CBC:SHA256,1*day,1*hour"}
                 String subject = (String) payload.get("subject");
                 String object = (String) payload.get("object");
                 String validity = (String) payload.get("validity");
@@ -931,10 +931,10 @@ public abstract class EntityConnectionHandler {
 
                         JSONObject info = p.getInfo();
                         String commPolicyCountValue = server.getCommPolicyCountValue();
-                        long curCommPolicyCount = Long.parseLong(commPolicyCountValue);
+                        long nextCommPolicyID = Long.parseLong(commPolicyCountValue) + 1;
 
                         CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
-                                .setID(curCommPolicyCount+1)
+                                .setID(nextCommPolicyID)
                                 .setReqGroup(subject)
                                 .setTargetTypeVal("Group")
                                 .setTargetType(CommunicationTargetType.fromStringValue("Group"))
@@ -946,15 +946,16 @@ public abstract class EntityConnectionHandler {
                                 // Ensure expiration does not exceed parent policy expiration
                                 .setExpiration(Math.min(new Date().getTime() + DateHelper.parseTimePeriod(expiration), parentPolicy.getExpiration()))
                                 .setIsDelegated(1);
+
                         DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
-                                .setCPTId(curCommPolicyCount+1)
+                                .setCPTId(nextCommPolicyID)
                                 .setParent(parentPolicy.getId())
                                 .setDelegatedTime(new Date().getTime())
                                 .setRevokedTime(0);
 
                         boolean addNewCommunicationPolicy = server.addCommunicationPolicy(newCommunicationPolicyTable);
                         boolean addNewDelegationInfo = server.addDelegationInfo(newDelegationInfoTable);
-                        boolean updateCommPolicyCount = server.updateCommPolicyCountValue(curCommPolicyCount+1);
+                        boolean updateCommPolicyCount = server.updateCommPolicyCountValue(nextCommPolicyID);
                         if (updateCommPolicyCount){
                             getLogger().info("Failed to update new Communication Policy Count number!");
                         }

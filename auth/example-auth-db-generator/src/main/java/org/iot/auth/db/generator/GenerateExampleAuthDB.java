@@ -254,13 +254,11 @@ public class GenerateExampleAuthDB {
         try {
             JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
             String commPolicyCountValue = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.CommPolicyCount.name());
-            long curCommPolicyCount = Long.parseLong(commPolicyCountValue);
-            int commPolicyCount = 0;
+            long nextCommPolicyID = Long.parseLong(commPolicyCountValue) + 1;
             for (Object objElement : jsonArray) {
-                JSONObject jsonObject =  (JSONObject)objElement;
+                JSONObject jsonObject = (JSONObject)objElement;
                 CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
-                commPolicyCount++;
-                communicationPolicyTable.setID(curCommPolicyCount + commPolicyCount);
+                communicationPolicyTable.setID(nextCommPolicyID);
                 communicationPolicyTable.setReqGroup((String)jsonObject.get(CommunicationPolicyTable.c.RequestingGroup.name()));
                 communicationPolicyTable.setTargetTypeVal((String)jsonObject.get(CommunicationPolicyTable.c.TargetType.name()));
                 communicationPolicyTable.setTarget((String)jsonObject.get(CommunicationPolicyTable.c.Target.name()));
@@ -276,8 +274,9 @@ public class GenerateExampleAuthDB {
                 }
                 communicationPolicyTable.setIsDelegated(convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.IsDelegated.name())));
                 sqLiteConnector.insertRecords(communicationPolicyTable);
+                nextCommPolicyID++;
             }
-            sqLiteConnector.updateMetaData(MetaDataTable.key.CommPolicyCount.name(), Long.toString(curCommPolicyCount + commPolicyCount));
+            sqLiteConnector.updateMetaData(MetaDataTable.key.CommPolicyCount.name(), Long.toString(nextCommPolicyID));
         }
         catch (ParseException e) {
             logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));

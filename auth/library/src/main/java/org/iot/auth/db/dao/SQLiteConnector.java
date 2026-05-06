@@ -339,13 +339,13 @@ public class SQLiteConnector {
         closeStatement();
 
         statement = connection.createStatement();
-        sql = "CREATE TABLE IF NOT EXISTS " + DelegationInfoTable.T_DELEGATIONINFO + "(";
-        sql += DelegationInfoTable.c.CPTID.name() + " INT NOT NULL,";
+        sql = "CREATE TABLE IF NOT EXISTS " + DelegationInfoTable.T_DELEGATION_INFO + "(";
+        sql += DelegationInfoTable.c.CPT_ID.name() + " INT NOT NULL,";
         sql += DelegationInfoTable.c.Parent.name() + " INT NOT NULL,";
         sql += DelegationInfoTable.c.DelegatedTime.name() + " INT,";
         sql += DelegationInfoTable.c.RevokedTime.name() + " INT,";
-        sql += "PRIMARY KEY (" + DelegationInfoTable.c.CPTID.name() + "),";
-        sql += "FOREIGN KEY (" + DelegationInfoTable.c.CPTID.name() + ") " +
+        sql += "PRIMARY KEY (" + DelegationInfoTable.c.CPT_ID.name() + "),";
+        sql += "FOREIGN KEY (" + DelegationInfoTable.c.CPT_ID.name() + ") " +
                 "REFERENCES " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
                 "(" + CommunicationPolicyTable.c.ID.name() + ") ON DELETE CASCADE,";
         sql += "FOREIGN KEY (" + DelegationInfoTable.c.Parent.name() + ") " +
@@ -353,9 +353,9 @@ public class SQLiteConnector {
                 "(" + CommunicationPolicyTable.c.ID.name() + "))";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
-            logger.info("Table {} created", DelegationInfoTable.T_DELEGATIONINFO);
+            logger.info("Table {} created", DelegationInfoTable.T_DELEGATION_INFO);
         else
-            logger.info("Table {} already exists", DelegationInfoTable.T_DELEGATIONINFO);
+            logger.info("Table {} already exists", DelegationInfoTable.T_DELEGATION_INFO);
         closeStatement();
 
         closeConnection();
@@ -674,7 +674,7 @@ public class SQLiteConnector {
     }
 
     /**
-     * Inserts the privilege information into the privilege table.
+     * Inserts the privilege information into the delegation privilege table.
      *
      * @param delegationPrivilegeTable the object container of the information in delegation_privilege table
      * @return <code>true</code> if the insertion has been successful
@@ -713,9 +713,9 @@ public class SQLiteConnector {
     }
 
     /**
-     * Inserts the delegated policy information into the delegation_info table.
+     * Inserts the delegated policy information into the delegation info table.
      *
-     * @param delegationInfoTable the object container of the information in delegation_info table
+     * @param delegationInfoTable the object container of the information in delegation info table
      * @return <code>true</code> if the insertion has been successful
      *         <code>false</code> if the insertion has failed
      * @throws SQLException  if a database access error occurs;
@@ -724,8 +724,8 @@ public class SQLiteConnector {
      * @see DelegationInfoTable
      */
     public boolean insertRecords(DelegationInfoTable delegationInfoTable) throws SQLException {
-        String sql = "INSERT INTO " + DelegationInfoTable.T_DELEGATIONINFO + "(";
-        sql += DelegationInfoTable.c.CPTID.name() + ",";
+        String sql = "INSERT INTO " + DelegationInfoTable.T_DELEGATION_INFO + "(";
+        sql += DelegationInfoTable.c.CPT_ID.name() + ",";
         sql += DelegationInfoTable.c.Parent.name() + ",";
         sql += DelegationInfoTable.c.DelegatedTime.name() + ",";
         sql += DelegationInfoTable.c.RevokedTime.name() + ")";
@@ -1010,8 +1010,8 @@ public class SQLiteConnector {
     public String selectParentById(String delegationInfoTableId)
             throws SQLException {
         statement = connection.createStatement();
-        String sql = "SELECT * FROM " + DelegationInfoTable.T_DELEGATIONINFO;
-        sql += " WHERE " + DelegationInfoTable.c.CPTID.name() + " = " + "'" + delegationInfoTableId + "'";
+        String sql = "SELECT * FROM " + DelegationInfoTable.T_DELEGATION_INFO;
+        sql += " WHERE " + DelegationInfoTable.c.CPT_ID.name() + " = " + "'" + delegationInfoTableId + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
         logger.info("selectParentById Table lookup");
@@ -1026,7 +1026,7 @@ public class SQLiteConnector {
     }
 
     public void findChildrenCPTs(String parentId, List<String> result) throws SQLException {
-        String sql = "SELECT " + DelegationInfoTable.c.CPTID + " FROM " + DelegationInfoTable.T_DELEGATIONINFO
+        String sql = "SELECT " + DelegationInfoTable.c.CPT_ID + " FROM " + DelegationInfoTable.T_DELEGATION_INFO
                 + " WHERE " +   DelegationInfoTable.c.Parent + " = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, parentId);
@@ -1289,8 +1289,8 @@ public class SQLiteConnector {
             throw new RuntimeException("The list of ID of Delegation Info to be removed is empty!");
         }
         String idList = String.join(",", CPTIDs);
-        String sql = "DELETE FROM " + DelegationInfoTable.T_DELEGATIONINFO;
-        sql += " WHERE " + DelegationInfoTable.c.CPTID.name() + " IN (" + idList + ")";
+        String sql = "DELETE FROM " + DelegationInfoTable.T_DELEGATION_INFO;
+        sql += " WHERE " + DelegationInfoTable.c.CPT_ID.name() + " IN (" + idList + ")";
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
         return preparedStatement.execute();

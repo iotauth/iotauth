@@ -20,6 +20,7 @@ import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
+import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -303,7 +305,7 @@ public class AuthCommandLine extends Thread  {
         return new RegisteredEntity(registeredEntityTable, null);
     }
 
-    private CommunicationPolicyTable getCommunicationPolicyInformation(BufferedReader br) throws IOException {
+    private CommunicationPolicyTable getCommunicationPolicyInformation(BufferedReader br) throws IOException, SQLException {
         logger.info("\nEnter requesting group:");
         String requestingGroup = br.readLine();
         if (requestingGroup.isEmpty()) {
@@ -335,27 +337,39 @@ public class AuthCommandLine extends Thread  {
             sessionCryptoSpec = "AES-128-CBC:SHA256";
         }
 
+        logger.info("\nEnter relative validity period of session keys [Default: 1*hour] (use day, hour, min, sec):");
+        String relativeValidityString = br.readLine();
+        if (relativeValidityString.isEmpty()) {
+            relativeValidityString = "1*hour";
+        }
+
         logger.info("\nEnter absolute validity period of session keys [Default: 1*day] (use day, hour, min, sec):");
         String absoluteValidityString = br.readLine();
         if (absoluteValidityString.isEmpty()) {
             absoluteValidityString = "1*day";
         }
 
-
-        logger.info("\nEnter absolute validity period of session keys [Default: 1*hour] (use day, hour, min, sec):");
-        String relativeValidityString = br.readLine();
-        if (relativeValidityString.isEmpty()) {
-            relativeValidityString = "1*hour";
+        logger.info("\nEnter expiration period of communcation policy [Default: 1*day] (use day, hour, min, sec):");
+        String expiration = br.readLine();
+        if (expiration.isEmpty()) {
+            expiration = "1*day";
         }
 
+        String commPolicyCountValue = server.getCommPolicyCountValue();
+        long nextCommPolicyID = Long.parseLong(commPolicyCountValue) + 1;
+        server.updateCommPolicyCountValue(nextCommPolicyID);
+
         return new CommunicationPolicyTable().setReqGroup(requestingGroup)
+                .setID(nextCommPolicyID)
                 .setTarget(target)
                 .setTargetTypeVal(targetType)
                 .setTargetType(CommunicationTargetType.fromStringValue(targetType))
                 .setMaxNumSessionKeyOwners(maxNumSessionKeyOwners)
                 .setSessionCryptoSpec(sessionCryptoSpec)
                 .setAbsValidityStr(absoluteValidityString)
-                .setRelValidityStr(relativeValidityString);
+                .setRelValidityStr(relativeValidityString)
+                .setIsDelegated(0)
+                .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration));
     }
 
     private List<String> getCommunicationPolicyIdsToRemove(BufferedReader br) throws IOException, NullPointerException {

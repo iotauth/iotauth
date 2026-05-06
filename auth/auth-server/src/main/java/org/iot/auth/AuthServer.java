@@ -673,6 +673,9 @@ public class AuthServer {
         for (String i : expiredIds){
             allCPTIDsToBeRemoved.addAll(getAllChildrenByParentID(i));
         }
+        if (allCPTIDsToBeRemoved.isEmpty()){
+            return;
+        }
         logger.debug("Child policies of expired policies {}", allCPTIDsToBeRemoved);
         removeCommunicationPolicies(allCPTIDsToBeRemoved);
     }

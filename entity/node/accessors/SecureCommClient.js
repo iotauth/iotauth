@@ -39,7 +39,7 @@ var currentSecureClient;
 
 // parameters for SecureCommClient
 var parameters =  {
-	numKeysPerRequest: 1,
+	numKeysPerRequest: 1,   // TODO-SY: config check
     migrationEnabled: false,
     authFailureThreshold: 3,
     migrationFailureThreshold: 3
