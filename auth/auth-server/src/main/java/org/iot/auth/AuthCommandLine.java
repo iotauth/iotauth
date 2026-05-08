@@ -349,7 +349,7 @@ public class AuthCommandLine extends Thread  {
             absoluteValidityString = "1*day";
         }
 
-        logger.info("\nEnter expiration period of communcation policy [Default: 1*day] (use day, hour, min, sec):");
+        logger.info("\nEnter expiration period of communication policy [Default: 1*day] (use day, hour, min, sec):");
         String expiration = br.readLine();
         if (expiration.isEmpty()) {
             expiration = "1*day";
