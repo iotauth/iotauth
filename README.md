@@ -1,13 +1,14 @@
 # Overview
 ---
-This is a repository for an open-source project of **SST (Secure Swarm Toolkit)** and the local authentication and authorization entity, **Auth**, for the security of distributed systems and Internet of Things (IoT). Auth is a local point of authorization, and Auth's main roles are 1) providing authentication/authorization for its locally registered entities or devices and 2) working as a bridge of authorization between its local entities and the Internet. 
+This is a repository for the open-source project **SST (Secure Swarm Toolkit)** and its local authentication and authorization entity, **Auth**, for the security of distributed systems and the Internet of Things (IoT). Auth is a local point of authorization, and Auth's main roles are 1) providing authentication/authorization for its locally registered entities or devices and 2) working as a bridge of authorization between its local entities and the Internet. 
 
-Our conference papers [[IoTDI '17](https://dl.acm.org/citation.cfm?id=3054980)], [[FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)] describe a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity).
+Our conference papers [[IoTDI '17](https://dl.acm.org/citation.cfm?id=3054980)] (winner of **ACM/IEEE Best Paper Award at CPSWeek '17**), [[FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)] describe a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity).
 The architecture provides security guarantees while addressing IoT-related issues, including resource constraints and intermittent connectivity.
 The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our magazine article [[IT Professional '17'](https://ieeexplore.ieee.org/document/8057722/)].
 Our ACM journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/3375837)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
-In 2023, we released C API for SST introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
-We also recently applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://dl.acm.org/doi/10.1145/3725354)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
+In 2023, we released the C API for SST, which was introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
+We also applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://dl.acm.org/doi/10.1145/3725354)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
+Furthermore, we built SST Testbed [[ICIT '26](https://ieeexplore.ieee.org/document/11490150)] a testbed for experimenting with attacks and defenses for distributed embedded systems and IoT using SST, which also won the **[1st place](https://2025.esweek.org/awards-2025/) in the Embedded System Software Competition (ESSC) at ESWEEK '25** ([[YouTube Video of SST Testbed](https://www.youtube.com/watch?v=DU9cHmDfRYI)]).
 
 More publications on SST or using SST include [[SmartSP '24](https://arxiv.org/abs/2411.13441)], [[FDL '23](https://ieeexplore.ieee.org/document/10272133)], and [[SenSys '23 - Poster Abstract]](https://dl.acm.org/doi/10.1145/3625687.3628408).
 
@@ -71,4 +72,4 @@ This project is currently intended for academic and research purposes, although 
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP), a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 This work was supported in part by the National Research Foundation of Korea (NRF) grants funded by the Korea government (MSIT).
 
-*Last updated on April 22, 2026*
+*Last updated on May 12, 2026*
