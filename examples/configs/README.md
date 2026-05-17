@@ -26,7 +26,7 @@
 
 	Default example SST topology containing two Auths (`Auth101` and `Auth102`) and their registered client/server entities across two separate networks (`net1` and `net2`).
 
-* `multi_agent.graph`
+* `privilege.graph`
 
 	Multi-level delegated-access example topology used for automated privilege grand and revoke workflows.
   * Example entities include:
@@ -35,5 +35,5 @@
   * This graph is used together with `autoPrivilege.js` under [`entity/node/example_entities`](../../entity/node/example_entities).
   * Generate with 
     ```
-    node defaultGraphGenerator.js --multi-agent -o multi_agent.graph
+    node defaultGraphGenerator.js -p -o privilege.graph
     ```
