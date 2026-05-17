@@ -1,6 +1,8 @@
 "use strict";
 
 const SecureCommClient = require("../accessors/SecureCommClient");
+const fs = require("fs");
+const path = require("path");
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -92,23 +94,37 @@ async function runPrivilegeTest(nodeConfig, type, subject, object, validity, tim
 }
 
 async function main() {
-    const tests = [
-        ["configs/net1/node0.config", "DelegationGrant", "Node1", "ResourceA", "1*day"],
-        ["configs/net1/node0.config", "DelegationGrant", "Node1", "ResourceB", "1*day"],
-        ["configs/net1/node0.config", "DelegationGrant", "Node2", "ResourceC", "1*day"],
-        ["configs/net1/node0.config", "DelegationGrant", "Node2", "ResourceD", "1*day"],
-        ["configs/net1/node1.config", "DelegationGrant", "Node3", "ResourceA", "1*day"],
-        ["configs/net1/node1.config", "DelegationGrant", "Node4", "ResourceB", "1*day"],
-        ["configs/net1/node2.config", "DelegationGrant", "Node5", "ResourceC", "1*day"],
-        ["configs/net1/node2.config", "DelegationGrant", "Node6", "ResourceD", "1*day"],
-    ];
+    const defaultType = process.argv[2] || "DelegationGrant";
+    const inputPath = process.argv[3] || "privileges.json";
+
+    const raw = fs.readFileSync(path.resolve(inputPath), "utf8");
+    const config = JSON.parse(raw);
+
+    const defaultValidity = config.defaultValidity || "1*day";
+    const defaultTimeoutMs = config.defaultTimeoutMs || 10000;
+
+    const tests = config.tests.map(t => ({
+        nodeConfig: t.nodeConfig,
+        type: defaultType,
+        subject: t.subject,
+        object: t.object,
+        validity: t.validity || defaultValidity,
+        timeoutMs: t.timeoutMs || defaultTimeoutMs,
+    }));
 
     const results = [];
     const startAll = process.hrtime.bigint();
 
-    for (const [nodeConfig, type, subject, object, validity] of tests) {
+    for (const test of tests) {
         results.push(
-            await runPrivilegeTest(nodeConfig, type, subject, object, validity)
+            await runPrivilegeTest(
+                test.nodeConfig,
+                test.type,
+                test.subject,
+                test.object,
+                test.validity,
+                test.timeoutMs
+            )
         );
     }
 

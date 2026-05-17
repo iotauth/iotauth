@@ -1033,7 +1033,7 @@ public class SQLiteConnector {
             try (ResultSet rs = ps.executeQuery()) {
                 logger.info("findChildrenCPTs Table lookup");
                 while (rs.next()) {
-                    String childId = rs.getString("CPTID");
+                    String childId = rs.getString("CPT_ID");
                     result.add(childId);
                     findChildrenCPTs(childId, result);
                 }
