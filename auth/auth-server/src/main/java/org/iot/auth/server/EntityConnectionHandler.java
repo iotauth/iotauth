@@ -931,7 +931,7 @@ public abstract class EntityConnectionHandler {
 
                         JSONObject info = p.getInfo();
                         String commPolicyCountValue = server.getCommPolicyCountValue();
-                        long nextCommPolicyID = Long.parseLong(commPolicyCountValue) + 1;
+                        long nextCommPolicyID = Long.parseLong(commPolicyCountValue);
 
                         CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
                                 .setID(nextCommPolicyID)
@@ -955,7 +955,7 @@ public abstract class EntityConnectionHandler {
 
                         boolean addNewCommunicationPolicy = server.addCommunicationPolicy(newCommunicationPolicyTable);
                         boolean addNewDelegationInfo = server.addDelegationInfo(newDelegationInfoTable);
-                        boolean updateCommPolicyCount = server.updateCommPolicyCountValue(nextCommPolicyID);
+                        boolean updateCommPolicyCount = server.updateCommPolicyCountValue(++nextCommPolicyID);
                         if (updateCommPolicyCount){
                             getLogger().info("Failed to update new Communication Policy Count number!");
                         }

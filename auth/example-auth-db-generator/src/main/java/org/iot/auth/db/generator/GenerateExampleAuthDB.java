@@ -254,7 +254,7 @@ public class GenerateExampleAuthDB {
         try {
             JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
             String commPolicyCountValue = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.CommPolicyCount.name());
-            long nextCommPolicyID = Long.parseLong(commPolicyCountValue) + 1;
+            long nextCommPolicyID = Long.parseLong(commPolicyCountValue);
             for (Object objElement : jsonArray) {
                 JSONObject jsonObject = (JSONObject)objElement;
                 CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
