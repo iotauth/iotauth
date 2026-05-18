@@ -46,7 +46,7 @@ public class CommunicationPolicyTable {
         IsDelegated,
     }
 
-    private long id;
+    private long id = -1;
     private String reqGroup;
     private CommunicationTargetType targetType;
     private String targetTypeVal;
