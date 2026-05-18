@@ -72,12 +72,26 @@ The script reads test configurations from a JSON file:
   ]
 }
 ```
+
+`privileges.json` contains a small set of example privilege operations for simple testing.
+
 #### How to use
 ```
 # It will use privileges.json as default.
-node autoPrivilege.js DelegationGrant   
-node autoPrivilege.js DelegationRevoke  
+node autoPrivilege.js DelegationGrant 
+node autoPrivilege.js DelegationRevoke 
+
+# Use a custom JSON test configuration file.
+node autoPrivilege.js DelegationGrant your_custom_test.json
 ```
+
+The file dbsec_test.json contains the automated privilege test configuration used for the DBsec paper experiments.
+```
+# Run the DBsec paper experiment configuration.
+node autoPrivilege.js DelegationGrant dbsec_test.json
+node autoPrivilege.js DelegationRevoke dbsec_test.json
+```
+
 #### Example Output
 ```
 [PASS] configs/net1/node1.config | Node3 -> ResourceA | 101.543 ms

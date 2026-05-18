@@ -1,0 +1,46 @@
+{
+  "defaultValidity": "1*day",
+  "defaultTimeoutMs": 10000,
+  "tests": [
+    {
+      "nodeConfig": "configs/net1/node0.config",
+      "subject": "Node1",
+      "object": "ResourceA"
+    },
+    {
+      "nodeConfig": "configs/net1/node0.config",
+      "subject": "Node1",
+      "object": "ResourceB"
+    },
+    {
+      "nodeConfig": "configs/net1/node0.config",
+      "subject": "Node2",
+      "object": "ResourceC"
+    },
+    {
+      "nodeConfig": "configs/net1/node0.config",
+      "subject": "Node2",
+      "object": "ResourceD"
+    },
+    {
+      "nodeConfig": "configs/net1/node1.config",
+      "subject": "Node3",
+      "object": "ResourceA"
+    },
+    {
+      "nodeConfig": "configs/net1/node1.config",
+      "subject": "Node4",
+      "object": "ResourceB"
+    },
+    {
+      "nodeConfig": "configs/net1/node2.config",
+      "subject": "Node5",
+      "object": "ResourceC"
+    },
+    {
+      "nodeConfig": "configs/net1/node2.config",
+      "subject": "Node6",
+      "object": "ResourceD"
+    }
+  ]
+}
