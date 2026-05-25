@@ -21,14 +21,13 @@ import org.iot.auth.config.constants.ConstantType;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.db.AuthDBProtectionMethod;
-import org.iot.auth.db.bean.CommunicationPolicyTable;
-import org.iot.auth.db.bean.RegisteredEntityTable;
-import org.iot.auth.db.bean.TrustedAuthTable;
+import org.iot.auth.db.bean.*;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.message.MessageType;
 import org.iot.auth.message.impl.AuthHello;
 import org.iot.auth.util.DateHelper;
+import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -61,18 +60,38 @@ public class AppTest {
     @Category(org.iot.auth.message.MessageType.class)
     public void testMessageType(){
         logger.info("{} {}", MessageType.AUTH_HELLO.toString(), MessageType.AUTH_HELLO.getValue());
+        logger.info("{} {}", MessageType.ENTITY_HELLO.toString(), MessageType.ENTITY_HELLO.getValue());
         logger.info("{} {}", MessageType.AUTH_SESSION_KEY_REQ.toString(), MessageType.AUTH_SESSION_KEY_REQ.getValue());
         logger.info("{} {}", MessageType.AUTH_SESSION_KEY_RESP.toString(), MessageType.AUTH_SESSION_KEY_RESP.getValue());
         logger.info("{} {}", MessageType.SESSION_KEY_REQ_IN_PUB_ENC.toString(), MessageType.SESSION_KEY_REQ_IN_PUB_ENC.getValue());
         logger.info("{} {}", MessageType.SESSION_KEY_RESP_WITH_DIST_KEY.toString(), MessageType.SESSION_KEY_RESP_WITH_DIST_KEY.getValue());
         logger.info("{} {}", MessageType.SESSION_KEY_REQ.toString(), MessageType.SESSION_KEY_REQ.getValue());
         logger.info("{} {}", MessageType.SESSION_KEY_RESP.toString(), MessageType.SESSION_KEY_RESP.getValue());
+        logger.info("{} {}", MessageType.SESSION_KEY_RESP_FOR_DELEGATION.toString(), MessageType.SESSION_KEY_RESP_FOR_DELEGATION.getValue());
+        logger.info("{} {}", MessageType.SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY.toString(), MessageType.SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY.getValue());
         logger.info("{} {}", MessageType.SKEY_HANDSHAKE_1.toString(), MessageType.SKEY_HANDSHAKE_1.getValue());
         logger.info("{} {}", MessageType.SKEY_HANDSHAKE_2.toString(), MessageType.SKEY_HANDSHAKE_2.getValue());
         logger.info("{} {}", MessageType.SKEY_HANDSHAKE_3.toString(), MessageType.SKEY_HANDSHAKE_3.getValue());
         logger.info("{} {}", MessageType.SECURE_COMM_MSG.toString(), MessageType.SECURE_COMM_MSG.getValue());
         logger.info("{} {}", MessageType.FIN_SECURE_COMM.toString(), MessageType.FIN_SECURE_COMM.getValue());
         logger.info("{} {}", MessageType.SECURE_PUB.toString(), MessageType.SECURE_PUB.getValue());
+        logger.info("{} {}", MessageType.MIGRATION_REQ_WITH_SIGN.toString(), MessageType.MIGRATION_REQ_WITH_SIGN.getValue());
+        logger.info("{} {}", MessageType.MIGRATION_RESP_WITH_SIGN.toString(), MessageType.MIGRATION_RESP_WITH_SIGN.getValue());
+        logger.info("{} {}", MessageType.MIGRATION_REQ_WITH_MAC.toString(), MessageType.MIGRATION_REQ_WITH_MAC.getValue());
+        logger.info("{} {}", MessageType.MIGRATION_RESP_WITH_MAC.toString(), MessageType.MIGRATION_RESP_WITH_MAC.getValue());
+        logger.info("{} {}", MessageType.ADD_READER_REQ_IN_PUB_ENC.toString(), MessageType.ADD_READER_REQ_IN_PUB_ENC.getValue());
+        logger.info("{} {}", MessageType.ADD_READER_RESP_WITH_DIST_KEY.toString(), MessageType.ADD_READER_RESP_WITH_DIST_KEY.getValue());
+        logger.info("{} {}", MessageType.ADD_READER_REQ.toString(), MessageType.ADD_READER_REQ.getValue());
+        logger.info("{} {}", MessageType.ADD_READER_RESP.toString(), MessageType.ADD_READER_RESP.getValue());
+        logger.info("{} {}", MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC.toString(), MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC.getValue());
+        logger.info("{} {}", MessageType.DELEGATED_ACCESS_RESP_WITH_DIST_KEY.toString(), MessageType.DELEGATED_ACCESS_RESP_WITH_DIST_KEY.getValue());
+        logger.info("{} {}", MessageType.DELEGATED_ACCESS_REQ.toString(), MessageType.DELEGATED_ACCESS_REQ.getValue());
+        logger.info("{} {}", MessageType.DELEGATED_ACCESS_RESP.toString(), MessageType.DELEGATED_ACCESS_RESP.getValue());
+        logger.info("{} {}", MessageType.PRIVILEGED_REQ_IN_PUB_ENC.toString(), MessageType.PRIVILEGED_REQ_IN_PUB_ENC.getValue());
+        logger.info("{} {}", MessageType.PRIVILEGED_RESP_WITH_DIST_KEY.toString(), MessageType.PRIVILEGED_RESP_WITH_DIST_KEY.getValue());
+        logger.info("{} {}", MessageType.PRIVILEGED_REQ.toString(), MessageType.PRIVILEGED_REQ.getValue());
+        logger.info("{} {}", MessageType.PRIVILEGED_RESP.toString(), MessageType.PRIVILEGED_RESP.getValue());
+        logger.info("{} {}", MessageType.AUTH_ALERT.toString(), MessageType.AUTH_ALERT.getValue());
     }
 
     @Test
@@ -316,6 +335,70 @@ public class AppTest {
 
         // Test Select All.
         sqLiteConnector.selectAllTrustedAuths();
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.DelegationPrivilege.class)
+    public void testDelegationPrivilegeInsertionAndSelectAll() throws SQLException, ClassNotFoundException, IOException, ParseException {
+        final String testDbFileName = testDbPath + "testDelegationPrivilegeInsertionAndSelectAll" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+        DelegationPrivilegeTable delegationPrivilegeTable = new DelegationPrivilegeTable();
+
+        delegationPrivilegeTable.setPrivilegeType("DelegationGrant");
+        delegationPrivilegeTable.setprivilegedGroup("Node0");
+        delegationPrivilegeTable.setSubject("Node1");
+        delegationPrivilegeTable.setObject("ResourceA");
+        delegationPrivilegeTable.setValidity("1*day");
+        delegationPrivilegeTable.setInfo("{\"cryptoSpec\":\"AES-128-CBC:SHA256\",\"absValidity\":\"1*day\",\"relValidity\":\"1*hour\"}");
+        sqLiteConnector.insertRecords(delegationPrivilegeTable);
+
+        delegationPrivilegeTable.setPrivilegeType("DelegationGrant");
+        delegationPrivilegeTable.setprivilegedGroup("Node0");
+        delegationPrivilegeTable.setSubject("Node1");
+        delegationPrivilegeTable.setObject("ResourceB");
+        delegationPrivilegeTable.setValidity("1*day");
+        delegationPrivilegeTable.setInfo("{\"cryptoSpec\":\"AES-128-CBC:SHA256\",\"absValidity\":\"1*day\",\"relValidity\":\"1*hour\"}");
+        sqLiteConnector.insertRecords(delegationPrivilegeTable);
+
+        delegationPrivilegeTable.setPrivilegeType("DelegationGrant");
+        delegationPrivilegeTable.setprivilegedGroup("Node0");
+        delegationPrivilegeTable.setSubject("Node2");
+        delegationPrivilegeTable.setObject("ResourceC");
+        delegationPrivilegeTable.setValidity("1*day");
+        delegationPrivilegeTable.setInfo("{\"cryptoSpec\":\"AES-128-CBC:SHA256\",\"absValidity\":\"1*day\",\"relValidity\":\"1*hour\"}");
+        sqLiteConnector.insertRecords(delegationPrivilegeTable);
+
+        delegationPrivilegeTable.setPrivilegeType("DelegationGrant");
+        delegationPrivilegeTable.setprivilegedGroup("Node2");
+        delegationPrivilegeTable.setSubject("Node1");
+        delegationPrivilegeTable.setObject("ResourceD");
+        delegationPrivilegeTable.setValidity("1*day");
+        delegationPrivilegeTable.setInfo("{\"cryptoSpec\":\"AES-128-CBC:SHA256\",\"absValidity\":\"1*day\",\"relValidity\":\"1*hour\"}");
+        sqLiteConnector.insertRecords(delegationPrivilegeTable);
+
+        delegationPrivilegeTable.setPrivilegeType("DelegationRevoke");
+        delegationPrivilegeTable.setprivilegedGroup("Node0");
+        delegationPrivilegeTable.setSubject("Node1");
+        delegationPrivilegeTable.setObject("ResourceA");
+        delegationPrivilegeTable.setValidity("");
+        delegationPrivilegeTable.setInfo("{}");
+        sqLiteConnector.insertRecords(delegationPrivilegeTable);
+
+        delegationPrivilegeTable.setPrivilegeType("DelegationRevoke");
+        delegationPrivilegeTable.setprivilegedGroup("Node0");
+        delegationPrivilegeTable.setSubject("Node2");
+        delegationPrivilegeTable.setObject("ResourceA");
+        delegationPrivilegeTable.setValidity("");
+        delegationPrivilegeTable.setInfo("{}");
+        sqLiteConnector.insertRecords(delegationPrivilegeTable);
+
+        sqLiteConnector.selectAllPrivileges();
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
     }
