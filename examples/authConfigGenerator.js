@@ -146,6 +146,35 @@ function generateFileSharingInfoTables() {
     }
 }
 
+// generate delegation grant policy table
+function getPrivilegePolicy(entity){
+    var privilegePolicy = {
+        PrivilegeType: entity.privilegeType,
+        PrivilegedGroup: entity.privilegedGroup,
+        Subject: entity.subject,
+        Object: entity.object,
+        Validity: entity.validity,
+        Info: entity.info
+    }
+    return privilegePolicy;
+}
+
+function generateDelegationPrivilegeTables(){
+    var delegationPolicyList = [];
+
+    var privilegeList = graph.privilegeList;
+    for (var i = 0; i < privilegeList.length; i++) {
+        var privilegeListElement = privilegeList[i];
+        delegationPolicyList.push(getPrivilegePolicy(privilegeListElement));
+    }
+    for (var i = 0; i < authList.length; i++) {
+        var auth = authList[i];
+        var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'DelegationPrivilegeTable.config';
+        console.log('Writing Auth config to ' + configFilePath + ' ...');
+        fs.writeFileSync(configFilePath, JSON2.stringify(delegationPolicyList, null, '\t'), 'utf8');
+    }
+}
+
 // generate client policy tables
 function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
     list.push({
@@ -155,7 +184,9 @@ function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, 
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
 }
 function addPubSubPolicy(list, requestingGroup, isPub) {
@@ -166,7 +197,9 @@ function addPubSubPolicy(list, requestingGroup, isPub) {
         MaxNumSessionKeyOwners: 64,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: '6*hour',
-        RelativeValidity: '3*hour'
+        RelativeValidity: '3*hour',
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
 }
 // Add policy for upload and download files
@@ -178,7 +211,9 @@ function addUploadDownloadlPolicy(list, requestingGroup, target) {
         MaxNumSessionKeyOwners: 10,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: '365*day',
-        RelativeValidity: '365*day'
+        RelativeValidity: '365*day',
+        Expiration: "Infinity",
+        IsDelegated: 0
     });    
 }
 // generate client policy tables
@@ -190,7 +225,9 @@ function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-CTR:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
     list.push({
         RequestingGroup: target,
@@ -199,7 +236,9 @@ function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-CTR:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
 }
 
@@ -212,7 +251,9 @@ function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-GCM:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
     list.push({
         RequestingGroup: target,
@@ -221,7 +262,9 @@ function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-GCM:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
 }
 
@@ -234,7 +277,9 @@ function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-CBC:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
     list.push({
         RequestingGroup: target,
@@ -243,7 +288,9 @@ function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteVa
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: 'AES-128-CBC:SHA256',
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
 }
 function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
@@ -254,7 +301,9 @@ function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, re
         MaxNumSessionKeyOwners: 2,
         SessionCryptoSpec: common.DEFAULT_CIPHER + ':' + common.DEFAULT_MAC,
         AbsoluteValidity: absoluteValidity,
-        RelativeValidity: relativeValidity
+        RelativeValidity: relativeValidity,
+        Expiration: "Infinity",
+        IsDelegated: 0
     });
 }
 
@@ -273,9 +322,9 @@ function generateCommunicationPolicyTables() {
         addPubSubPolicy(policyList, 'Servers', false);
         addPubSubPolicy(policyList, 'PtPublishers', true);
         addPubSubPolicy(policyList, 'PtSubscribers', false);
-        addUploadDownloadlPolicy(policyList, 'TeamA', 'TeamB');
-        addUploadDownloadlPolicy(policyList, 'TeamB', 'TeamC');
-        addUploadDownloadlPolicy(policyList, 'TeamC', 'TeamE');
+        addUploadDownloadlPolicy(policyList,'TeamA','TeamB');
+        addUploadDownloadlPolicy(policyList,'TeamB','TeamC');
+        addUploadDownloadlPolicy(policyList,'TeamC','TeamE');
         addServerClientPolicy(policyList, 'TeamA', 'Servers', '1*day', '2*hour');
         addServerClientPolicy(policyList, 'TeamA', 'FileManager', '1*day', '2*hour');
         addServerClientPolicy(policyList, 'TeamB', 'FileManager', '1*day', '2*hour');
@@ -283,9 +332,16 @@ function generateCommunicationPolicyTables() {
         addComputeCompactionCTRPolicy(policyList, 'ComputeNodesCTR', 'CompactionNodesCTR', '1*day', '2*hour');
         addComputeCompactionGCMPolicy(policyList, 'ComputeNodesGCM', 'CompactionNodesGCM', '1*day', '2*hour');
         addComputeCompactionCBCPolicy(policyList, 'ComputeNodesCBC', 'CompactionNodesCBC', '1*day', '2*hour');
-        addDelegationPolicy(policyList, 'Users', 'HighTrustAgents,Website', '1*day', '2*hour')
-        addDelegationPolicy(policyList, 'Users', 'MediumTrustAgents,Website', '1*day', '1*hour')
-        addDelegationPolicy(policyList, 'Users', 'LowTrustAgents,Website', '1*day', '300*sec')
+        addDelegationPolicy(policyList, 'Users', 'HighTrustAgents,Website', '1*day', '2*hour');
+        addDelegationPolicy(policyList, 'Users', 'MediumTrustAgents,Website', '1*day', '1*hour');
+        addDelegationPolicy(policyList, 'Users', 'LowTrustAgents,Website', '1*day', '300*sec');
+        addServerClientPolicy(policyList, 'Users', 'ResourceA', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'Users', 'ResourceB', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'Users', 'ResourceC', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'Node0', 'ResourceA', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'Node0', 'ResourceB', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'Node0', 'ResourceC', '1*day', '2*hour');
+        addServerClientPolicy(policyList, 'Node0', 'ResourceD', '1*day', '2*hour');
     }
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
@@ -359,7 +415,8 @@ function generatePropertiesFiles() {
             // currently default is false
             'qps_throttling_enabled': auth.capacityQpsLimit == null ? false : true,
             'qps_limit': auth.capacityQpsLimit == null ? 10 : auth.capacityQpsLimit/60.0,
-            'qps_calculation_bucket_size_in_sec': 60
+            'qps_calculation_bucket_size_in_sec': 60,
+            'cleanup_cycle_in_ms': 2*60*1000 // 1 hour 60*60*1000
         };
         var strProperties = '';
         for (var key in properties) {
@@ -377,3 +434,4 @@ generateCommunicationPolicyTables();
 generateTrustedAuthTables();
 generatePropertiesFiles();
 generateFileSharingInfoTables();
+generateDelegationPrivilegeTables();

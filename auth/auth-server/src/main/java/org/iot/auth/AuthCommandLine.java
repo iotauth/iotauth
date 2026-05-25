@@ -20,6 +20,7 @@ import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
+import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -175,13 +179,29 @@ public class AuthCommandLine extends Thread  {
                         logger.info("\n Information of new communication policy was not entered correctly.");
                         continue;
                     }
-                    logger.info("Entered new entity information");
+                    logger.info("Entered new communication policy information");
                     logger.info(newCommunicationPolicy.toString());
                     if (server.addCommunicationPolicy(newCommunicationPolicy)) {
                         logger.info("New communication policy has been added successfully.");
                     }
                     else {
                         logger.error("New communication policy has NOT been added due to errors.");
+                    }
+                }
+                else if (command.equals("remove cp")) {
+                    logger.info("\n Remove the communication policy command");
+                    List<String> policyIdsToRemove = getCommunicationPolicyIdsToRemove(br);
+                    if (policyIdsToRemove == null) {
+                        logger.info("\n ID of the communication policy to be removed was not entered correctly.");
+                        continue;
+                    }
+                    logger.info("Entered ID of the communication policy to be removed");
+                    logger.info(policyIdsToRemove.toString());
+                    if (server.removeCommunicationPolicies(policyIdsToRemove)) {
+                        logger.info("The communication policy has been removed successfully.");
+                    }
+                    else {
+                        logger.error("The communication policy has NOT been removed due to errors.");
                     }
                 }
                 else {
@@ -285,7 +305,7 @@ public class AuthCommandLine extends Thread  {
         return new RegisteredEntity(registeredEntityTable, null);
     }
 
-    private CommunicationPolicyTable getCommunicationPolicyInformation(BufferedReader br) throws IOException {
+    private CommunicationPolicyTable getCommunicationPolicyInformation(BufferedReader br) throws IOException, SQLException {
         logger.info("\nEnter requesting group:");
         String requestingGroup = br.readLine();
         if (requestingGroup.isEmpty()) {
@@ -317,27 +337,50 @@ public class AuthCommandLine extends Thread  {
             sessionCryptoSpec = "AES-128-CBC:SHA256";
         }
 
+        logger.info("\nEnter relative validity period of session keys [Default: 1*hour] (use day, hour, min, sec):");
+        String relativeValidityString = br.readLine();
+        if (relativeValidityString.isEmpty()) {
+            relativeValidityString = "1*hour";
+        }
+
         logger.info("\nEnter absolute validity period of session keys [Default: 1*day] (use day, hour, min, sec):");
         String absoluteValidityString = br.readLine();
         if (absoluteValidityString.isEmpty()) {
             absoluteValidityString = "1*day";
         }
 
-
-        logger.info("\nEnter absolute validity period of session keys [Default: 1*hour] (use day, hour, min, sec):");
-        String relativeValidityString = br.readLine();
-        if (relativeValidityString.isEmpty()) {
-            relativeValidityString = "1*hour";
+        logger.info("\nEnter expiration period of communication policy [Default: 1*day] (use day, hour, min, sec):");
+        String expiration = br.readLine();
+        if (expiration.isEmpty()) {
+            expiration = "1*day";
         }
 
+        String commPolicyCountValue = server.getCommPolicyCountValue();
+        long nextCommPolicyID = Long.parseLong(commPolicyCountValue) + 1;
+        server.updateCommPolicyCountValue(nextCommPolicyID);
+
         return new CommunicationPolicyTable().setReqGroup(requestingGroup)
+                .setID(nextCommPolicyID)
                 .setTarget(target)
                 .setTargetTypeVal(targetType)
                 .setTargetType(CommunicationTargetType.fromStringValue(targetType))
                 .setMaxNumSessionKeyOwners(maxNumSessionKeyOwners)
                 .setSessionCryptoSpec(sessionCryptoSpec)
                 .setAbsValidityStr(absoluteValidityString)
-                .setRelValidityStr(relativeValidityString);
+                .setRelValidityStr(relativeValidityString)
+                .setIsDelegated(0)
+                .setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration));
+    }
+
+    private List<String> getCommunicationPolicyIdsToRemove(BufferedReader br) throws IOException, NullPointerException {
+        logger.info("\nEnter the IDs of communication policy to be removed: (ex: 1 2 3)");
+        String requestedIds = br.readLine();
+        if (requestedIds.isEmpty()) {
+            return null;
+        }
+        String[] ids = requestedIds.trim().split("\\s+");
+
+        return new ArrayList<>(Arrays.asList(ids));
     }
 
     private AuthServer server;

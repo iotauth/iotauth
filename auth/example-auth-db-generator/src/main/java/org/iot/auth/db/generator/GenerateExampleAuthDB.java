@@ -23,6 +23,8 @@ import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.bean.FileSharingTable;
+import org.iot.auth.db.bean.DelegationPrivilegeTable;
+import org.iot.auth.db.bean.DelegationInfoTable;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.exception.InvalidDBDataTypeException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
@@ -115,6 +117,8 @@ public class GenerateExampleAuthDB {
                 authDatabaseDir + "configs/Auth" + authID + "TrustedAuthTable.config");
         initFileSharingInfoTable(sqLiteConnector, 
                 authDatabaseDir + "configs/Auth" + authID + "FileSharingInfoTable.config");
+        initDelegationPrivilegeTable(sqLiteConnector,
+                authDatabaseDir + "configs/Auth" + authID + "DelegationPrivilegeTable.config");
         sqLiteConnector.close();
     }
 
@@ -126,6 +130,9 @@ public class GenerateExampleAuthDB {
 
         metaData = new MetaDataTable();
         metaData.setKey(MetaDataTable.key.SessionKeyCount.name());
+        metaData.setValue(Long.toString(0));
+        sqLiteConnector.insertRecords(metaData);
+        metaData.setKey(MetaDataTable.key.CommPolicyCount.name());
         metaData.setValue(Long.toString(0));
         sqLiteConnector.insertRecords(metaData);
 
@@ -246,21 +253,30 @@ public class GenerateExampleAuthDB {
         JSONParser parser = new JSONParser();
         try {
             JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
-
+            String commPolicyCountValue = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.CommPolicyCount.name());
+            long nextCommPolicyID = Long.parseLong(commPolicyCountValue);
             for (Object objElement : jsonArray) {
-                JSONObject jsonObject =  (JSONObject)objElement;
+                JSONObject jsonObject = (JSONObject)objElement;
                 CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
-
+                communicationPolicyTable.setID(nextCommPolicyID);
                 communicationPolicyTable.setReqGroup((String)jsonObject.get(CommunicationPolicyTable.c.RequestingGroup.name()));
                 communicationPolicyTable.setTargetTypeVal((String)jsonObject.get(CommunicationPolicyTable.c.TargetType.name()));
                 communicationPolicyTable.setTarget((String)jsonObject.get(CommunicationPolicyTable.c.Target.name()));
-                communicationPolicyTable.setMaxNumSessionKeyOwners(
-                        convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name())));
+                communicationPolicyTable.setMaxNumSessionKeyOwners(convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name())));
                 communicationPolicyTable.setSessionCryptoSpec((String)jsonObject.get(CommunicationPolicyTable.c.SessionCryptoSpec.name()));
                 communicationPolicyTable.setAbsValidityStr((String)jsonObject.get(CommunicationPolicyTable.c.AbsoluteValidity.name()));
                 communicationPolicyTable.setRelValidityStr((String)jsonObject.get(CommunicationPolicyTable.c.RelativeValidity.name()));
+                String expiration = (String)jsonObject.get(CommunicationPolicyTable.c.Expiration.name());
+                if (expiration.equals("Infinity")){
+                    communicationPolicyTable.setExpiration(9223372036854775807L);
+                } else{
+                    communicationPolicyTable.setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration));
+                }
+                communicationPolicyTable.setIsDelegated(convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.IsDelegated.name())));
                 sqLiteConnector.insertRecords(communicationPolicyTable);
+                nextCommPolicyID++;
             }
+            sqLiteConnector.updateMetaData(MetaDataTable.key.CommPolicyCount.name(), Long.toString(nextCommPolicyID));
         }
         catch (ParseException e) {
             logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
@@ -286,6 +302,32 @@ public class GenerateExampleAuthDB {
                 FileSharing.setReader((String)jsonObject.get(FileSharingTable.c.Reader.name()));
                 FileSharing.setReaderType((String)jsonObject.get(FileSharingTable.c.ReaderType.name()));
                 sqLiteConnector.insertRecords(FileSharing);
+            }
+        }
+        catch (ParseException e) {
+            logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
+    }
+
+    private static void initDelegationPrivilegeTable(SQLiteConnector sqLiteConnector,
+                                                 String tableConfigFilePath)
+            throws ClassNotFoundException, SQLException, IOException
+    {
+        JSONParser parser = new JSONParser();
+        try {
+            JSONArray jsonArray = (JSONArray)parser.parse(new FileReader(tableConfigFilePath));
+
+            for (Object objElement : jsonArray) {
+                JSONObject jsonObject =  (JSONObject)objElement;
+                DelegationPrivilegeTable delegationPrivilegeTable = new DelegationPrivilegeTable();
+
+                delegationPrivilegeTable.setPrivilegeType((String)jsonObject.get(DelegationPrivilegeTable.c.PrivilegeType.name()));
+                delegationPrivilegeTable.setprivilegedGroup((String)jsonObject.get(DelegationPrivilegeTable.c.PrivilegedGroup.name()));
+                delegationPrivilegeTable.setSubject((String)jsonObject.get(DelegationPrivilegeTable.c.Subject.name()));
+                delegationPrivilegeTable.setObject((String)jsonObject.get(DelegationPrivilegeTable.c.Object.name()));
+                delegationPrivilegeTable.setValidity((String)jsonObject.get(DelegationPrivilegeTable.c.Validity.name()));
+                delegationPrivilegeTable.setInfo(String.valueOf(jsonObject.get(DelegationPrivilegeTable.c.Info.name())));
+                sqLiteConnector.insertRecords(delegationPrivilegeTable);
             }
         }
         catch (ParseException e) {

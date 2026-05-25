@@ -39,7 +39,7 @@ var currentSecureClient;
 
 // parameters for SecureCommClient
 var parameters =  {
-	numKeysPerRequest: 3,
+	numKeysPerRequest: 1,   // TODO-SY: config check
     migrationEnabled: false,
     authFailureThreshold: 3,
     migrationFailureThreshold: 3
@@ -95,6 +95,13 @@ function onData(data) {
 	outputs.received = data;
     if (outputHandlers.received) {
     	outputHandlers.received(data);
+    }
+}
+
+function onPrivilege(result) {
+    outputs.privilege = result;
+    if (outputHandlers.privilege) {
+        outputHandlers.privilege(result);
     }
 }
 
@@ -297,6 +304,20 @@ function sendMigrationRequest() {
         iotAuth.migrateToTrustedAuth(options, handleMigrationResp, eventHandlers);
     }
 }
+
+function handlePrivilegeResp(result){
+    console.log('Finished privilege request');
+    console.log(result)
+}
+function sendPrivilegeRequest(type, subject, object, validity) {
+    var options = iotAuth.getPrivilegeReqOptions(entityConfig, type, subject, object, validity);
+    var eventHandlers = {
+        onError: onError,
+        onPrivilege: onPrivilege
+    };
+    iotAuth.privilegeRequest(options, handlePrivilegeResp, eventHandlers);
+}
+
 /*
 serverHostPort = {
 	host: 'localhost',
@@ -329,6 +350,32 @@ function serverHostPortInputHandler(serverHostPort) {
 	    }
 	}
 }
+function serverHostPortInputHandlerResource(serverHostPort, resourceName) {
+    if (serverHostPort == null) {
+        console.log('ServerHostPort is null, trying to close previous socket...');
+        if (currentSecureClient) {
+            currentSecureClient.close();
+            currentSecureClient = null;
+        }
+    }
+    else {
+        if (currentSessionKeyList.length > 0) {
+            initSecureCommWithSessionKey(currentSessionKeyList.shift(),
+                serverHostPort.host, serverHostPort.port);
+        }
+        else {
+            // hack to support exp2
+            if (parameters.keyId) {
+                sendSessionKeyRequest({keyId: parameters.keyId}, 1,
+                    handleSessionKeyResp, serverHostPort);
+            }
+            else {
+                sendSessionKeyRequest({group: resourceName}, parameters.numKeysPerRequest,
+                    handleSessionKeyResp, serverHostPort);
+            }
+        }
+    }
+}
 
 function toSendInputHandler(toSend) {
     if (currentSecureClient && currentState == clientCommState.IN_COMM) {
@@ -357,12 +404,14 @@ SecureCommClient.prototype.initialize = function() {
     outputs = {
     	connected: false,
     	error: null,
-    	received: null
+    	received: null,
+        privilege: null
     };
     outputHandlers = {
     	connected: null,
     	error: null,
-    	received: null
+    	received: null,
+        privilege: null
     };
 	console.log('current parameters: ' + util.inspect(parameters));
 }
@@ -374,6 +423,15 @@ SecureCommClient.prototype.provideInput = function(port, input) {
 	else if (port == 'toSend') {
 		toSendInputHandler(input);
 	}
+}
+
+SecureCommClient.prototype.provideInputResource = function(port, input, resourceName) {
+    if (port == 'serverHostPort') {
+        serverHostPortInputHandlerResource(input, resourceName);
+    }
+    else if (port == 'toSend') {
+        toSendInputHandler(input);
+    }
 }
 
 SecureCommClient.prototype.setParameter = function(key, value) {
@@ -438,6 +496,10 @@ SecureCommClient.prototype.getSessionKeysForWebsite = function(keyID) {
 
 SecureCommClient.prototype.migrateToTrustedAuth = function() {
     sendMigrationRequest();
+}
+
+SecureCommClient.prototype.performPrivilege = function(type, subject, object, validity) {
+    sendPrivilegeRequest(type, subject, object, validity);
 }
 
 SecureCommClient.prototype.setEntityInfo = function(key, value) {

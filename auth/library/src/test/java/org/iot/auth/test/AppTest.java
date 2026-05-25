@@ -204,6 +204,7 @@ public class AppTest {
         sqLiteConnector.DEBUG = true;
         CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
 
+        communicationPolicyTable.setID(0);
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
@@ -213,6 +214,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable.setID(1);
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
@@ -222,6 +224,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable.setID(2);
         communicationPolicyTable.setReqGroup("PtClients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
@@ -231,6 +234,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("2*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable.setID(3);
         communicationPolicyTable.setReqGroup("PtClients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
@@ -240,6 +244,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable.setID(4);
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -249,6 +254,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable.setID(5);
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -258,6 +264,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable.setID(6);
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -267,6 +274,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("3*hour");
         sqLiteConnector.insertRecords(communicationPolicyTable);
 
+        communicationPolicyTable.setID(7);
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -307,7 +315,7 @@ public class AppTest {
         sqLiteConnector.insertRecords(trustedAuth);
 
         // Test Select All.
-        sqLiteConnector.selectAllTrustedAuth();
+        sqLiteConnector.selectAllTrustedAuths();
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
     }

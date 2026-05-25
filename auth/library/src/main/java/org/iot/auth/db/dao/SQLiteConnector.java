@@ -26,6 +26,7 @@ import org.iot.auth.io.Buffer;
 import org.iot.auth.io.FileIOHelper;
 import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,6 +162,11 @@ public class SQLiteConnector {
         if (useInMemoryProtection) {
             if (connection == null || connection.isClosed()) {
                 connection = DriverManager.getConnection("jdbc:sqlite:");
+                // Enable SQLite foreign key enforcement (required for ON DELETE CASCADE in DelegationInfoTable)
+                Statement pragmaStmt = connection.createStatement();
+                pragmaStmt.execute("PRAGMA foreign_keys = ON");
+                pragmaStmt.close();
+
                 File dbFile = new File(dbPath);
                 if (dbFile.exists() && !dbFile.isDirectory()) {
                     byte[] encryptedDBBytes = FileIOHelper.readFully(dbPath);
@@ -178,6 +184,9 @@ public class SQLiteConnector {
         else {
             if (connection == null || connection.isClosed()) {
                 connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+                Statement pragmaStmt = connection.createStatement();
+                pragmaStmt.execute("PRAGMA foreign_keys = ON");
+                pragmaStmt.close();
             }
         }
     }
@@ -203,6 +212,7 @@ public class SQLiteConnector {
      */
     public void createTablesIfNotExists() throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
+        sql += CommunicationPolicyTable.c.ID.name() + " INT NOT NULL PRIMARY KEY,";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.TargetType.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.Target.name() + " TEXT NOT NULL,";
@@ -212,7 +222,9 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.SessionCryptoSpec.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + " TEXT NOT NULL,";
-        sql += "PRIMARY KEY (" + CommunicationPolicyTable.c.RequestingGroup.name() + ",";
+        sql += CommunicationPolicyTable.c.Expiration.name() + " INT NOT NULL,";
+        sql += CommunicationPolicyTable.c.IsDelegated.name() + " INT NOT NULL,";
+        sql += "UNIQUE (" + CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
         sql += CommunicationPolicyTable.c.Target.name() + "))";
         statement = connection.createStatement();
@@ -307,6 +319,45 @@ public class SQLiteConnector {
             logger.info("Table {} already exists", FileSharingTable.T_File_Sharing);
         closeStatement();
 
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE + "(";
+        sql += DelegationPrivilegeTable.c.PrivilegeType.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.Validity.name() + " TEXT,";
+        sql += DelegationPrivilegeTable.c.Info.name() + " TEXT,";
+        sql += "PRIMARY KEY (" + DelegationPrivilegeTable.c.PrivilegeType.name() + ",";
+        sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
+        sql += DelegationPrivilegeTable.c.Subject.name() + ",";
+        sql += DelegationPrivilegeTable.c.Object.name() + "))";
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE);
+        else
+            logger.info("Table {} already exists", DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE);
+        closeStatement();
+
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + DelegationInfoTable.T_DELEGATION_INFO + "(";
+        sql += DelegationInfoTable.c.CPT_ID.name() + " INT NOT NULL,";
+        sql += DelegationInfoTable.c.Parent.name() + " INT NOT NULL,";
+        sql += DelegationInfoTable.c.DelegatedTime.name() + " INT,";
+        sql += DelegationInfoTable.c.RevokedTime.name() + " INT,";
+        sql += "PRIMARY KEY (" + DelegationInfoTable.c.CPT_ID.name() + "),";
+        sql += "FOREIGN KEY (" + DelegationInfoTable.c.CPT_ID.name() + ") " +
+                "REFERENCES " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
+                "(" + CommunicationPolicyTable.c.ID.name() + ") ON DELETE CASCADE,";
+        sql += "FOREIGN KEY (" + DelegationInfoTable.c.Parent.name() + ") " +
+                "REFERENCES " + CommunicationPolicyTable.T_COMMUNICATION_POLICY +
+                "(" + CommunicationPolicyTable.c.ID.name() + "))";
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", DelegationInfoTable.T_DELEGATION_INFO);
+        else
+            logger.info("Table {} already exists", DelegationInfoTable.T_DELEGATION_INFO);
+        closeStatement();
+
         closeConnection();
     }
 
@@ -323,16 +374,20 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(CommunicationPolicyTable policy) throws SQLException {
         String sql = "INSERT INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
+        sql += CommunicationPolicyTable.c.ID.name() + ",";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
         sql += CommunicationPolicyTable.c.Target.name() + ",";
         sql += CommunicationPolicyTable.c.MaxNumSessionKeyOwners.name() + ",";
         sql += CommunicationPolicyTable.c.SessionCryptoSpec.name() + ",";
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + ",";
-        sql += CommunicationPolicyTable.c.RelativeValidity.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?)";
+        sql += CommunicationPolicyTable.c.RelativeValidity.name() + ",";
+        sql += CommunicationPolicyTable.c.Expiration.name() + ",";
+        sql += CommunicationPolicyTable.c.IsDelegated.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?)";
         int index = 1;
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setLong(index++,policy.getID());
         preparedStatement.setString(index++,policy.getReqGroup());
         preparedStatement.setString(index++,policy.getTargetTypeVal());
         preparedStatement.setString(index++,policy.getTarget());
@@ -340,6 +395,8 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,policy.getSessionCryptoSpec());
         preparedStatement.setString(index++,policy.getAbsValidityStr());
         preparedStatement.setString(index++,policy.getRelValidityStr());
+        preparedStatement.setLong(index++,policy.getExpiration());
+        preparedStatement.setLong(index++,policy.getIsDelegated());
         if (DEBUG) logger.info(preparedStatement.toString());
         boolean result = preparedStatement.execute();
         preparedStatement.close();
@@ -617,6 +674,79 @@ public class SQLiteConnector {
     }
 
     /**
+     * Inserts the privilege information into the delegation privilege table.
+     *
+     * @param delegationPrivilegeTable the object container of the information in delegation_privilege table
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @see DelegationPrivilegeTable
+     */
+    public boolean insertRecords(DelegationPrivilegeTable delegationPrivilegeTable) throws SQLException {
+        String sql = "INSERT INTO " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE + "(";
+        sql += DelegationPrivilegeTable.c.PrivilegeType.name() + ",";
+        sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
+        sql += DelegationPrivilegeTable.c.Subject.name() + ",";
+        sql += DelegationPrivilegeTable.c.Object.name() + ",";
+        sql += DelegationPrivilegeTable.c.Validity.name() + ",";
+        sql += DelegationPrivilegeTable.c.Info.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setString(index++,delegationPrivilegeTable.getPrivilegeType());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getPrivilegedGroup());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getSubject());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getObject());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getValidity());
+        preparedStatement.setString(index++,String.valueOf(delegationPrivilegeTable.getInfo()));
+        logger.info("{} {} {} {} {} {}",
+                delegationPrivilegeTable.getPrivilegeType(), delegationPrivilegeTable.getPrivilegedGroup(),
+                delegationPrivilegeTable.getSubject(), delegationPrivilegeTable.getObject(),
+                delegationPrivilegeTable.getValidity(), delegationPrivilegeTable.getInfo() );
+        if (DEBUG) logger.info("{}",preparedStatement);
+        boolean result = preparedStatement.execute();
+        preparedStatement.close();
+        closeConnection();
+        return result;
+    }
+
+    /**
+     * Inserts the delegated policy information into the delegation info table.
+     *
+     * @param delegationInfoTable the object container of the information in delegation info table
+     * @return <code>true</code> if the insertion has been successful
+     *         <code>false</code> if the insertion has failed
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     * @see DelegationInfoTable
+     */
+    public boolean insertRecords(DelegationInfoTable delegationInfoTable) throws SQLException {
+        String sql = "INSERT INTO " + DelegationInfoTable.T_DELEGATION_INFO + "(";
+        sql += DelegationInfoTable.c.CPT_ID.name() + ",";
+        sql += DelegationInfoTable.c.Parent.name() + ",";
+        sql += DelegationInfoTable.c.DelegatedTime.name() + ",";
+        sql += DelegationInfoTable.c.RevokedTime.name() + ")";
+        sql += " VALUES (?,?,?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setLong(index++,delegationInfoTable.getCPTId());
+        preparedStatement.setLong(index++,delegationInfoTable.getParent());
+        preparedStatement.setLong(index++,delegationInfoTable.getDelegatedTime());
+        preparedStatement.setLong(index++,delegationInfoTable.getRevokedTime());
+        logger.info("{} {} {} {}",
+                delegationInfoTable.getCPTId(), delegationInfoTable.getParent(),
+                delegationInfoTable.getDelegatedTime(), delegationInfoTable.getRevokedTime());
+        if (DEBUG) logger.info("{}",preparedStatement);
+        boolean result = preparedStatement.execute();
+        preparedStatement.close();
+        closeConnection();
+        return result;
+    }
+
+    /**
      * Selects all policies record from the table communication policy.
      * @return a list of all policies stored in the database
      * @throws SQLException  if a database access error occurs;
@@ -628,6 +758,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllPolicies Table lookup");
         List<CommunicationPolicyTable> policies = new LinkedList<>();
         while(resultSet.next()){
             CommunicationPolicyTable policy = CommunicationPolicyTable.createRecord(resultSet);
@@ -651,6 +782,7 @@ public class SQLiteConnector {
         String sql = "SELECT * FROM " + RegisteredEntityTable.T_REGISTERED_ENTITY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllRegEntities Table lookup");
         List<RegisteredEntityTable> entities = new LinkedList<>();
         while(resultSet.next()) {
             RegisteredEntityTable entity = RegisteredEntityTable.createRecord(resultSet);
@@ -695,11 +827,12 @@ public class SQLiteConnector {
      * or an argument is supplied to this method
      * @throws CertificateEncodingException If there is a problem in certificate encoding.
      */
-    public List<TrustedAuthTable> selectAllTrustedAuth() throws SQLException, CertificateEncodingException {
+    public List<TrustedAuthTable> selectAllTrustedAuths() throws SQLException, CertificateEncodingException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + TrustedAuthTable.T_TRUSTED_AUTH;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllTrustedAuths Table lookup");
         List<TrustedAuthTable> authList = new LinkedList<>();
         while (resultSet.next()) {
             TrustedAuthTable auth = TrustedAuthTable.createRecord(resultSet);
@@ -717,11 +850,12 @@ public class SQLiteConnector {
      * this method is called on a closed <code>PreparedStatement</code>
      * or an argument is supplied to this method
      */
-    public List<CachedSessionKeyTable> selectAllCachedSessionKey() throws SQLException {
+    public List<CachedSessionKeyTable> selectAllCachedSessionKeys() throws SQLException {
         statement = connection.createStatement();
         String sql = "SELECT * FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllCachedSessionKeys Table lookup");
         List<CachedSessionKeyTable> cachedSessionKeyList = new LinkedList<>();
         while (resultSet.next()) {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -745,6 +879,7 @@ public class SQLiteConnector {
         sql += " WHERE " + CachedSessionKeyTable.c.ID.name() + " = " + id;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectCachedSessionKeyByID Table lookup");
         CachedSessionKeyTable cachedSessionKey = null;
         while (resultSet.next()) {
             cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -773,6 +908,7 @@ public class SQLiteConnector {
         sql += " AND " + CachedSessionKeyTable.c.ExpirationTime.name() + " > " + currentTime;
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectCachedSessionKeysByPurpose Table lookup");
         List<CachedSessionKeyTable> result = new LinkedList<>();
         while (resultSet.next()) {
             CachedSessionKeyTable cachedSessionKey = CachedSessionKeyTable.createRecord(resultSet);
@@ -797,6 +933,7 @@ public class SQLiteConnector {
         try {
             statement = connection.createStatement();
             resultSet = statement.executeQuery(sql);
+            logger.info("selectFileSharingInfoByOwner Table lookup");
         }
         catch (Exception e){
             e.printStackTrace();
@@ -812,6 +949,136 @@ public class SQLiteConnector {
             e.printStackTrace();
         }
         return result;
+    }
+
+    /**
+     * Selects all delegationPrivilege lists.
+     *
+     * @return a list of all privileges.
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public List<DelegationPrivilegeTable> selectAllPrivileges() throws SQLException, ParseException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE;
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllPrivileges Table lookup");
+        List<DelegationPrivilegeTable> delegationPrivilegeTableList = new LinkedList<>();
+        while (resultSet.next()) {
+            DelegationPrivilegeTable delegationPrivilegeTable = DelegationPrivilegeTable.createRecord(resultSet);
+            if (DEBUG) logger.info(delegationPrivilegeTable.toJSONObject().toJSONString());
+            delegationPrivilegeTableList.add(delegationPrivilegeTable);
+        }
+        return delegationPrivilegeTableList;
+    }
+
+    /**
+     * Select privileges of the requesting entity.
+     * @param requestingEntityName the name of the requesting entity who wants to perform privilege.
+     * @return returns the list of privileges.
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public List<DelegationPrivilegeTable> selectPrivilegeByPrivilegedGroup(String requestingEntityName)
+            throws SQLException, ParseException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE;
+        sql += " WHERE " + DelegationPrivilegeTable.c.PrivilegedGroup.name() + " = " + "'" + requestingEntityName + "'";
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectPrivilegeByPrivilegedGroup Table lookup");
+        List<DelegationPrivilegeTable> result = new LinkedList<>();
+        while (resultSet.next()) {
+            DelegationPrivilegeTable delegationPrivilegeTable = DelegationPrivilegeTable.createRecord(resultSet);
+            if (DEBUG) logger.info(delegationPrivilegeTable.toJSONObject().toJSONString());
+            result.add(delegationPrivilegeTable);
+        }
+        return result;
+    }
+
+    /**
+     * Select parent of the delegationInfoId.
+     * @param delegationInfoTableId the id of delegationInfoTableId.
+     * @return returns the parent id.
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public String selectParentById(String delegationInfoTableId)
+            throws SQLException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + DelegationInfoTable.T_DELEGATION_INFO;
+        sql += " WHERE " + DelegationInfoTable.c.CPT_ID.name() + " = " + "'" + delegationInfoTableId + "'";
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectParentById Table lookup");
+        String parent = resultSet.getString("Parent");
+        return parent;
+    }
+
+    public List<String> getAllChildren(String parentId) throws SQLException {
+        List<String> result = new ArrayList<>();
+        findChildrenCPTs(parentId, result);
+        return result;
+    }
+
+    public void findChildrenCPTs(String parentId, List<String> result) throws SQLException {
+        String sql = "SELECT " + DelegationInfoTable.c.CPT_ID + " FROM " + DelegationInfoTable.T_DELEGATION_INFO
+                + " WHERE " +   DelegationInfoTable.c.Parent + " = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, parentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                logger.info("findChildrenCPTs Table lookup");
+                while (rs.next()) {
+                    String childId = rs.getString("CPT_ID");
+                    result.add(childId);
+                    findChildrenCPTs(childId, result);
+                }
+            }
+        }
+    }
+
+    /**
+     * Deletes expired communication policies from the database.
+     * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
+     * @throws SQLException  if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public List<String> deleteExpiredCommunicationPolicies() throws SQLException {
+        long currentTime = new java.util.Date().getTime();
+        List<String> expiredIds = new ArrayList<>();
+        String selectSql = "SELECT " + CommunicationPolicyTable.c.ID.name()
+                + " FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY
+                + " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(selectSql)) {
+            ps.setLong(1, currentTime);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                logger.info("deleteExpiredCommunicationPolicies Table lookup");
+                while (rs.next()) {
+                    expiredIds.add(rs.getString(1));
+                }
+            }
+        }
+        if (expiredIds.isEmpty()) {
+            logger.info("No expired communication policies.");
+            return expiredIds;
+        } else {
+            logger.info("Deleting {} expired communication policies {}", expiredIds.size(), expiredIds);
+        }
+        String deleteSql = "DELETE FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY
+                + " WHERE " + CommunicationPolicyTable.c.Expiration.name() + " < ?";
+        if (DEBUG) logger.info(deleteSql);
+        try (PreparedStatement ps = connection.prepareStatement(deleteSql)) {
+            ps.setLong(1, currentTime);
+            ps.executeUpdate();
+        }
+        return expiredIds;
     }
 
     /**
@@ -892,6 +1159,7 @@ public class SQLiteConnector {
         sql_deduplication += owner + "' AND " + FileSharingTable.c.ReaderType + "='entity' AND ";
         sql_deduplication += FileSharingTable.c.Reader + "='" + fileReader + "'";
         ResultSet resultSet = statement.executeQuery(sql_deduplication);
+        logger.info("appendFileReader Table lookup");
         if (resultSet.getString("Reader") != null) {
             logger.info("Already registered reader information!");
             return true;
@@ -922,6 +1190,7 @@ public class SQLiteConnector {
         sql += " WHERE " + MetaDataTable.c.Key.name() + " = '" + key + "'";
         if (DEBUG) logger.info(sql);
         ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectMetaDataValue Table lookup");
         MetaDataTable metaData = null;
         while (resultSet.next()) {
             metaData = MetaDataTable.createRecord(resultSet);
@@ -998,6 +1267,30 @@ public class SQLiteConnector {
         for (int i = 1; i < registeredEntityNameList.size(); i++) {
             sql += " OR " + RegisteredEntityTable.c.Name.name() + " = '" + registeredEntityNameList.get(i) + "'";
         }
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        return preparedStatement.execute();
+    }
+
+    public boolean deleteCommunicationPoliciesByIDs(List<String> targetPolicies) throws SQLException {
+        if (targetPolicies.isEmpty()) {
+            throw new RuntimeException("The list of ID of communication policies to be removed is empty!");
+        }
+        String idList = String.join(",", targetPolicies);
+        String sql = "DELETE FROM " + CommunicationPolicyTable.T_COMMUNICATION_POLICY;
+        sql += " WHERE " + CommunicationPolicyTable.c.ID.name() + " IN (" + idList + ")";
+        if (DEBUG) logger.info(sql);
+        PreparedStatement preparedStatement  = connection.prepareStatement(sql);
+        return preparedStatement.execute();
+    }
+
+    public boolean deleteDelegationInfoByIDs(List<String> CPTIDs) throws SQLException {
+        if (CPTIDs.isEmpty()) {
+            throw new RuntimeException("The list of ID of Delegation Info to be removed is empty!");
+        }
+        String idList = String.join(",", CPTIDs);
+        String sql = "DELETE FROM " + DelegationInfoTable.T_DELEGATION_INFO;
+        sql += " WHERE " + DelegationInfoTable.c.CPT_ID.name() + " IN (" + idList + ")";
         if (DEBUG) logger.info(sql);
         PreparedStatement preparedStatement  = connection.prepareStatement(sql);
         return preparedStatement.execute();
