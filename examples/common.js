@@ -43,7 +43,7 @@ exports.safeFileCopy = function(srcPath, dstDir) {
 
 // SpawnSync with error handling.
 exports.safeSpawnSync = function(cmd, args) {
-    const result = spawnSync(cmd, args, {shell: true});
+    const result = spawnSync(cmd, args, {shell: true, stdio: 'inherit'});
     if (result.error) {
         // Execution failed (command not found or failed to execute).
         console.error('SpawnSync failed: ', result.error);
