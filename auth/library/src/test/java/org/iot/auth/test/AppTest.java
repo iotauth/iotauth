@@ -28,8 +28,12 @@ import org.iot.auth.config.constants.ConstantType;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.SymmetricKey;
 import org.iot.auth.db.AuthDBProtectionMethod;
+import org.iot.auth.db.bean.CachedSessionKeyTable;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
+import org.iot.auth.db.bean.DelegationInfoTable;
+import org.iot.auth.db.bean.DelegationPrivilegeTable;
 import org.iot.auth.db.bean.FileSharingTable;
+import org.iot.auth.db.bean.MetaDataTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.dao.SQLiteConnector;
@@ -37,11 +41,14 @@ import org.iot.auth.io.Buffer;
 import org.iot.auth.message.MessageType;
 import org.iot.auth.message.impl.AuthHello;
 import org.iot.auth.util.DateHelper;
-import static org.junit.Assert.assertTrue;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+
 
 /**
  * @author Salomon Lee, Hokeun Kim, Sunyoung Kim
@@ -50,8 +57,8 @@ public class AppTest {
     private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
     private static final String testDbPath = "../library/src/test/test_files/databases/";
     SymmetricKey databaseKey;
-    private String testFilesDir = "../library/src/test/test_files/";
-    private AuthDBProtectionMethod authDBProtectionMethod =
+    private final String testFilesDir = "../library/src/test/test_files/";
+    private final AuthDBProtectionMethod authDBProtectionMethod =
             AuthDBProtectionMethod.ENCRYPT_CREDENTIALS;
     @Test
     @Category(org.iot.auth.config.constants.C.class)
@@ -62,19 +69,19 @@ public class AppTest {
     @Test
     @Category(org.iot.auth.message.MessageType.class)
     public void testMessageType(){
-        logger.info("{} {}", MessageType.AUTH_HELLO.toString(), MessageType.AUTH_HELLO.getValue());
-        logger.info("{} {}", MessageType.AUTH_SESSION_KEY_REQ.toString(), MessageType.AUTH_SESSION_KEY_REQ.getValue());
-        logger.info("{} {}", MessageType.AUTH_SESSION_KEY_RESP.toString(), MessageType.AUTH_SESSION_KEY_RESP.getValue());
-        logger.info("{} {}", MessageType.SESSION_KEY_REQ_IN_PUB_ENC.toString(), MessageType.SESSION_KEY_REQ_IN_PUB_ENC.getValue());
-        logger.info("{} {}", MessageType.SESSION_KEY_RESP_WITH_DIST_KEY.toString(), MessageType.SESSION_KEY_RESP_WITH_DIST_KEY.getValue());
-        logger.info("{} {}", MessageType.SESSION_KEY_REQ.toString(), MessageType.SESSION_KEY_REQ.getValue());
-        logger.info("{} {}", MessageType.SESSION_KEY_RESP.toString(), MessageType.SESSION_KEY_RESP.getValue());
-        logger.info("{} {}", MessageType.SKEY_HANDSHAKE_1.toString(), MessageType.SKEY_HANDSHAKE_1.getValue());
-        logger.info("{} {}", MessageType.SKEY_HANDSHAKE_2.toString(), MessageType.SKEY_HANDSHAKE_2.getValue());
-        logger.info("{} {}", MessageType.SKEY_HANDSHAKE_3.toString(), MessageType.SKEY_HANDSHAKE_3.getValue());
-        logger.info("{} {}", MessageType.SECURE_COMM_MSG.toString(), MessageType.SECURE_COMM_MSG.getValue());
-        logger.info("{} {}", MessageType.FIN_SECURE_COMM.toString(), MessageType.FIN_SECURE_COMM.getValue());
-        logger.info("{} {}", MessageType.SECURE_PUB.toString(), MessageType.SECURE_PUB.getValue());
+        logger.info("{} {}", MessageType.AUTH_HELLO, MessageType.AUTH_HELLO.getValue());
+        logger.info("{} {}", MessageType.AUTH_SESSION_KEY_REQ, MessageType.AUTH_SESSION_KEY_REQ.getValue());
+        logger.info("{} {}", MessageType.AUTH_SESSION_KEY_RESP, MessageType.AUTH_SESSION_KEY_RESP.getValue());
+        logger.info("{} {}", MessageType.SESSION_KEY_REQ_IN_PUB_ENC, MessageType.SESSION_KEY_REQ_IN_PUB_ENC.getValue());
+        logger.info("{} {}", MessageType.SESSION_KEY_RESP_WITH_DIST_KEY, MessageType.SESSION_KEY_RESP_WITH_DIST_KEY.getValue());
+        logger.info("{} {}", MessageType.SESSION_KEY_REQ, MessageType.SESSION_KEY_REQ.getValue());
+        logger.info("{} {}", MessageType.SESSION_KEY_RESP, MessageType.SESSION_KEY_RESP.getValue());
+        logger.info("{} {}", MessageType.SKEY_HANDSHAKE_1, MessageType.SKEY_HANDSHAKE_1.getValue());
+        logger.info("{} {}", MessageType.SKEY_HANDSHAKE_2, MessageType.SKEY_HANDSHAKE_2.getValue());
+        logger.info("{} {}", MessageType.SKEY_HANDSHAKE_3, MessageType.SKEY_HANDSHAKE_3.getValue());
+        logger.info("{} {}", MessageType.SECURE_COMM_MSG, MessageType.SECURE_COMM_MSG.getValue());
+        logger.info("{} {}", MessageType.FIN_SECURE_COMM, MessageType.FIN_SECURE_COMM.getValue());
+        logger.info("{} {}", MessageType.SECURE_PUB, MessageType.SECURE_PUB.getValue());
     }
 
     @Test
@@ -142,7 +149,7 @@ public class AppTest {
         regEntity.setActive(true);
         regEntity.setBackupToAuthIDs("102,103");
         regEntity.setBackupFromAuthID(-1);
-        assertTrue(sqLiteConnector.insertRecords(regEntity));
+        Assert.assertTrue(sqLiteConnector.insertRecords(regEntity));
 
         regEntity.setName("net1.ptClient");
         regEntity.setGroup("PtClients");
@@ -157,7 +164,7 @@ public class AppTest {
         regEntity.setActive(true);
         regEntity.setBackupToAuthIDs("102");
         regEntity.setBackupFromAuthID(-1);
-        assertTrue(sqLiteConnector.insertRecords(regEntity));
+        Assert.assertTrue(sqLiteConnector.insertRecords(regEntity));
 
         regEntity.setName("net1.server");
         regEntity.setGroup("Servers");
@@ -172,7 +179,7 @@ public class AppTest {
         regEntity.setActive(true);
         regEntity.setBackupToAuthIDs("102,103");
         regEntity.setBackupFromAuthID(-1);
-        assertTrue(sqLiteConnector.insertRecords(regEntity));
+        Assert.assertTrue(sqLiteConnector.insertRecords(regEntity));
 
         regEntity.setName("net1.ptServer");
         regEntity.setGroup("PtServers");
@@ -187,7 +194,7 @@ public class AppTest {
         regEntity.setActive(true);
         regEntity.setBackupToAuthIDs("102");
         regEntity.setBackupFromAuthID(-1);
-        assertTrue(sqLiteConnector.insertRecords(regEntity));
+        Assert.assertTrue(sqLiteConnector.insertRecords(regEntity));
 
         C.PROPERTIES = new AuthServerProperties(testFilesDir + "properties/exampleAuth101.properties", null);
         sqLiteConnector.selectAllRegEntities();
@@ -214,7 +221,7 @@ public class AppTest {
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("1*day");
         communicationPolicyTable.setRelValidityStr("20*sec");
-        assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
+        Assert.assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
         communicationPolicyTable.setID(1);
         communicationPolicyTable.setReqGroup("Clients");
@@ -224,7 +231,7 @@ public class AppTest {
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("1*hour");
         communicationPolicyTable.setRelValidityStr("20*sec");
-        assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
+        Assert.assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
         communicationPolicyTable.setID(2);
         communicationPolicyTable.setReqGroup("PtClients");
@@ -234,7 +241,7 @@ public class AppTest {
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("1*day");
         communicationPolicyTable.setRelValidityStr("2*hour");
-        assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
+        Assert.assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
         communicationPolicyTable.setID(3);
         communicationPolicyTable.setReqGroup("PtClients");
@@ -244,7 +251,7 @@ public class AppTest {
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("2*hour");
         communicationPolicyTable.setRelValidityStr("20*sec");
-        assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
+        Assert.assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
         communicationPolicyTable.setID(4);
         communicationPolicyTable.setReqGroup("Clients");
@@ -254,7 +261,7 @@ public class AppTest {
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
-        assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
+        Assert.assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
         communicationPolicyTable.setID(5);
         communicationPolicyTable.setReqGroup("Servers");
@@ -264,7 +271,7 @@ public class AppTest {
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
-        assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
+        Assert.assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
         communicationPolicyTable.setID(6);
         communicationPolicyTable.setReqGroup("Clients");
@@ -274,7 +281,7 @@ public class AppTest {
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
-        assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
+        Assert.assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
         communicationPolicyTable.setID(7);
         communicationPolicyTable.setReqGroup("Servers");
@@ -284,7 +291,7 @@ public class AppTest {
         communicationPolicyTable.setSessionCryptoSpec("AES-128-CBC:SHA256");
         communicationPolicyTable.setAbsValidityStr("6*hour");
         communicationPolicyTable.setRelValidityStr("3*hour");
-        assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
+        Assert.assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
         // Test Select All.
         sqLiteConnector.selectAllPolicies();
@@ -314,7 +321,7 @@ public class AppTest {
                 AuthCrypto.loadCertificateFromFile(testFilesDir + "trusted_auth_certs/Auth102EntityCert.pem"));
         trustedAuth.setHeartbeatPeriod(3);
         trustedAuth.setFailureThreshold(4);
-        assertTrue(sqLiteConnector.insertRecords(trustedAuth));
+        Assert.assertTrue(sqLiteConnector.insertRecords(trustedAuth));
 
         // Test Select All.
         sqLiteConnector.selectAllTrustedAuths();
@@ -336,13 +343,277 @@ public class AppTest {
         fileSharing.setOwner("Alice");
         fileSharing.setReader("Bob");
         fileSharing.setReaderType("entity");
-        assertTrue(sqLiteConnector.insertRecords(fileSharing));
+        Assert.assertTrue(sqLiteConnector.insertRecords(fileSharing));
 
         fileSharing.setOwner("Alice");
         fileSharing.setReader("TeamA");
         fileSharing.setReaderType("group");
-        assertTrue(sqLiteConnector.insertRecords(fileSharing));
+        Assert.assertTrue(sqLiteConnector.insertRecords(fileSharing));
 
         // TODO (@hokeun): Implement selectAllFileSharing and add test for it.
+    }
+
+    private CachedSessionKeyTable buildCachedSessionKey(long id, String owner, String purpose, long absValidity) {
+        CachedSessionKeyTable key = new CachedSessionKeyTable();
+        key.setID(id);
+        key.setOwner(owner);
+        key.setMaxNumOwners(2);
+        key.setPurpose(purpose);
+        key.setAbsValidity(absValidity);
+        key.setRelValidity(DateHelper.parseTimePeriod("20*sec"));
+        key.setSessionCryptoSpec("AES-128-CBC:SHA256");
+        key.setKeyVal(new byte[16]);
+        key.setExpectedOwnerGroups("Clients,Servers");
+        return key;
+    }
+
+    @Test
+    @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
+    public void testCachedSessionKeyInsertionAndSelectAll() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testCachedSessionKeyInsertionAndSelectAll" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        long futureTime = new Date().getTime() + DateHelper.parseTimePeriod("1*hour");
+        sqLiteConnector.insertRecords(buildCachedSessionKey(1L, "net1.client", "Clients:Group:Servers", futureTime));
+        sqLiteConnector.insertRecords(buildCachedSessionKey(2L, "net1.ptClient", "PtClients:Group:PtServers", futureTime));
+
+        List<CachedSessionKeyTable> keys = sqLiteConnector.selectAllCachedSessionKeys();
+        Assert.assertEquals(2, keys.size());
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
+    public void testCachedSessionKeySelectById() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testCachedSessionKeySelectById" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        long futureTime = new Date().getTime() + DateHelper.parseTimePeriod("1*hour");
+        sqLiteConnector.insertRecords(buildCachedSessionKey(42L, "net1.client", "Clients:Group:Servers", futureTime));
+
+        CachedSessionKeyTable found = sqLiteConnector.selectCachedSessionKeyByID(42L);
+        Assert.assertNotNull(found);
+        Assert.assertEquals(42L, found.getID());
+        Assert.assertEquals("Clients:Group:Servers", found.getPurpose());
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
+    public void testCachedSessionKeySelectByPurpose() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testCachedSessionKeySelectByPurpose" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        long futureTime = new Date().getTime() + DateHelper.parseTimePeriod("1*hour");
+        sqLiteConnector.insertRecords(buildCachedSessionKey(1L, "net1.server", "Clients:Group:Servers", futureTime));
+        sqLiteConnector.insertRecords(buildCachedSessionKey(2L, "net1.server", "PtClients:Group:PtServers", futureTime));
+
+        List<CachedSessionKeyTable> results = sqLiteConnector.selectCachedSessionKeysByPurpose(
+                "net1.client", "Clients:Group:Servers");
+        Assert.assertEquals(1, results.size());
+        Assert.assertEquals("Clients:Group:Servers", results.get(0).getPurpose());
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
+    public void testCachedSessionKeyAppendOwner() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testCachedSessionKeyAppendOwner" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        long futureTime = new Date().getTime() + DateHelper.parseTimePeriod("1*hour");
+        sqLiteConnector.insertRecords(buildCachedSessionKey(1L, null, "Clients:Group:Servers", futureTime));
+
+        sqLiteConnector.appendSessionKeyOwner(1L, "net1.client");
+        sqLiteConnector.appendSessionKeyOwner(1L, "net1.server");
+
+        CachedSessionKeyTable found = sqLiteConnector.selectCachedSessionKeyByID(1L);
+        Assert.assertNotNull(found);
+        Assert.assertTrue(found.getOwner().contains("net1.client"));
+        Assert.assertTrue(found.getOwner().contains("net1.server"));
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
+    public void testCachedSessionKeyDeleteAll() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testCachedSessionKeyDeleteAll" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        long futureTime = new Date().getTime() + DateHelper.parseTimePeriod("1*hour");
+        sqLiteConnector.insertRecords(buildCachedSessionKey(1L, "net1.client", "Clients:Group:Servers", futureTime));
+        sqLiteConnector.insertRecords(buildCachedSessionKey(2L, "net1.server", "PtClients:Group:PtServers", futureTime));
+
+        sqLiteConnector.deleteAllCachedSessionKeys();
+        List<CachedSessionKeyTable> keys = sqLiteConnector.selectAllCachedSessionKeys();
+        Assert.assertEquals(0, keys.size());
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.bean.FileSharingTable.class)
+    public void testFileSharingInsertionAndSelectByOwner() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testFileSharingInsertionAndSelectByOwner" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        FileSharingTable entry1 = new FileSharingTable();
+        entry1.setOwner("net1.server");
+        entry1.setReaderType("entity");
+        entry1.setReader("net1.client");
+        sqLiteConnector.insertRecords(entry1);
+
+        FileSharingTable entry2 = new FileSharingTable();
+        entry2.setOwner("net1.server");
+        entry2.setReaderType("group");
+        entry2.setReader("Clients");
+        sqLiteConnector.insertRecords(entry2);
+
+        List<String> readers = sqLiteConnector.selectFileSharingInfoByOwner("net1.server");
+        Assert.assertEquals(2, readers.size());
+        Assert.assertTrue(readers.contains("net1.client"));
+        Assert.assertTrue(readers.contains("Clients"));
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.DelegationPrivilege.class)
+    public void testDelegationPrivilegeInsertionAndSelectAll()
+            throws SQLException, ClassNotFoundException, IOException, org.json.simple.parser.ParseException {
+        final String testDbFileName = testDbPath + "testDelegationPrivilegeInsertionAndSelectAll" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        DelegationPrivilegeTable priv1 = new DelegationPrivilegeTable();
+        priv1.setPrivilegeType("DELEGATE");
+        priv1.setprivilegedGroup("Admins");
+        priv1.setSubject("net1.client");
+        priv1.setObject("Servers");
+        priv1.setValidity("1*day");
+        priv1.setInfo("{\"note\":\"test delegation\"}");
+        sqLiteConnector.insertRecords(priv1);
+
+        DelegationPrivilegeTable priv2 = new DelegationPrivilegeTable();
+        priv2.setPrivilegeType("READ");
+        priv2.setprivilegedGroup("Clients");
+        priv2.setSubject("net1.ptClient");
+        priv2.setObject("PtServers");
+        priv2.setValidity("2*hour");
+        priv2.setInfo("{\"note\":\"read privilege\"}");
+        sqLiteConnector.insertRecords(priv2);
+
+        List<DelegationPrivilegeTable> all = sqLiteConnector.selectAllPrivileges();
+        Assert.assertEquals(2, all.size());
+
+        List<DelegationPrivilegeTable> adminsPrivs = sqLiteConnector.selectPrivilegeByPrivilegedGroup("Admins");
+        Assert.assertEquals(1, adminsPrivs.size());
+        Assert.assertEquals("DELEGATE", adminsPrivs.get(0).getPrivilegeType());
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.bean.DelegationInfoTable.class)
+    public void testDelegationInfoInsertionAndGetChildren()
+            throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testDelegationInfoInsertionAndGetChildren" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        // Insert parent and child communication policies (required by FK constraints).
+        CommunicationPolicyTable parent = new CommunicationPolicyTable();
+        parent.setID(100);
+        parent.setReqGroup("Clients");
+        parent.setTargetTypeVal("Group");
+        parent.setTarget("Servers");
+        parent.setMaxNumSessionKeyOwners(2);
+        parent.setSessionCryptoSpec("AES-128-CBC:SHA256");
+        parent.setAbsValidityStr("1*day");
+        parent.setRelValidityStr("20*sec");
+        sqLiteConnector.insertRecords(parent);
+
+        CommunicationPolicyTable child = new CommunicationPolicyTable();
+        child.setID(101);
+        child.setReqGroup("Clients");
+        child.setTargetTypeVal("Group");
+        child.setTarget("PtServers");
+        child.setMaxNumSessionKeyOwners(2);
+        child.setSessionCryptoSpec("AES-128-CBC:SHA256");
+        child.setAbsValidityStr("1*hour");
+        child.setRelValidityStr("20*sec");
+        sqLiteConnector.insertRecords(child);
+
+        DelegationInfoTable delegationInfo = new DelegationInfoTable();
+        delegationInfo.setCPTId(101L);
+        delegationInfo.setParent(100L);
+        delegationInfo.setDelegatedTime(new Date().getTime());
+        delegationInfo.setRevokedTime(0L);
+        sqLiteConnector.insertRecords(delegationInfo);
+
+        List<String> children = sqLiteConnector.getAllChildren("100");
+        Assert.assertEquals(1, children.size());
+        Assert.assertEquals("101", children.get(0));
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    @Test
+    @Category(org.iot.auth.db.bean.MetaDataTable.class)
+    public void testMetaDataInsertionAndUpdate() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testMetaDataInsertionAndUpdate" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        MetaDataTable metaData = new MetaDataTable();
+        metaData.setKey(MetaDataTable.key.SessionKeyCount.name());
+        metaData.setValue("0");
+        sqLiteConnector.insertRecords(metaData);
+
+        String value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.SessionKeyCount.name());
+        Assert.assertEquals("0", value);
+
+        sqLiteConnector.updateMetaData(MetaDataTable.key.SessionKeyCount.name(), "5");
+        value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.SessionKeyCount.name());
+        Assert.assertEquals("5", value);
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
     }
 }
