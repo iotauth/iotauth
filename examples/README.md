@@ -102,7 +102,7 @@ If you see `Enter command (e.g., show re/cp/ta/sk, clean sk):` at the end of the
 
 ### To run example Auths using IntelliJ IDEA for development.
 
-See README.md under `auth/`.
+See [README.md](../auth/README.md) under `auth/`.
 
 ### To run example entities written in Node.js
 
