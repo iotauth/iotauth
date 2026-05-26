@@ -483,5 +483,6 @@
 			]
 		}  
 	],
-	"filesharingLists": []
+	"filesharingLists": [],
+	"privilegeList": []
 }

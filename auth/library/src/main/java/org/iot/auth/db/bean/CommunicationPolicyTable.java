@@ -34,15 +34,19 @@ public class CommunicationPolicyTable {
     public static final String T_COMMUNICATION_POLICY = "communication_policy";
 
     public enum c {
+        ID,
         RequestingGroup,
         TargetType,
         Target,
         MaxNumSessionKeyOwners,
         SessionCryptoSpec,
         AbsoluteValidity,
-        RelativeValidity
+        RelativeValidity,
+        Expiration,
+        IsDelegated,
     }
 
+    private long id = -1;
     private String reqGroup;
     private CommunicationTargetType targetType;
     private String targetTypeVal;
@@ -53,6 +57,8 @@ public class CommunicationPolicyTable {
     private long relValidity;
     private String relValidityStr;
     private String sessionCryptoSpec;
+    private long expiration;
+    private int isDelegated;
 
     /**
      * Gets the requesting group type
@@ -107,6 +113,13 @@ public class CommunicationPolicyTable {
         return this;
     }
 
+    public long getID() {
+        return id;
+    }
+    public CommunicationPolicyTable setID(long id) {
+        this.id = id;
+        return this;
+    }
 
     public int getMaxNumSessionKeyOwners() {
         return maxNumSessionKeyOwners;
@@ -173,9 +186,28 @@ public class CommunicationPolicyTable {
         return this;
     }
 
+    public long getExpiration() {
+        return expiration;
+    }
+
+    public CommunicationPolicyTable setExpiration(long expiration) {
+        this.expiration = expiration;
+        return this;
+    }
+
+    public int getIsDelegated() {
+        return isDelegated;
+    }
+
+    public CommunicationPolicyTable setIsDelegated(int isDelegated) {
+        this.isDelegated = isDelegated;
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject(){
         JSONObject object = new JSONObject();
+        object.put(c.ID.name(),getID());
         object.put(c.RequestingGroup.name(),getReqGroup());
         object.put(c.TargetType.name(),getTargetTypeVal());
         object.put(c.Target.name(),getTarget());
@@ -184,11 +216,14 @@ public class CommunicationPolicyTable {
         object.put(c.RelativeValidity.name()+"Str", getRelValidityStr());
         object.put(c.AbsoluteValidity.name(), getAbsValidity());
         object.put(c.RelativeValidity.name(), getRelValidity());
+        object.put(c.Expiration.name(), getExpiration());
+        object.put(c.IsDelegated.name(), getIsDelegated());
         return object;
     }
 
     public static CommunicationPolicyTable createRecord(ResultSet r) throws SQLException {
         CommunicationPolicyTable policy = new CommunicationPolicyTable();
+        policy.setID(r.getLong(c.ID.name()));
         policy.setReqGroup(r.getString(c.RequestingGroup.name()));
         policy.setTargetTypeVal(r.getString(c.TargetType.name()));
         policy.setTargetType(CommunicationTargetType.fromStringValue(r.getString(c.TargetType.name())));
@@ -197,6 +232,8 @@ public class CommunicationPolicyTable {
         policy.setSessionCryptoSpec(r.getString(c.SessionCryptoSpec.name()));
         policy.setAbsValidity(DateHelper.parseTimePeriod(r.getString(c.AbsoluteValidity.name())));
         policy.setRelValidity(DateHelper.parseTimePeriod(r.getString(c.RelativeValidity.name())));
+        policy.setExpiration(r.getLong(c.Expiration.name()));
+        policy.setIsDelegated(r.getInt(c.IsDelegated.name()));
         return policy;
     }
 }

@@ -7,7 +7,7 @@ To use these entities, refer to [iotauth/examples/README.md](https://github.com/
 node client.js configs/net1/client.config
 ```
 
-## Avaiable entities
+## Available entities
 ### 1. client.js
 A general-purpose interactive secure client.
 
@@ -44,4 +44,64 @@ This allows the website to confirm which agent group issued the delegation used 
 #### How to use
 ```
 node website.js configs/net1/website.config keyId 10100000
+```
+
+### 5. autoPrivilege.js
+Automatically performs batch privilege operations such as `DelegationGrant` or `DelegationRevoke` using predefined test cases from a JSON file (default: `privilege.json`).
+### Features
+- Loads privilege test cases from `privileges.json` by default.
+- Supports both:
+  - `DelegationGrant`
+  - `DelegationRevoke`
+- Measures:
+  - per-request latency 
+  - total execution time 
+  - success/failure statistics
+#### Input Format
+The script reads test configurations from a JSON file:
+```
+{
+  "defaultValidity": "1*day",
+  "defaultTimeoutMs": 10000,
+  "tests": [
+    {
+      "nodeConfig": "configs/net1/node0.config",
+      "subject": "Node1",
+      "object": "ResourceA"
+    }
+  ]
+}
+```
+
+`privileges.json` contains a small set of example privilege operations for simple testing.
+
+#### How to use
+```
+# It will use privileges.json as default.
+node autoPrivilege.js DelegationGrant 
+node autoPrivilege.js DelegationRevoke 
+
+# Use a custom JSON test configuration file.
+node autoPrivilege.js DelegationGrant your_custom_test.json
+```
+
+The file dbsec_test.json contains the automated privilege test configuration used for the DBsec paper experiments.
+```
+# Run the DBsec paper experiment configuration.
+node autoPrivilege.js DelegationGrant dbsec_test.json
+node autoPrivilege.js DelegationRevoke dbsec_test.json
+```
+
+#### Example Output
+```
+[PASS] configs/net1/node1.config | Node3 -> ResourceA | 101.543 ms
+
+========== SUMMARY ==========
+Total tests   : 3
+Success       : 3
+Fail          : 0
+Success rate  : 100.00%
+Total latency : 307.252 ms
+Avg latency   : 102.417 ms
+End-to-end    : 312.987 ms
 ```

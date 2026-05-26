@@ -25,6 +25,7 @@ import org.iot.auth.db.bean.CommunicationPolicyTable;
 public class CommunicationPolicy {
     public CommunicationPolicy(CommunicationPolicyTable communicationPolicyTable)
     {
+        this.id = communicationPolicyTable.getID();
         this.reqGroup = communicationPolicyTable.getReqGroup();
         this.targetType = communicationPolicyTable.getTargetType();
         this.target = communicationPolicyTable.getTarget();
@@ -34,8 +35,13 @@ public class CommunicationPolicy {
 
         this.absValidity = communicationPolicyTable.getAbsValidity();
         this.relValidity = communicationPolicyTable.getRelValidity();
+        this.expiration = communicationPolicyTable.getExpiration();
+        this.isDelegated = communicationPolicyTable.getIsDelegated();
     }
 
+    public long getId() {
+        return id;
+    }
     public String getReqGroup() {
         return reqGroup;
     }
@@ -59,14 +65,21 @@ public class CommunicationPolicy {
     public long getRelValidity() {
         return relValidity;
     }
+    public long getExpiration() {
+        return expiration;
+    }
+    public int getIsDelegated() {
+        return isDelegated;
+    }
 
     public String toString() {
-        return "RequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
+        return "ID " + id + "\tRequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
                 "\t" + sessionCryptoSpec.toString() +
-                "\tAbsoluteValidity: " + absValidity + "\tRelativeValidity: " + relValidity;
+                "\tAbsoluteValidity: " + absValidity + "\tRelativeValidity: " + relValidity + "\tExpiration: " + expiration ;
     }
 
 
+    private long id;
     private String reqGroup;
     private CommunicationTargetType targetType;
     private String target;
@@ -76,5 +89,6 @@ public class CommunicationPolicy {
 
     private long absValidity;
     private long relValidity;
-
+    private long expiration;
+    private int isDelegated;
 }

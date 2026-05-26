@@ -57,6 +57,11 @@ public enum MessageType {
     DELEGATED_ACCESS_RESP_WITH_DIST_KEY((byte)71),
     DELEGATED_ACCESS_REQ((byte) 72),
     DELEGATED_ACCESS_RESP((byte) 73),
+    /** For privilege to grant delegation authority access **/
+    PRIVILEGED_REQ_IN_PUB_ENC((byte)80),
+    PRIVILEGED_RESP_WITH_DIST_KEY((byte)81),
+    PRIVILEGED_REQ((byte) 82),
+    PRIVILEGED_RESP((byte) 83),
     AUTH_ALERT((byte)100);
 
     public static MessageType fromByte(byte value) {

@@ -103,6 +103,65 @@ function commandInterpreter() {
             secureCommClient.getSessionKeyIdForGrantAccess(1, trustLevel);
              
         }
+        else if (command == 'initComm') {
+            var targetServerInfoList = secureCommClient.getTargetServerInfoList();
+            var commServerInfo = null;
+            if (message != undefined) {
+                var tokens = message.split(' ');
+                var serverName = tokens[0];
+                for (var i = 0; i < targetServerInfoList.length; i++) {
+                    if (targetServerInfoList[i].name == serverName) {
+                        commServerInfo = targetServerInfoList[i];
+                    }
+                }
+                if (commServerInfo == null) {
+                    console.log('cannot find communication server named ' + serverName);
+                    return;
+                }
+
+                if (tokens.length > 1) {
+                    var serverPort = parseInt(tokens[1]);
+                    console.log('serverPort is explicitly specified: ' + serverPort);
+                    commServerInfo.port = serverPort;
+                }
+            }
+            else {
+                commServerInfo = targetServerInfoList[0];
+            }
+            const resourceName = commServerInfo.name.split('.')[1].replace(/^./, c => c.toUpperCase());
+            console.log('initComm command targeted to ' + commServerInfo.name + " resource name" + resourceName);
+            secureCommClient.provideInputResource('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, resourceName);
+
+        }
+        else if (command == 'send') {
+            console.log('send command');
+            if (message == undefined) {
+                console.log('no message!');
+                return;
+            }
+            secureCommClient.provideInput('toSend', Buffer.from(message));
+        }
+        else if (command == "delegateAuthority"){
+            console.log('delegateAuthority (Perform privilege to grant delegation authority) command');
+            console.log('Enter the delegatee(subject) delegated(object) validity');
+            var spec = message.split(' ');
+            var subject = spec[0];
+            var object = spec[1];
+            var validity = spec[2];
+
+            console.log(spec + " / subject: " + subject + " / object: " + object + " / validity: " + validity);
+            secureCommClient.performPrivilege("DelegationGrant", subject, object, validity);
+        }
+        else if (command == "revoke"){
+            console.log('revoke (Perform privilege to revoke delegation authority) command');
+            console.log('Enter the delegatee(subject) delegated(object)');
+            var spec = message.split(' ');
+            var subject = spec[0];
+            var object = spec[1];
+
+            console.log("Full String: " + spec + " / subject: " + subject + " / object: " + object);
+            secureCommClient.performPrivilege("DelegationRevoke", subject, object, null);
+        }
         else if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');
             console.log(secureCommClient.showKeys());

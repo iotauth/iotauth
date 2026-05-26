@@ -1,0 +1,22 @@
+{
+  "defaultValidity": "1*day",
+  "defaultTimeoutMs": 10000,
+  "tests": [
+    {
+      "nodeConfig": "configs/net1/node0.config",
+      "subject": "Node1",
+      "object": "ResourceA"
+    },
+    {
+      "nodeConfig": "configs/net1/node0.config",
+      "subject": "Node1",
+      "object": "ResourceB"
+    },
+    {
+      "nodeConfig": "configs/net1/node1.config",
+      "subject": "Node3",
+      "object": "ResourceA",
+      "validity": "2*day"
+    }
+  ]
+}
