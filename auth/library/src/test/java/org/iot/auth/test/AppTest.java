@@ -518,18 +518,18 @@ public class AppTest {
 
         DelegationPrivilegeTable priv1 = new DelegationPrivilegeTable();
         priv1.setPrivilegeType("DELEGATE");
-        priv1.setprivilegedGroup("Admins");
-        priv1.setSubject("net1.client");
-        priv1.setObject("Servers");
+        priv1.setprivilegedGroup("HighTrustAgents");
+        priv1.setSubject("net1.highTrustAgent");
+        priv1.setObject("LowTrustAgents");
         priv1.setValidity("1*day");
         priv1.setInfo("{\"note\":\"test delegation\"}");
         sqLiteConnector.insertRecords(priv1);
 
         DelegationPrivilegeTable priv2 = new DelegationPrivilegeTable();
         priv2.setPrivilegeType("READ");
-        priv2.setprivilegedGroup("Clients");
-        priv2.setSubject("net1.ptClient");
-        priv2.setObject("PtServers");
+        priv2.setprivilegedGroup("Users");
+        priv2.setSubject("net1.rcUser");
+        priv2.setObject("Website");
         priv2.setValidity("2*hour");
         priv2.setInfo("{\"note\":\"read privilege\"}");
         sqLiteConnector.insertRecords(priv2);
@@ -537,9 +537,9 @@ public class AppTest {
         List<DelegationPrivilegeTable> all = sqLiteConnector.selectAllPrivileges();
         Assert.assertEquals(2, all.size());
 
-        List<DelegationPrivilegeTable> adminsPrivs = sqLiteConnector.selectPrivilegeByPrivilegedGroup("Admins");
-        Assert.assertEquals(1, adminsPrivs.size());
-        Assert.assertEquals("DELEGATE", adminsPrivs.get(0).getPrivilegeType());
+        List<DelegationPrivilegeTable> highTrustPrivs = sqLiteConnector.selectPrivilegeByPrivilegedGroup("HighTrustAgents");
+        Assert.assertEquals(1, highTrustPrivs.size());
+        Assert.assertEquals("DELEGATE", highTrustPrivs.get(0).getPrivilegeType());
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
     }
@@ -558,9 +558,9 @@ public class AppTest {
         // Insert parent and child communication policies (required by FK constraints).
         CommunicationPolicyTable parent = new CommunicationPolicyTable();
         parent.setID(100);
-        parent.setReqGroup("Clients");
+        parent.setReqGroup("Users");
         parent.setTargetTypeVal("Group");
-        parent.setTarget("Servers");
+        parent.setTarget("Website");
         parent.setMaxNumSessionKeyOwners(2);
         parent.setSessionCryptoSpec("AES-128-CBC:SHA256");
         parent.setAbsValidityStr("1*day");
@@ -569,9 +569,9 @@ public class AppTest {
 
         CommunicationPolicyTable child = new CommunicationPolicyTable();
         child.setID(101);
-        child.setReqGroup("Clients");
+        child.setReqGroup("Users");
         child.setTargetTypeVal("Group");
-        child.setTarget("PtServers");
+        child.setTarget("HighTrustAgents");
         child.setMaxNumSessionKeyOwners(2);
         child.setSessionCryptoSpec("AES-128-CBC:SHA256");
         child.setAbsValidityStr("1*hour");
