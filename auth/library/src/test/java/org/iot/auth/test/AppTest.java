@@ -15,6 +15,13 @@
 
 package org.iot.auth.test;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.UUID;
+
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
 import org.iot.auth.config.constants.ConstantType;
@@ -34,15 +41,10 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.cert.CertificateEncodingException;
-import java.sql.SQLException;
-import java.util.Date;
-import java.util.UUID;
-
 /**
  * @author Salomon Lee
+ * @author Hokeun Kim
+ * @author Sunyoung Kim
  */
 public class AppTest {
     private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
