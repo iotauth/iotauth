@@ -60,12 +60,22 @@ public class AppTest {
     private final String testFilesDir = "../library/src/test/test_files/";
     private final AuthDBProtectionMethod authDBProtectionMethod =
             AuthDBProtectionMethod.ENCRYPT_CREDENTIALS;
+    /**
+     * Verifies that {@code C.AUTH_NONCE_SIZE} equals 8 and that {@link C#getValueOf} returns the
+     * same value for {@link ConstantType#AUTH_NONCE_SIZE}.
+     */
     @Test
     @Category(org.iot.auth.config.constants.C.class)
     public void testConstant(){
         logger.info("{}, {}",ConstantType.AUTH_NONCE_SIZE, C.AUTH_NONCE_SIZE);
+        Assert.assertEquals(8, C.AUTH_NONCE_SIZE);
+        Assert.assertEquals(C.AUTH_NONCE_SIZE, C.getValueOf(ConstantType.AUTH_NONCE_SIZE));
     }
 
+    /**
+     * Verifies that each {@link MessageType} enum constant has the expected numeric byte value and
+     * that {@link MessageType#fromByte} round-trips back to the original enum constant.
+     */
     @Test
     @Category(org.iot.auth.message.MessageType.class)
     public void testMessageType(){
@@ -82,8 +92,31 @@ public class AppTest {
         logger.info("{} {}", MessageType.SECURE_COMM_MSG, MessageType.SECURE_COMM_MSG.getValue());
         logger.info("{} {}", MessageType.FIN_SECURE_COMM, MessageType.FIN_SECURE_COMM.getValue());
         logger.info("{} {}", MessageType.SECURE_PUB, MessageType.SECURE_PUB.getValue());
+
+        Assert.assertEquals((byte)  0, MessageType.AUTH_HELLO.getValue());
+        Assert.assertEquals((byte) 10, MessageType.AUTH_SESSION_KEY_REQ.getValue());
+        Assert.assertEquals((byte) 11, MessageType.AUTH_SESSION_KEY_RESP.getValue());
+        Assert.assertEquals((byte) 20, MessageType.SESSION_KEY_REQ_IN_PUB_ENC.getValue());
+        Assert.assertEquals((byte) 21, MessageType.SESSION_KEY_RESP_WITH_DIST_KEY.getValue());
+        Assert.assertEquals((byte) 22, MessageType.SESSION_KEY_REQ.getValue());
+        Assert.assertEquals((byte) 23, MessageType.SESSION_KEY_RESP.getValue());
+        Assert.assertEquals((byte) 30, MessageType.SKEY_HANDSHAKE_1.getValue());
+        Assert.assertEquals((byte) 31, MessageType.SKEY_HANDSHAKE_2.getValue());
+        Assert.assertEquals((byte) 32, MessageType.SKEY_HANDSHAKE_3.getValue());
+        Assert.assertEquals((byte) 33, MessageType.SECURE_COMM_MSG.getValue());
+        Assert.assertEquals((byte) 34, MessageType.FIN_SECURE_COMM.getValue());
+        Assert.assertEquals((byte) 40, MessageType.SECURE_PUB.getValue());
+
+        for (MessageType type : MessageType.values()) {
+            Assert.assertEquals(type, MessageType.fromByte(type.getValue()));
+        }
     }
 
+    /**
+     * Constructs an {@link AuthHello} message with a random auth ID, nonce, and a fixed payload,
+     * then asserts that the message type byte, auth ID, nonce, buffer content, and computed payload
+     * length are all set correctly.
+     */
     @Test
     @Category(org.iot.auth.message.impl.AuthHello.class)
     public void testAuthHello(){
@@ -94,20 +127,35 @@ public class AppTest {
         authHello.setNonce(nonce);
         Buffer message = new Buffer("Hello Message".getBytes());
         authHello.setBuffer(message);
-        authHello.setPayLoadLength(
+        int expectedPayloadLength =
                 authHello.getNonce().getRawBytes().length +
                         1 + //authHello.getMessageType()
                         authHello.getAuthId().length +
                         authHello.getBuffer().getRawBytes().length +
-                        authHello.getNonce().getRawBytes().length
-        );
+                        authHello.getNonce().getRawBytes().length;
+        authHello.setPayLoadLength(expectedPayloadLength);
         logger.info("MessageType, {}", authHello.getMessageType());
         logger.info("AuthId, {}", authHello.getAuthId());
         logger.info("Nonce, {}", authHello.getNonce().getRawBytes());
         logger.info("Buffer, {}", authHello.getBuffer().getRawBytes());
         logger.info("PayLoadLength, {}", authHello.getPayLoadLength());
+
+        Assert.assertEquals(MessageType.AUTH_HELLO.getValue(), authHello.getMessageType());
+        Assert.assertNotNull(authHello.getAuthId());
+        Assert.assertNotNull(authHello.getNonce());
+        Assert.assertArrayEquals("Hello Message".getBytes(), authHello.getBuffer().getRawBytes());
+        Assert.assertEquals(expectedPayloadLength, authHello.getPayLoadLength());
     }
 
+    /**
+     * Creates a fresh SQLite auth database at the given path, initializes it with a newly generated
+     * symmetric database key, and creates all required tables.
+     *
+     * @param testDbFileName absolute or relative path where the test database file should be created
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be written
+     */
     public void createTestAuthDB(String testDbFileName) throws SQLException, ClassNotFoundException, IOException {
         SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
         databaseKey = new SymmetricKey(
@@ -121,11 +169,26 @@ public class AppTest {
         sqLiteConnector.close();
     }
 
+    /**
+     * Deletes the test database file at the given path. Silently succeeds if the file does not
+     * exist, making it safe to call before {@link #createTestAuthDB} as a cleanup step.
+     *
+     * @param testDbFileName path to the test database file to delete
+     */
     public void destroyTestAuthDB(String testDbFileName) {
         File file = new File(testDbFileName);
         file.delete();
     }
 
+    /**
+     * Inserts four {@link RegisteredEntityTable} records representing different entity groups
+     * (Clients, PtClients, Servers, PtServers) and verifies that {@code selectAllRegEntities}
+     * retrieves them without error.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if a certificate or properties file cannot be read
+     */
     @Test
     @Category(org.iot.auth.db.RegisteredEntity.class)
     public void testRegEntityInsertionAndSelectAll() throws SQLException, ClassNotFoundException, IOException {
@@ -202,6 +265,15 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts eight {@link CommunicationPolicyTable} records covering unicast (Group), publish
+     * (PubTopic), and subscribe (SubTopic) target types, then verifies that
+     * {@code selectAllPolicies} retrieves all records without error.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.CommunicationPolicy.class)
     public void testCommPolicyInsertionAndSelectAll() throws SQLException, ClassNotFoundException, IOException {
@@ -299,6 +371,15 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts a {@link TrustedAuthTable} record for Auth 102 loaded from PEM certificate files
+     * and verifies that {@code selectAllTrustedAuths} completes without error.
+     *
+     * @throws SQLException                  if a database access error occurs
+     * @throws ClassNotFoundException        if the SQLite JDBC driver is not on the classpath
+     * @throws CertificateEncodingException  if a certificate cannot be DER-encoded
+     * @throws IOException                   if a certificate file cannot be read
+     */
     @Test
     @Category(org.iot.auth.db.TrustedAuth.class)
     public void testTrustedAuthInsertionAndSelectAll() throws SQLException, ClassNotFoundException, CertificateEncodingException,
@@ -329,6 +410,14 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts two {@link FileSharingTable} records — one with reader type {@code "entity"} and one
+     * with {@code "group"} — and verifies both insertions succeed.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws IOException             if the database file cannot be accessed
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     */
     @Test
     @Category(org.iot.auth.db.bean.FileSharingTable.class)
     public void testFileSharingTable() throws SQLException, IOException, ClassNotFoundException {
@@ -353,6 +442,16 @@ public class AppTest {
         // TODO (@hokeun): Implement selectAllFileSharing and add test for it.
     }
 
+    /**
+     * Constructs a {@link CachedSessionKeyTable} instance pre-populated with common test defaults
+     * (max 2 owners, 20-second relative validity, AES-128-CBC:SHA256 crypto spec, 16-byte zero key).
+     *
+     * @param id          numeric session key identifier
+     * @param owner       initial owner entity name, or {@code null} if no owner is set yet
+     * @param purpose     session key purpose string (e.g., {@code "Clients:Group:Servers"})
+     * @param absValidity absolute expiry timestamp in milliseconds since epoch
+     * @return a fully initialized {@link CachedSessionKeyTable} ready for insertion
+     */
     private CachedSessionKeyTable buildCachedSessionKey(long id, String owner, String purpose, long absValidity) {
         CachedSessionKeyTable key = new CachedSessionKeyTable();
         key.setID(id);
@@ -367,6 +466,14 @@ public class AppTest {
         return key;
     }
 
+    /**
+     * Inserts two {@link CachedSessionKeyTable} records with different purposes and verifies that
+     * {@code selectAllCachedSessionKeys} returns exactly two entries.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
     public void testCachedSessionKeyInsertionAndSelectAll() throws SQLException, ClassNotFoundException, IOException {
@@ -387,6 +494,14 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts a single {@link CachedSessionKeyTable} record with a known ID and verifies that
+     * {@code selectCachedSessionKeyByID} retrieves it with the correct ID and purpose.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
     public void testCachedSessionKeySelectById() throws SQLException, ClassNotFoundException, IOException {
@@ -408,6 +523,15 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts two {@link CachedSessionKeyTable} records with different purposes and verifies that
+     * {@code selectCachedSessionKeysByPurpose} returns only the record matching the requested
+     * entity and purpose string.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
     public void testCachedSessionKeySelectByPurpose() throws SQLException, ClassNotFoundException, IOException {
@@ -430,6 +554,15 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts a {@link CachedSessionKeyTable} record with no initial owner, appends two owner
+     * entity names via {@code appendSessionKeyOwner}, and confirms both names appear in the
+     * retrieved owner field.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
     public void testCachedSessionKeyAppendOwner() throws SQLException, ClassNotFoundException, IOException {
@@ -454,6 +587,14 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts two {@link CachedSessionKeyTable} records, calls {@code deleteAllCachedSessionKeys},
+     * and verifies that a subsequent {@code selectAllCachedSessionKeys} returns an empty list.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.bean.CachedSessionKeyTable.class)
     public void testCachedSessionKeyDeleteAll() throws SQLException, ClassNotFoundException, IOException {
@@ -475,6 +616,15 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts two {@link FileSharingTable} records for the same owner — one granting access to a
+     * specific entity and one to a group — and verifies that {@code selectFileSharingInfoByOwner}
+     * returns both reader identifiers.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.bean.FileSharingTable.class)
     public void testFileSharingInsertionAndSelectByOwner() throws SQLException, ClassNotFoundException, IOException {
@@ -505,6 +655,17 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts two {@link DelegationPrivilegeTable} records — one DELEGATE privilege for
+     * {@code HighTrustAgents} and one READ privilege for {@code Users} — then verifies that
+     * {@code selectAllPrivileges} returns both records and that filtering by privileged group
+     * {@code "HighTrustAgents"} returns only the DELEGATE entry.
+     *
+     * @throws SQLException                          if a database access error occurs
+     * @throws ClassNotFoundException                if the SQLite JDBC driver is not on the classpath
+     * @throws IOException                           if the database file cannot be accessed
+     * @throws org.json.simple.parser.ParseException if privilege info JSON cannot be parsed
+     */
     @Test
     @Category(org.iot.auth.db.DelegationPrivilege.class)
     public void testDelegationPrivilegeInsertionAndSelectAll()
@@ -544,6 +705,15 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts parent and child {@link CommunicationPolicyTable} records required by foreign-key
+     * constraints, then inserts a {@link DelegationInfoTable} record linking them. Verifies that
+     * {@code getAllChildren} for the parent policy ID returns exactly the child policy ID.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.bean.DelegationInfoTable.class)
     public void testDelegationInfoInsertionAndGetChildren()
@@ -592,6 +762,15 @@ public class AppTest {
         destroyTestAuthDB(testDbFileName);
     }
 
+    /**
+     * Inserts a {@link MetaDataTable} record for {@code SessionKeyCount} with an initial value of
+     * {@code "0"}, reads it back to confirm the insert, updates it to {@code "5"} via
+     * {@code updateMetaData}, and verifies the updated value is persisted correctly.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
     @Test
     @Category(org.iot.auth.db.bean.MetaDataTable.class)
     public void testMetaDataInsertionAndUpdate() throws SQLException, ClassNotFoundException, IOException {
