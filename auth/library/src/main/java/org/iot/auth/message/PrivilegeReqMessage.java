@@ -24,27 +24,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class for a session key req message from an entity.
+ * A class for a privilege req message from an entity.
  * <pre>
- * SessionKeyReq Format
+ * PrivilegeReq Format
  * {
  *      entityNonce: /Buffer/, (ENTITY_NONCE_SIZE)
- *      authNonce:    /Buffer/, (AUTH_NONCE_SIZE)
- *      numKeys: /UInt32BE/,
- *      sender: /string/, (senderLen UInt8)
- *      purpose: JSON,
+ *      nonce: /Buffer/, (AUTH_NONCE_SIZE)
+ *      replyNonce:    /Buffer/, (AUTH_NONCE_SIZE)
+ *      payload: JSON,
  *      dhParam: /Buffer/ (optional, Diffie-Hellman parameter)
  * } </pre>
- * @author Hokeun Kim
+ * @author Sunyoung Kim
  */
-public class SessionKeyReqMessage extends IoTSPMessage {
+public class PrivilegeReqMessage extends IoTSPMessage {
     /**
-     * Constructor to construct a session key request message from message payload.
-     * @param type Message type of the session key request.
+     * Constructor to construct a privilege request message from message payload.
+     * @param type Message type of the add reader request.
      * @param decPayload Payload of the message in Buffer.
      * @throws ParseException When JSON parser fails
      */
-    public SessionKeyReqMessage(MessageType type, Buffer decPayload) throws ParseException {
+    public PrivilegeReqMessage(MessageType type, Buffer decPayload) throws ParseException {
         super(type);
         int curIndex = 0;
         this.entityNonce = decPayload.slice(curIndex, curIndex + ENTITY_NONCE_SIZE);
@@ -53,9 +52,6 @@ public class SessionKeyReqMessage extends IoTSPMessage {
         this.authNonce = decPayload.slice(curIndex, curIndex + AUTH_NONCE_SIZE);
         curIndex += AUTH_NONCE_SIZE;
 
-        this.numKeys = decPayload.getInt(curIndex);
-        curIndex += 4;
-
         BufferedString bufStr = decPayload.getBufferedString(curIndex);
         this.entityName = bufStr.getString();
         curIndex += bufStr.length();
@@ -63,7 +59,7 @@ public class SessionKeyReqMessage extends IoTSPMessage {
         bufStr = decPayload.getBufferedString(curIndex);
         String msg = bufStr.getString();
         logger.info("Received JSON: {}", msg);
-        this.purpose = (JSONObject) new JSONParser().parse(msg);
+        this.payload = (JSONObject) new JSONParser().parse(msg);
         curIndex += bufStr.length();
 
         if (curIndex < decPayload.length()) {
@@ -83,11 +79,8 @@ public class SessionKeyReqMessage extends IoTSPMessage {
     public String getEntityName() {
         return entityName;
     }
-    public int getNumKeys() {
-        return numKeys;
-    }
-    public JSONObject getPurpose() {
-        return purpose;
+    public JSONObject getPayload() {
+        return payload;
     }
     public Buffer getDiffieHellmanParam() {
         return diffieHellmanParam;
@@ -95,9 +88,8 @@ public class SessionKeyReqMessage extends IoTSPMessage {
 
     private Buffer entityNonce;
     private Buffer authNonce;
-    private int numKeys;
     private String entityName;
-    private JSONObject purpose;
+    private JSONObject payload;
     private Buffer diffieHellmanParam;
 
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);

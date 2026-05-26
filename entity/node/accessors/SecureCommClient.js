@@ -39,7 +39,7 @@ var currentSecureClient;
 
 // parameters for SecureCommClient
 var parameters =  {
-	numKeysPerRequest: 3,
+	numKeysPerRequest: 1,   // TODO-SY: config check
     migrationEnabled: false,
     authFailureThreshold: 3,
     migrationFailureThreshold: 3
@@ -98,6 +98,13 @@ function onData(data) {
     }
 }
 
+function onPrivilege(result) {
+    outputs.privilege = result;
+    if (outputHandlers.privilege) {
+        outputHandlers.privilege(result);
+    }
+}
+
 function onConnection(entityClientSocket) {
     currentSecureClient = entityClientSocket;
     currentState = clientCommState.IN_COMM;
@@ -149,6 +156,91 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParameter
             callbackParameters.host, callbackParameters.port);
     }
 
+    if (callbackParameters != null && callbackParameters.callback) {
+        callbackParameters.callback();
+    }
+}
+
+function handleSessionKeyRespForGrantAccess(sessionKeyList, receivedDistKey, callbackParameters) {
+    if (parameters.migrationEnabled) {
+        authFailureCount = 0;
+        console.log('handleSessionKeyRespForGrantAccess: session key request succeeded! authFailureCount: ' + authFailureCount);
+    }
+    if (receivedDistKey != null) {
+        currentDistributionKey = receivedDistKey;
+    }
+
+    var sessionKeys = sessionKeyList[0];
+    let keys = Array.isArray(sessionKeys) ? sessionKeys : [ sessionKeys ];
+    const out = keys.map(k => ({
+        id: String(k.id),
+        cipherKey_b64: k.cipherKeyVal.toString('base64'),
+        macKey_b64: k.macKeyVal.toString('base64'),
+        absValidity: k.absValidity,
+        relValidity: k.relValidity
+    }));
+    console.log(JSON.stringify({ session_keys: out }));
+
+    currentSessionKeyList = currentSessionKeyList.concat(sessionKeyList);
+
+    if (currentSessionKeyList.length > 0 && callbackParameters != null) {
+        initSecureCommWithSessionKey(currentSessionKeyList.shift(),
+            callbackParameters.host, callbackParameters.port);
+    }
+
+    if (callbackParameters != null && callbackParameters.callback) {
+        callbackParameters.callback();
+    }
+    process.exit(0);
+}
+
+function handleSessionKeyRespForWebsite(sessionKeyList, otherSessionKeyOwnerGroup, receivedDistKey, callbackParameters) {
+    if (parameters.migrationEnabled) {
+        authFailureCount = 0;
+        console.log('handleSessionKeyRespForGrantAccess: session key request succeeded! authFailureCount: ' + authFailureCount);
+    }
+    if (receivedDistKey != null) {
+        currentDistributionKey = receivedDistKey;
+    }
+    var sessionKeys = sessionKeyList[0];
+    let keys = Array.isArray(sessionKeys) ? sessionKeys : [ sessionKeys ];
+    const out = keys.map(k => ({
+        id: String(k.id),
+        cipherKey_b64: k.cipherKeyVal.toString('base64'),
+        macKey_b64: k.macKeyVal.toString('base64'),
+        absValidity: k.absValidity,
+        relValidity: k.relValidity,
+        owner: otherSessionKeyOwnerGroup
+    }));
+    //console.log(otherSessionKeyOwnerGroup);
+    console.log(JSON.stringify({
+        session_keys: out,
+    }));
+
+    currentSessionKeyList = currentSessionKeyList.concat(sessionKeyList);
+
+    if (currentSessionKeyList.length > 0 && callbackParameters != null) {
+        initSecureCommWithSessionKey(currentSessionKeyList.shift(),
+            callbackParameters.host, callbackParameters.port);
+    }
+
+    if (callbackParameters != null && callbackParameters.callback) {
+        callbackParameters.callback();
+    }
+    process.exit(0);
+}
+
+function handleSessionKeyIdResp(sessionKeyID, receivedDistKey, callbackParameters) {
+    if (parameters.migrationEnabled) {
+        authFailureCount = 0;
+        console.log('handleSessionKeyIdResp: session key request succeeded! authFailureCount: ' + authFailureCount);
+    }
+    if (receivedDistKey != null) {
+        console.log('updating distribution key: ' + util.inspect(receivedDistKey));
+        currentDistributionKey = receivedDistKey;
+    }
+    console.log('received sessionKeyID ' + util.inspect(sessionKeyID));
+    
     if (callbackParameters != null && callbackParameters.callback) {
         callbackParameters.callback();
     }
@@ -212,6 +304,20 @@ function sendMigrationRequest() {
         iotAuth.migrateToTrustedAuth(options, handleMigrationResp, eventHandlers);
     }
 }
+
+function handlePrivilegeResp(result){
+    console.log('Finished privilege request');
+    console.log(result)
+}
+function sendPrivilegeRequest(type, subject, object, validity) {
+    var options = iotAuth.getPrivilegeReqOptions(entityConfig, type, subject, object, validity);
+    var eventHandlers = {
+        onError: onError,
+        onPrivilege: onPrivilege
+    };
+    iotAuth.privilegeRequest(options, handlePrivilegeResp, eventHandlers);
+}
+
 /*
 serverHostPort = {
 	host: 'localhost',
@@ -244,6 +350,32 @@ function serverHostPortInputHandler(serverHostPort) {
 	    }
 	}
 }
+function serverHostPortInputHandlerResource(serverHostPort, resourceName) {
+    if (serverHostPort == null) {
+        console.log('ServerHostPort is null, trying to close previous socket...');
+        if (currentSecureClient) {
+            currentSecureClient.close();
+            currentSecureClient = null;
+        }
+    }
+    else {
+        if (currentSessionKeyList.length > 0) {
+            initSecureCommWithSessionKey(currentSessionKeyList.shift(),
+                serverHostPort.host, serverHostPort.port);
+        }
+        else {
+            // hack to support exp2
+            if (parameters.keyId) {
+                sendSessionKeyRequest({keyId: parameters.keyId}, 1,
+                    handleSessionKeyResp, serverHostPort);
+            }
+            else {
+                sendSessionKeyRequest({group: resourceName}, parameters.numKeysPerRequest,
+                    handleSessionKeyResp, serverHostPort);
+            }
+        }
+    }
+}
 
 function toSendInputHandler(toSend) {
     if (currentSecureClient && currentState == clientCommState.IN_COMM) {
@@ -272,12 +404,14 @@ SecureCommClient.prototype.initialize = function() {
     outputs = {
     	connected: false,
     	error: null,
-    	received: null
+    	received: null,
+        privilege: null
     };
     outputHandlers = {
     	connected: null,
     	error: null,
-    	received: null
+    	received: null,
+        privilege: null
     };
 	console.log('current parameters: ' + util.inspect(parameters));
 }
@@ -289,6 +423,15 @@ SecureCommClient.prototype.provideInput = function(port, input) {
 	else if (port == 'toSend') {
 		toSendInputHandler(input);
 	}
+}
+
+SecureCommClient.prototype.provideInputResource = function(port, input, resourceName) {
+    if (port == 'serverHostPort') {
+        serverHostPortInputHandlerResource(input, resourceName);
+    }
+    else if (port == 'toSend') {
+        toSendInputHandler(input);
+    }
 }
 
 SecureCommClient.prototype.setParameter = function(key, value) {
@@ -336,8 +479,27 @@ SecureCommClient.prototype.getSessionKeysForCaching = function(numKeys) {
         handleSessionKeyResp, null);
 }
 
+SecureCommClient.prototype.getSessionKeyIdForGrantAccess = function(numKeys, trustLevel) {
+    sendSessionKeyRequest({delegation: trustLevel + ',Website'}, numKeys,
+        handleSessionKeyIdResp, null);
+}
+
+SecureCommClient.prototype.getSessionKeysForGrantAccess = function(keyID) {
+    sendSessionKeyRequest({keyId: keyID}, 1,
+        handleSessionKeyRespForGrantAccess, null);
+}
+
+SecureCommClient.prototype.getSessionKeysForWebsite = function(keyID) {
+    sendSessionKeyRequest({keyId: keyID}, 1,
+        handleSessionKeyRespForWebsite, null);
+}
+
 SecureCommClient.prototype.migrateToTrustedAuth = function() {
     sendMigrationRequest();
+}
+
+SecureCommClient.prototype.performPrivilege = function(type, subject, object, validity) {
+    sendPrivilegeRequest(type, subject, object, validity);
 }
 
 SecureCommClient.prototype.setEntityInfo = function(key, value) {

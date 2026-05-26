@@ -15,6 +15,13 @@
 
 package org.iot.auth.test;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.UUID;
+
 import org.iot.auth.config.AuthServerProperties;
 import org.iot.auth.config.constants.C;
 import org.iot.auth.config.constants.ConstantType;
@@ -30,22 +37,14 @@ import org.iot.auth.io.Buffer;
 import org.iot.auth.message.MessageType;
 import org.iot.auth.message.impl.AuthHello;
 import org.iot.auth.util.DateHelper;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.cert.CertificateEncodingException;
-import java.sql.SQLException;
-import java.util.Date;
-import java.util.UUID;
-
-import static org.junit.Assert.assertTrue;
-
 /**
- * @author Salomon Lee, Hokeun Kim
+ * @author Salomon Lee, Hokeun Kim, Sunyoung Kim
  */
 public class AppTest {
     private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
@@ -207,6 +206,7 @@ public class AppTest {
         sqLiteConnector.DEBUG = true;
         CommunicationPolicyTable communicationPolicyTable = new CommunicationPolicyTable();
 
+        communicationPolicyTable.setID(0);
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
@@ -216,6 +216,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("20*sec");
         assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
+        communicationPolicyTable.setID(1);
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
@@ -225,6 +226,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("20*sec");
         assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
+        communicationPolicyTable.setID(2);
         communicationPolicyTable.setReqGroup("PtClients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("Servers");
@@ -234,6 +236,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("2*hour");
         assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
+        communicationPolicyTable.setID(3);
         communicationPolicyTable.setReqGroup("PtClients");
         communicationPolicyTable.setTargetTypeVal("Group");
         communicationPolicyTable.setTarget("PtServers");
@@ -243,6 +246,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("20*sec");
         assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
+        communicationPolicyTable.setID(4);
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -252,6 +256,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("3*hour");
         assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
+        communicationPolicyTable.setID(5);
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -261,6 +266,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("3*hour");
         assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
+        communicationPolicyTable.setID(6);
         communicationPolicyTable.setReqGroup("Clients");
         communicationPolicyTable.setTargetTypeVal("SubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -270,6 +276,7 @@ public class AppTest {
         communicationPolicyTable.setRelValidityStr("3*hour");
         assertTrue(sqLiteConnector.insertRecords(communicationPolicyTable));
 
+        communicationPolicyTable.setID(7);
         communicationPolicyTable.setReqGroup("Servers");
         communicationPolicyTable.setTargetTypeVal("PubTopic");
         communicationPolicyTable.setTarget("Ptopic");
@@ -310,7 +317,7 @@ public class AppTest {
         assertTrue(sqLiteConnector.insertRecords(trustedAuth));
 
         // Test Select All.
-        sqLiteConnector.selectAllTrustedAuth();
+        sqLiteConnector.selectAllTrustedAuths();
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
     }

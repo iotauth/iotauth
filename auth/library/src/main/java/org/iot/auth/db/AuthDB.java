@@ -22,6 +22,7 @@ import org.iot.auth.db.bean.*;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.util.ExceptionToString;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +151,15 @@ public class AuthDB {
         return null;
     }
 
+    public CommunicationPolicy getCommunicationPolicyByID(long ID) {
+        for (CommunicationPolicy communicationPolicy : communicationPolicyList) {
+            if (communicationPolicy.getId() == ID) {
+                return communicationPolicy;
+            }
+        }
+        return null;
+    }
+
     /**
      * Update the distribution key of the specified entity.
      * @param entityName The name of the entity whose distribution key to be updated.
@@ -169,10 +179,10 @@ public class AuthDB {
     }
 
     /**
-     * Generate session keys and cache the generaged session keys.
+     * Generate session keys and cache the generated session keys.
      *
      * @param authID ID of the Auth who generates the session keys
-     * @param owner Name of the owner (entity) for the generated session keys
+     * @param owner Name of the owner (entity) for the generated session keys, can be null
      * @param numKeys Number of keys to be generated
      * @param communicationPolicy Corresponding communication policy for the generated session keys
      * @param sessionKeyPurpose Purpose specified by session key request
@@ -183,7 +193,7 @@ public class AuthDB {
      */
     public List<SessionKey> generateSessionKeys(int authID, String owner, int numKeys,
                                                 CommunicationPolicy communicationPolicy,
-                                                SessionKeyPurpose sessionKeyPurpose)
+                                                SessionKeyPurpose sessionKeyPurpose, String[] expectedOwnerGroups)
             throws IOException, SQLException, ClassNotFoundException
     {
         List<SessionKey> sessionKeyList = new LinkedList<>();
@@ -196,10 +206,12 @@ public class AuthDB {
             long curSessionKeyIndex = sessionKeyCount + i;
             // TODO: work on authID encoding
             long sessionKeyID = encodeSessionKeyID(authID, curSessionKeyIndex);
-            SessionKey sessionKey = new SessionKey(sessionKeyID, owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
+            SessionKey sessionKey = new SessionKey(sessionKeyID,
+                    owner == null ? null : owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
                     communicationPolicy.getMaxNumSessionKeyOwners(), sessionKeyPurpose.toString(),
                     new Date().getTime() + communicationPolicy.getAbsValidity(), communicationPolicy.getRelValidity(),
-                    communicationPolicy.getSessionCryptoSpec());
+                    communicationPolicy.getSessionCryptoSpec(),
+                    expectedOwnerGroups);
             sessionKeyList.add(sessionKey);
         }
         sessionKeyCount += numKeys;
@@ -235,6 +247,31 @@ public class AuthDB {
         return sqLiteConnector.selectFileSharingInfoByOwner(fileOwner);
     }
 
+    public List<DelegationPrivilege> selectPrivilegeByPrivilegedGroup(String requestingEntityGroup) throws SQLException, ParseException {
+        List<DelegationPrivilegeTable> privilegeTableList = sqLiteConnector.selectPrivilegeByPrivilegedGroup(requestingEntityGroup);
+        List<DelegationPrivilege> privileges = new ArrayList<>(privilegeTableList.size());
+        for (DelegationPrivilegeTable delegationPrivilegeTable : privilegeTableList){
+            privileges.add(new DelegationPrivilege(delegationPrivilegeTable));
+        }
+        return privileges;
+    }
+
+    public String selectParentById(String delegationInfoTableId) throws SQLException{
+        String parent = sqLiteConnector.selectParentById(delegationInfoTableId);
+        return parent;
+    }
+
+    public List<String> getAllChildrenByParentID(String parentID) throws SQLException{
+        return sqLiteConnector.getAllChildren(parentID);
+    }
+
+    public String getCommPolicyCountValue() throws SQLException {
+        return sqLiteConnector.selectMetaDataValue(MetaDataTable.key.CommPolicyCount.name());
+    }
+    public boolean updateCommPolicyCountValue(long newCommPolicyCount) throws SQLException {
+        return sqLiteConnector.updateMetaData(MetaDataTable.key.CommPolicyCount.name(),
+                Long.toString(newCommPolicyCount));
+    }
     public boolean addSessionKeyOwner(long keyID, String newOwner) throws SQLException, ClassNotFoundException {
         return sqLiteConnector.appendSessionKeyOwner(keyID, newOwner);
     }
@@ -245,6 +282,10 @@ public class AuthDB {
 
     public void cleanExpiredSessionKeys() throws SQLException, ClassNotFoundException {
         sqLiteConnector.deleteExpiredCahcedSessionKeys();
+    }
+
+    public List<String> cleanExpiredCommunicationPolicies() throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.deleteExpiredCommunicationPolicies();
     }
 
     public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {
@@ -279,7 +320,7 @@ public class AuthDB {
     public String sessionKeysToString() throws SQLException, ClassNotFoundException {
         StringBuilder sb = new StringBuilder();
 
-        List<CachedSessionKeyTable> cachedSessionKeyList = sqLiteConnector.selectAllCachedSessionKey();
+        List<CachedSessionKeyTable> cachedSessionKeyList = sqLiteConnector.selectAllCachedSessionKeys();
         boolean init = true;
         for (CachedSessionKeyTable cachedSessionKey: cachedSessionKeyList) {
             if (init) {
@@ -399,7 +440,7 @@ public class AuthDB {
         trustStoreForTrustedAuths = KeyStore.getInstance(KeyStore.getDefaultType());
         trustStoreForTrustedAuths.load(null, trustStorePassword.toCharArray());
 
-        for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuth()) {
+        for (TrustedAuthTable t: sqLiteConnector.selectAllTrustedAuths()) {
             TrustedAuth trustedAuth = new TrustedAuth(t.getId(), t.getHost(), t.getEntityHost(),
                     t.getPort(),
                     t.getHeartbeatPeriod(),
@@ -444,5 +485,16 @@ public class AuthDB {
 
     public void insertCommunicationPolicy(CommunicationPolicyTable newCommunicationPolicyTable) throws SQLException, ClassNotFoundException {
         sqLiteConnector.insertRecords(newCommunicationPolicyTable);
+    }
+    public boolean removeCommunicationPolicies(List<String> targetPolicies) throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.deleteCommunicationPoliciesByIDs(targetPolicies);
+    }
+
+    public void insertDelegationInfo(DelegationInfoTable delegationInfoTable) throws SQLException, ClassNotFoundException {
+        sqLiteConnector.insertRecords(delegationInfoTable);
+    }
+
+    public boolean removeDelegationInfo(List<String> CPTIDs) throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.deleteDelegationInfoByIDs(CPTIDs);
     }
 }

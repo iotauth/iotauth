@@ -45,7 +45,7 @@ function receivedHandler(data) {
     }
 }
 
-var configFilePath = 'configs/net1/client.config';
+var configFilePath = 'configs/net1/user.config';
 if (process.argv.length > 2) {
     configFilePath = process.argv[2];
 }
@@ -84,8 +84,26 @@ function commandInterpreter() {
             command = input.slice(0, idx);
             message = input.slice(idx + 1);
         }
+        if (command == 'delegateAccess') {
+            console.log('delegateAccess (Session key request for cached keys that will be used to delegate access) command');
+            console.log('Enter the agent\'s trust level');
 
-        if (command == 'initComm') {
+            var trust = message;
+            var trustLevel;
+            if (trust == 'high'){
+                trustLevel = 'HighTrustAgents';
+            } else if (trust == 'medium'){
+                trustLevel = 'MediumTrustAgents';
+            } else if (trust == 'low'){
+                trustLevel = 'LowTrustAgents';
+            } else {
+                console.log('unrecognized trust level: ' + command);
+            }
+
+            secureCommClient.getSessionKeyIdForGrantAccess(1, trustLevel);
+             
+        }
+        else if (command == 'initComm') {
             var targetServerInfoList = secureCommClient.getTargetServerInfoList();
             var commServerInfo = null;
             if (message != undefined) {
@@ -115,9 +133,34 @@ function commandInterpreter() {
             secureCommClient.provideInputResource('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, resourceName);
 
         }
-        else if (command == 'finComm' || command == 'f') {
-            console.log('finComm command');
-            secureCommClient.provideInput('serverHostPort', null);
+        else if (command == 'send') {
+            console.log('send command');
+            if (message == undefined) {
+                console.log('no message!');
+                return;
+            }
+            secureCommClient.provideInput('toSend', Buffer.from(message));
+        }
+        else if (command == "delegateAuthority"){
+            console.log('delegateAuthority (Perform privilege to grant delegation authority) command');
+            console.log('Enter the delegatee(subject) delegated(object) validity');
+            var spec = message.split(' ');
+            var subject = spec[0];
+            var object = spec[1];
+            var validity = spec[2];
+
+            console.log(spec + " / subject: " + subject + " / object: " + object + " / validity: " + validity);
+            secureCommClient.performPrivilege("DelegationGrant", subject, object, validity);
+        }
+        else if (command == "revoke"){
+            console.log('revoke (Perform privilege to revoke delegation authority) command');
+            console.log('Enter the delegatee(subject) delegated(object)');
+            var spec = message.split(' ');
+            var subject = spec[0];
+            var object = spec[1];
+
+            console.log("Full String: " + spec + " / subject: " + subject + " / object: " + object);
+            secureCommClient.performPrivilege("DelegationRevoke", subject, object, null);
         }
         else if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');
@@ -127,33 +170,6 @@ function commandInterpreter() {
             console.log('showSocket command. current secure client socket: ');
             console.log(secureCommClient.showSocket());
         }
-        else if (command == 'send') {
-            console.log('send command');
-            if (message == undefined) {
-                console.log('no message!');
-                return;
-            }
-            secureCommClient.provideInput('toSend', Buffer.from(message));
-        }
-        else if (command == 'sendFile') {
-            console.log('sendFile command');
-            var fileName = '../data_examples/data.bin';
-            if (message != undefined) {
-                fileName = message;
-            }
-            var fileData = fs.readFileSync(fileName);
-            console.log('file data length: ' + fileData.length);
-
-            secureCommClient.provideInput('toSend', fileData);
-        }
-        else if (command == 'skReq') {
-            console.log('skReq (Session key request for cached keys that will be used to connect to servers) command');
-            var numKeys = 3;
-            if (message != undefined) {
-                numKeys = parseInt(message);
-            }
-            secureCommClient.getSessionKeysForCaching(numKeys);
-        }
         else if (command == 'numKeys') {
             console.log('numKeys (Set number of session keys per request) command');
             var numKeys = 3;
@@ -161,57 +177,6 @@ function commandInterpreter() {
                 numKeys = parseInt(message);
             }
             secureCommClient.setParameter('numKeysPerRequest', numKeys);
-        }
-        else if (command == 'saveData') {
-            console.log('saveData command');
-            var received = secureCommClient.latestOutput('received');
-            if (received == undefined) {
-                console.log('No data to be saved!');
-                return;
-            }
-            var fileName = '../data_examples/receivedData.bin';
-            if (message != undefined) {
-                fileName = message;
-            }
-            fs.writeFileSync(fileName, received);
-            console.log('file data saved to ' + fileName);
-        }
-        else if (command == 'mig') {
-            console.log('migration request command!');
-            secureCommClient.migrateToTrustedAuth();
-
-        }
-        else if (command == 'exp1') {
-            console.log('experiment for scenario 1 command!');
-            if (message == undefined) {
-                console.log('specify number of servers!');
-                return;
-            }
-            var args = message.split(' ');
-            var serverCount = parseInt(args[0]);
-            var serverPort = 22100;
-            if (args.length > 1) {
-                serverPort = parseInt(args[1]);
-            }
-            console.log('serverCount: ' + serverCount + ' serverPort: ' + serverPort);
-            console.log('start experiments for ' + serverCount + ' servers ...');
-            var idx = 0;
-            var repeater;
-            var repeater2;
-            var repeater2 = function() {
-                secureCommClient.provideInput('serverHostPort', null);
-                //commServerInfo.port++;
-                if (idx < serverCount) {
-                    setTimeout(repeater, 500);
-                }
-            }
-            var repeater = function() {
-                idx++;
-                console.log('round ' + idx);
-                secureCommClient.provideInput('serverHostPort', {host: 'localhost', port: serverPort});
-                setTimeout(repeater2, 500);
-            }
-            repeater();
         }
         else {
             console.log('unrecognized command: ' + command);

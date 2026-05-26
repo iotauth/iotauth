@@ -23,6 +23,7 @@ import org.iot.auth.db.RegisteredEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * A utility class for checking communication policy.
@@ -34,7 +35,9 @@ public class CommunicationPolicyChecker {
      * When an entity requests a session key with a session key ID, this method checks if the session key is valid for
      * the communication policy of the requesting entity. This check includes target group, purpose, and maximum number
      * of session key owners.
-     * @param requestingEntity The entity who sent a session key request based on a session key ID.
+     * @param server The instance of the Auth server.
+     * @param requestingEntityGroup The group name of the entity who sent a session key request based on a session key ID.
+     * @param requestingEntityName The entity who sent a session key request based on a session key ID.
      * @param sessionKey The session key found from the session key ID.
      * @return If the check is successful.
      */
@@ -49,6 +52,11 @@ public class CommunicationPolicyChecker {
         }
         String targetType = purposeTokens[0];
         String target = purposeTokens[1];
+        if (Arrays.asList(sessionKey.getOwners()).contains(requestingEntityName)) {
+            logger.error("Requesting entity ({}) is already an owner of this session key.",
+                    requestingEntityName);
+            return false;
+        }
         switch (targetType) {
             case "Group":
                 if (!target.equals(requestingEntityGroup)) {
@@ -89,6 +97,18 @@ public class CommunicationPolicyChecker {
                     logger.error("Requesting entity ({})'s target group does not match session key communication policy.",
                         requestingEntityName); 
                     return false;  
+                }
+                if (sessionKey.getOwners().length >= sessionKey.getMaxNumOwners()) {
+                    logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",
+                            requestingEntityName, target);
+                    return false;
+                }
+                return true;
+            case "Delegation":
+                if (!Arrays.asList(sessionKey.getExpectedOwnerGroups()).contains(requestingEntityGroup)) {
+                    logger.error("Requesting entity ({})'s group is not in the expected owner groups of this session key.",
+                            requestingEntityName);
+                    return false;
                 }
                 if (sessionKey.getOwners().length >= sessionKey.getMaxNumOwners()) {
                     logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",

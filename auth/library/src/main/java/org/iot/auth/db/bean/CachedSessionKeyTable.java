@@ -38,28 +38,37 @@ public class CachedSessionKeyTable {
         ExpirationTime,
         RelValidity,
         CryptoSpec,
-        KeyVal
+        KeyVal,
+        ExpectedOwnerGroups
     }
 
     public static CachedSessionKeyTable fromSessionKey(SessionKey sessionKey) {
         CachedSessionKeyTable cachedSessionKey = new CachedSessionKeyTable();
         cachedSessionKey.setID(sessionKey.getID());
-        cachedSessionKey.setOwner(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getOwners()));
+        if (sessionKey.getOwners() != null) {
+            cachedSessionKey.setOwner(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getOwners()));
+        }
         cachedSessionKey.setMaxNumOwners(sessionKey.getMaxNumOwners());
         cachedSessionKey.setPurpose(sessionKey.getPurpose());
         cachedSessionKey.setAbsValidity(sessionKey.getRawExpirationTime());
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
         cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toSpecString());
         cachedSessionKey.setKeyVal(sessionKey.getSerializedKeyVal().getRawBytes());
+        if (sessionKey.getExpectedOwnerGroups() != null) {
+            cachedSessionKey.setExpectedOwnerGroups(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getExpectedOwnerGroups()));
+        }
         return cachedSessionKey;
     }
 
     public SessionKey toSessionKey() {
         SymmetricKeyCryptoSpec cryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(getSessionCryptoSpec());
-        SessionKey sessionKey = new SessionKey(getID(), getOwner().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
+        SessionKey sessionKey = new SessionKey(getID(),
+                getOwner() != null ? getOwner().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM) : new String[0],
                 getMaxNumOwners(), getPurpose(),
                 getAbsValidity(), getRelValidity(),
-                cryptoSpec, new Buffer(getKeyVal()));
+                cryptoSpec, new Buffer(getKeyVal()),
+                getExpectedOwnerGroups() != null ?
+                        getExpectedOwnerGroups().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM) : new String[0]);
         return sessionKey;
     }
 
@@ -116,6 +125,9 @@ public class CachedSessionKeyTable {
         this.keyVal = Arrays.copyOf(keyVal, keyVal.length);
     }
 
+    public String getExpectedOwnerGroups() { return this.expectedOwnerGroups; }
+    public void setExpectedOwnerGroups(String expectedOwnerGroups) { this.expectedOwnerGroups = expectedOwnerGroups; }
+
     public static CachedSessionKeyTable createRecord(ResultSet r) throws SQLException {
         CachedSessionKeyTable cachedSessionKey = new CachedSessionKeyTable();
         cachedSessionKey.setID(r.getLong(c.ID.name()));
@@ -126,6 +138,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setRelValidity(r.getLong(c.RelValidity.name()));
         cachedSessionKey.setSessionCryptoSpec(r.getString(c.CryptoSpec.name()));
         cachedSessionKey.setKeyVal(r.getBytes(c.KeyVal.name()));
+        cachedSessionKey.setExpectedOwnerGroups(r.getString(c.ExpectedOwnerGroups.name()));
         return cachedSessionKey;
     }
 
@@ -140,6 +153,7 @@ public class CachedSessionKeyTable {
         object.put(c.RelValidity.name(), getRelValidity());
         object.put(c.CryptoSpec.name(), getSessionCryptoSpec());
         object.put(c.KeyVal.name(), getKeyVal());
+        object.put(c.ExpectedOwnerGroups.name(), getExpectedOwnerGroups());
         return object;
     }
 
@@ -154,4 +168,5 @@ public class CachedSessionKeyTable {
     private String sessionCryptoSpec;
 
     private byte[] keyVal;
+    private String expectedOwnerGroups;
 }

@@ -13,57 +13,55 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.db.bean;
+package org.iot.auth.db;
 
+import org.iot.auth.db.bean.DelegationPrivilegeTable;
 import org.json.simple.JSONObject;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 /**
- * A class for meta data table in auth database, storing meta values for database
- * @author Hokeun Kim
+ * A class for describing the privilege.
+ * @author Sunyoung Kim
  */
-public class MetaDataTable {
-    public static final String T_META_DATA = "meta_data";
-    public enum c {
-        Key,
-        Value
-    }
-    public enum key {
-        SessionKeyCount,
-        EncryptedDatabaseKey,
-        CommPolicyCount
-    }
-    private String key;
-    private String value;
-
-    public String getKey() {
-        return key;
-    }
-    public void setKey(String key) {
-        this.key = key;
+public class DelegationPrivilege {
+    public DelegationPrivilege(DelegationPrivilegeTable delegationPrivilegeTable)
+    {
+        this.privilegeType = delegationPrivilegeTable.getPrivilegeType();
+        this.privilegedGroup = delegationPrivilegeTable.getPrivilegedGroup();
+        this.subject = delegationPrivilegeTable.getSubject();
+        this.object = delegationPrivilegeTable.getObject();
+        this.validity = delegationPrivilegeTable.getValidity();
+        this.info = delegationPrivilegeTable.getInfo();
     }
 
-    public String getValue() {
-        return value;
+    public String getPrivilegeType() {
+        return privilegeType;
     }
-
-    public void setValue(String value) {
-        this.value = value;
+    public String getPrivilegedGroup() {
+        return privilegedGroup;
     }
-
-    @SuppressWarnings("unchecked")
-    public JSONObject toJSONObject() {
-        JSONObject object = new JSONObject();
-        object.put(c.Key.name(), getKey());
-        object.put(c.Value.name(), getValue());
+    public String getSubject() {
+        return subject;
+    }
+    public String getObject() {
         return object;
     }
-    public static MetaDataTable createRecord(ResultSet resultSet) throws SQLException {
-        MetaDataTable metaData = new MetaDataTable();
-        metaData.setKey(resultSet.getString(c.Key.name()));
-        metaData.setValue(resultSet.getString(c.Value.name()));
-        return metaData;
+    public String getValidity() {
+        return validity;
     }
+    public JSONObject getInfo() {
+        return info;
+    }
+
+    public String toString() {
+        return "PrivilegeType: " + privilegeType + "\tprivilegedGroup: " + privilegedGroup + "\tSubject: " + subject +
+                "\tObject: " + object + "\tValidity: " + validity + "\tInfo: " + info ;
+    }
+
+
+    private String privilegeType;
+    private String privilegedGroup;
+    private String subject;
+    private String object;
+    private String validity;
+    private JSONObject info;
 }

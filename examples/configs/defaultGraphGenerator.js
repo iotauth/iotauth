@@ -43,7 +43,7 @@ function getNetId(authId) {
     return authId - 100;
 }
 
-function populateDefaultEntityList(filesharingEnabled) {
+function populateDefaultEntityList(filesharingEnabled, privilegeEnabled) {
     var DEFAULT_ENTITY_LIST = [
         { group: 'Clients',		name: 'client' },
         { group: 'Clients',		name: 'rcClient' },
@@ -71,11 +71,30 @@ function populateDefaultEntityList(filesharingEnabled) {
         { group: 'FileManager', name: 'FileSystemManager'}
 
     ];
+    var PRIVILEGE_ENTITY_LIST = [
+        { group: 'Nodes',       name: 'Node0' },
+        { group: 'Nodes',       name: 'Node1' },
+        { group: 'Nodes',       name: 'Node2' },
+        { group: 'Nodes',       name: 'Node3' },
+        { group: 'Nodes',       name: 'Node4' },
+        { group: 'Nodes',       name: 'Node5' },
+        { group: 'Nodes',       name: 'Node6' },
+        { group: 'Resources',   name: 'ResourceA',      port: 100},
+        { group: 'Resources',   name: 'ResourceB',      port: 200},
+        { group: 'Resources',   name: 'ResourceC',      port: 300},
+        { group: 'Resources',   name: 'ResourceD',      port: 400},
+    ]
     var ENTITY_LIST = [
 
     ];
-    if (filesharingEnabled == true){
+    if (filesharingEnabled == true && privilegeEnabled == true) {
+        ENTITY_LIST = FILESHARING_ENTITY_LIST.concat(PRIVILEGE_ENTITY_LIST);
+    }
+    else if (filesharingEnabled == true){
         ENTITY_LIST = FILESHARING_ENTITY_LIST;
+    }
+    else if (privilegeEnabled == true){
+        ENTITY_LIST = PRIVILEGE_ENTITY_LIST;
     }
     else {
         ENTITY_LIST = DEFAULT_ENTITY_LIST;
@@ -112,12 +131,46 @@ function populateDefaultEntityList(filesharingEnabled) {
     return ENTITY_LIST;
 }
 
-function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled, filesharingEnabled) {
+function populatePrivilegeList() {
+    return [
+        ["DelegationGrant", "Node0", "Node1", "ResourceA"],
+        ["DelegationGrant", "Node0", "Node1", "ResourceB"],
+        ["DelegationGrant", "Node0", "Node2", "ResourceC"],
+        ["DelegationGrant", "Node0", "Node2", "ResourceD"],
+        ["DelegationGrant", "Node1", "Node3", "ResourceA"],
+        ["DelegationGrant", "Node1", "Node4", "ResourceB"],
+        ["DelegationGrant", "Node2", "Node5", "ResourceC"],
+        ["DelegationGrant", "Node2", "Node6", "ResourceD"],
+        ["DelegationRevoke", "Node0", "Node1", "ResourceA"],
+        ["DelegationRevoke", "Node0", "Node1", "ResourceB"]
+    ].map(function (p) {
+        var privilege = {
+            privilegeType: p[0],
+            privilegedGroup: p[1],
+            subject: p[2],
+            object: p[3]
+        };
+
+        if (p[0] == "DelegationGrant") {
+            privilege.validity = "1*day";
+            privilege.info = {
+                cryptoSpec: "AES-128-CBC:SHA256",
+                absValidity: "1*day",
+                relValidity: "1*hour"
+            };
+        }
+
+        return privilege;
+    });
+}
+
+function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled, filesharingEnabled, privilegeEnabled) {
     var authList = [];
     var entityList = [];
     var authTrusts = [];
     var assignments = {};
     var filesharingLists = [];
+    var privilegeLists = [];
     /*
         dbProtectionMethod: values
         DEBUG(0),
@@ -187,6 +240,9 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
             if (entity.reader_type == "group"){
                 continue;
             }
+            if (privilegeEnabled == true && netId == 1){
+                privilegeLists = populatePrivilegeList();
+            }
             entityList.push(entity);
         }
     }
@@ -196,12 +252,14 @@ function generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEn
         authTrusts: authTrusts,
         assignments: assignments,
         entityList: entityList,
-        filesharingLists: filesharingLists
+        filesharingLists: filesharingLists,
+        privilegeList: privilegeLists,
     };
     return graph;
 }
 
-var program = require('commander');
+const { Command } = require('commander');
+const program = new Command();
 program
   .version('0.1.0')
   .option('-n, --num-auths <n>', 'Nmber of Auths', parseInt)
@@ -210,6 +268,7 @@ program
   .option('-a, --backup-to-all', 'Backup to all Auths (boolean), defaults to false')
   .option('-c, --enable-contextual-callback', 'Enable contextual callback (boolean), defaults to false')
   .option('-f, --filesharing-enabled', 'Enable filesharing (boolean), defaults to false')
+  .option('-p, --privilege-enabled', 'Enable privilege (boolean), defaults to false')
   .parse(process.argv);
 
 /*
@@ -225,6 +284,7 @@ var backupEnabled = false;
 var backupToAll = false;
 var contextualCallbackEnabled = false;
 var filesharingEnabled = false;
+var privilegeEnabled = false;
 if (program.opts().numAuths != null) {
     numAuths = program.opts().numAuths;
 }
@@ -243,6 +303,9 @@ if (program.opts().enableContextualCallback != null) {
 if (program.opts().filesharingEnabled != null) {
     filesharingEnabled = program.opts().filesharingEnabled;
 }
+if (program.opts().privilegeEnabled != null) {
+    privilegeEnabled = program.opts().privilegeEnabled;
+}
 
 console.log('Number of Auths: ' + numAuths);
 console.log('Output file name: ' + outputFile);
@@ -250,9 +313,10 @@ console.log('Backup enabled?: ' + backupEnabled);
 console.log('Backup to all Auths?: ' + backupToAll);
 console.log('Contextual callback enabled?: ' + contextualCallbackEnabled);
 console.log('Filesharing enabled?: ' + filesharingEnabled);
+console.log('Privilege enabled?: ' + privilegeEnabled);
 
-var defaultEntityList = populateDefaultEntityList(filesharingEnabled);
-var graph = generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled, filesharingEnabled);
+var defaultEntityList = populateDefaultEntityList(filesharingEnabled, privilegeEnabled);
+var graph = generateGraph(defaultEntityList, numAuths, dbProtectionMethod, backupEnabled, backupToAll, contextualCallbackEnabled, filesharingEnabled, privilegeEnabled);
 
 fs.writeFileSync(outputFile, 
     JSON2.stringify(graph, null, '\t'),
