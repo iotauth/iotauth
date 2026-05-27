@@ -14,8 +14,18 @@
  */
 
 package org.iot.auth;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
 import org.iot.auth.crypto.AuthCrypto;
-import org.iot.auth.db.CommunicationPolicy;
 import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
@@ -25,17 +35,6 @@ import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 /**
  * A thread for processing command line interface.
@@ -67,7 +66,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps/dp/di, clean sk, reset re/sk, issue cert [ic], backup, add/remove re/cp/dp): ");
+                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps/dp/di, add/remove re/cp/dp, clean sk, reset re/sk, issue cert [ic], backup, quit): ");
                 String command = br.readLine();
                 if (command == null) {
                     break;
@@ -253,6 +252,10 @@ public class AuthCommandLine extends Thread  {
                         logger.error("The communication policy has NOT been removed due to errors.");
                     }
                 }
+                else if (command.equals("quit")) {
+                    logger.info("\n Quit Auth command. Quitting Auth ...");
+                    System.exit(0);
+                }
                 else {
                     logger.info("Unrecognized command: {}", command);
                 }
@@ -281,7 +284,8 @@ public class AuthCommandLine extends Thread  {
                 "add cp             : Add new communication policy\n" +
                 "remove cp          : Remove communication policy\n" +
                 "add dp             : Add new delegation privilege\n" +
-                "remove dp          : Remove delegation privilege\n";
+                "remove dp          : Remove delegation privilege\n" +
+                "quit               : Quit this Auth and exit the program\n";
     }
 
     private RegisteredEntity getRegisteredEntityInformation(BufferedReader br) throws IOException {
