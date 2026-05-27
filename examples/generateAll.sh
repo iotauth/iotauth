@@ -44,7 +44,7 @@ do
 		-h|--help)
 			SHOW_HELP=true
 		;;
-		--policy)
+		-po|--policy)
 			POLICY_FILE="$2"
 			shift
 		;;
@@ -67,7 +67,7 @@ if [ "$SHOW_HELP" = true ] ; then
 	echo "  -lc,--leave-cred-config         Leave credentials and config files after DB generation."
 	echo "  -p,--password                   Password passed for credential generation."
 	echo "                                  (Must not be used for actual deployment.)"
-	echo "  --policy <file>                 Path to communication policy JSON file."
+	echo "  -po,--policy <file>                 Path to communication policy JSON file."
 	echo "                                  If provided, only the policies defined in the file"
 	echo "                                  will be generated instead of the default policies."
 	echo "  -h,--help                       Show this help."
@@ -95,12 +95,12 @@ if [ "$GEN_CRED_CONFIG" = true ] ; then
 	echo "Generating credentials ..."
 	node credentialGenerator.js $GRAPH_FILE $PASSWORD_FOR_CRED_GENERATION
 	if [ $? -ne 0  ] ; then
-		echo "[Error] Script finished with problems! exiting..." ; exit 1
+		echo "[Error] Script finished with problems! credentialGenerator.js failed. exiting..." ;  exit 1
 	fi
 	echo "Generating entity configuration files..."
 	node entityConfigGenerator.js $GRAPH_FILE
 	if [ $? -ne 0  ] ; then
-		echo "[Error] Script finished with problems! exiting..." ; exit 1
+		echo "[Error] Script finished with problems! entityConfigGenerator.js failed. exiting..." ; exit 1
 	fi
 	echo "Generating Auth configuration files..."
 	if [ -n "$POLICY_FILE" ]; then
@@ -109,7 +109,7 @@ if [ "$GEN_CRED_CONFIG" = true ] ; then
 		node authConfigGenerator.js "$GRAPH_FILE"
 	fi
 	if [ $? -ne 0  ] ; then
-		echo "[Error] Script finished with problems! exiting..." ; exit 1
+		echo "[Error] Script finished with problems! authConfigGenerator.js failed. exiting..." ; exit 1
 	fi
 fi
 
@@ -118,6 +118,6 @@ if [ "$GEN_AUTH_DB" = true ] ; then
 	# generate Auth DBs
 	node authDBGenerator.js $GRAPH_FILE $REMOVE_FILES_AFTER_DB_GEN
 	if [ $? -ne 0  ] ; then
-		echo "[Error] Script finished with problems! exiting..." ; exit 1
+		echo "[Error] Script finished with problems! authDBGenerator.js failed. exiting..." ; exit 1
 	fi
 fi
