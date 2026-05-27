@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
@@ -80,32 +81,72 @@ public class AppTest {
     @Category(org.iot.auth.message.MessageType.class)
     public void testMessageType(){
         logger.info("{} {}", MessageType.AUTH_HELLO, MessageType.AUTH_HELLO.getValue());
+        logger.info("{} {}", MessageType.ENTITY_HELLO, MessageType.ENTITY_HELLO.getValue());
         logger.info("{} {}", MessageType.AUTH_SESSION_KEY_REQ, MessageType.AUTH_SESSION_KEY_REQ.getValue());
         logger.info("{} {}", MessageType.AUTH_SESSION_KEY_RESP, MessageType.AUTH_SESSION_KEY_RESP.getValue());
         logger.info("{} {}", MessageType.SESSION_KEY_REQ_IN_PUB_ENC, MessageType.SESSION_KEY_REQ_IN_PUB_ENC.getValue());
         logger.info("{} {}", MessageType.SESSION_KEY_RESP_WITH_DIST_KEY, MessageType.SESSION_KEY_RESP_WITH_DIST_KEY.getValue());
         logger.info("{} {}", MessageType.SESSION_KEY_REQ, MessageType.SESSION_KEY_REQ.getValue());
         logger.info("{} {}", MessageType.SESSION_KEY_RESP, MessageType.SESSION_KEY_RESP.getValue());
+        logger.info("{} {}", MessageType.SESSION_KEY_RESP_FOR_DELEGATION, MessageType.SESSION_KEY_RESP_FOR_DELEGATION.getValue());
+        logger.info("{} {}", MessageType.SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY, MessageType.SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY.getValue());
         logger.info("{} {}", MessageType.SKEY_HANDSHAKE_1, MessageType.SKEY_HANDSHAKE_1.getValue());
         logger.info("{} {}", MessageType.SKEY_HANDSHAKE_2, MessageType.SKEY_HANDSHAKE_2.getValue());
         logger.info("{} {}", MessageType.SKEY_HANDSHAKE_3, MessageType.SKEY_HANDSHAKE_3.getValue());
         logger.info("{} {}", MessageType.SECURE_COMM_MSG, MessageType.SECURE_COMM_MSG.getValue());
         logger.info("{} {}", MessageType.FIN_SECURE_COMM, MessageType.FIN_SECURE_COMM.getValue());
         logger.info("{} {}", MessageType.SECURE_PUB, MessageType.SECURE_PUB.getValue());
+        logger.info("{} {}", MessageType.MIGRATION_REQ_WITH_SIGN, MessageType.MIGRATION_REQ_WITH_SIGN.getValue());
+        logger.info("{} {}", MessageType.MIGRATION_RESP_WITH_SIGN, MessageType.MIGRATION_RESP_WITH_SIGN.getValue());
+        logger.info("{} {}", MessageType.MIGRATION_REQ_WITH_MAC, MessageType.MIGRATION_REQ_WITH_MAC.getValue());
+        logger.info("{} {}", MessageType.MIGRATION_RESP_WITH_MAC, MessageType.MIGRATION_RESP_WITH_MAC.getValue());
+        logger.info("{} {}", MessageType.ADD_READER_REQ_IN_PUB_ENC, MessageType.ADD_READER_REQ_IN_PUB_ENC.getValue());
+        logger.info("{} {}", MessageType.ADD_READER_RESP_WITH_DIST_KEY, MessageType.ADD_READER_RESP_WITH_DIST_KEY.getValue());
+        logger.info("{} {}", MessageType.ADD_READER_REQ, MessageType.ADD_READER_REQ.getValue());
+        logger.info("{} {}", MessageType.ADD_READER_RESP, MessageType.ADD_READER_RESP.getValue());
+        logger.info("{} {}", MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC, MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC.getValue());
+        logger.info("{} {}", MessageType.DELEGATED_ACCESS_RESP_WITH_DIST_KEY, MessageType.DELEGATED_ACCESS_RESP_WITH_DIST_KEY.getValue());
+        logger.info("{} {}", MessageType.DELEGATED_ACCESS_REQ, MessageType.DELEGATED_ACCESS_REQ.getValue());
+        logger.info("{} {}", MessageType.DELEGATED_ACCESS_RESP, MessageType.DELEGATED_ACCESS_RESP.getValue());
+        logger.info("{} {}", MessageType.PRIVILEGED_REQ_IN_PUB_ENC, MessageType.PRIVILEGED_REQ_IN_PUB_ENC.getValue());
+        logger.info("{} {}", MessageType.PRIVILEGED_RESP_WITH_DIST_KEY, MessageType.PRIVILEGED_RESP_WITH_DIST_KEY.getValue());
+        logger.info("{} {}", MessageType.PRIVILEGED_REQ, MessageType.PRIVILEGED_REQ.getValue());
+        logger.info("{} {}", MessageType.PRIVILEGED_RESP, MessageType.PRIVILEGED_RESP.getValue());
+        logger.info("{} {}", MessageType.AUTH_ALERT, MessageType.AUTH_ALERT.getValue());
 
         Assert.assertEquals((byte)  0, MessageType.AUTH_HELLO.getValue());
+        Assert.assertEquals((byte)  1, MessageType.ENTITY_HELLO.getValue());
         Assert.assertEquals((byte) 10, MessageType.AUTH_SESSION_KEY_REQ.getValue());
         Assert.assertEquals((byte) 11, MessageType.AUTH_SESSION_KEY_RESP.getValue());
         Assert.assertEquals((byte) 20, MessageType.SESSION_KEY_REQ_IN_PUB_ENC.getValue());
         Assert.assertEquals((byte) 21, MessageType.SESSION_KEY_RESP_WITH_DIST_KEY.getValue());
         Assert.assertEquals((byte) 22, MessageType.SESSION_KEY_REQ.getValue());
         Assert.assertEquals((byte) 23, MessageType.SESSION_KEY_RESP.getValue());
+        Assert.assertEquals((byte) 24, MessageType.SESSION_KEY_RESP_FOR_DELEGATION.getValue());
+        Assert.assertEquals((byte) 25, MessageType.SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY.getValue());
         Assert.assertEquals((byte) 30, MessageType.SKEY_HANDSHAKE_1.getValue());
         Assert.assertEquals((byte) 31, MessageType.SKEY_HANDSHAKE_2.getValue());
         Assert.assertEquals((byte) 32, MessageType.SKEY_HANDSHAKE_3.getValue());
         Assert.assertEquals((byte) 33, MessageType.SECURE_COMM_MSG.getValue());
         Assert.assertEquals((byte) 34, MessageType.FIN_SECURE_COMM.getValue());
         Assert.assertEquals((byte) 40, MessageType.SECURE_PUB.getValue());
+        Assert.assertEquals((byte) 50, MessageType.MIGRATION_REQ_WITH_SIGN.getValue());
+        Assert.assertEquals((byte) 51, MessageType.MIGRATION_RESP_WITH_SIGN.getValue());
+        Assert.assertEquals((byte) 52, MessageType.MIGRATION_REQ_WITH_MAC.getValue());
+        Assert.assertEquals((byte) 53, MessageType.MIGRATION_RESP_WITH_MAC.getValue());
+        Assert.assertEquals((byte) 60, MessageType.ADD_READER_REQ_IN_PUB_ENC.getValue());
+        Assert.assertEquals((byte) 61, MessageType.ADD_READER_RESP_WITH_DIST_KEY.getValue());
+        Assert.assertEquals((byte) 62, MessageType.ADD_READER_REQ.getValue());
+        Assert.assertEquals((byte) 63, MessageType.ADD_READER_RESP.getValue());
+        Assert.assertEquals((byte) 70, MessageType.DELEGATED_ACCESS_REQ_IN_PUB_ENC.getValue());
+        Assert.assertEquals((byte) 71, MessageType.DELEGATED_ACCESS_RESP_WITH_DIST_KEY.getValue());
+        Assert.assertEquals((byte) 72, MessageType.DELEGATED_ACCESS_REQ.getValue());
+        Assert.assertEquals((byte) 73, MessageType.DELEGATED_ACCESS_RESP.getValue());
+        Assert.assertEquals((byte) 80, MessageType.PRIVILEGED_REQ_IN_PUB_ENC.getValue());
+        Assert.assertEquals((byte) 81, MessageType.PRIVILEGED_RESP_WITH_DIST_KEY.getValue());
+        Assert.assertEquals((byte) 82, MessageType.PRIVILEGED_REQ.getValue());
+        Assert.assertEquals((byte) 83, MessageType.PRIVILEGED_RESP.getValue());
+        Assert.assertEquals((byte) 100, MessageType.AUTH_ALERT.getValue());
 
         for (MessageType type : MessageType.values()) {
             Assert.assertEquals(type, MessageType.fromByte(type.getValue()));
@@ -639,13 +680,13 @@ public class AppTest {
         entry1.setOwner("net1.server");
         entry1.setReaderType("entity");
         entry1.setReader("net1.client");
-        sqLiteConnector.insertRecords(entry1);
+        Assert.assertTrue(sqLiteConnector.insertRecords(entry1));
 
         FileSharingTable entry2 = new FileSharingTable();
         entry2.setOwner("net1.server");
         entry2.setReaderType("group");
         entry2.setReader("Clients");
-        sqLiteConnector.insertRecords(entry2);
+        Assert.assertTrue(sqLiteConnector.insertRecords(entry2));
 
         List<String> readers = sqLiteConnector.selectFileSharingInfoByOwner("net1.server");
         Assert.assertEquals(2, readers.size());
@@ -684,7 +725,7 @@ public class AppTest {
         priv1.setObject("LowTrustAgents");
         priv1.setValidity("1*day");
         priv1.setInfo("{\"note\":\"test delegation\"}");
-        sqLiteConnector.insertRecords(priv1);
+        Assert.assertTrue(sqLiteConnector.insertRecords(priv1));
 
         DelegationPrivilegeTable priv2 = new DelegationPrivilegeTable();
         priv2.setPrivilegeType("READ");
@@ -693,7 +734,7 @@ public class AppTest {
         priv2.setObject("Website");
         priv2.setValidity("2*hour");
         priv2.setInfo("{\"note\":\"read privilege\"}");
-        sqLiteConnector.insertRecords(priv2);
+        Assert.assertTrue(sqLiteConnector.insertRecords(priv2));
 
         List<DelegationPrivilegeTable> all = sqLiteConnector.selectAllPrivileges();
         Assert.assertEquals(2, all.size());
@@ -707,8 +748,9 @@ public class AppTest {
 
     /**
      * Inserts parent and child {@link CommunicationPolicyTable} records required by foreign-key
-     * constraints, then inserts a {@link DelegationInfoTable} record linking them. Verifies that
-     * {@code getAllChildren} for the parent policy ID returns exactly the child policy ID.
+     * constraints, then inserts a {@link DelegationInfoTable} record linking them. Verifies that if
+     * {@code getAllChildren} returns all cascading descendant policy IDs for a given parent policy ID.
+     * {@code selectParentById} for returns the correct parent policy ID for a given child policy ID.
      *
      * @throws SQLException            if a database access error occurs
      * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
@@ -735,7 +777,7 @@ public class AppTest {
         parent.setSessionCryptoSpec("AES-128-CBC:SHA256");
         parent.setAbsValidityStr("1*day");
         parent.setRelValidityStr("20*sec");
-        sqLiteConnector.insertRecords(parent);
+        Assert.assertTrue(sqLiteConnector.insertRecords(parent));
 
         CommunicationPolicyTable child = new CommunicationPolicyTable();
         child.setID(101);
@@ -746,18 +788,43 @@ public class AppTest {
         child.setSessionCryptoSpec("AES-128-CBC:SHA256");
         child.setAbsValidityStr("1*hour");
         child.setRelValidityStr("20*sec");
-        sqLiteConnector.insertRecords(child);
+        Assert.assertTrue(sqLiteConnector.insertRecords(child));
+
+        CommunicationPolicyTable grandChild = new CommunicationPolicyTable();
+        grandChild.setID(102);
+        grandChild.setReqGroup("HighTrustAgents");
+        grandChild.setTargetTypeVal("Group");
+        grandChild.setTarget("LowTrustAgents");
+        grandChild.setMaxNumSessionKeyOwners(2);
+        grandChild.setSessionCryptoSpec("AES-128-CBC:SHA256");
+        grandChild.setAbsValidityStr("1*hour");
+        grandChild.setRelValidityStr("20*sec");
+        Assert.assertTrue(sqLiteConnector.insertRecords(grandChild));
 
         DelegationInfoTable delegationInfo = new DelegationInfoTable();
         delegationInfo.setCPTId(101L);
         delegationInfo.setParent(100L);
         delegationInfo.setDelegatedTime(new Date().getTime());
         delegationInfo.setRevokedTime(0L);
-        sqLiteConnector.insertRecords(delegationInfo);
+        Assert.assertTrue(sqLiteConnector.insertRecords(delegationInfo));
+
+        delegationInfo.setCPTId(102L);
+        delegationInfo.setParent(101L);
+        delegationInfo.setDelegatedTime(new Date().getTime());
+        delegationInfo.setRevokedTime(0L);
+        Assert.assertTrue(sqLiteConnector.insertRecords(delegationInfo));
 
         List<String> children = sqLiteConnector.getAllChildren("100");
-        Assert.assertEquals(1, children.size());
+        Assert.assertEquals(2, children.size());
         Assert.assertEquals("101", children.get(0));
+        Assert.assertEquals("102", children.get(1));
+
+        String parentId = sqLiteConnector.selectParentById("101");
+        Assert.assertEquals("100", parentId);
+
+        String childId = sqLiteConnector.selectParentById("102");
+        Assert.assertEquals("101", childId);
+
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
     }
@@ -784,7 +851,7 @@ public class AppTest {
         MetaDataTable metaData = new MetaDataTable();
         metaData.setKey(MetaDataTable.key.SessionKeyCount.name());
         metaData.setValue("0");
-        sqLiteConnector.insertRecords(metaData);
+        Assert.assertTrue(sqLiteConnector.insertRecords(metaData));
 
         String value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.SessionKeyCount.name());
         Assert.assertEquals("0", value);
