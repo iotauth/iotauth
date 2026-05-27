@@ -19,6 +19,7 @@ import org.iot.auth.db.CommunicationPolicy;
 import org.iot.auth.db.CommunicationTargetType;
 import org.iot.auth.db.RegisteredEntity;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
+import org.iot.auth.db.bean.DelegationPrivilegeTable;
 import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.util.DateHelper;
 import org.iot.auth.util.ExceptionToString;
@@ -66,7 +67,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps, clean sk, reset re/sk, issue cert [ic], backup ): ");
+                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps/dp/di, clean sk, reset re/sk, issue cert [ic], backup, add/remove re/cp/dp): ");
                 String command = br.readLine();
                 if (command == null) {
                     break;
@@ -172,6 +173,54 @@ public class AuthCommandLine extends Thread  {
                         logger.error("Existing registered entity has NOT been removed due to errors.");
                     }
                 }
+                else if (command.equals("show dp")) {
+                    try {
+                        logger.info("\nShow delegation privileges command\n{}", server.allPrivilegesToString());
+                    }
+                    catch (SQLException | org.json.simple.parser.ParseException e) {
+                        logger.error("Exception {}", ExceptionToString.convertExceptionToStackTrace(e));
+                        throw new RuntimeException("Exception occurred while loading delegation privileges!");
+                    }
+                }
+                else if (command.equals("show di")) {
+                    try {
+                        logger.info("\nShow delegation info command\n{}", server.allDelegationInfoToString());
+                    }
+                    catch (SQLException e) {
+                        logger.error("SQLException {}", ExceptionToString.convertExceptionToStackTrace(e));
+                        throw new RuntimeException("Exception occurred while loading delegation info!");
+                    }
+                }
+                else if (command.equals("add dp")) {
+                    logger.info("\n Add new delegation privilege command");
+                    DelegationPrivilegeTable newPrivilege = getDelegationPrivilegeInformation(br);
+                    if (newPrivilege == null) {
+                        logger.info("\n Information of new delegation privilege was not entered correctly.");
+                        continue;
+                    }
+                    logger.info("Entered new delegation privilege information");
+                    logger.info(newPrivilege.toJSONObject().toJSONString());
+                    if (server.addPrivilege(newPrivilege)) {
+                        logger.info("New delegation privilege has been added successfully.");
+                    }
+                    else {
+                        logger.error("New delegation privilege has NOT been added due to errors.");
+                    }
+                }
+                else if (command.equals("remove dp")) {
+                    logger.info("\n Remove existing delegation privilege command");
+                    String[] key = getDelegationPrivilegeKeyToRemove(br);
+                    if (key == null) {
+                        logger.info("\n Key of the delegation privilege to be removed was not entered correctly.");
+                        continue;
+                    }
+                    if (server.removePrivilege(key[0], key[1], key[2], key[3])) {
+                        logger.info("Existing delegation privilege has been removed successfully.");
+                    }
+                    else {
+                        logger.error("Existing delegation privilege has NOT been removed due to errors.");
+                    }
+                }
                 else if (command.equals("add cp")) {
                     logger.info("\n Add new communication policy command");
                     CommunicationPolicyTable newCommunicationPolicy = getCommunicationPolicyInformation(br);
@@ -220,6 +269,8 @@ public class AuthCommandLine extends Thread  {
                 "show cp            : Show communication policies\n" +
                 "show ta            : Show trusted Auths\n" +
                 "show maps          : Show maps for UDP listener port\n" +
+                "show dp            : Show delegation privileges\n" +
+                "show di            : Show delegation info\n" +
                 "clean sk           : Clean expired session keys\n" +
                 "reset sk           : Reset cached session key table (Delete all session keys)\n" +
                 "reset re           : Reset registered entities (delete all entities backed up from other Auths)\n" +
@@ -228,7 +279,9 @@ public class AuthCommandLine extends Thread  {
                 "add re             : Add new registered entity\n" +
                 "remove re          : Remove registered entity\n" +
                 "add cp             : Add new communication policy\n" +
-                "remove cp          : Remove communication policy\n";
+                "remove cp          : Remove communication policy\n" +
+                "add dp             : Add new delegation privilege\n" +
+                "remove dp          : Remove delegation privilege\n";
     }
 
     private RegisteredEntity getRegisteredEntityInformation(BufferedReader br) throws IOException {
@@ -381,6 +434,81 @@ public class AuthCommandLine extends Thread  {
         String[] ids = requestedIds.trim().split("\\s+");
 
         return new ArrayList<>(Arrays.asList(ids));
+    }
+
+    private DelegationPrivilegeTable getDelegationPrivilegeInformation(BufferedReader br) throws IOException {
+        logger.info("\nEnter privilege type (e.g., DELEGATE):");
+        String privilegeType = br.readLine();
+        if (privilegeType.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter privileged group:");
+        String privilegedGroup = br.readLine();
+        if (privilegedGroup.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter subject:");
+        String subject = br.readLine();
+        if (subject.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter object:");
+        String object = br.readLine();
+        if (object.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter validity period [Default: 1*day] (use day, hour, min, sec):");
+        String validity = br.readLine();
+        if (validity.isEmpty()) {
+            validity = "1*day";
+        }
+
+        logger.info("\nEnter info as JSON [Default: {}]:");
+        String infoStr = br.readLine();
+        if (infoStr.isEmpty()) {
+            infoStr = "{}";
+        }
+
+        DelegationPrivilegeTable table = new DelegationPrivilegeTable();
+        table.setPrivilegeType(privilegeType);
+        table.setprivilegedGroup(privilegedGroup);
+        table.setSubject(subject);
+        table.setObject(object);
+        table.setValidity(validity);
+        table.setInfo(infoStr);
+        return table;
+    }
+
+    private String[] getDelegationPrivilegeKeyToRemove(BufferedReader br) throws IOException {
+        logger.info("\nEnter privilege type:");
+        String privilegeType = br.readLine();
+        if (privilegeType.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter privileged group:");
+        String privilegedGroup = br.readLine();
+        if (privilegedGroup.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter subject:");
+        String subject = br.readLine();
+        if (subject.isEmpty()) {
+            return null;
+        }
+
+        logger.info("\nEnter object:");
+        String object = br.readLine();
+        if (object.isEmpty()) {
+            return null;
+        }
+
+        return new String[]{privilegeType, privilegedGroup, subject, object};
     }
 
     private AuthServer server;
