@@ -66,7 +66,7 @@ public class AuthCommandLine extends Thread  {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         for (;;) {
             try {
-                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps, clean sk, reset re/sk, issue cert [ic], backup ): ");
+                logger.info("\nEnter command (e.g., help, show re/cp/ta/sk/maps, clean sk, reset re/sk, issue cert [ic], backup, quit): ");
                 String command = br.readLine();
                 if (command == null) {
                     break;
@@ -204,6 +204,10 @@ public class AuthCommandLine extends Thread  {
                         logger.error("The communication policy has NOT been removed due to errors.");
                     }
                 }
+                else if (command.equals("quit")) {
+                    logger.info("\n Quit Auth command. Quitting Auth ...");
+                    System.exit(0);
+                }
                 else {
                     logger.info("Unrecognized command: {}", command);
                 }
@@ -228,7 +232,8 @@ public class AuthCommandLine extends Thread  {
                 "add re             : Add new registered entity\n" +
                 "remove re          : Remove registered entity\n" +
                 "add cp             : Add new communication policy\n" +
-                "remove cp          : Remove communication policy\n";
+                "remove cp          : Remove communication policy\n" +
+                "quit               : Quit this Auth and exit the program\n";
     }
 
     private RegisteredEntity getRegisteredEntityInformation(BufferedReader br) throws IOException {
