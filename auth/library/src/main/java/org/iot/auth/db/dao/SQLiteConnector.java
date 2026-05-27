@@ -706,10 +706,10 @@ public class SQLiteConnector {
                 delegationPrivilegeTable.getSubject(), delegationPrivilegeTable.getObject(),
                 delegationPrivilegeTable.getValidity(), delegationPrivilegeTable.getInfo() );
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1;
     }
 
     /**
@@ -740,10 +740,10 @@ public class SQLiteConnector {
                 delegationInfoTable.getCPTId(), delegationInfoTable.getParent(),
                 delegationInfoTable.getDelegatedTime(), delegationInfoTable.getRevokedTime());
         if (DEBUG) logger.info("{}",preparedStatement);
-        boolean result = preparedStatement.execute();
+        int result = preparedStatement.executeUpdate();
         preparedStatement.close();
         closeConnection();
-        return result;
+        return result == 1;
     }
 
     /**

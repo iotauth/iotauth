@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
@@ -679,13 +680,13 @@ public class AppTest {
         entry1.setOwner("net1.server");
         entry1.setReaderType("entity");
         entry1.setReader("net1.client");
-        sqLiteConnector.insertRecords(entry1);
+        Assert.assertTrue(sqLiteConnector.insertRecords(entry1));
 
         FileSharingTable entry2 = new FileSharingTable();
         entry2.setOwner("net1.server");
         entry2.setReaderType("group");
         entry2.setReader("Clients");
-        sqLiteConnector.insertRecords(entry2);
+        Assert.assertTrue(sqLiteConnector.insertRecords(entry2));
 
         List<String> readers = sqLiteConnector.selectFileSharingInfoByOwner("net1.server");
         Assert.assertEquals(2, readers.size());
@@ -724,7 +725,7 @@ public class AppTest {
         priv1.setObject("LowTrustAgents");
         priv1.setValidity("1*day");
         priv1.setInfo("{\"note\":\"test delegation\"}");
-        sqLiteConnector.insertRecords(priv1);
+        Assert.assertTrue(sqLiteConnector.insertRecords(priv1));
 
         DelegationPrivilegeTable priv2 = new DelegationPrivilegeTable();
         priv2.setPrivilegeType("READ");
@@ -733,7 +734,7 @@ public class AppTest {
         priv2.setObject("Website");
         priv2.setValidity("2*hour");
         priv2.setInfo("{\"note\":\"read privilege\"}");
-        sqLiteConnector.insertRecords(priv2);
+        Assert.assertTrue(sqLiteConnector.insertRecords(priv2));
 
         List<DelegationPrivilegeTable> all = sqLiteConnector.selectAllPrivileges();
         Assert.assertEquals(2, all.size());
@@ -776,7 +777,7 @@ public class AppTest {
         parent.setSessionCryptoSpec("AES-128-CBC:SHA256");
         parent.setAbsValidityStr("1*day");
         parent.setRelValidityStr("20*sec");
-        sqLiteConnector.insertRecords(parent);
+        Assert.assertTrue(sqLiteConnector.insertRecords(parent));
 
         CommunicationPolicyTable child = new CommunicationPolicyTable();
         child.setID(101);
@@ -787,7 +788,7 @@ public class AppTest {
         child.setSessionCryptoSpec("AES-128-CBC:SHA256");
         child.setAbsValidityStr("1*hour");
         child.setRelValidityStr("20*sec");
-        sqLiteConnector.insertRecords(child);
+        Assert.assertTrue(sqLiteConnector.insertRecords(child));
 
         CommunicationPolicyTable grandChild = new CommunicationPolicyTable();
         grandChild.setID(102);
@@ -798,20 +799,20 @@ public class AppTest {
         grandChild.setSessionCryptoSpec("AES-128-CBC:SHA256");
         grandChild.setAbsValidityStr("1*hour");
         grandChild.setRelValidityStr("20*sec");
-        sqLiteConnector.insertRecords(grandChild);
+        Assert.assertTrue(sqLiteConnector.insertRecords(grandChild));
 
         DelegationInfoTable delegationInfo = new DelegationInfoTable();
         delegationInfo.setCPTId(101L);
         delegationInfo.setParent(100L);
         delegationInfo.setDelegatedTime(new Date().getTime());
         delegationInfo.setRevokedTime(0L);
-        sqLiteConnector.insertRecords(delegationInfo);
+        Assert.assertTrue(sqLiteConnector.insertRecords(delegationInfo));
 
         delegationInfo.setCPTId(102L);
         delegationInfo.setParent(101L);
         delegationInfo.setDelegatedTime(new Date().getTime());
         delegationInfo.setRevokedTime(0L);
-        sqLiteConnector.insertRecords(delegationInfo);
+        Assert.assertTrue(sqLiteConnector.insertRecords(delegationInfo));
 
         List<String> children = sqLiteConnector.getAllChildren("100");
         Assert.assertEquals(2, children.size());
@@ -850,7 +851,7 @@ public class AppTest {
         MetaDataTable metaData = new MetaDataTable();
         metaData.setKey(MetaDataTable.key.SessionKeyCount.name());
         metaData.setValue("0");
-        sqLiteConnector.insertRecords(metaData);
+        Assert.assertTrue(sqLiteConnector.insertRecords(metaData));
 
         String value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.SessionKeyCount.name());
         Assert.assertEquals("0", value);
