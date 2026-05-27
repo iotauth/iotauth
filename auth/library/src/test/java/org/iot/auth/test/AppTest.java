@@ -707,8 +707,9 @@ public class AppTest {
 
     /**
      * Inserts parent and child {@link CommunicationPolicyTable} records required by foreign-key
-     * constraints, then inserts a {@link DelegationInfoTable} record linking them. Verifies that
-     * {@code getAllChildren} for the parent policy ID returns exactly the child policy ID.
+     * constraints, then inserts a {@link DelegationInfoTable} record linking them. Verifies that if
+     * {@code getAllChildren} returns all cascading descendant policy IDs for a given parent policy ID.
+     * {@code selectParentById} for returns the correct parent policy ID for a given child policy ID.
      *
      * @throws SQLException            if a database access error occurs
      * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
@@ -748,6 +749,17 @@ public class AppTest {
         child.setRelValidityStr("20*sec");
         sqLiteConnector.insertRecords(child);
 
+        CommunicationPolicyTable grandChild = new CommunicationPolicyTable();
+        grandChild.setID(102);
+        grandChild.setReqGroup("HighTrustAgents");
+        grandChild.setTargetTypeVal("Group");
+        grandChild.setTarget("LowTrustAgents");
+        grandChild.setMaxNumSessionKeyOwners(2);
+        grandChild.setSessionCryptoSpec("AES-128-CBC:SHA256");
+        grandChild.setAbsValidityStr("1*hour");
+        grandChild.setRelValidityStr("20*sec");
+        sqLiteConnector.insertRecords(grandChild);
+
         DelegationInfoTable delegationInfo = new DelegationInfoTable();
         delegationInfo.setCPTId(101L);
         delegationInfo.setParent(100L);
@@ -755,9 +767,23 @@ public class AppTest {
         delegationInfo.setRevokedTime(0L);
         sqLiteConnector.insertRecords(delegationInfo);
 
+        delegationInfo.setCPTId(102L);
+        delegationInfo.setParent(101L);
+        delegationInfo.setDelegatedTime(new Date().getTime());
+        delegationInfo.setRevokedTime(0L);
+        sqLiteConnector.insertRecords(delegationInfo);
+
         List<String> children = sqLiteConnector.getAllChildren("100");
-        Assert.assertEquals(1, children.size());
+        Assert.assertEquals(2, children.size());
         Assert.assertEquals("101", children.get(0));
+        Assert.assertEquals("102", children.get(1));
+
+        String parentId = sqLiteConnector.selectParentById("101");
+        Assert.assertEquals("100", parentId);
+
+        String childId = sqLiteConnector.selectParentById("102");
+        Assert.assertEquals("101", childId);
+
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
     }
