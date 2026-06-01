@@ -4,7 +4,7 @@ This is a repository for the open-source project **SST (Secure Swarm Toolkit)** 
 
 Our conference papers [[IoTDI '17](https://dl.acm.org/citation.cfm?id=3054980)] (winner of **ACM/IEEE Best Paper Award at CPSWeek '17**), [[FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)] describe a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity).
 The architecture provides security guarantees while addressing IoT-related issues, including resource constraints and intermittent connectivity.
-The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our magazine article [[IT Professional '17'](https://ieeexplore.ieee.org/document/8057722/)].
+The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our magazine article [[IT Professional '17](https://ieeexplore.ieee.org/document/8057722/)].
 Our ACM journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/3375837)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
 In 2023, we released the C API for SST, which was introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
 We also applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://dl.acm.org/doi/10.1145/3725354)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
