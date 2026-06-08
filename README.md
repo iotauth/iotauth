@@ -51,6 +51,7 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 - [Sunyoung Kim](https://github.com/sunnykim638) (Undergraduate Student at Arizona State University)
 - [Jose Felix](https://github.com/JFelix000) (M.S. Student at Arizona State University)
 - [Kushal Paliwal](https://github.com/kushalpaliwal01) (M.S. Graduate, Volunteer Researcher at Arizona State University)
+- [Krutyanjay Shinde](https://github.com/kjshinde) (M.S. Graduate, Volunteer Researcher at Arizona State University)
 
 ## Former Contributors
 - [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
