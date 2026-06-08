@@ -11,7 +11,24 @@ node client.js configs/net1/client.config
 ### 1. client.js
 A general-purpose interactive secure client.
 
-### 2. user.js
+### 2. heterogeneous_server.js
+A Node.js secure server intended for the heterogeneous C-client-to-Node-server example.
+
+#### How to use
+Generate the scenario first:
+```
+cd ../../../examples
+./generateAll.sh -g heterogeneous/heterogeneous.graph -po heterogeneous/heterogeneous.policy.json
+```
+
+Then run:
+```
+node heterogeneous_server.js configs/heterogeneous/nodeServer.config
+```
+
+For the full scenario, see `examples/heterogeneous/README.md`.
+
+### 3. user.js
 Represents a human user entity capable of delegating access.
 #### Features
 - Loads `configs/net1/user.config` by default.
@@ -24,7 +41,7 @@ node user.js configs/net1/user.config
 delegateAccess high
 ```
 
-### 3. agent.js
+### 4. agent.js
 Represents an agent entity that acts on behalf of a user using delegated access.
 #### Features
 - Loads `configs/net1/highTrustAgent.config` by default.
@@ -34,7 +51,7 @@ Represents an agent entity that acts on behalf of a user using delegated access.
 node agent.js configs/net1/highTrustAgent.config keyId 10100000
 ```
 
-### 4. website.js
+### 5. website.js
 Represents a website service entity that receives session key Id from an agent.
 #### Features
 - Loads `configs/net1/website.config` by default.

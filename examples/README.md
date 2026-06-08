@@ -71,6 +71,10 @@ This scripts deletes all credentials of example Auths and entities, and deletes 
 
 For this section, we use `$ROOT` for the root directory of this repository.
 
+### To run the heterogeneous C-client-to-Node-server example
+
+See [`examples/heterogeneous/README.md`](heterogeneous/README.md) for a cross-language example where a C client securely communicates with a Node.js server through Auth.
+
 ### To generate credentials for example Auths and entities, and to create example Auth databases
 
 1. Change directory to `$ROOT/examples`.
@@ -155,4 +159,3 @@ See https://github.com/iotauth/sst-c-api/tree/master/examples/ for more examples
 4. Make sure Auth101 is running.
 
 5. Run `SecureCommServer.xml` first then also run `SecureCommClient.xml`.
-

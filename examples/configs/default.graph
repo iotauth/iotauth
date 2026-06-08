@@ -33,11 +33,13 @@
 	],
 	"assignments": {
 		"net1.client": 101,
+		"net1.cClient": 101,
 		"net1.rcClient": 101,
 		"net1.udpClient": 101,
 		"net1.rcUdpClient": 101,
 		"net1.safetyCriticalClient": 101,
 		"net1.server": 101,
+		"net1.nodeServer": 101,
 		"net1.rcServer": 101,
 		"net1.udpServer": 101,
 		"net1.safetyCriticalServer": 101,
@@ -83,6 +85,28 @@
 				102
 			]
 		},
+		{
+			"group": "Clients",
+			"name": "net1.cClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Client",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [
+				102
+			]
+		},
+		
 		{
 			"group": "Clients",
 			"name": "net1.rcClient",
@@ -171,6 +195,29 @@
 		{
 			"group": "Servers",
 			"name": "net1.server",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Server",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": [
+				102
+			]
+		},
+		{
+			"group": "Servers",
+			"name": "net1.nodeServer",
 			"port": 21100,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
