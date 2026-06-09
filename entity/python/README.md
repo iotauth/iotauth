@@ -471,6 +471,341 @@ Compatibility notes:
   single `entity.server.ip.address` / `entity.server.port.number` target is
   enough.
 
+## Step 2: context and credential loading design
+
+After Step 1, Python can read a `.config` file and return validated config
+objects. Step 2 should turn that static config into a runtime context. In C,
+this job is handled by `init_SST(...)`, which loads config, loads keys, prepares
+distribution-key state, and returns an `SST_ctx_t*`.
+
+In Python, the equivalent should be `IoTAuthContext`.
+
+Proposed usage:
+
+```python
+from iotauth import IoTAuthContext
+
+ctx = IoTAuthContext.from_config("examples/configs/client.config")
+```
+
+At the end of Step 2, `ctx` should not yet talk to Auth or open entity sockets.
+It should only prove that the entity has a valid config and usable credentials.
+
+### C mental model
+
+The C API groups runtime state in `SST_ctx_t`:
+
+```c
+typedef struct {
+    distribution_key_t dist_key;
+    config_t config;
+    void* pub_key;
+    void* priv_key;
+    pthread_mutex_t mutex;
+} SST_ctx_t;
+```
+
+Python should model the same idea with named fields:
+
+```python
+@dataclass
+class IoTAuthContext:
+    config: EntityConfig
+    auth_public_key: object
+    entity_private_key: object
+    distribution_key: DistributionKey | None
+    session_keys: SessionKeyCache
+```
+
+The `object` type above is temporary documentation language. In the actual
+implementation, these should be the public/private key objects returned by the
+chosen crypto library.
+
+### Why this comes second
+
+The config parser only answers: "What did the file say?"
+
+The context answers: "Is this entity ready to participate in IoTAuth?"
+
+That means Step 2 should verify:
+
+- The Auth public key file can be loaded.
+- The entity private key file can be loaded.
+- The key types are acceptable for IoTAuth milestone 1.
+- Permanent distribution key mode is either loaded correctly or rejected with a
+  clear "not implemented yet" error.
+- An empty session key cache exists for later Auth responses.
+
+### Proposed Python modules
+
+Step 2 should add:
+
+```text
+entity/python/iotauth/
+  context.py
+  credentials.py
+  keys.py
+```
+
+Suggested responsibilities:
+
+- `context.py`
+  - Defines `IoTAuthContext`.
+  - Provides `IoTAuthContext.from_config(path)`.
+  - Calls `load_config(...)`.
+  - Calls credential-loading helpers.
+  - Creates empty key/cache state.
+- `credentials.py`
+  - Loads Auth public certificates or public keys from PEM files.
+  - Loads entity private keys from PEM files.
+  - Converts low-level crypto-library failures into `CredentialError`.
+- `keys.py`
+  - Defines `DistributionKey`.
+  - Defines `SessionKey`.
+  - Defines `SessionKeyCache`.
+
+### Proposed public API
+
+```python
+ctx = IoTAuthContext.from_config("client.config")
+
+ctx.config.entity.name
+ctx.config.auth.host
+ctx.auth_public_key
+ctx.entity_private_key
+ctx.session_keys
+```
+
+The public constructor should accept either a path or an already parsed
+`EntityConfig`:
+
+```python
+ctx = IoTAuthContext.from_config("client.config")
+ctx = IoTAuthContext.from_entity_config(config)
+```
+
+This keeps tests simple. It also lets future applications generate config in
+memory without writing a temporary file.
+
+### Credential loading rules
+
+The current C code expects:
+
+- Auth public credential path: an X.509 PEM certificate.
+- Entity private credential path: a PEM private key.
+- Auth public key type: RSA.
+
+Python should follow that behavior first.
+
+Credential loader behavior:
+
+- Read Auth public credential from `config.auth.public_key_path`.
+- First try to parse it as an X.509 certificate and extract the public key.
+- Optionally later support raw PEM public keys.
+- Reject non-RSA public keys in milestone 1.
+- Read entity private key from `config.entity.private_key_path`.
+- Reject encrypted private keys until we explicitly support passphrases.
+- Raise `CredentialError` instead of returning `None`.
+
+### Key and cache objects
+
+Step 2 should define the shape of keys even before Auth responses exist.
+
+Proposed `SessionKey` fields:
+
+```python
+@dataclass(frozen=True)
+class SessionKey:
+    id: bytes
+    cipher_key: bytes
+    mac_key: bytes | None
+    abs_validity: int | None
+    rel_validity: int | None
+    encryption_mode: str
+    hmac_enabled: bool
+    permanent_distribution_key: bool
+```
+
+Proposed `DistributionKey` fields:
+
+```python
+@dataclass(frozen=True)
+class DistributionKey:
+    cipher_key: bytes
+    mac_key: bytes | None
+    abs_validity: int | None
+    encryption_mode: str
+```
+
+Proposed `SessionKeyCache` behavior:
+
+- Starts empty.
+- Stores keys by 8-byte key ID.
+- Rejects duplicate IDs unless explicitly replacing.
+- Can find a key by ID.
+- Can report whether it has room for more keys.
+- Uses `MAX_SESSION_KEY = 10` to match the C API milestone.
+
+### Permanent distribution key mode
+
+C supports permanent distribution keys by loading raw cipher/MAC key files when
+`PermanentDistKeyMode` is enabled.
+
+For Python Step 2, recommended behavior:
+
+- If `PermanentDistKeyMode` is disabled, set `distribution_key = None`.
+- If `PermanentDistKeyMode` is enabled, either:
+  - Load `distKey.cipherkey.path` and `distkey.mackey.path` when both are
+    present and have the expected sizes, or
+  - Raise `CredentialError("Permanent distribution key mode is not implemented")`
+    if we want to defer this feature.
+
+I recommend deferring permanent distribution key support unless we need it
+immediately for the first integration test. Normal Auth public/private key mode
+is the central path.
+
+### Error model additions
+
+Step 2 should add:
+
+- `CredentialError`: key file exists but cannot be parsed, has the wrong type,
+  or is unsupported.
+- `KeyCacheError`: invalid key IDs, duplicate keys, or cache capacity problems.
+
+These should inherit from `IoTAuthError`, just like `ConfigError`.
+
+### Tests to add
+
+Unit tests should cover:
+
+- `IoTAuthContext.from_config(...)` loads a valid config and credentials.
+- Auth public certificate is parsed and exposes an RSA public key.
+- Entity private key is parsed.
+- Missing key files still fail clearly.
+- Invalid PEM data raises `CredentialError`.
+- Encrypted private key raises `CredentialError` until passphrases are
+  supported.
+- Empty `SessionKeyCache` starts with length `0`.
+- `SessionKeyCache` can add and retrieve by key ID.
+- `SessionKeyCache` rejects key IDs that are not 8 bytes.
+- `SessionKeyCache` enforces the maximum key count.
+
+### Learning notes
+
+Topics worth studying for this step:
+
+- Class methods such as `from_config(...)`: named constructors for objects.
+  <https://docs.python.org/3/library/functions.html#classmethod>
+- Instance attributes and object state.
+  <https://docs.python.org/3/tutorial/classes.html>
+- The `cryptography` package X.509 and serialization APIs.
+  <https://cryptography.io/en/latest/x509/>
+  <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/>
+- Python dictionaries as lookup tables, useful for session-key caches.
+  <https://docs.python.org/3/tutorial/datastructures.html#dictionaries>
+
+### Step 2 repo references
+
+Python references from Step 1 that Step 2 will build on:
+
+- `entity/python/iotauth/config.py`
+  - `load_config(...)`: should be called by `IoTAuthContext.from_config(...)`.
+  - `EntityConfig`: should be stored inside `IoTAuthContext`.
+- `entity/python/iotauth/exceptions.py`
+  - Add `CredentialError` and `KeyCacheError` here.
+
+C references this mirrors:
+
+- `entity/c/src/c_api.h`
+  - `SST_ctx_t`: C runtime context containing config, distribution key, public
+    key, and private key.
+  - `session_key_t`, `distribution_key_t`, and `session_key_list_t`: C key
+    objects to mirror with Python dataclasses/cache classes.
+  - `init_SST(const char* config_path)`: public C context initializer.
+- `entity/c/src/c_api.c`
+  - `init_SST(...)`: loads config, loads keys, initializes distribution-key
+    state.
+  - `init_empty_session_key_list(...)`: creates the empty session-key list.
+- `entity/c/src/c_crypto.h`
+  - `load_auth_public_key(...)`: Auth public credential loader.
+  - `load_entity_private_key(...)`: entity private key loader.
+- `entity/c/src/c_crypto.c`
+  - `load_auth_public_key(...)`: reads an X.509 PEM cert and extracts an RSA
+    public key.
+  - `load_entity_private_key(...)`: reads a PEM private key.
+  - `load_permanent_distribution_key(...)`: loads raw permanent distribution
+    key files.
+
+Expected verification command after implementation:
+
+```sh
+PYTHONPATH=entity/python python3 -m unittest discover -s entity/python/tests
+```
+
+### Step 2 implementation references
+
+The Step 2 context, credential-loading boundary, and key-cache foundation have
+now been implemented.
+
+Python files:
+
+- `entity/python/iotauth/context.py`
+  - `IoTAuthContext`: runtime object that holds validated config, loaded
+    credentials, distribution-key state, and an empty session-key cache.
+  - `IoTAuthContext.from_config(path, validate_paths=True)`: parses config with
+    `load_config(...)`, then builds a runtime context.
+  - `IoTAuthContext.from_entity_config(config)`: builds a context from an
+    already parsed `EntityConfig`, useful for tests and generated configs.
+  - Permanent distribution key mode currently raises `CredentialError` so we do
+    not silently pretend that path is ready.
+- `entity/python/iotauth/credentials.py`
+  - `load_auth_public_key(path)`: loads Auth's public credential. It first tries
+    X.509 PEM certificate parsing, then raw PEM public key parsing.
+  - `load_entity_private_key(path)`: loads the entity PEM private key.
+  - `_load_crypto_backend()`: imports the optional `cryptography` package and
+    raises `CredentialError` with a clear install message if it is unavailable.
+  - Milestone 1 accepts RSA public/private keys only.
+- `entity/python/iotauth/keys.py`
+  - `SessionKey`: typed session key object with 8-byte key-ID validation.
+  - `DistributionKey`: typed distribution-key object.
+  - `SessionKeyCache`: in-memory cache keyed by session key ID.
+  - `SESSION_KEY_ID_SIZE = 8` and `MAX_SESSION_KEY = 10` mirror the C API.
+- `entity/python/iotauth/exceptions.py`
+  - Added `CredentialError`.
+  - Added `KeyCacheError`.
+- `entity/python/iotauth/__init__.py`
+  - Exports `IoTAuthContext`, key classes, cache class, and new exceptions.
+- `entity/python/tests/test_context.py`
+  - Tests context construction from parsed config and config path.
+  - Tests that permanent distribution key mode is explicitly deferred.
+- `entity/python/tests/test_keys.py`
+  - Tests cache start state, add/retrieve, duplicate handling, replace behavior,
+    key-ID validation, and cache capacity.
+- `entity/python/tests/test_credentials.py`
+  - Tests that missing `cryptography` dependency is reported as `CredentialError`.
+
+Dependency note:
+
+- The environment used for this implementation does not currently have the
+  `cryptography` package installed.
+- The code is structured so context/key/cache behavior can be tested without
+  that dependency by patching the credential loaders.
+- Real PEM certificate/private-key parsing requires installing `cryptography`
+  before using `IoTAuthContext` against actual IoTAuth credentials.
+
+Verification command:
+
+```sh
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s entity/python/tests
+```
+
+Current result:
+
+```text
+Ran 16 tests
+OK
+```
+
 ## Message types to model
 
 The Java Auth library defines the message type IDs. Python should define the

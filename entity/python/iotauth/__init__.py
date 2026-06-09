@@ -8,15 +8,23 @@ from .config import (
     TargetServer,
     load_config,
 )
-from .exceptions import ConfigError, IoTAuthError
+from .context import IoTAuthContext
+from .exceptions import ConfigError, CredentialError, IoTAuthError, KeyCacheError
+from .keys import DistributionKey, SessionKey, SessionKeyCache
 
 __all__ = [
     "AuthInfo",
     "ConfigError",
+    "CredentialError",
+    "DistributionKey",
     "EntityConfig",
     "EntityInfo",
+    "IoTAuthContext",
     "IoTAuthError",
+    "KeyCacheError",
     "SessionConfig",
+    "SessionKey",
+    "SessionKeyCache",
     "TargetServer",
     "load_config",
 ]
