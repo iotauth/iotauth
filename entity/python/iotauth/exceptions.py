@@ -23,3 +23,11 @@ class SerializationError(IoTAuthError):
 
 class AuthProtocolError(IoTAuthError):
     """Raised when Auth protocol bytes are valid but semantically unexpected."""
+
+
+class UnsupportedCryptoError(IoTAuthError):
+    """Raised when a requested crypto operation or backend is unsupported."""
+
+
+class MessageIntegrityError(IoTAuthError):
+    """Raised when signature, MAC, or authenticated decryption verification fails."""

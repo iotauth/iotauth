@@ -1618,6 +1618,445 @@ Ran 48 tests
 OK
 ```
 
+## Step 5: crypto layer design
+
+After Step 4, Python can build and parse the cleartext Auth payloads, but those
+payloads are not safe to send yet. Step 5 should add the cryptographic
+operations that protect those payloads before they are wrapped in IoTSP frames
+and sent over TCP.
+
+This step should not open sockets and should not implement the full Auth
+request workflow yet. It should only provide tested crypto primitives and
+higher-level wrappers that later Auth-service code can call.
+
+### Why this comes next
+
+The session-key request path has two protection modes:
+
+1. No valid distribution key yet:
+   - Encrypt the cleartext request payload with Auth's public key.
+   - Sign the encrypted bytes with the entity private key.
+   - Send as `SESSION_KEY_REQ_IN_PUB_ENC`.
+2. Valid distribution key already exists:
+   - Symmetrically encrypt/authenticate the cleartext request payload with the
+     distribution key.
+   - Prefix the sender entity name.
+   - Send as `SESSION_KEY_REQ`.
+
+The session-key response path also needs crypto:
+
+- Verify Auth's signature on a new encrypted distribution key.
+- Decrypt the distribution key with the entity private key.
+- Decrypt/authenticate the session-key response body with the distribution key.
+
+Step 5 provides these building blocks, but leaves socket sequencing for Step 6.
+
+### C mental model
+
+In C, the crypto layer is mostly in `c_crypto.c`, with Auth-specific wrapping in
+`c_secure_comm.c`:
+
+```c
+public_encrypt(...)
+private_decrypt(...)
+SHA256_sign(...)
+SHA256_verify(...)
+symmetric_encrypt_authenticate(...)
+symmetric_decrypt_authenticate(...)
+encrypt_and_sign(...)
+save_distribution_key(...)
+```
+
+Python should mirror this with small explicit functions instead of hiding
+everything inside the future `AuthService`.
+
+### Proposed Python modules
+
+Step 5 should add:
+
+```text
+entity/python/iotauth/
+  crypto.py
+```
+
+Suggested responsibilities:
+
+- RSA/OAEP public-key encryption.
+- RSA/OAEP private-key decryption.
+- RSA/SHA-256 signing.
+- RSA/SHA-256 verification.
+- AES-128-CBC encryption/decryption.
+- AES-128-CTR encryption/decryption.
+- AES-128-GCM encryption/decryption.
+- HMAC-SHA256 attach/verify helpers.
+- IoTAuth symmetric encrypt/authenticate envelope helpers.
+- Auth-specific public-encrypt-and-sign wrapper.
+- Auth-specific verify-and-private-decrypt wrapper.
+
+### Dependency
+
+Step 5 should use the `cryptography` package.
+
+The current `credentials.py` module already treats `cryptography` as the real
+PEM parsing dependency. Step 5 should make that dependency explicit for crypto
+operations too.
+
+Implementation rule:
+
+- If `cryptography` is missing, raise `CredentialError` or
+  `UnsupportedCryptoError` with a clear install message.
+- Do not silently fall back to weak or home-grown crypto.
+
+### Public-key crypto API
+
+Proposed helpers:
+
+```python
+public_encrypt(payload: bytes, public_key) -> bytes
+private_decrypt(ciphertext: bytes, private_key) -> bytes
+sign_sha256(data: bytes, private_key) -> bytes
+verify_sha256(data: bytes, signature: bytes, public_key) -> None
+```
+
+Expected algorithms:
+
+- RSA encryption padding: OAEP.
+- OAEP hash: SHA-256 if compatible with Auth, otherwise SHA-1 may be needed for
+  compatibility with existing Java/C behavior. This must be verified before
+  implementation.
+- Signature hash: SHA-256.
+- Signature padding: PKCS#1 v1.5 if matching existing C `RSA_PKCS1_PADDING`.
+
+Open compatibility decision:
+
+- C uses `RSA_PKCS1_OAEP_PADDING` for encryption/decryption.
+- C uses `RSA_PKCS1_PADDING` with SHA-256 for signatures.
+- Python should match the C/Auth server behavior exactly, even if a newer
+  default would be different.
+
+### Public encrypt and sign envelope
+
+When no valid distribution key exists, the entity sends a request protected by
+Auth public key and entity private key.
+
+C helper:
+
+```c
+encrypt_and_sign(...)
+```
+
+Python helper:
+
+```python
+encrypt_and_sign_for_auth(payload: bytes, ctx: IoTAuthContext) -> bytes
+```
+
+Expected output format:
+
+```text
+encrypted_payload: RSA_KEY_SIZE bytes
+signature: RSA_KEY_SIZE bytes
+```
+
+For the current RSA-2048 credentials, that means:
+
+```text
+encrypted payload: 256 bytes
+signature: 256 bytes
+total: 512 bytes
+```
+
+Validation:
+
+- Reject payloads too large for RSA/OAEP direct encryption.
+- Confirm key type and key size.
+- Raise `UnsupportedCryptoError` for unsupported key types.
+
+Important future concern:
+
+- RSA can only encrypt small payloads directly. If session-key request payloads
+  grow, we may need hybrid encryption. For now, match the current IoTAuth
+  protocol.
+
+### Verify and decrypt distribution key
+
+When Auth returns a new distribution key, Python needs the reverse operation:
+
+```python
+verify_and_decrypt_from_auth(
+    signed_ciphertext: bytes,
+    ctx: IoTAuthContext,
+    encrypted_size: int,
+) -> bytes
+```
+
+Expected behavior:
+
+1. Split `signed_ciphertext` into encrypted data and signature.
+2. Verify the signature using Auth's public key.
+3. Decrypt the encrypted data using the entity private key.
+4. Return the decrypted distribution-key record bytes.
+
+The parser from Step 4 can then convert those bytes into `DistributionKey`.
+
+### Symmetric envelope format
+
+The C symmetric helpers produce an envelope broadly shaped like:
+
+```text
+iv: variable size based on AES mode
+ciphertext: encrypted payload
+hmac_tag: optional, usually 32 bytes for HMAC-SHA256
+```
+
+For AES-GCM, the authentication tag is part of the AEAD mode. The C code uses a
+GCM tag size of 12 bytes.
+
+Python helpers:
+
+```python
+symmetric_encrypt_authenticate(
+    plaintext: bytes,
+    cipher_key: bytes,
+    mac_key: bytes | None,
+    encryption_mode: str,
+    hmac_enabled: bool,
+) -> bytes
+
+symmetric_decrypt_authenticate(
+    envelope: bytes,
+    cipher_key: bytes,
+    mac_key: bytes | None,
+    encryption_mode: str,
+    hmac_enabled: bool,
+) -> bytes
+```
+
+Validation:
+
+- AES-128 keys must be exactly 16 bytes.
+- HMAC-SHA256 keys should be 32 bytes when HMAC is enabled.
+- CBC IV should be 16 bytes.
+- CTR IV should be 16 bytes.
+- GCM IV should be 12 bytes.
+- Reject unsupported encryption modes.
+- Verify HMAC before decrypting for CBC/CTR.
+- Reject tampered envelopes.
+
+### Distribution-key request wrapper
+
+When a valid distribution key exists, C wraps the encrypted request with the
+sender name:
+
+```text
+sender_name_length: 1 byte
+sender_name: sender_name_length bytes
+encrypted_authenticated_payload: remaining bytes
+```
+
+Python helper:
+
+```python
+encrypt_request_with_distribution_key(
+    payload: bytes,
+    sender_name: str,
+    distribution_key: DistributionKey,
+) -> bytes
+```
+
+This should mirror C's `serialize_session_key_req_with_distribution_key(...)`.
+
+Open issue:
+
+- This C helper uses a one-byte sender length, unlike the buffered string helper
+  used elsewhere. Python should match C here for compatibility.
+
+### Error model additions
+
+Step 5 should add:
+
+- `UnsupportedCryptoError`: unsupported cipher mode, key type, key size, padding
+  mode, or missing crypto backend.
+- `MessageIntegrityError`: signature verification, HMAC verification, or AEAD
+  tag verification failed.
+
+These should inherit from `IoTAuthError`.
+
+Suggested split:
+
+- Use `UnsupportedCryptoError` when the operation cannot be attempted safely.
+- Use `MessageIntegrityError` when protected bytes fail verification.
+- Use `SerializationError` only when a binary envelope is malformed.
+
+### Tests to add
+
+Unit tests should cover:
+
+- RSA encrypt/decrypt round trip using generated test keys.
+- RSA signature verify succeeds for original bytes.
+- RSA signature verify fails for tampered bytes.
+- Public encrypt and sign envelope splits into encrypted bytes and signature.
+- Verify and decrypt rejects tampered signature.
+- AES-128-CBC encrypt/decrypt round trip.
+- AES-128-CTR encrypt/decrypt round trip.
+- AES-128-GCM encrypt/decrypt round trip.
+- HMAC-SHA256 detects tampered ciphertext.
+- Symmetric decrypt rejects malformed envelopes.
+- Unsupported encryption mode raises `UnsupportedCryptoError`.
+- Wrong AES key length raises `UnsupportedCryptoError`.
+- Distribution-key request wrapper preserves one-byte sender-name prefix.
+
+Integration-style tests, once `cryptography` is installed:
+
+- Load existing IoTAuth example credentials.
+- Encrypt/sign a Step 4 session-key request payload.
+- Verify/decrypt using the corresponding test key pair.
+
+### Learning notes
+
+Topics worth studying for this step:
+
+- `cryptography` RSA encryption and padding:
+  <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/>
+- `cryptography` signatures:
+  <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#signing>
+- `cryptography` symmetric encryption:
+  <https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption/>
+- HMAC:
+  <https://cryptography.io/en/latest/hazmat/primitives/mac/hmac/>
+- Why authentication must be verified before trusting decrypted data.
+
+### Step 5 repo references
+
+Python references from previous steps that Step 5 will build on:
+
+- `entity/python/iotauth/context.py`
+  - `IoTAuthContext`: provides loaded Auth public key, entity private key, and
+    distribution key state.
+- `entity/python/iotauth/credentials.py`
+  - Existing `cryptography` backend loading pattern.
+- `entity/python/iotauth/auth_messages.py`
+  - Step 4 cleartext request/response payload bytes.
+- `entity/python/iotauth/keys.py`
+  - `DistributionKey`
+  - `SessionKey`
+- `entity/python/iotauth/exceptions.py`
+  - Add `UnsupportedCryptoError`.
+  - Add `MessageIntegrityError`.
+
+C references:
+
+- `entity/c/src/c_crypto.h`
+  - `public_encrypt(...)`
+  - `private_decrypt(...)`
+  - `SHA256_sign(...)`
+  - `SHA256_verify(...)`
+  - `symmetric_encrypt_authenticate(...)`
+  - `symmetric_decrypt_authenticate(...)`
+- `entity/c/src/c_crypto.c`
+  - RSA encryption/decryption implementation.
+  - RSA/SHA-256 signing and verification.
+  - AES mode selection.
+  - HMAC-SHA256 attach/verify behavior.
+- `entity/c/src/c_secure_comm.c`
+  - `encrypt_and_sign(...)`
+  - `serialize_session_key_req_with_distribution_key(...)`
+  - `save_distribution_key(...)`
+  - Symmetric decrypt path for session-key responses.
+- `entity/c/src/c_api.h`
+  - AES mode enum values and key size constants.
+
+Java references:
+
+- `auth/library/src/main/java/org/iot/auth/crypto/AuthCrypto.java`
+  - Auth-side public/private and symmetric crypto helpers.
+- `auth/library/src/main/java/org/iot/auth/crypto/SymmetricKey.java`
+  - Java symmetric key encrypt/authenticate behavior.
+- `auth/library/src/main/java/org/iot/auth/crypto/DistributionKey.java`
+  - Distribution-key representation.
+- `auth/library/src/main/java/org/iot/auth/crypto/SessionKey.java`
+  - Session-key representation.
+
+Node references:
+
+- `entity/node/accessors/node_modules/common.js`
+  - `publicEncryptAndSign(...)`
+  - `privateDecrypt(...)`
+  - `signAndAttach(...)`
+  - `verifySignedData(...)`
+  - `symmetricEncryptAuthenticate(...)`
+  - `symmetricDecryptAuthenticate(...)`
+- `entity/node/accessors/node_modules/iotAuthService.js`
+  - Session-key request and response crypto flow.
+
+Expected verification command after implementation:
+
+```sh
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s entity/python/tests
+```
+
+### Step 5 implementation references
+
+The Step 5 crypto helper layer has now been implemented.
+
+Python files:
+
+- `entity/python/iotauth/crypto.py`
+  - `public_encrypt(...)`: RSA/OAEP public-key encryption.
+  - `private_decrypt(...)`: RSA/OAEP private-key decryption.
+  - `sign_sha256(...)`: RSA/SHA-256 signing with PKCS#1 v1.5 signature padding.
+  - `verify_sha256(...)`: RSA/SHA-256 signature verification.
+  - `encrypt_and_sign_for_auth(...)`: Auth request public-encrypt-and-sign
+    envelope for the no-distribution-key path.
+  - `verify_and_decrypt_from_auth(...)`: verifies Auth signature, then decrypts
+    with the entity private key.
+  - `symmetric_encrypt_authenticate(...)`: AES envelope encryption with optional
+    HMAC-SHA256.
+  - `symmetric_decrypt_authenticate(...)`: HMAC verification and AES envelope
+    decryption.
+  - `encrypt_request_with_distribution_key(...)`: mirrors the C sender-name
+    prefix plus distribution-key protected payload format.
+  - `decrypt_request_with_distribution_key(...)`: parses that sender-name
+    prefix and decrypts the protected payload.
+- `entity/python/iotauth/exceptions.py`
+  - Added `UnsupportedCryptoError`.
+  - Added `MessageIntegrityError`.
+- `entity/python/iotauth/__init__.py`
+  - Exports Step 5 crypto helpers and new exceptions.
+- `entity/python/tests/test_crypto.py`
+  - Tests clear missing-dependency errors.
+  - Tests sender-name validation for the distribution-key wrapper.
+  - Includes real RSA/AES/HMAC round-trip tests that run when `cryptography` is
+    installed and skip otherwise.
+
+Implementation notes:
+
+- Real crypto operations require the `cryptography` package.
+- This environment does not currently have `cryptography` installed, so the
+  real RSA/AES/HMAC round-trip tests are skipped locally.
+- RSA encryption uses OAEP with SHA-1 to match OpenSSL's default
+  `RSA_PKCS1_OAEP_PADDING` behavior in the existing C implementation.
+- RSA signatures use PKCS#1 v1.5 with SHA-256 to match the C
+  `SHA256_sign(...)` / `SHA256_verify(...)` path.
+- Symmetric envelopes use `IV + ciphertext + optional HMAC`.
+- AES-GCM uses a 12-byte IV and stores a 12-byte authentication tag for C
+  compatibility.
+- CBC/CTR HMAC verification is performed before decryption.
+- Step 5 still does not perform socket I/O or the full Auth request workflow.
+
+Verification command:
+
+```sh
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s entity/python/tests
+```
+
+Current result in this environment:
+
+```text
+Ran 60 tests
+OK (skipped=10)
+```
+
 ## Message types to model
 
 The Java Auth library defines the message type IDs. Python should define the
