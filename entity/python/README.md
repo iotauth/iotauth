@@ -1143,6 +1143,422 @@ Ran 33 tests
 OK
 ```
 
+## Step 4: Auth session-key message design
+
+After Step 3, Python can encode and decode generic IoTSP frames:
+
+```text
+message_type: 1 byte
+payload_length: variable-length integer
+payload: payload_length bytes
+```
+
+Step 4 should move one layer up. It should define the payload objects used when
+an entity talks to Auth for session keys.
+
+This step should not open sockets yet. It should not encrypt, decrypt, sign, or
+verify payloads yet. It should only build and parse the cleartext payload
+structures that later crypto and transport code will wrap.
+
+### Why this comes next
+
+The first real Auth workflow will be:
+
+1. Receive `AUTH_HELLO` from Auth.
+2. Parse Auth ID and Auth nonce.
+3. Generate an entity nonce.
+4. Build a session-key request payload.
+5. Encrypt/sign or MAC-protect that payload.
+6. Wrap it in an IoTSP frame.
+7. Send it over TCP.
+8. Receive a session-key response.
+9. Decrypt/verify the response.
+10. Parse returned distribution/session keys.
+
+Step 4 covers only the payload-building and payload-parsing pieces from that
+workflow. This keeps byte layout work separate from crypto and sockets.
+
+### C mental model
+
+In C, this layer is mostly raw buffers and helper functions:
+
+```c
+serialize_message_for_auth(...)
+handle_AUTH_HELLO(...)
+parse_session_key_response(...)
+parse_distribution_key(...)
+parse_session_key(...)
+```
+
+Python should represent those payloads as small typed objects with explicit
+serialization helpers.
+
+Suggested shape:
+
+```python
+@dataclass(frozen=True)
+class AuthHelloPayload:
+    auth_id: int
+    nonce: bytes
+
+
+@dataclass(frozen=True)
+class SessionKeyRequestPayload:
+    entity_nonce: bytes
+    auth_nonce: bytes
+    num_keys: int
+    entity_name: str
+    purpose: dict[str, object] | str
+    diffie_hellman_param: bytes | None = None
+```
+
+### Proposed Python module
+
+Step 4 should add:
+
+```text
+entity/python/iotauth/auth_messages.py
+```
+
+Suggested responsibilities:
+
+- Parse `AUTH_HELLO` payloads.
+- Parse `AUTH_ALERT` payloads.
+- Serialize session-key request payloads.
+- Parse cleartext session-key response payloads after a future crypto layer has
+  decrypted them.
+- Parse distribution-key and session-key binary records.
+
+### Constants
+
+Step 4 should define these protocol sizes:
+
+```python
+AUTH_ID_SIZE = 4
+NONCE_SIZE = 8
+SESSION_KEY_ID_SIZE = 8
+DIST_KEY_EXPIRATION_TIME_SIZE = 6
+KEY_EXPIRATION_TIME_SIZE = 6
+REL_VALIDITY_SIZE = 6
+MAC_KEY_SIZE = 32
+AES_128_KEY_SIZE = 16
+```
+
+Some constants already exist in the C API. Python should keep names close
+enough that cross-referencing C and Python stays easy.
+
+### AuthHello payload
+
+`AUTH_HELLO` frame payload format:
+
+```text
+offset  size       field
+0       4 bytes    auth_id, unsigned big-endian
+4       8 bytes    auth_nonce
+```
+
+Python API:
+
+```python
+payload = parse_auth_hello_payload(frame.payload)
+payload.auth_id
+payload.nonce
+```
+
+Validation:
+
+- Payload length must be exactly `12` bytes.
+- Auth nonce must be exactly `8` bytes.
+- The caller should compare `payload.auth_id` with `ctx.config.auth.id`.
+
+### AuthAlert payload
+
+`AUTH_ALERT` frame payload format:
+
+```text
+offset  size       field
+0       1 byte     alert_code
+```
+
+Python API:
+
+```python
+alert = parse_auth_alert_payload(frame.payload)
+alert.code
+```
+
+This gives future Auth workflows a clean way to fail with an Auth-provided
+reason instead of treating every failure as malformed bytes.
+
+### Buffered string format
+
+Java and Node use a "buffered string" format:
+
+```text
+string_length: variable-length integer
+string_bytes: UTF-8 bytes
+```
+
+Python helpers:
+
+```python
+serialize_buffered_string("net1.client")
+parse_buffered_string(data, offset) -> (value, bytes_consumed)
+```
+
+These helpers are needed for:
+
+- Entity names.
+- JSON purpose strings.
+- Crypto-spec JSON strings in session-key responses.
+- Future delegation/migration strings.
+
+Validation:
+
+- Reject truncated length fields.
+- Reject string length larger than available bytes.
+- Decode as UTF-8.
+- Return consumed byte count so parsers can advance correctly.
+
+### Session-key request payload
+
+Cleartext `SessionKeyReq` payload format:
+
+```text
+offset  size       field
+0       8 bytes    entity_nonce
+8       8 bytes    auth_nonce
+16      4 bytes    num_keys, unsigned big-endian
+20      varstr     entity_name
+...     varstr     purpose JSON string
+...     optional   Diffie-Hellman parameter bytes
+```
+
+Python API:
+
+```python
+request = SessionKeyRequestPayload(
+    entity_nonce=entity_nonce,
+    auth_nonce=auth_nonce,
+    num_keys=ctx.config.num_keys,
+    entity_name=ctx.config.entity.name,
+    purpose={"group": "Servers"},
+)
+
+payload = serialize_session_key_request_payload(request)
+```
+
+Purpose serialization rule:
+
+- If `purpose` is a dictionary, serialize with compact JSON using stable key
+  ordering.
+- If `purpose` is already a string, preserve it exactly.
+
+The string-preserving path matters because existing configs sometimes use
+purpose strings like:
+
+```properties
+entityInfo.purpose={"keyId":00000000}
+```
+
+That is not strict JSON, but existing C-style examples may still rely on it.
+
+### Session-key response payload
+
+Step 4 should parse only the cleartext/decrypted response payload. It should not
+decrypt the response yet.
+
+Cleartext `SessionKeyResp` inner payload format:
+
+```text
+offset  size       field
+0       8 bytes    entity_nonce
+8       varstr     crypto spec JSON string
+...     4 bytes    session key count, unsigned big-endian
+...     repeated   session key records
+```
+
+Response frames that include a new distribution key have an encrypted
+distribution-key prefix before the encrypted response body. That outer
+encryption/signature handling belongs in a later crypto/Auth-service step.
+
+Python API:
+
+```python
+response = parse_session_key_response_payload(decrypted_payload)
+response.entity_nonce
+response.crypto_spec
+response.session_keys
+```
+
+Validation:
+
+- Entity nonce must be exactly `8` bytes.
+- Crypto spec must be a buffered string.
+- Session key count must fit available data.
+- Parser must reject trailing bytes unless explicitly allowed.
+
+### Distribution-key record
+
+Distribution key binary record format:
+
+```text
+offset  size       field
+0       6 bytes    absolute validity, unsigned big-endian
+6       1 byte     cipher key size
+7       variable   cipher key bytes
+...     1 byte     MAC key size
+...     variable   MAC key bytes
+```
+
+Python API:
+
+```python
+distribution_key = parse_distribution_key_record(data)
+```
+
+This should return the `DistributionKey` dataclass introduced in Step 2.
+
+### Session-key record
+
+Session key binary record format:
+
+```text
+offset  size       field
+0       8 bytes    key ID
+8       6 bytes    absolute validity, unsigned big-endian
+14      6 bytes    relative validity, unsigned big-endian
+20      1 byte     cipher key size
+21      variable   cipher key bytes
+...     1 byte     MAC key size
+...     variable   MAC key bytes
+```
+
+Python API:
+
+```python
+session_key, consumed = parse_session_key_record(data, offset, session_config)
+```
+
+The parser should use the active config/session crypto settings to populate:
+
+- `encryption_mode`
+- `hmac_enabled`
+- `permanent_distribution_key`
+
+This mirrors the C helper that updates parsed session keys with config modes.
+
+### Error model additions
+
+Step 4 can reuse `SerializationError` for malformed byte payloads.
+
+It may also add:
+
+- `AuthProtocolError`: valid bytes but invalid Auth protocol state, such as an
+  unexpected Auth ID.
+
+Recommended split:
+
+- Use `SerializationError` for malformed payload structure.
+- Use `AuthProtocolError` for semantically valid payloads that do not match the
+  current entity context.
+
+### Tests to add
+
+Unit tests should cover:
+
+- `parse_auth_hello_payload(...)` accepts a 12-byte payload.
+- `parse_auth_hello_payload(...)` rejects short or long payloads.
+- `parse_auth_alert_payload(...)` parses one-byte alert codes.
+- Buffered string serialization and parsing round trip ASCII and UTF-8.
+- Buffered string parser rejects truncated data.
+- Session-key request serialization matches known byte layout.
+- Dictionary purpose serializes to compact JSON.
+- Raw string purpose is preserved.
+- Session-key response parser handles one cleartext session-key record.
+- Session-key response parser rejects count/payload mismatch.
+- Distribution-key parser handles cipher/MAC key sizes.
+- Session-key parser rejects invalid key ID length or truncated key material.
+
+### Learning notes
+
+Topics worth studying for this step:
+
+- JSON serialization with `json.dumps(...)`.
+  <https://docs.python.org/3/library/json.html#json.dumps>
+- UTF-8 string encoding and decoding in Python.
+  <https://docs.python.org/3/howto/unicode.html>
+- Dataclasses with methods: small typed payload objects that know how to
+  validate themselves.
+  <https://docs.python.org/3/library/dataclasses.html>
+- Binary parser design: always track offsets and consumed byte counts.
+
+### Step 4 repo references
+
+Python references from previous steps that Step 4 will build on:
+
+- `entity/python/iotauth/messages.py`
+  - `MessageType.AUTH_HELLO`
+  - `MessageType.AUTH_ALERT`
+  - `MessageType.SESSION_KEY_REQ_IN_PUB_ENC`
+  - `MessageType.SESSION_KEY_REQ`
+- `entity/python/iotauth/serialization/binary.py`
+  - `encode_varint(...)`
+  - `decode_varint(...)`
+  - `encode_uint_be(...)`
+  - `decode_uint_be(...)`
+  - `serialize_frame(...)`
+  - `parse_frame(...)`
+- `entity/python/iotauth/keys.py`
+  - `DistributionKey`
+  - `SessionKey`
+- `entity/python/iotauth/exceptions.py`
+  - `SerializationError`
+  - Add `AuthProtocolError` here if needed.
+
+Java references:
+
+- `auth/library/src/main/java/org/iot/auth/message/AuthHelloMessage.java`
+  - Auth hello payload: Auth ID plus Auth nonce.
+- `auth/library/src/main/java/org/iot/auth/message/SessionKeyReqMessage.java`
+  - Session-key request payload parser and field order.
+- `auth/library/src/main/java/org/iot/auth/message/SessionKeyRespMessage.java`
+  - Session-key response payload serializer and field order.
+- `auth/library/src/main/java/org/iot/auth/io/BufferedString.java`
+  - Buffered string format.
+- `auth/library/src/main/java/org/iot/auth/crypto/SessionKey.java`
+  - Java session-key record serialization.
+- `auth/library/src/main/java/org/iot/auth/crypto/DistributionKey.java`
+  - Java distribution-key record serialization.
+
+C references:
+
+- `entity/c/src/c_secure_comm.c`
+  - `handle_AUTH_HELLO(...)`: parses Auth hello, generates entity nonce, builds
+    request.
+  - `serialize_session_key_req_with_distribution_key(...)`: wraps an encrypted
+    request with sender identity when a distribution key is already valid.
+  - `parse_string_param(...)`: parses buffered strings.
+  - `parse_session_key_response(...)`: parses decrypted session-key responses.
+  - `parse_distribution_key(...)`: parses distribution-key records.
+  - `parse_session_key(...)`: parses session-key records.
+
+Node references:
+
+- `entity/node/accessors/node_modules/iotAuthService.js`
+  - `serializeAuthHello(...)` and `parseAuthHello(...)`.
+  - `serializeSessionKeyReq(...)`.
+  - `parseDistributionKey(...)`.
+  - Session-key response parsing helpers nearby.
+- `entity/node/accessors/node_modules/common.js`
+  - `serializeStringParam(...)` and `parseStringParam(...)`.
+
+Expected verification command after implementation:
+
+```sh
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s entity/python/tests
+```
+
 ## Message types to model
 
 The Java Auth library defines the message type IDs. Python should define the
