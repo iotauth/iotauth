@@ -1559,6 +1559,65 @@ Expected verification command after implementation:
 PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s entity/python/tests
 ```
 
+### Step 4 implementation references
+
+The Step 4 Auth-facing payload layer has now been implemented.
+
+Python files:
+
+- `entity/python/iotauth/auth_messages.py`
+  - `AuthHelloPayload`: parsed `AUTH_HELLO` payload object.
+  - `AuthAlertPayload`: parsed `AUTH_ALERT` payload object.
+  - `SessionKeyRequestPayload`: cleartext session-key request payload object.
+  - `SessionKeyResponsePayload`: cleartext/decrypted session-key response object.
+  - `parse_auth_hello_payload(...)`: parses Auth ID and Auth nonce.
+  - `parse_auth_alert_payload(...)`: parses one-byte Auth alert codes.
+  - `serialize_buffered_string(...)`: serializes Java/Node-style buffered
+    strings.
+  - `parse_buffered_string(...)`: parses buffered strings and returns
+    `(value, bytes_consumed)`.
+  - `serialize_session_key_request_payload(...)`: serializes the cleartext
+    session-key request payload.
+  - `parse_session_key_response_payload(...)`: parses a decrypted session-key
+    response payload into session key objects.
+  - `parse_distribution_key_record(...)`: parses distribution-key records into
+    `DistributionKey`.
+  - `parse_session_key_record(...)`: parses one session-key record and returns
+    `(SessionKey, bytes_consumed)`.
+- `entity/python/iotauth/exceptions.py`
+  - Added `AuthProtocolError` for future semantic Auth protocol failures.
+  - Step 4 malformed bytes currently raise `SerializationError`.
+- `entity/python/iotauth/__init__.py`
+  - Exports Step 4 payload classes, constants, and helper functions.
+- `entity/python/tests/test_auth_messages.py`
+  - Tests Auth hello/alert parsing, buffered strings, session-key request
+    serialization, distribution/session key records, and cleartext response
+    parsing.
+
+Implementation notes:
+
+- Step 4 does not perform socket I/O.
+- Step 4 does not encrypt, decrypt, sign, verify, or MAC payloads.
+- Dictionary purposes serialize as compact stable JSON, for example
+  `{"group":"Servers"}`.
+- Raw purpose strings are preserved exactly for compatibility with existing
+  config values such as `{"keyId":00000000}`.
+- Session-key records are converted into the Step 2 `SessionKey` dataclass using
+  the active `SessionConfig`.
+
+Verification command:
+
+```sh
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s entity/python/tests
+```
+
+Current result:
+
+```text
+Ran 48 tests
+OK
+```
+
 ## Message types to model
 
 The Java Auth library defines the message type IDs. Python should define the

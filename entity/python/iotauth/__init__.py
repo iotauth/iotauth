@@ -9,7 +9,24 @@ from .config import (
     load_config,
 )
 from .context import IoTAuthContext
+from .auth_messages import (
+    AUTH_ID_SIZE,
+    NONCE_SIZE,
+    AuthAlertPayload,
+    AuthHelloPayload,
+    SessionKeyRequestPayload,
+    SessionKeyResponsePayload,
+    parse_auth_alert_payload,
+    parse_auth_hello_payload,
+    parse_buffered_string,
+    parse_distribution_key_record,
+    parse_session_key_record,
+    parse_session_key_response_payload,
+    serialize_buffered_string,
+    serialize_session_key_request_payload,
+)
 from .exceptions import (
+    AuthProtocolError,
     ConfigError,
     CredentialError,
     IoTAuthError,
@@ -28,6 +45,10 @@ from .serialization import (
 )
 
 __all__ = [
+    "AUTH_ID_SIZE",
+    "AuthAlertPayload",
+    "AuthHelloPayload",
+    "AuthProtocolError",
     "AuthInfo",
     "ConfigError",
     "CredentialError",
@@ -44,12 +65,23 @@ __all__ = [
     "KeyCacheError",
     "MessageType",
     "message_type_from_byte",
+    "NONCE_SIZE",
+    "parse_auth_alert_payload",
+    "parse_auth_hello_payload",
+    "parse_buffered_string",
+    "parse_distribution_key_record",
     "parse_frame",
+    "parse_session_key_record",
+    "parse_session_key_response_payload",
     "SerializationError",
+    "serialize_buffered_string",
     "serialize_frame",
+    "serialize_session_key_request_payload",
     "SessionConfig",
     "SessionKey",
     "SessionKeyCache",
+    "SessionKeyRequestPayload",
+    "SessionKeyResponsePayload",
     "TargetServer",
     "load_config",
 ]
