@@ -4,7 +4,7 @@ This is a repository for the open-source project **SST (Secure Swarm Toolkit)** 
 
 Our conference papers [[IoTDI '17](https://dl.acm.org/citation.cfm?id=3054980)] (winner of **ACM/IEEE Best Paper Award at CPSWeek '17**), [[FiCloud '16](http://ieeexplore.ieee.org/document/7575852/)] describe a secure network architecture with key distribution mechanisms using Auth (local, automated authorization entity).
 The architecture provides security guarantees while addressing IoT-related issues, including resource constraints and intermittent connectivity.
-The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our magazine article [[IT Professional '17'](https://ieeexplore.ieee.org/document/8057722/)].
+The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our magazine article [[IT Professional '17](https://ieeexplore.ieee.org/document/8057722/)].
 Our ACM journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/3375837)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
 In 2023, we released the C API for SST, which was introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
 We also applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://dl.acm.org/doi/10.1145/3725354)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
@@ -31,16 +31,16 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 ---
 - **android**: Directory for SST's Auth and entities for the Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
-- **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/master/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
+- **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/main/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
 - **examples**: Directory for scripts and descriptions to run example Auths and entities.
 
 # Quick start for SST
 ---
-Please check [QUICKSTART.md](https://github.com/iotauth/iotauth/blob/master/QUICKSTART.md) for a quick start of SST.
+Please check [QUICKSTART.md](https://github.com/iotauth/iotauth/blob/main/QUICKSTART.md) for a quick start of SST.
 
 # Detailed examples with Auths and entities
 ---
-See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/master/examples/README.md) for a fully working example.
+See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/main/examples/README.md) for a fully working example.
 
 # Contributors
 ---
@@ -51,6 +51,7 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 - [Sunyoung Kim](https://github.com/sunnykim638) (Undergraduate Student at Arizona State University)
 - [Jose Felix](https://github.com/JFelix000) (M.S. Student at Arizona State University)
 - [Kushal Paliwal](https://github.com/kushalpaliwal01) (M.S. Graduate, Volunteer Researcher at Arizona State University)
+- [Krutyanjay Shinde](https://github.com/kjshinde) (M.S. Graduate, Volunteer Researcher at Arizona State University)
 
 ## Former Contributors
 - [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
