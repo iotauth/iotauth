@@ -2,7 +2,7 @@
 
 This directory contains example Node.js entities that use SST (Secure Swarm Toolkit) to communicate with an Auth and with other entities.  
 
-To use these entities, refer to [iotauth/examples/README.md](https://github.com/iotauth/iotauth/tree/master/examples)
+To use these entities, refer to [iotauth/examples/README.md](https://github.com/iotauth/iotauth/tree/main/examples)
 ```
 node client.js configs/net1/client.config
 ```

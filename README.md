@@ -31,16 +31,16 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 ---
 - **android**: Directory for SST's Auth and entities for the Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
-- **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/master/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
+- **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/main/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
 - **examples**: Directory for scripts and descriptions to run example Auths and entities.
 
 # Quick start for SST
 ---
-Please check [QUICKSTART.md](https://github.com/iotauth/iotauth/blob/master/QUICKSTART.md) for a quick start of SST.
+Please check [QUICKSTART.md](https://github.com/iotauth/iotauth/blob/main/QUICKSTART.md) for a quick start of SST.
 
 # Detailed examples with Auths and entities
 ---
-See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/master/examples/README.md) for a fully working example.
+See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/main/examples/README.md) for a fully working example.
 
 # Contributors
 ---
