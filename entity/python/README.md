@@ -2247,5 +2247,76 @@ When implementation begins, keep examples small and runnable:
 
 ## Current status
 
-Documentation and API planning only. No new Python implementation has been
-added yet.
+Steps 1 through 5 now have implementation and tests. The API is still growing
+step by step, so the sections above should be treated as both design notes and
+learning notes for the current implementation.
+
+## Local Python virtual environment
+
+A Python virtual environment is a private copy of the Python package
+environment for this project. It is similar in spirit to keeping project-local
+build output separate from system-wide C libraries: we can install packages for
+IoTAuth without changing the machine's global Python setup.
+
+For this repository, the virtual environment lives at:
+
+```text
+entity/python/.venv
+```
+
+That directory is intentionally ignored by the root `.gitignore`, because it is
+generated local state. We commit the source code and documentation, not the
+installed package files inside `.venv`.
+
+Create the environment from the repository root:
+
+```bash
+cd /Users/krutyanjayshinde/Desktop/OPT_project/iotauth
+python3 -m venv entity/python/.venv
+```
+
+Activate it before working on the Python API:
+
+```bash
+source entity/python/.venv/bin/activate
+```
+
+After activation, the `python` and `pip` commands point at the project-local
+environment instead of the global Python installation.
+
+Install the dependency needed by the credential and crypto steps:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install cryptography
+```
+
+Run the current unit tests through the virtual environment:
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s entity/python/tests
+```
+
+Why these command pieces matter:
+
+- `PYTHONPATH=entity/python` tells Python where to find the local `iotauth`
+  package before it is formally packaged and installed.
+- `PYTHONDONTWRITEBYTECODE=1` keeps Python from creating `__pycache__`
+  directories while we are still doing early development.
+- `python -m unittest discover -s entity/python/tests` runs every test module in
+  the current test directory.
+
+When you are done working, leave the virtual environment:
+
+```bash
+deactivate
+```
+
+Implementation references:
+
+- Root ignore rules for the virtual environment:
+  `/Users/krutyanjayshinde/Desktop/OPT_project/iotauth/.gitignore`
+- Virtual environment location:
+  `/Users/krutyanjayshinde/Desktop/OPT_project/iotauth/entity/python/.venv`
+- Current test command:
+  `PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests`

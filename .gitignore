@@ -1,3 +1,23 @@
 .vscode/*
 **/.DS_Store
 **/*.pem
+
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Python packaging output
+build/
+dist/
+*.egg-info/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+entity/python/.venv/
