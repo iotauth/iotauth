@@ -15,3 +15,7 @@ class CredentialError(IoTAuthError):
 
 class KeyCacheError(IoTAuthError):
     """Raised when a session key cache operation is invalid."""
+
+
+class SerializationError(IoTAuthError):
+    """Raised when binary protocol serialization or parsing fails."""

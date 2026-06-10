@@ -806,6 +806,343 @@ Ran 16 tests
 OK
 ```
 
+## Step 3: message types and binary serialization design
+
+After Step 2, Python has a runtime context and key containers, but it still
+cannot speak IoTAuth on the wire. Step 3 should add the smallest protocol layer:
+message type IDs and binary serialization helpers.
+
+This step should not open sockets, encrypt payloads, or request session keys
+yet. It should only answer: "Can Python encode and decode the same basic bytes
+that Java, C, and Node expect?"
+
+### C mental model
+
+In C, protocol messages are byte buffers. A sender builds:
+
+```text
+message_type: 1 byte
+payload_length: variable-length integer
+payload: payload_length bytes
+```
+
+The C helper `make_sender_buf(...)` creates this frame. The C helper
+`parse_received_message(...)` reads the message type and returns a pointer to
+the payload.
+
+Python should model this as explicit serialization functions and a tiny frame
+object:
+
+```python
+@dataclass(frozen=True)
+class IoTSPFrame:
+    message_type: MessageType
+    payload: bytes
+```
+
+Suggested usage:
+
+```python
+frame = IoTSPFrame(MessageType.SKEY_HANDSHAKE_1, payload)
+wire_bytes = serialize_frame(frame)
+
+parsed = parse_frame(wire_bytes)
+assert parsed.message_type is MessageType.SKEY_HANDSHAKE_1
+assert parsed.payload == payload
+```
+
+### Why this comes third
+
+Session key requests and secure handshakes both depend on the same framing
+rules. If we get this layer right first, later steps can focus on Auth request
+payloads, crypto, and sockets without also debugging byte offsets.
+
+This is the Python version of a C habit you already know well: before writing a
+network protocol, define the struct layout and buffer packing rules.
+
+### Proposed Python modules
+
+Step 3 should add:
+
+```text
+entity/python/iotauth/
+  messages.py
+  serialization/
+    __init__.py
+    binary.py
+```
+
+Suggested responsibilities:
+
+- `messages.py`
+  - Defines `MessageType` as an `IntEnum`.
+  - Defines `IoTSPFrame`.
+  - Provides `message_type_from_byte(...)`.
+- `serialization/binary.py`
+  - Encodes and decodes variable-length integers.
+  - Encodes and decodes unsigned big-endian integers.
+  - Serializes and parses IoTSP frames.
+
+### MessageType enum
+
+Python should use `enum.IntEnum` so message types behave like integers when
+needed, but still have readable names:
+
+```python
+class MessageType(IntEnum):
+    AUTH_HELLO = 0
+    ENTITY_HELLO = 1
+    AUTH_SESSION_KEY_REQ = 10
+    AUTH_SESSION_KEY_RESP = 11
+    SESSION_KEY_REQ_IN_PUB_ENC = 20
+    SESSION_KEY_RESP_WITH_DIST_KEY = 21
+    SESSION_KEY_REQ = 22
+    SESSION_KEY_RESP = 23
+    SESSION_KEY_RESP_FOR_DELEGATION = 24
+    SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY = 25
+    SKEY_HANDSHAKE_1 = 30
+    SKEY_HANDSHAKE_2 = 31
+    SKEY_HANDSHAKE_3 = 32
+    SECURE_COMM_MSG = 33
+    FIN_SECURE_COMM = 34
+    SECURE_PUB = 40
+    MIGRATION_REQ_WITH_SIGN = 50
+    MIGRATION_RESP_WITH_SIGN = 51
+    MIGRATION_REQ_WITH_MAC = 52
+    MIGRATION_RESP_WITH_MAC = 53
+    ADD_READER_REQ_IN_PUB_ENC = 60
+    ADD_READER_RESP_WITH_DIST_KEY = 61
+    ADD_READER_REQ = 62
+    ADD_READER_RESP = 63
+    DELEGATED_ACCESS_REQ_IN_PUB_ENC = 70
+    DELEGATED_ACCESS_RESP_WITH_DIST_KEY = 71
+    DELEGATED_ACCESS_REQ = 72
+    DELEGATED_ACCESS_RESP = 73
+    PRIVILEGED_REQ_IN_PUB_ENC = 80
+    PRIVILEGED_RESP_WITH_DIST_KEY = 81
+    PRIVILEGED_REQ = 82
+    PRIVILEGED_RESP = 83
+    AUTH_ALERT = 100
+```
+
+### Variable-length integer format
+
+IoTAuth uses the same variable-length integer style in Java, C, and Node:
+
+- The integer is encoded 7 bits at a time.
+- The low 7 bits go into each byte.
+- If more bytes follow, set the high bit (`0x80`).
+- The final byte has the high bit clear.
+- This is little-endian by 7-bit groups.
+
+Examples:
+
+```text
+0      -> 00
+1      -> 01
+127    -> 7f
+128    -> 80 01
+300    -> ac 02
+```
+
+Python helpers:
+
+```python
+encode_varint(300) == b"\xac\x02"
+decode_varint(b"\xac\x02", 0) == (300, 2)
+```
+
+`decode_varint(...)` should return both the decoded value and the number of
+bytes consumed.
+
+### Unsigned big-endian integer helpers
+
+Several IoTAuth fields are fixed-width unsigned integers, including session key
+IDs and sequence numbers. Python should provide helpers equivalent to C's
+`read_unsigned_int_BE(...)` and Node's `readVariableUIntBE(...)`.
+
+```python
+encode_uint_be(value=5, length=8) == b"\x00\x00\x00\x00\x00\x00\x00\x05"
+decode_uint_be(b"\x00\x00\x00\x00\x00\x00\x00\x05") == 5
+```
+
+Validation:
+
+- Reject negative values.
+- Reject values too large for the requested byte length.
+- Reject empty byte lengths.
+
+### IoTSP frame format
+
+The frame format should match Java `IoTSPMessage`, Node `serializeIoTSP(...)`,
+and C `make_sender_buf(...)`:
+
+```text
+offset  size       field
+0       1 byte     message type
+1       varint     payload length
+...     N bytes    payload
+```
+
+Python helpers:
+
+```python
+serialize_frame(IoTSPFrame(MessageType.SECURE_COMM_MSG, b"abc"))
+parse_frame(data)
+```
+
+Parsing validation:
+
+- Reject empty buffers.
+- Reject unknown message types.
+- Reject truncated variable-length integers.
+- Reject frames whose declared payload length exceeds available bytes.
+- Reject frames with trailing bytes unless the parser explicitly allows them.
+
+### Error model additions
+
+Step 3 should add:
+
+- `SerializationError`: invalid integer encoding, truncated frame, unknown
+  message type, malformed payload length.
+
+This should inherit from `IoTAuthError`.
+
+### Tests to add
+
+Unit tests should cover:
+
+- Every `MessageType` value matches Java and Node.
+- Known varint examples: `0`, `1`, `127`, `128`, `300`.
+- Varint rejects negative numbers.
+- Varint rejects truncated encodings.
+- Big-endian integer helpers round trip 1-, 2-, 4-, and 8-byte values.
+- Big-endian helper rejects values too large for the requested length.
+- IoTSP frame serialization produces expected bytes.
+- IoTSP frame parsing round trips message type and payload.
+- Frame parser rejects unknown message type.
+- Frame parser rejects payload length mismatch.
+- Frame parser rejects trailing bytes by default.
+
+### Learning notes
+
+Topics worth studying for this step:
+
+- `enum.IntEnum`: named constants that still behave like integers.
+  <https://docs.python.org/3/library/enum.html#enum.IntEnum>
+- Python `bytes` and `bytearray`: immutable vs mutable byte buffers.
+  <https://docs.python.org/3/library/stdtypes.html#bytes-objects>
+- `int.to_bytes(...)` and `int.from_bytes(...)`: Python's built-in way to pack
+  and unpack fixed-width integers.
+  <https://docs.python.org/3/library/stdtypes.html#int.to_bytes>
+- Binary protocols generally: keep parsing strict and fail early on malformed
+  buffers.
+
+### Step 3 repo references
+
+Python references from previous steps that Step 3 will build on:
+
+- `entity/python/iotauth/exceptions.py`
+  - Add `SerializationError` here.
+- `entity/python/iotauth/__init__.py`
+  - Export `MessageType`, `IoTSPFrame`, and common serialization helpers if they
+    are intended as public API.
+
+Java references:
+
+- `auth/library/src/main/java/org/iot/auth/message/MessageType.java`
+  - Canonical message type values.
+- `auth/library/src/main/java/org/iot/auth/message/IoTSPMessage.java`
+  - Java IoTSP frame format: message type, variable-length payload length,
+    payload.
+- `auth/library/src/main/java/org/iot/auth/io/VariableLengthInt.java`
+  - Java variable-length integer implementation.
+
+C references:
+
+- `entity/c/src/c_common.c`
+  - `num_to_var_length_int(...)`: C varint encoder.
+  - `var_length_int_to_num(...)`: C varint decoder.
+  - `read_unsigned_int_BE(...)`: C big-endian integer reader.
+  - `make_sender_buf(...)`: C IoTSP frame serializer.
+  - `parse_received_message(...)`: C IoTSP frame parser.
+- `entity/c/src/c_common.h`
+  - Function declarations for the same helpers.
+
+Node references:
+
+- `entity/node/accessors/node_modules/common.js`
+  - `msgType`: Node message type values.
+  - `numToVarLenInt(...)` and `varLenIntToNum(...)`: Node varint helpers.
+  - `readVariableUIntBE(...)` and `writeVariableUIntBE(...)`: Node fixed-width
+    integer helpers.
+  - `serializeIoTSP(...)` and `parseIoTSP(...)`: Node frame helpers.
+
+Expected verification command after implementation:
+
+```sh
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s entity/python/tests
+```
+
+### Step 3 implementation references
+
+The Step 3 message-type and binary-serialization layer has now been
+implemented.
+
+Python files:
+
+- `entity/python/iotauth/messages.py`
+  - `MessageType`: Python `IntEnum` containing the IoTAuth protocol message IDs
+    from Java and Node.
+  - `IoTSPFrame`: small immutable frame object with `message_type` and
+    `payload`.
+  - `message_type_from_byte(...)`: validates raw message type bytes and raises
+    `SerializationError` for unknown values.
+- `entity/python/iotauth/serialization/binary.py`
+  - `encode_varint(...)`: encodes IoTAuth variable-length integers.
+  - `decode_varint(...)`: decodes IoTAuth variable-length integers and returns
+    `(value, bytes_consumed)`.
+  - `encode_uint_be(...)`: encodes fixed-width unsigned big-endian integers.
+  - `decode_uint_be(...)`: decodes fixed-width unsigned big-endian integers.
+  - `serialize_frame(...)`: serializes an `IoTSPFrame` as message type,
+    varint payload length, and payload bytes.
+  - `parse_frame(...)`: parses IoTSP frame bytes and rejects malformed frames.
+- `entity/python/iotauth/serialization/__init__.py`
+  - Exports the binary serialization helpers.
+- `entity/python/iotauth/exceptions.py`
+  - Added `SerializationError`.
+- `entity/python/iotauth/__init__.py`
+  - Exports `MessageType`, `IoTSPFrame`, `message_type_from_byte(...)`, and the
+    serialization helpers.
+- `entity/python/tests/test_messages.py`
+  - Tests message type values and unknown message type rejection.
+- `entity/python/tests/test_serialization.py`
+  - Tests varint encoding/decoding, unsigned big-endian helpers, IoTSP frame
+    serialization/parsing, and malformed-frame rejection.
+
+Implementation notes:
+
+- The varint helpers match the Java/C/Node 7-bit continuation-byte format.
+- The parser is strict by default: unknown message types, truncated varints,
+  payload length mismatches, and trailing bytes raise `SerializationError`.
+- `parse_frame(..., allow_trailing=True)` exists for future stream-buffer use
+  cases where one read may contain more than one frame.
+- The helpers do not perform crypto, socket I/O, or Auth request construction.
+  Those are intentionally later steps.
+
+Verification command:
+
+```sh
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s entity/python/tests
+```
+
+Current result:
+
+```text
+Ran 33 tests
+OK
+```
+
 ## Message types to model
 
 The Java Auth library defines the message type IDs. Python should define the
