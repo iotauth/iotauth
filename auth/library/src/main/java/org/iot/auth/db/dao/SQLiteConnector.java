@@ -1041,6 +1041,36 @@ public class SQLiteConnector {
         }
     }
 
+    public List<DelegationInfoTable> selectAllDelegationInfo() throws SQLException {
+        statement = connection.createStatement();
+        String sql = "SELECT * FROM " + DelegationInfoTable.T_DELEGATION_INFO;
+        if (DEBUG) logger.info(sql);
+        ResultSet resultSet = statement.executeQuery(sql);
+        logger.info("selectAllDelegationInfo Table lookup");
+        List<DelegationInfoTable> delegationInfoTableList = new LinkedList<>();
+        while (resultSet.next()) {
+            delegationInfoTableList.add(DelegationInfoTable.createRecord(resultSet));
+        }
+        return delegationInfoTableList;
+    }
+
+    public boolean deletePrivilegeByKey(String privilegeType, String privilegedGroup, String subject, String object)
+            throws SQLException {
+        String sql = "DELETE FROM " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE
+                + " WHERE " + DelegationPrivilegeTable.c.PrivilegeType.name() + " = ?"
+                + " AND " + DelegationPrivilegeTable.c.PrivilegedGroup.name() + " = ?"
+                + " AND " + DelegationPrivilegeTable.c.Subject.name() + " = ?"
+                + " AND " + DelegationPrivilegeTable.c.Object.name() + " = ?";
+        if (DEBUG) logger.info(sql);
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, privilegeType);
+            ps.setString(2, privilegedGroup);
+            ps.setString(3, subject);
+            ps.setString(4, object);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     /**
      * Deletes expired communication policies from the database.
      * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>

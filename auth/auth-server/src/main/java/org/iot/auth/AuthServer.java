@@ -42,6 +42,7 @@ import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.db.*;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.DelegationInfoTable;
+import org.iot.auth.db.bean.DelegationPrivilegeTable;
 import org.iot.auth.io.Buffer;
 import org.iot.auth.message.*;
 import org.iot.auth.db.CommunicationTargetType;
@@ -448,6 +449,32 @@ public class AuthServer {
 
     public boolean updateCommPolicyCountValue(long newCommPolicyCount) throws SQLException {
         return db.updateCommPolicyCountValue(newCommPolicyCount);
+    }
+
+    public String allPrivilegesToString() throws SQLException, org.json.simple.parser.ParseException {
+        return db.allPrivilegesToString();
+    }
+
+    public String allDelegationInfoToString() throws SQLException {
+        return db.allDelegationInfoToString();
+    }
+
+    public boolean addPrivilege(DelegationPrivilegeTable privilegeTable) {
+        try {
+            return db.insertPrivilege(privilegeTable);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removePrivilege(String privilegeType, String privilegedGroup, String subject, String object) {
+        try {
+            return db.removePrivilege(privilegeType, privilegedGroup, subject, object);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean addDelegationInfo(DelegationInfoTable delegationInfoTable){
