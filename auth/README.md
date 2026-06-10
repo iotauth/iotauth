@@ -1,7 +1,7 @@
 # Auth directory
 
 This directory includes an open-source implementation of Auth, using the IntelliJ IDEA.
-We strongly recommend looking into [*examples*](https://github.com/iotauth/iotauth/tree/master/examples) before setting up the environment, since this includes ways to locally generate your own credentials that will be used by Auth for actual execution of Auth.
+We strongly recommend looking into [*examples*](https://github.com/iotauth/iotauth/tree/main/examples) before setting up the environment, since this includes ways to locally generate your own credentials that will be used by Auth for actual execution of Auth.
 
 # Directory structure
 ---
@@ -42,7 +42,7 @@ For the following instructions, we use $ROOT to indicate the root directory of t
   * Select from clean to install and run (click on the green triangle at the top of Maven Project tab)
 
 * To run jar file
-  * See the [this](https://github.com/iotauth/iotauth/blob/master/auth/auth-server/README.md) (the README file of auth-server module.)
+  * See the [this](https://github.com/iotauth/iotauth/blob/main/auth/auth-server/README.md) (the README file of auth-server module.)
 
 * To generate JavaDoc
   * In menu bar, select Tools -> Generate JavaDoc, set output directory $ROOT/auth/doc and click OK. The directory will be created automatically.
@@ -55,9 +55,9 @@ For the following instructions, we use $ROOT to indicate the root directory of t
     * `-p ../properties/exampleAuth101.properties`
     * `-p ../properties/exampleAuth102.properties`
 
-![Image of Auth101 Config](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/auth101_intellij_config.png)
+![Image of Auth101 Config](https://raw.githubusercontent.com/iotauth/iotauth/main/examples/figures/auth101_intellij_config.png)
 
-![Image of Auth102 Config](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/auth102_intellij_config.png)
+![Image of Auth102 Config](https://raw.githubusercontent.com/iotauth/iotauth/main/examples/figures/auth102_intellij_config.png)
 
 
 # Using VSCode

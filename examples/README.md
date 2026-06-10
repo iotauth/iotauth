@@ -7,7 +7,7 @@ The scripts are used to clean and generate credentials (certificates and keystor
 
 # Example details
 ---
-![Image of Example Auths and entities](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/example_description.png)
+![Image of Example Auths and entities](https://raw.githubusercontent.com/iotauth/iotauth/main/examples/figures/example_description.png)
 
 The figure above illustrates the example with two Auths (`Auth101` and `Auth102`) and their example entities. 
 `Auth101` (Auth with ID 101) is an authorization entity for network 1 (net1), and it has two registered entities, namely, `net1.server` and `net1.client`. 
@@ -141,7 +141,7 @@ $ make
 
 4. Run `./entity_client ../c_client.config` in a separate terminal, to execute net1.client.
 
-See https://github.com/iotauth/sst-c-api/tree/master/examples/ for more examples.
+See https://github.com/iotauth/sst-c-api/tree/main/examples/ for more examples.
 
 ### To run example entities written in Cape Code
 
