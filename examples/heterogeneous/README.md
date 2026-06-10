@@ -13,7 +13,7 @@ The example uses the default graph and default communication policy. The default
 | Path | Purpose |
 | --- | --- |
 | `entity/node/example_entities/server.js` | Existing Node.js secure server. |
-| `entity/c/examples/heterogeneous_client/` | Minimal C client for this cross-language run. |
+| `entity/c/examples/server_client_example/entity_client.c` | Existing C secure client. |
 | `entity/c/examples/server_client_example/c_client.config` | Existing C client config generated for `net1.client`. |
 | `examples/heterogeneous/` | Convenience scripts and this guide. |
 
@@ -23,14 +23,12 @@ From `$SST_ROOT/examples`:
 
 ```bash
 ./cleanAll.sh
-./generateAll.sh
+./generateAll.sh -p 1234
 ```
 
-In a non-interactive shell or CI run, pass a temporary credential password explicitly:
+The `-p 1234` flag sets `1234` as the demo password for the generated Auth keystores and database credentials. The convenience Auth script uses the same password by default, so this is the simplest setup for running the example locally.
 
-```bash
-./generateAll.sh -p testpass
-```
+If you prefer to enter a password interactively, run `./generateAll.sh` without `-p` and pass the same password to `run_auth101.sh` later.
 
 This creates:
 
@@ -56,7 +54,7 @@ mvn clean install
 
 ## 3. Build the C client
 
-From `$SST_ROOT/entity/c/examples/heterogeneous_client`:
+From `$SST_ROOT/entity/c/examples/server_client_example`:
 
 ```bash
 mkdir -p build
@@ -73,7 +71,7 @@ Use three terminals.
 
 ```bash
 cd $SST_ROOT/auth/auth-server
-java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties
+java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties --password=1234
 ```
 
 Auth is ready when it prints:
@@ -92,14 +90,8 @@ node server.js configs/net1/server.config
 ### Terminal 3: C client
 
 ```bash
-cd $SST_ROOT/entity/c/examples/heterogeneous_client/build
-./heterogeneous_c_client ../../server_client_example/c_client.config
-```
-
-You can pass a custom message:
-
-```bash
-./heterogeneous_c_client ../../server_client_example/c_client.config "temperature=72 humidity=41"
+cd $SST_ROOT/entity/c/examples/server_client_example/build
+./entity_client ../c_client.config
 ```
 
 ## Convenience scripts
@@ -112,10 +104,10 @@ bash examples/heterogeneous/run_node_server.sh
 bash examples/heterogeneous/run_c_client.sh
 ```
 
-Pass a custom C client message through the client script:
+`run_auth101.sh` starts Auth101 with password `1234` by default. This matches the `./generateAll.sh -p 1234` command above. If you generated credentials with a different password, pass it explicitly:
 
 ```bash
-bash examples/heterogeneous/run_c_client.sh "hello from the C device"
+bash examples/heterogeneous/run_auth101.sh --password your-password
 ```
 
 ## Expected behavior
@@ -123,13 +115,12 @@ bash examples/heterogeneous/run_c_client.sh "hello from the C device"
 1. The Node.js server reports that it is listening on port `21100`.
 2. The C client requests session keys from Auth101.
 3. The C client connects to the Node.js server and completes the SST secure handshake.
-4. The C client sends an encrypted message.
-5. The Node.js server prints the decrypted message and sends an encrypted acknowledgment.
-6. The C client receive thread prints the acknowledgment.
+4. The C client sends encrypted messages.
+5. The Node.js server prints the decrypted messages.
 
 ## Troubleshooting
 
-- If the C client cannot find credentials, regenerate with `./cleanAll.sh && ./generateAll.sh` and run the client from the `build` directory.
+- If the C client cannot find credentials, regenerate with `./cleanAll.sh && ./generateAll.sh -p 1234` and run the client from the `build` directory.
 - If the C client cannot connect, confirm the Node.js server is running and listening on `21100`.
 - If Auth rejects the session key request, confirm the Auth database was generated from the default graph and includes the default `Clients` to `Servers` communication policy.
 - If Node.js cannot find modules, run `npm install` from `entity/node`.
