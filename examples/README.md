@@ -143,10 +143,6 @@ $ make
 
 See https://github.com/iotauth/sst-c-api/tree/main/examples/ for more examples.
 
-### To run the heterogeneous C-client-to-Node-server example
-
-See [`examples/heterogeneous/README.md`](heterogeneous/README.md) for a cross-language example where a C client securely communicates with a Node.js server through Auth.
-
 ### To run example entities written in Cape Code
 
 1. [Install Ptolemy II](https://icyphy.github.io/ptII/) and run the [Cape Code Swarmlet host](https://wiki.eecs.berkeley.edu/accessors/Main/CapeCodeHost). 
