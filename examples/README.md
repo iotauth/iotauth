@@ -66,6 +66,21 @@ This script uses following helper script.
 
 This scripts deletes all credentials of example Auths and entities, and deletes databases for example Auths.
 
+### scripts/
+
+The [`scripts/`](scripts/) subdirectory contains automated end-to-end integration test scripts that build, configure, start Auth, and run a client/server pair in a single command. Four scripts cover every combination of C and Node.js entities:
+
+| Script | Client | Server |
+|--------|--------|--------|
+| `c_client_node_server_test.sh` | C `entity_client` | Node `server.js` |
+| `c_client_c_server_test.sh` | C `entity_client` | C `entity_server` |
+| `node_client_c_server_test.sh` | Node `autoClient.js` | C `entity_server` |
+| `node_client_node_server_test.sh` | Node `autoClient.js` | Node `server.js` |
+
+The `node_client_*` scripts use `autoClient.js`, which automatically reconnects every ~10 seconds and sends two messages (`"data2"` then `"data1"`) per connection.
+
+See [`scripts/README.md`](scripts/README.md) for detailed descriptions of each script, including expected messages, termination behavior, and verified output.
+
 # How to run examples
 ---
 

@@ -7,11 +7,25 @@ To use these entities, refer to [iotauth/examples/README.md](https://github.com/
 node client.js configs/net1/client.config
 ```
 
+For automated end-to-end tests that start Auth, a server, and a client in a single command, see [`examples/scripts/README.md`](../../../examples/scripts/README.md).
+
 ## Available entities
-### 1. client.js
+### 1. server.js
+A general-purpose secure server that listens for incoming client connections on the port specified in its config file.  Prints received data to stdout.  Used as the server in [`c_client_node_server_test.sh`](../../../examples/scripts/c_client_node_server_test.sh) and [`node_client_node_server_test.sh`](../../../examples/scripts/node_client_node_server_test.sh).
+```
+node server.js configs/net1/server.config
+```
+
+### 2. client.js
 A general-purpose interactive secure client.
 
-### 2. user.js
+### 3. autoClient.js
+A non-interactive client that automatically connects to the server specified in its config, sends `"data2"` and then `"data1"` (5 seconds apart), and reconnects every ~10 seconds.  Used as the client in [`node_client_c_server_test.sh`](../../../examples/scripts/node_client_c_server_test.sh) and [`node_client_node_server_test.sh`](../../../examples/scripts/node_client_node_server_test.sh).
+```
+node autoClient.js configs/net1/client.config
+```
+
+### 4. user.js
 Represents a human user entity capable of delegating access.
 #### Features
 - Loads `configs/net1/user.config` by default.
@@ -24,7 +38,7 @@ node user.js configs/net1/user.config
 delegateAccess high
 ```
 
-### 3. agent.js
+### 5. agent.js
 Represents an agent entity that acts on behalf of a user using delegated access.
 #### Features
 - Loads `configs/net1/highTrustAgent.config` by default.
@@ -34,7 +48,7 @@ Represents an agent entity that acts on behalf of a user using delegated access.
 node agent.js configs/net1/highTrustAgent.config keyId 10100000
 ```
 
-### 4. website.js
+### 6. website.js
 Represents a website service entity that receives session key Id from an agent.
 #### Features
 - Loads `configs/net1/website.config` by default.
@@ -46,7 +60,7 @@ This allows the website to confirm which agent group issued the delegation used 
 node website.js configs/net1/website.config keyId 10100000
 ```
 
-### 5. autoPrivilege.js
+### 7. autoPrivilege.js
 Automatically performs batch privilege operations such as `DelegationGrant` or `DelegationRevoke` using predefined test cases from a JSON file (default: `privilege.json`).
 ### Features
 - Loads privilege test cases from `privileges.json` by default.

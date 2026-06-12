@@ -32,7 +32,7 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 - **android**: Directory for SST's Auth and entities for the Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
 - **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/main/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
-- **examples**: Directory for scripts and descriptions to run example Auths and entities.
+- **examples**: Directory for scripts and descriptions to run example Auths and entities. The [`examples/scripts/`](examples/scripts/) subdirectory contains automated end-to-end integration test scripts covering all combinations of C and Node.js clients and servers — see [`examples/scripts/README.md`](examples/scripts/README.md).
 
 # Quick start for SST
 ---
