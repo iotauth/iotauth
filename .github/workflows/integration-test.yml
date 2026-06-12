@@ -1,0 +1,57 @@
+# This workflow runs the four entity integration tests (all combinations of
+# C and Node.js clients and servers) in sequence.  The first script handles
+# the full build and credential setup; the remaining three skip both steps.
+
+# Author: Hokeun Kim
+
+name: Entity Integration Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Install C build tools
+        run: sudo apt-get install -y cmake make gcc libssl-dev
+
+      - name: Make scripts executable
+        run: chmod +x examples/scripts/*.sh examples/generateAll.sh examples/cleanAll.sh
+
+      - name: Run c_client_c_server_test (build + setup)
+        working-directory: ./examples/scripts
+        run: ./c_client_c_server_test.sh
+
+      - name: Run c_client_node_server_test (no-build, no-setup)
+        working-directory: ./examples/scripts
+        run: ./c_client_node_server_test.sh --no-build --no-setup
+
+      - name: Run node_client_c_server_test (no-build, no-setup)
+        working-directory: ./examples/scripts
+        run: ./node_client_c_server_test.sh --no-build --no-setup
+
+      - name: Run node_client_node_server_test (no-build, no-setup)
+        working-directory: ./examples/scripts
+        run: ./node_client_node_server_test.sh --no-build --no-setup
