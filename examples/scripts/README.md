@@ -8,8 +8,8 @@ Each script in this directory builds, configures, and runs one combination of cl
 
 | Script | Client | Server | Build deps |
 |--------|--------|--------|------------|
-| `c_client_node_server_test.sh` | C `entity_client` | Node `server.js` | mvn, cmake, make, node, npm |
 | `c_client_c_server_test.sh` | C `entity_client` | C `entity_server` | mvn, cmake, make |
+| `c_client_node_server_test.sh` | C `entity_client` | Node `server.js` | mvn, cmake, make, node, npm |
 | `node_client_c_server_test.sh` | Node `autoClient.js` | C `entity_server` | mvn, cmake, make, node, npm |
 | `node_client_node_server_test.sh` | Node `autoClient.js` | Node `server.js` | mvn, node, npm |
 
@@ -35,37 +35,6 @@ All four scripts accept the same flags:
 ---
 
 ## Script details
-
-### `c_client_node_server_test.sh` — C client → Node server
-
-**Entities**
-- Client: `entity/c/examples/server_client_example/build/entity_client` (config: `c_client.config`)
-- Server: `entity/node/example_entities/server.js` (config: `configs/net1/server.config`)
-
-**Message flow**
-
-The C client makes two sequential connections to the Node server.  Only the client sends application data; the server receives and logs it.
-
-| Connection | Client sends |
-|------------|-------------|
-| 1st | `"Hello server"`, then `"Hello server - second message"` |
-| 2nd | `"Hello server 2"`, then `"Hello server 2 - second message"` |
-
-**Termination**  
-The C client exits after its second connection completes.  The script waits for the client process to exit naturally (up to `--client-timeout`), then stops Auth and the Node server.
-
-**Readiness detection**  
-The Node server is considered ready when its log contains `Handler: listening on port` (log-based).
-
-**Verified output (Node server log)**
-```
-data: Hello server
-data: Hello server - second message
-data: Hello server 2
-data: Hello server 2 - second message
-```
-
----
 
 ### `c_client_c_server_test.sh` — C client → C server
 
@@ -99,6 +68,37 @@ LOG: Received: Hello server 2 - second message
 # C client log
 LOG: Received: Hello client
 LOG: Received: Hello client 2
+```
+
+---
+
+### `c_client_node_server_test.sh` — C client → Node server
+
+**Entities**
+- Client: `entity/c/examples/server_client_example/build/entity_client` (config: `c_client.config`)
+- Server: `entity/node/example_entities/server.js` (config: `configs/net1/server.config`)
+
+**Message flow**
+
+The C client makes two sequential connections to the Node server.  Only the client sends application data; the server receives and logs it.
+
+| Connection | Client sends |
+|------------|-------------|
+| 1st | `"Hello server"`, then `"Hello server - second message"` |
+| 2nd | `"Hello server 2"`, then `"Hello server 2 - second message"` |
+
+**Termination**  
+The C client exits after its second connection completes.  The script waits for the client process to exit naturally (up to `--client-timeout`), then stops Auth and the Node server.
+
+**Readiness detection**  
+The Node server is considered ready when its log contains `Handler: listening on port` (log-based).
+
+**Verified output (Node server log)**
+```
+data: Hello server
+data: Hello server - second message
+data: Hello server 2
+data: Hello server 2 - second message
 ```
 
 ---
