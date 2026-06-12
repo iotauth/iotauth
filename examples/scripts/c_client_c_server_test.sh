@@ -420,6 +420,9 @@ if [[ "$VERIFY_OUTPUT" == true ]]; then
 	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server - second message"
 	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server 2"
 	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server 2 - second message"
+	echo "[test] Checking C client output."
+	assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client"
+	assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client 2"
 fi
 
 echo "[test] C-client-to-C-server test passed."

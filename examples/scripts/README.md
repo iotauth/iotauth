@@ -75,12 +75,12 @@ data: Hello server 2 - second message
 
 **Message flow**
 
-Same two-connection pattern as above.  The C server also sends `"Hello client"` back on each connection, but the test does not verify the client-side receipt.
+Both sides send messages on each connection.  The C client spawns a background receive thread per connection to read server replies.
 
-| Connection | Client sends |
-|------------|-------------|
-| 1st | `"Hello server"`, then `"Hello server - second message"` |
-| 2nd | `"Hello server 2"`, then `"Hello server 2 - second message"` |
+| Connection | Client sends | Server replies |
+|------------|-------------|----------------|
+| 1st | `"Hello server"`, then `"Hello server - second message"` | `"Hello client"`, then `"Hello client - second message"` |
+| 2nd | `"Hello server 2"`, then `"Hello server 2 - second message"` | `"Hello client 2"`, then `"Hello client 2 - second message"` |
 
 **Termination**  
 The C client exits after its second connection.  The script waits for the client process to exit naturally, then kills the C server and Auth.
@@ -88,12 +88,17 @@ The C client exits after its second connection.  The script waits for the client
 **Readiness detection**  
 The C server produces no structured startup log, so readiness is detected by polling port 21100 until it is open (port-based).
 
-**Verified output (C server log)**
+**Verified output**
 ```
+# C server log
 LOG: Received: Hello server
 LOG: Received: Hello server - second message
 LOG: Received: Hello server 2
 LOG: Received: Hello server 2 - second message
+
+# C client log
+LOG: Received: Hello client
+LOG: Received: Hello client 2
 ```
 
 ---
