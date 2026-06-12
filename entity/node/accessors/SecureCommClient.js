@@ -71,6 +71,10 @@ function onClose() {
 
 // event handlers
 function onError(message) {
+    if (typeof message !== 'string') {
+        console.error('onError received non-string message (type: ' + typeof message + '):', message);
+        message = String(message);
+    }
     if (parameters.migrationEnabled) {
         if (message.includes('Error occurred in migration request')) {
             migrationFailureCount++;
