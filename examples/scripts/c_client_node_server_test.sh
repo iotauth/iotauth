@@ -34,7 +34,7 @@ usage() {
 	echo "  --no-setup                  Skip cleanAll.sh/generateAll.sh."
 	echo "  --no-verify                 Run without checking Node server output."
 	echo "  --keep-logs                 Keep logs after the test finishes."
-	echo "  --stop-existing             Stop existing Auth/Node processes on the demo ports."
+	echo "  --stop-existing             Stop existing Auth/Node processes on the test ports."
 	echo "  --tmux                      Show Auth, Node, and C client in tmux panes."
 	echo "                              After the C client exits, Auth and Node are stopped"
 	echo "                              while the tmux panes remain open for inspection."
@@ -170,7 +170,7 @@ quote_for_shell() {
 	printf "%s" "$1" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/"
 }
 
-prepare_demo() {
+prepare_test() {
 	if [[ "$RUN_BUILD" == true ]]; then
 		require_command mvn
 		require_command cmake
@@ -206,10 +206,10 @@ if [[ "$STOP_EXISTING" == true ]]; then
 fi
 ensure_ports_available
 
-prepare_demo
+prepare_test
 
 if [[ "$USE_TMUX" == true ]]; then
-	SESSION_NAME="sst_heterogeneous_demo_$$"
+	SESSION_NAME="sst_c_client_node_server_test_$$"
 	WAIT_SCRIPT="/tmp/${SESSION_NAME}_wait_and_stop.sh"
 	PASSWORD_ARG="$(quote_for_shell "$AUTH_PASSWORD")"
 
@@ -222,10 +222,13 @@ if [[ "$USE_TMUX" == true ]]; then
 
 	tmux set-option -t "$SESSION_NAME" pane-border-status top
 	tmux set-option -t "$SESSION_NAME" pane-border-format " #{pane_title} "
+	tmux set-option -t "$SESSION_NAME" pane-border-style 'fg=white,bg=colour25'
+	tmux set-option -t "$SESSION_NAME" pane-active-border-style 'fg=white,bg=colour25,bold'
 	tmux set-option -t "$SESSION_NAME" status off
+	tmux set-option -t "$SESSION_NAME" mouse on
 	tmux set-window-option -t "$SESSION_NAME" remain-on-exit on
 
-	tmux select-pane -t "$AUTH_PANE" -T "Auth101"
+	tmux select-pane -t "$AUTH_PANE" -T "Auth101 — Ctrl+C to stop | Ctrl+B d to detach and kill"
 	tmux select-pane -t "$NODE_PANE" -T "Node server"
 	tmux select-pane -t "$CLIENT_PANE" -T "C client"
 
