@@ -46,6 +46,7 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 ---
 ## Active Contributors
 - [Hokeun Kim](https://hokeun.github.io/) (Assistant Professor at Arizona State University)
+- [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (Senior Scientific Programmer, Polaris Wireless)
 - [Dongha Kim](https://github.com/Jakio815) (Ph.D. Student at Arizona State University)
 - [Carlos Beltran Quinonez](https://github.com/CarlosBeltranQ) (M.S. Student at Arizona State University)
 - [Sunyoung Kim](https://github.com/sunnykim638) (Undergraduate Student at Arizona State University)
@@ -54,7 +55,6 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 - [Krutyanjay Shinde](https://github.com/kjshinde) (M.S. Graduate, Volunteer Researcher at Arizona State University)
 
 ## Former Contributors
-- [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
 - [Eunsuk Kang](https://eskang.github.io/) (Associate Professor at Carnegie Mellon University)
 - [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/) (CEO at Xronos Inc.)
 - [Taekyung Kim](https://github.com/LukeKimm) (Commissioned Officer in the Republic of Korea Army)
@@ -73,4 +73,4 @@ This project is currently intended for academic and research purposes, although 
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP), a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 This work was supported in part by the National Research Foundation of Korea (NRF) grants funded by the Korea government (MSIT).
 
-*Last updated on May 12, 2026*
+*Last updated on June 12, 2026*
