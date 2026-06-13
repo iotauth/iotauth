@@ -88,6 +88,10 @@ function handleSessionKeyResp(sessionKeyList, receivedDistKey, callbackParams) {
 }
 
 function onServerError(message) {
+    if (typeof message !== 'string') {
+        console.error('onServerError received non-string message (type: ' + typeof message + '):', message);
+        message = String(message);
+    }
     if (parameters.migrationEnabled) {
         if (message.includes('Error occurred in migration request')) {
             migrationFailureCount++;
