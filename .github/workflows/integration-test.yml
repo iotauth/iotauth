@@ -1,6 +1,9 @@
 # This workflow runs the four entity integration tests (all combinations of
 # C and Node.js clients and servers) in sequence.  The first script handles
-# the full build and credential setup; the remaining three skip both steps.
+# the full build and credential setup.  If it succeeds, the remaining three
+# scripts reuse those artifacts (--no-build --no-setup).  If the first script
+# fails, each subsequent script runs its own full build and setup so it is
+# independent.  All four tests always run; the job fails if any of them fails.
 
 # Author: Hokeun Kim
 
@@ -41,17 +44,59 @@ jobs:
         run: chmod +x examples/scripts/*.sh examples/generateAll.sh examples/cleanAll.sh
 
       - name: Run c_client_c_server_test (build + setup)
+        id: test1
+        continue-on-error: true
         working-directory: ./examples/scripts
         run: ./c_client_c_server_test.sh
 
-      - name: Run c_client_node_server_test (no-build, no-setup)
+      - name: Run c_client_node_server_test
+        id: test2
+        if: always()
+        continue-on-error: true
         working-directory: ./examples/scripts
-        run: ./c_client_node_server_test.sh --no-build --no-setup
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./c_client_node_server_test.sh --no-build --no-setup
+          else
+            ./c_client_node_server_test.sh
+          fi
 
-      - name: Run node_client_c_server_test (no-build, no-setup)
+      - name: Run node_client_c_server_test
+        id: test3
+        if: always()
+        continue-on-error: true
         working-directory: ./examples/scripts
-        run: ./node_client_c_server_test.sh --no-build --no-setup
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./node_client_c_server_test.sh --no-build --no-setup
+          else
+            ./node_client_c_server_test.sh
+          fi
 
-      - name: Run node_client_node_server_test (no-build, no-setup)
+      - name: Run node_client_node_server_test
+        id: test4
+        if: always()
+        continue-on-error: true
         working-directory: ./examples/scripts
-        run: ./node_client_node_server_test.sh --no-build --no-setup
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./node_client_node_server_test.sh --no-build --no-setup
+          else
+            ./node_client_node_server_test.sh
+          fi
+
+      - name: Fail if any test failed
+        if: always()
+        run: |
+          result=0
+          for outcome in \
+            "${{ steps.test1.outcome }}" \
+            "${{ steps.test2.outcome }}" \
+            "${{ steps.test3.outcome }}" \
+            "${{ steps.test4.outcome }}"; do
+            if [ "$outcome" != "success" ]; then
+              echo "A test step did not succeed (outcome: $outcome)."
+              result=1
+            fi
+          done
+          exit $result

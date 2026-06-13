@@ -82,7 +82,7 @@ run_step() {
 }
 
 build_auth() {
-	run_step mvn -B -q package --file "$SST_ROOT/auth/pom.xml"
+	run_step mvn -B -q package -DskipTests --file "$SST_ROOT/auth/pom.xml"
 }
 
 build_c_entities() {
@@ -188,6 +188,9 @@ start_auth() {
 	start_service auth bash -c \
 		"cd $(quote_for_shell "$SST_ROOT/auth/auth-server") && exec java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties --password=$(quote_for_shell "$AUTH_PASSWORD")"
 	wait_for_log "$AUTH_LOG" "Enter command" "Auth101"
+	# "Enter command" can appear before the entity TCP port (21900) is bound;
+	# wait for the port explicitly so entities don't race during handshake.
+	wait_for_port 21900 "Auth101 entity service"
 }
 
 # --- Client runner (C entity_client) ---
