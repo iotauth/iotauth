@@ -17,6 +17,7 @@ CLIENT_PID=""
 AUTH_TAIL_PID=""
 SERVER_TAIL_PID=""
 LOG_DIR="${LOG_DIR:-}"
+declare -a ERROR_WATCHER_PIDS=()
 
 # --- Port helpers ---
 
@@ -131,6 +132,9 @@ start_service() {
 			SERVER_PID="$service_pid"
 			SERVER_TAIL_PID="$tail_pid"
 			;;
+		*)
+			echo "[test] Unknown service: $prefix" >&2
+			;;
 	esac
 }
 
@@ -225,11 +229,34 @@ assert_log_no_errors() {
 	fi
 }
 
+# Background watcher: tails a log file and kills the test immediately if any
+# line containing "ERROR:" is found.  Call after setup_logs for each C entity.
+start_error_watcher() {
+	local label="$1"
+	local log_file="$2"
+	local main_pid="$$"
+	(
+		while [[ ! -f "$log_file" ]]; do sleep 0.1; done
+		tail -n +1 -f "$log_file" 2>/dev/null | while IFS= read -r line; do
+			if [[ "$line" == *"ERROR:"* ]]; then
+				echo "[test] Unexpected ERROR in $label log: $line" >&2
+				touch "$LOG_DIR/.error_detected"
+				kill -TERM "$main_pid" 2>/dev/null || true
+			fi
+		done
+	) &
+	ERROR_WATCHER_PIDS+=($!)
+}
+
 # --- Lifecycle ---
 
 cleanup() {
 	local status=$?
+	[[ -f "${LOG_DIR:-}/.error_detected" ]] && status=1
 	local pid
+	for pid in "${ERROR_WATCHER_PIDS[@]+"${ERROR_WATCHER_PIDS[@]}"}"; do
+		kill "$pid" 2>/dev/null || true
+	done
 	for pid in "$CLIENT_PID" "$SERVER_TAIL_PID" "$AUTH_TAIL_PID" "$SERVER_PID" "$AUTH_PID"; do
 		[[ -n "$pid" ]] && kill "$pid" 2>/dev/null || true
 	done

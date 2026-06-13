@@ -87,6 +87,7 @@ EOF
 fi
 
 setup_logs "node-client-c-server"
+start_error_watcher "C server" "$SERVER_LOG"
 start_auth
 
 echo "[test] Starting C server."

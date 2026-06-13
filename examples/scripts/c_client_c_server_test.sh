@@ -79,6 +79,8 @@ EOF
 fi
 
 setup_logs "c-client-c-server"
+start_error_watcher "C server" "$SERVER_LOG"
+start_error_watcher "C client" "$CLIENT_LOG"
 start_auth
 
 echo "[test] Starting C server."
