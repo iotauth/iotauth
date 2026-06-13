@@ -362,6 +362,16 @@ assert_log_contains() {
 	fi
 }
 
+assert_log_no_errors() {
+	local log_file="$1"
+	local label="$2"
+	if grep -qF "ERROR:" "$log_file" 2>/dev/null; then
+		echo "[test] Unexpected ERROR in $label log:" >&2
+		grep -F "ERROR:" "$log_file" >&2
+		return 1
+	fi
+}
+
 run_client_with_timeout() {
 	(
 		cd "$SST_ROOT/entity/c/examples/server_client_example/build"
@@ -399,6 +409,8 @@ echo "[test] Running C client."
 run_client_with_timeout
 
 if [[ "$VERIFY_OUTPUT" == true ]]; then
+	echo "[test] Checking for unexpected errors."
+	assert_log_no_errors "$CLIENT_LOG" "C client"
 	echo "[test] Checking Node.js server output."
 	assert_log_contains "$NODE_LOG" "Handler: socketID:"
 	assert_log_contains "$NODE_LOG" "data: Hello server"

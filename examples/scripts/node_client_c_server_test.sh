@@ -391,6 +391,16 @@ assert_log_contains() {
 	fi
 }
 
+assert_log_no_errors() {
+	local log_file="$1"
+	local label="$2"
+	if grep -qF "ERROR:" "$log_file" 2>/dev/null; then
+		echo "[test] Unexpected ERROR in $label log:" >&2
+		grep -F "ERROR:" "$log_file" >&2
+		return 1
+	fi
+}
+
 echo "[test] Logs: $LOG_DIR"
 echo "[test] Starting Auth101."
 start_service auth bash -c \
@@ -429,6 +439,8 @@ wait "$CLIENT_PID" 2>/dev/null || true
 CLIENT_PID=""
 
 if [[ "$VERIFY_OUTPUT" == true ]]; then
+	echo "[test] Checking for unexpected errors."
+	assert_log_no_errors "$SERVER_LOG" "C server"
 	echo "[test] Checking C server output."
 	assert_log_contains "$SERVER_LOG" "LOG: Received: data2"
 	assert_log_contains "$SERVER_LOG" "Finished first communication"
