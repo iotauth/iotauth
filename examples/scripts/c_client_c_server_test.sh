@@ -91,6 +91,8 @@ echo "[test] Running C client."
 run_client_with_timeout
 
 if [[ "$VERIFY_OUTPUT" == true ]]; then
+	echo "[test] Waiting for C server to finish processing."
+	wait_for_log "$SERVER_LOG" "LOG: Received: Hello server 2 - second message" "C server" 15
 	echo "[test] Checking for unexpected errors."
 	assert_log_no_errors "$SERVER_LOG" "C server"
 	assert_log_no_errors "$CLIENT_LOG" "C client"

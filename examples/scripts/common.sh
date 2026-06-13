@@ -150,9 +150,10 @@ wait_for_log() {
 	local log_file="$1"
 	local pattern="$2"
 	local label="$3"
+	local timeout="${4:-$SERVICE_TIMEOUT}"
 	local elapsed=0
 
-	while [[ "$elapsed" -lt "$SERVICE_TIMEOUT" ]]; do
+	while [[ "$elapsed" -lt "$timeout" ]]; do
 		if grep -Fq "$pattern" "$log_file" 2>/dev/null; then
 			echo "[test] $label is ready."
 			return 0
@@ -224,7 +225,7 @@ assert_log_contains() {
 	local pattern="$2"
 
 	if ! grep -Fq "$pattern" "$log_file"; then
-		echo "[test] Missing expected output in $log_file:" >&2
+		echo "[test] Failure: Missing expected output in $log_file:" >&2
 		echo "[test]   $pattern" >&2
 		return 1
 	fi
@@ -234,7 +235,7 @@ assert_log_no_errors() {
 	local log_file="$1"
 	local label="$2"
 	if grep -qF "ERROR:" "$log_file" 2>/dev/null; then
-		echo "[test] Unexpected ERROR in $label log:" >&2
+		echo "[test] Failure: Unexpected ERROR in $label log:" >&2
 		grep -F "ERROR:" "$log_file" >&2
 		return 1
 	fi
