@@ -143,6 +143,9 @@ start_service() {
 			SERVER_PID="$service_pid"
 			SERVER_TAIL_PID="$tail_pid"
 			;;
+		*)
+			echo "[test] Unknown service: $prefix" >&2
+			;;
 	esac
 }
 
