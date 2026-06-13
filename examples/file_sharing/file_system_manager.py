@@ -87,6 +87,7 @@ port = 22100
 host, port = '127.0.0.1', port
 
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 lsock.bind((host, port))
 lsock.listen()
 print(f"Listening on {(host, port)}")
