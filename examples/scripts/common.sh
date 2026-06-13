@@ -111,6 +111,7 @@ start_service() {
 	local prefix="$1"
 	shift
 	local log_file="$LOG_DIR/$prefix.log"
+	local main_pid="$$"
 
 	(
 		cd "$SST_ROOT"
@@ -118,8 +119,18 @@ start_service() {
 	) &
 	local service_pid=$!
 
+	# Forward log lines to console; on the first ERROR: line, kill the service
+	# and signal the test immediately so output stops after a single error line.
 	(
-		tail -n +1 -f "$log_file" 2>/dev/null | sed -u "s/^/[$prefix] /"
+		tail -n +1 -f "$log_file" 2>/dev/null | while IFS= read -r line; do
+			echo "[$prefix] $line"
+			if [[ "$line" == *"ERROR:"* ]]; then
+				touch "$LOG_DIR/.error_detected"
+				kill "$service_pid" 2>/dev/null || true
+				kill -TERM "$main_pid" 2>/dev/null || true
+				break
+			fi
+		done
 	) &
 	local tail_pid=$!
 
@@ -131,9 +142,6 @@ start_service() {
 		server)
 			SERVER_PID="$service_pid"
 			SERVER_TAIL_PID="$tail_pid"
-			;;
-		*)
-			echo "[test] Unknown service: $prefix" >&2
 			;;
 	esac
 }
@@ -242,6 +250,7 @@ start_error_watcher() {
 				echo "[test] Unexpected ERROR in $label log: $line" >&2
 				touch "$LOG_DIR/.error_detected"
 				kill -TERM "$main_pid" 2>/dev/null || true
+				break
 			fi
 		done
 	) &
