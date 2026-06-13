@@ -176,7 +176,7 @@ prepare_test() {
 		require_command cmake
 		require_command make
 
-		run_step mvn -B package --file "$SST_ROOT/auth/pom.xml"
+		run_step mvn -B -q package --file "$SST_ROOT/auth/pom.xml"
 		run_step cmake -S "$SST_ROOT/entity/c/examples/server_client_example" -B "$SST_ROOT/entity/c/examples/server_client_example/build"
 		run_step cmake --build "$SST_ROOT/entity/c/examples/server_client_example/build"
 	fi

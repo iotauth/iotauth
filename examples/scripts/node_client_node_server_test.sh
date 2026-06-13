@@ -177,7 +177,7 @@ prepare_test() {
 		require_command node
 		require_command npm
 
-		run_step mvn -B package --file "$SST_ROOT/auth/pom.xml"
+		run_step mvn -B -q package --file "$SST_ROOT/auth/pom.xml"
 	fi
 
 	if [[ "$RUN_SETUP" == true ]]; then
