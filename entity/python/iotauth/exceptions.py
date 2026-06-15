@@ -35,3 +35,11 @@ class UnsupportedCryptoError(IoTAuthError):
 
 class MessageIntegrityError(IoTAuthError):
     """Raised when signature, MAC, or authenticated decryption verification fails."""
+
+
+class SecureHandshakeError(IoTAuthError):
+    """Raised when a secure entity handshake fails."""
+
+
+class ExpiredKeyError(IoTAuthError):
+    """Raised when an expired key is used for a secure operation."""

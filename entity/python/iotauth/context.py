@@ -60,3 +60,21 @@ class IoTAuthContext:
             count=count,
             timeout=timeout,
         )
+
+    def connect_secure(
+        self,
+        *,
+        key: SessionKey,
+        host: str | None = None,
+        port: int | None = None,
+        timeout: float | None = 5.0,
+    ) -> Any:
+        from .secure_channel import connect_secure
+
+        return connect_secure(
+            self,
+            key=key,
+            host=host,
+            port=port,
+            timeout=timeout,
+        )

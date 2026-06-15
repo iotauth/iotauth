@@ -31,11 +31,24 @@ from .exceptions import (
     AuthProtocolError,
     ConfigError,
     CredentialError,
+    ExpiredKeyError,
     IoTAuthError,
     KeyCacheError,
     MessageIntegrityError,
     SerializationError,
+    SecureHandshakeError,
     UnsupportedCryptoError,
+)
+from .handshake import (
+    HANDSHAKE_DH_PARAM_PRESENT,
+    HANDSHAKE_FIXED_SIZE,
+    HANDSHAKE_NONCE_PRESENT,
+    HANDSHAKE_REPLY_NONCE_PRESENT,
+    HandshakePayload,
+    build_handshake_1,
+    parse_handshake_payload,
+    serialize_handshake_payload,
+    verify_handshake_2_and_build_handshake_3,
 )
 from .crypto import (
     decrypt_request_with_distribution_key,
@@ -59,6 +72,7 @@ from .serialization import (
     parse_frame,
     serialize_frame,
 )
+from .secure_channel import SecureChannel, connect_secure, session_key_is_expired
 from .transports.tcp import recv_frame, send_frame
 
 __all__ = [
@@ -81,6 +95,14 @@ __all__ = [
     "encode_varint",
     "EntityConfig",
     "EntityInfo",
+    "ExpiredKeyError",
+    "HANDSHAKE_DH_PARAM_PRESENT",
+    "HANDSHAKE_FIXED_SIZE",
+    "HANDSHAKE_NONCE_PRESENT",
+    "HANDSHAKE_REPLY_NONCE_PRESENT",
+    "HandshakePayload",
+    "build_handshake_1",
+    "connect_secure",
     "IoTAuthContext",
     "IoTAuthError",
     "IoTSPFrame",
@@ -94,6 +116,7 @@ __all__ = [
     "parse_buffered_string",
     "parse_distribution_key_record",
     "parse_frame",
+    "parse_handshake_payload",
     "parse_session_key_record",
     "parse_session_key_response_payload",
     "private_decrypt",
@@ -101,10 +124,14 @@ __all__ = [
     "SerializationError",
     "serialize_buffered_string",
     "serialize_frame",
+    "serialize_handshake_payload",
     "serialize_session_key_request_payload",
+    "SecureChannel",
+    "SecureHandshakeError",
     "SessionConfig",
     "SessionKey",
     "SessionKeyCache",
+    "session_key_is_expired",
     "SessionKeyRequestPayload",
     "SessionKeyResponsePayload",
     "recv_frame",
@@ -116,6 +143,7 @@ __all__ = [
     "TargetServer",
     "UnsupportedCryptoError",
     "verify_and_decrypt_from_auth",
+    "verify_handshake_2_and_build_handshake_3",
     "verify_sha256",
     "load_config",
 ]
