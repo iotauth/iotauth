@@ -9,6 +9,7 @@ from .config import (
     load_config,
 )
 from .context import IoTAuthContext
+from .auth_service import distribution_key_is_expired, request_session_keys
 from .auth_messages import (
     AUTH_ID_SIZE,
     NONCE_SIZE,
@@ -26,6 +27,7 @@ from .auth_messages import (
     serialize_session_key_request_payload,
 )
 from .exceptions import (
+    AuthConnectionError,
     AuthProtocolError,
     ConfigError,
     CredentialError,
@@ -57,9 +59,11 @@ from .serialization import (
     parse_frame,
     serialize_frame,
 )
+from .transports.tcp import recv_frame, send_frame
 
 __all__ = [
     "AUTH_ID_SIZE",
+    "AuthConnectionError",
     "AuthAlertPayload",
     "AuthHelloPayload",
     "AuthProtocolError",
@@ -70,6 +74,7 @@ __all__ = [
     "decode_varint",
     "decrypt_request_with_distribution_key",
     "DistributionKey",
+    "distribution_key_is_expired",
     "encrypt_and_sign_for_auth",
     "encrypt_request_with_distribution_key",
     "encode_uint_be",
@@ -102,6 +107,9 @@ __all__ = [
     "SessionKeyCache",
     "SessionKeyRequestPayload",
     "SessionKeyResponsePayload",
+    "recv_frame",
+    "request_session_keys",
+    "send_frame",
     "sign_sha256",
     "symmetric_decrypt_authenticate",
     "symmetric_encrypt_authenticate",

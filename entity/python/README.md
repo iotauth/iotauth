@@ -2247,7 +2247,7 @@ When implementation begins, keep examples small and runnable:
 
 ## Current status
 
-Steps 1 through 5 now have implementation and tests. The API is still growing
+Steps 1 through 6 now have implementation and tests. The API is still growing
 step by step, so the sections above should be treated as both design notes and
 learning notes for the current implementation.
 
@@ -2320,3 +2320,515 @@ Implementation references:
   `/Users/krutyanjayshinde/Desktop/OPT_project/iotauth/entity/python/.venv`
 - Current test command:
   `PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests`
+
+## Step 6: Auth TCP session-key service design
+
+After Step 5, Python has all the pieces needed to protect Auth messages:
+
+- Step 1 loads and validates config.
+- Step 2 loads credentials and creates `IoTAuthContext`.
+- Step 3 frames messages as IoTSP frames.
+- Step 4 builds and parses Auth session-key payloads.
+- Step 5 encrypts, signs, verifies, decrypts, and MAC-checks protected bytes.
+
+Step 6 should connect those pieces into the first real network workflow:
+requesting session keys from Auth over TCP.
+
+This step should still not implement entity-to-entity secure channels. It should
+only talk to Auth, request session keys, validate Auth's response, and store the
+returned session keys in the context cache.
+
+### Goal
+
+At the end of Step 6, application code should be able to do this:
+
+```python
+from iotauth import IoTAuthContext, request_session_keys
+
+ctx = IoTAuthContext.from_config("entity/python/examples/configs/client.config")
+keys = request_session_keys(ctx)
+```
+
+Or, if we decide to put the method directly on the context:
+
+```python
+ctx = IoTAuthContext.from_config("entity/python/examples/configs/client.config")
+keys = ctx.request_session_keys()
+```
+
+Recommended first implementation: keep the workflow in an `auth_service.py`
+function first. Once the behavior is stable, `IoTAuthContext.request_session_keys`
+can delegate to that function.
+
+### Why this comes next
+
+This is the first step where the Python API becomes useful against a running
+Auth server.
+
+So far, most of the work has been local and deterministic:
+
+- Parse files.
+- Load keys.
+- Encode bytes.
+- Decode bytes.
+- Encrypt and decrypt bytes.
+
+Step 6 adds I/O. That means Python must now handle the same kinds of failures a
+C socket caller handles:
+
+- Auth is not listening.
+- The TCP connection closes early.
+- A message arrives in multiple TCP reads.
+- Auth sends a valid frame with the wrong message type.
+- Auth returns `AUTH_ALERT`.
+- Auth's nonce response does not match the entity nonce.
+- Auth returns a session key response that fails crypto verification.
+
+### C mental model
+
+The C flow lives mostly in `entity/c/src/c_secure_comm.c`:
+
+```c
+send_session_key_req_via_TCP(...)
+handle_AUTH_HELLO(...)
+send_auth_request_message(...)
+save_distribution_key(...)
+parse_session_key_response(...)
+```
+
+The C TCP workflow is:
+
+1. Open a TCP connection to Auth.
+2. Wait for `AUTH_HELLO`.
+3. Parse Auth ID and Auth nonce.
+4. Generate the entity nonce.
+5. Serialize the cleartext session-key request.
+6. If no valid distribution key exists, encrypt/sign with public-key crypto and
+   send `SESSION_KEY_REQ_IN_PUB_ENC`.
+7. If a valid distribution key exists, encrypt/MAC with the distribution key and
+   send `SESSION_KEY_REQ`.
+8. Read either `SESSION_KEY_RESP_WITH_DIST_KEY`, `SESSION_KEY_RESP`, or
+   `AUTH_ALERT`.
+9. Decrypt and verify the response.
+10. Check that the response nonce matches the entity nonce.
+11. Save the new distribution key, if Auth included one.
+12. Save returned session keys in the session-key cache.
+
+Important compatibility note:
+
+- The C and Node TCP paths connect and wait for Auth's `AUTH_HELLO`.
+- They do not send `ENTITY_HELLO` first on TCP.
+- `ENTITY_HELLO` appears in the UDP flow, but UDP is not part of Step 6.
+
+### Proposed Python modules
+
+Step 6 should add:
+
+```text
+entity/python/iotauth/
+  auth_service.py
+  transports/
+    __init__.py
+    tcp.py
+```
+
+Suggested responsibilities:
+
+- `auth_service.py`
+  - Own the Auth session-key request workflow.
+  - Convert config/context values into `SessionKeyRequestPayload`.
+  - Choose public-key mode or distribution-key mode.
+  - Decrypt and parse Auth responses.
+  - Update `ctx.distribution_key` and `ctx.session_keys`.
+- `transports/tcp.py`
+  - Open TCP sockets.
+  - Send one encoded IoTSP frame.
+  - Read exactly one IoTSP frame, even when TCP splits it across reads.
+  - Convert low-level socket errors into `AuthConnectionError`.
+
+The transport layer should know about bytes and frames, but it should not know
+how session keys work. The Auth service should know the protocol workflow, but
+it should not contain raw socket read loops.
+
+### Proposed public API
+
+Initial function:
+
+```python
+def request_session_keys(
+    ctx: IoTAuthContext,
+    *,
+    purpose: dict[str, object] | str | None = None,
+    count: int | None = None,
+    timeout: float | None = 5.0,
+) -> list[SessionKey]:
+    ...
+```
+
+Behavior:
+
+- `purpose=None` means use the first purpose from `ctx.config.purposes`.
+- `count=None` means use `ctx.config.num_keys`.
+- `timeout` applies to connecting and reading from Auth.
+- Returned keys are also added to `ctx.session_keys`.
+- If Auth returns a new distribution key, store it in `ctx.distribution_key`.
+
+Later convenience method:
+
+```python
+class IoTAuthContext:
+    def request_session_keys(...):
+        return request_session_keys(self, ...)
+```
+
+### Request construction
+
+When `AUTH_HELLO` arrives, Python should parse:
+
+```python
+hello = parse_auth_hello_payload(frame.payload)
+```
+
+Then validate:
+
+- `frame.message_type == MessageType.AUTH_HELLO`
+- `hello.auth_id == ctx.config.auth.id`
+- `len(hello.nonce) == NONCE_SIZE`
+
+Then generate a fresh entity nonce:
+
+```python
+entity_nonce = secrets.token_bytes(NONCE_SIZE)
+```
+
+Then build:
+
+```python
+request = SessionKeyRequestPayload(
+    entity_nonce=entity_nonce,
+    auth_nonce=hello.nonce,
+    num_keys=count,
+    entity_name=ctx.config.entity.name,
+    purpose=purpose,
+)
+```
+
+Then serialize it with Step 4:
+
+```python
+payload = serialize_session_key_request_payload(request)
+```
+
+### Choosing the request protection mode
+
+The first Step 6 implementation can use this rule:
+
+```python
+if ctx.distribution_key is None or distribution_key_is_expired(ctx.distribution_key):
+    protected = encrypt_and_sign_for_auth(payload, ctx)
+    message_type = MessageType.SESSION_KEY_REQ_IN_PUB_ENC
+else:
+    protected = encrypt_request_with_distribution_key(
+        payload,
+        ctx.config.entity.name,
+        ctx.distribution_key,
+    )
+    message_type = MessageType.SESSION_KEY_REQ
+```
+
+Open implementation choice:
+
+- Distribution-key expiration is currently stored as an integer parsed from the
+  wire format. Before Step 6 implementation, we should confirm whether the Java
+  and C code treat this as epoch seconds, milliseconds, or IoTAuth-specific
+  packed time.
+- If there is any uncertainty, Step 6 can initially treat `None` as invalid and
+  non-`None` as valid only in tests with explicit fixtures. Then we can tighten
+  expiration validation after checking the Java Auth behavior.
+
+### TCP frame transport
+
+Step 3 already has frame serialization logic. Step 6 needs socket helpers that
+can move those frames over TCP safely.
+
+Proposed helpers:
+
+```python
+def send_frame(sock: socket.socket, frame: IoTSPFrame) -> None:
+    ...
+
+def recv_frame(sock: socket.socket, *, max_payload_size: int = 65536) -> IoTSPFrame:
+    ...
+```
+
+`recv_frame` is important because TCP is a stream, not a message queue. One
+`socket.recv(...)` call may return:
+
+- less than one full frame,
+- exactly one frame,
+- one frame plus bytes from the next frame.
+
+The C code handles this by reading the message type, reading the variable-length
+payload length one byte at a time, then reading exactly that many payload bytes.
+Python should follow the same idea.
+
+For Step 6, it is enough to read one complete frame at a time. We do not need a
+full reusable buffered stream parser until the secure channel step.
+
+### Response handling
+
+Auth can return three important message types in this step.
+
+#### `SESSION_KEY_RESP_WITH_DIST_KEY`
+
+This response is used when Python requested a new distribution key.
+
+Expected payload shape:
+
+```text
+encrypted_distribution_key: RSA key size bytes
+distribution_key_signature: RSA key size bytes
+encrypted_session_key_response: remaining bytes
+```
+
+Handling:
+
+1. Split the first `2 * rsa_key_size` bytes.
+2. Verify and decrypt the distribution key with
+   `verify_and_decrypt_from_auth(...)`.
+3. Parse the decrypted distribution-key record with
+   `parse_distribution_key_record(...)`.
+4. Store the result on `ctx.distribution_key`.
+5. Decrypt the remaining response bytes with the distribution key.
+6. Parse the plaintext with `parse_session_key_response_payload(...)`.
+7. Verify the response entity nonce equals the nonce Python generated.
+8. Store every returned session key in `ctx.session_keys`.
+
+#### `SESSION_KEY_RESP`
+
+This response is used when Python already has a valid distribution key.
+
+Handling:
+
+1. Require `ctx.distribution_key`.
+2. Decrypt the response payload with that distribution key.
+3. Parse the plaintext with `parse_session_key_response_payload(...)`.
+4. Verify the response entity nonce.
+5. Store returned session keys in `ctx.session_keys`.
+
+#### `AUTH_ALERT`
+
+Handling:
+
+1. Parse with `parse_auth_alert_payload(...)`.
+2. Raise `AuthProtocolError` with the alert code and a readable message.
+
+Known alert codes from C:
+
+- `INVALID_DISTRIBUTION_KEY`
+- `INVALID_SESSION_KEY_REQ`
+- `UNKNOWN_INTERNAL_ERROR`
+
+If Python does not yet have named constants for those alert codes, Step 6 can
+start by reporting the numeric code.
+
+### Error model additions
+
+Step 6 should add:
+
+- `AuthConnectionError`: TCP connect, read, write, timeout, or early close.
+- `AuthProtocolError`: validly framed Auth message is unexpected or rejected.
+
+`AuthProtocolError` already exists in `exceptions.py`; Step 6 should add
+`AuthConnectionError`.
+
+Suggested behavior:
+
+- Use `AuthConnectionError` for socket-level failures.
+- Use `SerializationError` for malformed frames or malformed payload bytes.
+- Use `AuthProtocolError` for wrong Auth ID, wrong message type, bad nonce, or
+  `AUTH_ALERT`.
+- Use `MessageIntegrityError` for failed signatures, HMACs, AEAD tags, or
+  decrypt-auth failures.
+
+### Tests to add
+
+Unit tests should cover the workflow without requiring a real Auth server:
+
+- `recv_frame` reads a frame whose header and payload arrive in multiple chunks.
+- `recv_frame` rejects payloads larger than `max_payload_size`.
+- `request_session_keys` rejects a first frame that is not `AUTH_HELLO`.
+- `request_session_keys` rejects an `AUTH_HELLO` with the wrong Auth ID.
+- Public-key request mode sends `SESSION_KEY_REQ_IN_PUB_ENC` when
+  `ctx.distribution_key is None`.
+- Distribution-key request mode sends `SESSION_KEY_REQ` when a valid
+  distribution key exists.
+- `SESSION_KEY_RESP_WITH_DIST_KEY` updates `ctx.distribution_key`.
+- Returned session keys are added to `ctx.session_keys`.
+- Response nonce mismatch raises `AuthProtocolError`.
+- `AUTH_ALERT` raises `AuthProtocolError`.
+- Socket timeout or early close raises `AuthConnectionError`.
+
+Integration tests can come after the unit behavior is stable:
+
+- Start or connect to the Java Auth server.
+- Load an existing C-style config.
+- Request one or more session keys.
+- Confirm the returned key IDs and key material are stored in the Python cache.
+
+### Step 6 repo references
+
+Python references from previous steps:
+
+- `entity/python/iotauth/context.py`
+  - `IoTAuthContext`: runtime state to pass into the Auth service.
+- `entity/python/iotauth/messages.py`
+  - `MessageType`
+  - `IoTSPFrame`
+- `entity/python/iotauth/auth_messages.py`
+  - `parse_auth_hello_payload(...)`
+  - `parse_auth_alert_payload(...)`
+  - `SessionKeyRequestPayload`
+  - `serialize_session_key_request_payload(...)`
+  - `parse_distribution_key_record(...)`
+  - `parse_session_key_response_payload(...)`
+- `entity/python/iotauth/crypto.py`
+  - `encrypt_and_sign_for_auth(...)`
+  - `verify_and_decrypt_from_auth(...)`
+  - `encrypt_request_with_distribution_key(...)`
+  - `symmetric_decrypt_authenticate(...)`
+- `entity/python/iotauth/keys.py`
+  - `DistributionKey`
+  - `SessionKey`
+  - `SessionKeyCache.add(...)`
+- `entity/python/iotauth/exceptions.py`
+  - `AuthProtocolError`
+  - `MessageIntegrityError`
+  - `SerializationError`
+
+C references:
+
+- `entity/c/src/c_secure_comm.c`
+  - `send_session_key_req_via_TCP(...)`: main TCP session-key request flow.
+  - `handle_AUTH_HELLO(...)`: Auth hello parsing and request creation.
+  - `send_auth_request_message(...)`: chooses public-key or distribution-key
+    protection.
+  - `save_distribution_key(...)`: verifies and decrypts a new distribution key.
+  - `parse_session_key_response(...)`: parses decrypted session-key responses.
+- `entity/c/src/c_common.c`
+  - `parse_received_message(...)`: message type plus variable-length payload
+    parsing.
+  - `read_header_return_data_buf_pointer(...)`: reads one TCP frame from a
+    stream.
+  - `make_sender_buf(...)`: builds an IoTSP frame for sending.
+- `entity/c/src/c_common.h`
+  - TCP helper declarations and message framing comments.
+
+Node references:
+
+- `entity/node/accessors/node_modules/iotAuthService.js`
+  - `sendSessionKeyReqViaTCP(...)`: Node TCP workflow and fragmented payload
+    handling.
+  - `sendSessionKeyReqHelper(...)`: Auth hello, request selection, response
+    parsing, and nonce verification.
+- `entity/node/accessors/node_modules/common.js`
+  - `serializeIoTSP(...)`
+  - `parseIoTSP(...)`
+
+### Learning notes
+
+Topics worth studying for this step:
+
+- Python `socket` module:
+  <https://docs.python.org/3/library/socket.html>
+- Why TCP is a byte stream, not message-based:
+  <https://docs.python.org/3/howto/sockets.html>
+- `socket.create_connection(...)` for client connections:
+  <https://docs.python.org/3/library/socket.html#socket.create_connection>
+- `secrets.token_bytes(...)` for cryptographic nonces:
+  <https://docs.python.org/3/library/secrets.html#secrets.token_bytes>
+- Context managers with sockets, similar in spirit to making sure C code always
+  closes file descriptors:
+  <https://docs.python.org/3/reference/datamodel.html#context-managers>
+
+### Expected verification command after implementation
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+```
+
+Documentation status:
+
+- Step 6 is documented here.
+
+### Step 6 implementation references
+
+The Step 6 Auth TCP session-key request workflow has now been implemented.
+
+Python files:
+
+- `entity/python/iotauth/auth_service.py`
+  - `request_session_keys(...)`: public Auth workflow that connects to Auth,
+    receives `AUTH_HELLO`, builds the session-key request, sends the protected
+    request frame, parses the response, and stores returned keys in
+    `ctx.session_keys`.
+  - `distribution_key_is_expired(...)`: checks distribution-key absolute
+    validity using epoch milliseconds, matching the C and Node behavior.
+  - `_protect_session_key_request(...)`: chooses
+    `SESSION_KEY_REQ_IN_PUB_ENC` when no valid distribution key exists, or
+    `SESSION_KEY_REQ` when a distribution key can be reused.
+  - `_handle_session_key_response(...)`: handles `SESSION_KEY_RESP`,
+    `SESSION_KEY_RESP_WITH_DIST_KEY`, and `AUTH_ALERT`.
+  - `_decrypt_response_with_new_distribution_key(...)`: verifies/decrypts a new
+    distribution key, stores it on the context, then decrypts the session-key
+    response.
+  - `_decrypt_response_with_existing_distribution_key(...)`: decrypts a response
+    using the cached distribution key.
+- `entity/python/iotauth/transports/tcp.py`
+  - `connect(...)`: opens a TCP connection to Auth.
+  - `send_frame(...)`: serializes and writes one IoTSP frame.
+  - `recv_frame(...)`: reads one complete IoTSP frame from a TCP stream, even
+    when the frame arrives across multiple reads.
+- `entity/python/iotauth/transports/__init__.py`
+  - Exports the TCP transport helpers.
+- `entity/python/iotauth/context.py`
+  - `IoTAuthContext.request_session_keys(...)`: convenience method that
+    delegates to `auth_service.request_session_keys(...)`.
+- `entity/python/iotauth/exceptions.py`
+  - Added `AuthConnectionError` for TCP connect, read, write, timeout, and
+    early-close failures.
+- `entity/python/iotauth/__init__.py`
+  - Exports `request_session_keys`, `distribution_key_is_expired`,
+    `AuthConnectionError`, `send_frame`, and `recv_frame`.
+- `entity/python/tests/test_auth_service.py`
+  - Tests Auth hello validation, request protection-mode selection,
+    `AUTH_ALERT` handling, response nonce validation, new distribution-key
+    storage, session-key cache updates, and the context convenience method.
+- `entity/python/tests/test_tcp_transport.py`
+  - Tests fragmented TCP frame reads, oversized payload rejection, early socket
+    close handling, and frame writes.
+
+Implementation notes:
+
+- Step 6 uses TCP only. UDP remains a later milestone.
+- The TCP path follows the C and Node behavior: connect to Auth and wait for
+  `AUTH_HELLO`; do not send `ENTITY_HELLO` first on TCP.
+- Absolute key validity is interpreted as epoch milliseconds. This matches
+  `check_validity(...)` in C and `new Date(...)` parsing in Node.
+- Unit tests use fake sockets and patched crypto boundaries for protocol-flow
+  cases. Real crypto behavior remains covered by the Step 5 tests.
+- Step 6 still does not implement the entity-to-entity secure channel,
+  handshake, or `SecureChannel.send()` / `SecureChannel.recv()`.
+
+Verification command:
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+```
+
+Current result:
+
+```text
+Ran 74 tests
+OK
+```

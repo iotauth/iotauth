@@ -21,6 +21,10 @@ class SerializationError(IoTAuthError):
     """Raised when binary protocol serialization or parsing fails."""
 
 
+class AuthConnectionError(IoTAuthError):
+    """Raised when TCP communication with Auth fails."""
+
+
 class AuthProtocolError(IoTAuthError):
     """Raised when Auth protocol bytes are valid but semantically unexpected."""
 
