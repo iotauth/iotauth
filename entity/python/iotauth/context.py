@@ -78,3 +78,13 @@ class IoTAuthContext:
             port=port,
             timeout=timeout,
         )
+
+    def accept_secure(
+        self,
+        sock: Any,
+        *,
+        timeout: float | None = 5.0,
+    ) -> Any:
+        from .secure_channel import accept_secure
+
+        return accept_secure(self, sock, timeout=timeout)

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from .auth_messages import NONCE_SIZE
 from .crypto import symmetric_decrypt_authenticate, symmetric_encrypt_authenticate
 from .exceptions import SecureHandshakeError, SerializationError
-from .keys import SessionKey
+from .keys import SESSION_KEY_ID_SIZE, SessionKey
 
 
 HANDSHAKE_NONCE_PRESENT = 0x01
@@ -123,6 +123,56 @@ def verify_handshake_2_and_build_handshake_3(
         HandshakePayload(reply_nonce=payload.nonce)
     )
     return payload.nonce, _encrypt_handshake_payload(key, response_plaintext)
+
+
+def parse_handshake_1_key_id(payload: Buffer) -> bytes:
+    """Extract the session key ID prefix from SKEY_HANDSHAKE_1 payload bytes."""
+
+    view = memoryview(payload)
+    if len(view) < SESSION_KEY_ID_SIZE:
+        raise SerializationError("Handshake 1 payload is missing session key ID")
+    return bytes(view[:SESSION_KEY_ID_SIZE])
+
+
+def verify_handshake_1_and_build_handshake_2(
+    key: SessionKey,
+    handshake_1_payload: bytes,
+    server_nonce: bytes,
+) -> tuple[bytes, bytes]:
+    """Verify SKEY_HANDSHAKE_1 and return ``(client_nonce, handshake2_payload)``."""
+
+    _require_nonce(server_nonce, "server_nonce")
+    key_id = parse_handshake_1_key_id(handshake_1_payload)
+    if key_id != key.id:
+        raise SecureHandshakeError("Handshake 1 session key ID did not match key")
+    encrypted = handshake_1_payload[SESSION_KEY_ID_SIZE:]
+    if not encrypted:
+        raise SerializationError("Handshake 1 payload is missing encrypted bytes")
+
+    plaintext = _decrypt_handshake_payload(key, encrypted)
+    payload = parse_handshake_payload(plaintext)
+    if payload.nonce is None:
+        raise SecureHandshakeError("Handshake 1 is missing client nonce")
+
+    response_plaintext = serialize_handshake_payload(
+        HandshakePayload(nonce=server_nonce, reply_nonce=payload.nonce)
+    )
+    return payload.nonce, _encrypt_handshake_payload(key, response_plaintext)
+
+
+def verify_handshake_3(
+    key: SessionKey,
+    encrypted_handshake_3: bytes,
+    server_nonce: bytes,
+) -> HandshakePayload:
+    """Verify SKEY_HANDSHAKE_3 and return the decrypted handshake payload."""
+
+    _require_nonce(server_nonce, "server_nonce")
+    plaintext = _decrypt_handshake_payload(key, encrypted_handshake_3)
+    payload = parse_handshake_payload(plaintext)
+    if payload.reply_nonce != server_nonce:
+        raise SecureHandshakeError("Handshake 3 reply nonce did not match server nonce")
+    return payload
 
 
 def _encrypt_handshake_payload(key: SessionKey, plaintext: bytes) -> bytes:

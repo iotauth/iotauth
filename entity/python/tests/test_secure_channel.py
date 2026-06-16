@@ -16,6 +16,7 @@ from iotauth import (
     SessionKey,
     SessionKeyCache,
     TargetServer,
+    accept_secure,
     connect_secure,
     parse_frame,
     serialize_frame,
@@ -97,6 +98,12 @@ def context(targets=None):
         distribution_key=None,
         session_keys=SessionKeyCache(),
     )
+
+
+def context_with_key(key):
+    ctx = context()
+    ctx.session_keys.add(key)
+    return ctx
 
 
 def frame(message_type, payload):
@@ -248,6 +255,113 @@ class SecureChannelTests(unittest.TestCase):
             port=None,
             timeout=1.0,
         )
+
+    def test_accept_secure_completes_server_handshake(self):
+        key = session_key()
+        fake = FakeSocket(
+            frame(MessageType.SKEY_HANDSHAKE_1, b"12345678handshake1")
+            + frame(MessageType.SKEY_HANDSHAKE_3, b"handshake3")
+        )
+
+        with patch(
+            "iotauth.secure_channel.verify_handshake_1_and_build_handshake_2",
+            return_value=(CLIENT_NONCE, b"handshake2"),
+        ) as verify_h1, patch(
+            "iotauth.secure_channel.verify_handshake_3",
+            return_value=None,
+        ) as verify_h3:
+            channel = accept_secure(
+                context_with_key(key),
+                fake,
+                _nonce_factory=lambda size: b"s" * 8,
+            )
+
+        self.assertIsInstance(channel, SecureChannel)
+        self.assertIs(channel.socket, fake)
+        self.assertIs(channel.session_key, key)
+        verify_h1.assert_called_once_with(key, b"12345678handshake1", b"s" * 8)
+        verify_h3.assert_called_once_with(key, b"handshake3", b"s" * 8)
+
+        sent = parse_frame(fake.sent[0])
+        self.assertEqual(sent, IoTSPFrame(MessageType.SKEY_HANDSHAKE_2, b"handshake2"))
+        self.assertFalse(fake.closed)
+
+    def test_accept_secure_unknown_session_key_raises_handshake_error(self):
+        fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_1, b"87654321handshake1"))
+
+        with self.assertRaisesRegex(SecureHandshakeError, "not found"):
+            accept_secure(
+                context(),
+                fake,
+                _nonce_factory=lambda size: b"s" * 8,
+            )
+
+        self.assertTrue(fake.closed)
+
+    def test_accept_secure_wrong_first_frame_type_raises_handshake_error(self):
+        fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_2, b"payload"))
+
+        with self.assertRaisesRegex(SecureHandshakeError, "SKEY_HANDSHAKE_1"):
+            accept_secure(
+                context_with_key(session_key()),
+                fake,
+                _nonce_factory=lambda size: b"s" * 8,
+            )
+
+        self.assertTrue(fake.closed)
+
+    def test_accept_secure_wrong_third_frame_type_raises_handshake_error(self):
+        key = session_key()
+        fake = FakeSocket(
+            frame(MessageType.SKEY_HANDSHAKE_1, b"12345678handshake1")
+            + frame(MessageType.AUTH_ALERT, b"\x01")
+        )
+
+        with patch(
+            "iotauth.secure_channel.verify_handshake_1_and_build_handshake_2",
+            return_value=(CLIENT_NONCE, b"handshake2"),
+        ):
+            with self.assertRaisesRegex(SecureHandshakeError, "SKEY_HANDSHAKE_3"):
+                accept_secure(
+                    context_with_key(key),
+                    fake,
+                    _nonce_factory=lambda size: b"s" * 8,
+                )
+
+        self.assertTrue(fake.closed)
+
+    def test_accept_secure_expired_session_key_raises(self):
+        key = session_key(abs_validity=1000)
+        fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_1, b"12345678handshake1"))
+
+        with self.assertRaises(ExpiredKeyError):
+            accept_secure(
+                context_with_key(key),
+                fake,
+                _nonce_factory=lambda size: b"s" * 8,
+            )
+
+        self.assertTrue(fake.closed)
+
+    def test_accept_secure_tcp_early_close_raises_auth_connection_error(self):
+        fake = FakeSocket()
+
+        with self.assertRaises(AuthConnectionError):
+            accept_secure(
+                context_with_key(session_key()),
+                fake,
+                _nonce_factory=lambda size: b"s" * 8,
+            )
+
+        self.assertTrue(fake.closed)
+
+    def test_accept_secure_context_convenience_method_delegates(self):
+        ctx = context()
+        fake = FakeSocket()
+        with patch("iotauth.secure_channel.accept_secure", return_value="channel") as acc:
+            self.assertEqual(ctx.accept_secure(fake, timeout=1.0), "channel")
+
+        acc.assert_called_once_with(ctx, fake, timeout=1.0)
 
 
 if __name__ == "__main__":

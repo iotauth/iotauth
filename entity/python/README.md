@@ -2247,7 +2247,7 @@ When implementation begins, keep examples small and runnable:
 
 ## Current status
 
-Steps 1 through 7 now have implementation and tests. The API is still growing
+Steps 1 through 8 now have implementation and tests. The API is still growing
 step by step, so the sections above should be treated as both design notes and
 learning notes for the current implementation.
 
@@ -3281,5 +3281,415 @@ Current result:
 
 ```text
 Ran 94 tests
+OK
+```
+
+## Step 8: TCP secure server handshake design
+
+After Step 7, Python can act as a secure TCP client: it can use a cached session
+key, connect to another entity, and complete `SKEY_HANDSHAKE_1`,
+`SKEY_HANDSHAKE_2`, and `SKEY_HANDSHAKE_3` from the client side.
+
+Step 8 should implement the server-side counterpart. The Python API should be
+able to accept one already-connected TCP socket, complete the secure handshake
+using a cached session key, and return a `SecureChannel`.
+
+This step should still not implement encrypted application messages,
+`SecureChannel.send()`, `SecureChannel.recv()`, or a full `SecureServer`
+listener loop. Those should follow once both sides can create a channel.
+
+### Goal
+
+At the end of Step 8, application or test code should be able to do this:
+
+```python
+ctx = IoTAuthContext.from_config("entity/python/examples/configs/server.config")
+
+client_socket, address = listening_socket.accept()
+channel = accept_secure(ctx, client_socket)
+```
+
+The returned `SecureChannel` should contain:
+
+- the accepted socket,
+- the session key selected by handshake 1's key ID,
+- send and receive sequence counters initialized to zero,
+- `closed=False`.
+
+### Why this comes next
+
+Step 7 lets Python initiate a secure connection. Step 8 lets Python answer one.
+Together, they complete the minimum entity-to-entity handshake foundation:
+
+- Python client to Python server in tests.
+- Python client to C/Node server later.
+- C/Node client to Python server later.
+
+This is the server-side version of the same challenge-response proof:
+
+1. Server receives handshake 1.
+2. Server reads the session key ID.
+3. Server finds the matching session key.
+4. Server decrypts the client's nonce.
+5. Server sends its own nonce and echoes the client nonce.
+6. Server receives handshake 3.
+7. Server verifies that the client echoed the server nonce.
+
+### Scope for Step 8
+
+Step 8 should include:
+
+- Server-side handshake 1 parser/verifier.
+- Server-side handshake 2 builder.
+- Server-side handshake 3 verifier.
+- `accept_secure(...)` helper that performs the server-side handshake on an
+  already-connected socket.
+- Session-key lookup from `ctx.session_keys` using the key ID included in
+  handshake 1.
+- Minimal tests proving Step 7's client helper and Step 8's server helper can
+  interoperate through fake sockets or an in-memory socket pair.
+
+Step 8 should not include:
+
+- A long-running `SecureServer.serve_forever()` loop.
+- Threading or async connection management.
+- Server-side key-ID request to Auth when a key is missing.
+- Encrypted application data frames.
+- Sequence-number validation.
+- Diffie-Hellman session-key derivation.
+
+### C mental model
+
+The C server-side flow is in `entity/c/src/c_api.c`:
+
+```c
+server_secure_comm_setup(...)
+```
+
+That function:
+
+1. Reads `SKEY_HANDSHAKE_1`.
+2. Extracts the session key ID from the first 8 payload bytes.
+3. Looks up the matching session key.
+4. Calls `check_handshake1_send_handshake2(...)`.
+5. Sends `SKEY_HANDSHAKE_2`.
+6. Reads `SKEY_HANDSHAKE_3`.
+7. Decrypts and parses handshake 3.
+8. Verifies `reply_nonce == server_nonce`.
+9. Copies the selected session key into the session context.
+10. Switches to `IN_COMM`.
+
+The lower-level C helper is in `entity/c/src/c_secure_comm.c`:
+
+```c
+check_handshake1_send_handshake2(...)
+```
+
+That helper decrypts handshake 1, parses the client's nonce, generates the
+server nonce, serializes handshake 2, and encrypts it with the selected session
+key.
+
+### Node mental model
+
+The Node server flow is split between:
+
+- `entity/node/accessors/node_modules/iotSecureServer.js`
+- `entity/node/accessors/SecureCommServer.js`
+
+The important behavior is:
+
+1. `SKEY_HANDSHAKE_1` arrives.
+2. `SecureCommServer.js` reads the key ID from the first 8 bytes.
+3. If the key is cached, it calls `sendHandshake2(...)`.
+4. `sendHandshake2(...)` decrypts the rest of handshake 1.
+5. It sends `SKEY_HANDSHAKE_2` with server nonce and client reply nonce.
+6. Later it receives `SKEY_HANDSHAKE_3`.
+7. It verifies the client's reply nonce equals the server nonce.
+
+Python Step 8 should match this behavior for the cached-key path. The cache-miss
+path, where the server asks Auth for the key by ID, should remain a later step.
+
+### Proposed Python module changes
+
+Step 8 should build on the files introduced in Step 7:
+
+```text
+entity/python/iotauth/
+  handshake.py
+  secure_channel.py
+```
+
+Suggested additions to `handshake.py`:
+
+- `parse_handshake_1_key_id(payload) -> bytes`
+- `verify_handshake_1_and_build_handshake_2(key, payload, server_nonce)`
+- `verify_handshake_3(key, encrypted_handshake_3, server_nonce)`
+
+Suggested additions to `secure_channel.py`:
+
+- `accept_secure(ctx, sock, timeout=5.0) -> SecureChannel`
+- Optional helper `_lookup_session_key(ctx, key_id)`
+
+Step 8 should reuse:
+
+- `recv_frame(...)`
+- `send_frame(...)`
+- `parse_handshake_payload(...)`
+- `serialize_handshake_payload(...)`
+- `symmetric_encrypt_authenticate(...)`
+- `symmetric_decrypt_authenticate(...)`
+- `SecureChannel`
+- `session_key_is_expired(...)`
+
+### Proposed public API
+
+Initial API:
+
+```python
+from iotauth import accept_secure
+
+channel = accept_secure(ctx, client_socket)
+```
+
+Future higher-level server API:
+
+```python
+server = SecureServer(ctx)
+server.serve_forever()
+```
+
+The higher-level server should wait until after Step 8, because first we need a
+well-tested single-connection handshake primitive.
+
+### Server handshake flow
+
+`accept_secure(...)` should do:
+
+1. Read one IoTSP frame from the socket.
+2. Require `frame.message_type == MessageType.SKEY_HANDSHAKE_1`.
+3. Require the payload to be at least `SESSION_KEY_ID_SIZE + encrypted bytes`.
+4. Extract `key_id = payload[:8]`.
+5. Look up `key = ctx.session_keys.require(key_id)`.
+6. Reject the key if expired.
+7. Decrypt `payload[8:]` with the selected session key.
+8. Parse handshake 1 and require `nonce` to be present.
+9. Generate `server_nonce = secrets.token_bytes(8)`.
+10. Serialize handshake 2 with `nonce=server_nonce` and
+    `reply_nonce=client_nonce`.
+11. Encrypt handshake 2 with the selected session key.
+12. Send `SKEY_HANDSHAKE_2`.
+13. Read the next IoTSP frame.
+14. Require `frame.message_type == MessageType.SKEY_HANDSHAKE_3`.
+15. Decrypt and parse handshake 3.
+16. Require `reply_nonce == server_nonce`.
+17. Reject if the key expired during the handshake.
+18. Return `SecureChannel(socket=sock, session_key=key)`.
+
+### Error behavior
+
+Step 8 should use the same exceptions introduced earlier:
+
+- `AuthConnectionError`: socket read/write/early-close failure.
+- `SerializationError`: malformed frame or malformed handshake bytes.
+- `MessageIntegrityError`: encrypted handshake payload fails decrypt/MAC.
+- `SecureHandshakeError`: wrong message type, missing key ID, unknown key ID,
+  missing nonce, nonce mismatch, or invalid handshake state.
+- `ExpiredKeyError`: selected session key is expired.
+
+Open choice:
+
+- `SessionKeyCache.require(...)` currently raises `KeyCacheError` when the key
+  is missing. For Step 8, `accept_secure(...)` can catch that and raise
+  `SecureHandshakeError`, because from the handshake caller's point of view this
+  is a protocol failure.
+
+### Key-ID cache miss
+
+C and Node both have plans for server-side cache misses:
+
+- If the server does not have the requested session key, ask Auth for a session
+  key by ID.
+- Then continue the handshake.
+
+Step 8 should not implement that. The first server handshake should require the
+key to already exist in `ctx.session_keys`. This keeps the implementation small
+and testable. A later step can add "request by key ID" once the basic server
+handshake works.
+
+### Tests to add
+
+Handshake helper tests:
+
+- Extract key ID from handshake 1 payload.
+- Reject handshake 1 payload shorter than 8 bytes.
+- Verify handshake 1 decrypts and returns the client nonce.
+- Build handshake 2 with server nonce and client reply nonce.
+- Verify handshake 3 accepts matching `reply_nonce`.
+- Verify handshake 3 rejects nonce mismatch.
+
+Server accept tests with fake sockets:
+
+- `accept_secure(...)` reads `SKEY_HANDSHAKE_1`, sends `SKEY_HANDSHAKE_2`, reads
+  `SKEY_HANDSHAKE_3`, and returns `SecureChannel`.
+- Unknown session key ID raises `SecureHandshakeError`.
+- Wrong first frame type raises `SecureHandshakeError`.
+- Wrong third frame type raises `SecureHandshakeError`.
+- Expired session key raises `ExpiredKeyError`.
+- TCP early close raises `AuthConnectionError`.
+- Failed handshake closes the socket or leaves closure behavior clearly
+  documented.
+
+Interoperability-style unit test:
+
+- Use Step 7 client helper and Step 8 server helper with a socket pair or a fake
+  duplex socket to prove the generated handshake messages are compatible.
+
+Crypto-backed tests:
+
+- Build handshake 1 with a real session key and verify the server-side helper
+  decrypts it.
+- Build handshake 2 and verify Step 7's client-side helper accepts it.
+- Build handshake 3 and verify Step 8's server-side helper accepts it.
+- Tamper with handshake 3 and expect `MessageIntegrityError`.
+
+### Step 8 repo references
+
+Python references from previous steps:
+
+- `entity/python/iotauth/handshake.py`
+  - `HandshakePayload`
+  - `serialize_handshake_payload(...)`
+  - `parse_handshake_payload(...)`
+  - `build_handshake_1(...)`
+  - `verify_handshake_2_and_build_handshake_3(...)`
+- `entity/python/iotauth/secure_channel.py`
+  - `SecureChannel`
+  - `connect_secure(...)`
+  - `session_key_is_expired(...)`
+- `entity/python/iotauth/keys.py`
+  - `SessionKey`
+  - `SessionKeyCache.require(...)`
+- `entity/python/iotauth/messages.py`
+  - `MessageType.SKEY_HANDSHAKE_1`
+  - `MessageType.SKEY_HANDSHAKE_2`
+  - `MessageType.SKEY_HANDSHAKE_3`
+  - `IoTSPFrame`
+- `entity/python/iotauth/transports/tcp.py`
+  - `recv_frame(...)`
+  - `send_frame(...)`
+- `entity/python/iotauth/exceptions.py`
+  - `AuthConnectionError`
+  - `SecureHandshakeError`
+  - `ExpiredKeyError`
+  - `MessageIntegrityError`
+  - `SerializationError`
+
+C references:
+
+- `entity/c/src/c_api.c`
+  - `server_secure_comm_setup(...)`: server-side secure handshake.
+- `entity/c/src/c_secure_comm.c`
+  - `check_handshake1_send_handshake2(...)`: decrypts handshake 1 and builds
+    handshake 2.
+- `entity/c/src/c_common.c`
+  - `serialize_handshake(...)`
+  - `parse_handshake(...)`
+- `entity/c/src/c_common.h`
+  - `SKEY_HANDSHAKE_1`
+  - `SKEY_HANDSHAKE_2`
+  - `SKEY_HANDSHAKE_3`
+  - `HS_NONCE_SIZE`
+
+Node references:
+
+- `entity/node/accessors/node_modules/iotSecureServer.js`
+  - `secureServerHelper(...)`
+  - `sendHandshake2(...)`
+- `entity/node/accessors/SecureCommServer.js`
+  - `onClientRequest(...)`: extracts key ID and handles the cached-key path.
+- `entity/node/accessors/node_modules/common.js`
+  - `serializeHandshake(...)`
+  - `parseHandshake(...)`
+
+### Learning notes
+
+Topics worth studying for this step:
+
+- TCP server sockets and `accept()`:
+  <https://docs.python.org/3/library/socket.html#socket.socket.accept>
+- Why server code is usually split into "accept connection" and "handle one
+  connection" pieces.
+- Cache lookup and error translation: low-level cache miss vs protocol-level
+  handshake failure.
+- Designing symmetric protocol tests where a client helper and server helper
+  validate each other.
+
+### Expected verification command after implementation
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+```
+
+Documentation status:
+
+- Step 8 is documented here.
+
+### Step 8 implementation references
+
+The Step 8 TCP secure server handshake layer has now been implemented.
+
+Python files:
+
+- `entity/python/iotauth/handshake.py`
+  - `parse_handshake_1_key_id(...)`: extracts the 8-byte session key ID prefix
+    from `SKEY_HANDSHAKE_1`.
+  - `verify_handshake_1_and_build_handshake_2(...)`: decrypts handshake 1,
+    verifies that it contains the client nonce, and builds encrypted
+    handshake 2 with the server nonce plus client reply nonce.
+  - `verify_handshake_3(...)`: decrypts handshake 3 and verifies that the
+    client echoed the server nonce.
+- `entity/python/iotauth/secure_channel.py`
+  - `accept_secure(...)`: completes the server-side handshake on an already
+    accepted TCP socket and returns `SecureChannel`.
+  - `_lookup_session_key(...)`: looks up the requested key ID in
+    `ctx.session_keys` and translates cache misses into `SecureHandshakeError`.
+  - Reuses `SecureChannel`, `session_key_is_expired(...)`, `recv_frame(...)`,
+    and `send_frame(...)` from previous steps.
+- `entity/python/iotauth/context.py`
+  - `IoTAuthContext.accept_secure(...)`: convenience method that delegates to
+    `secure_channel.accept_secure(...)`.
+- `entity/python/iotauth/__init__.py`
+  - Exports `accept_secure`, `parse_handshake_1_key_id(...)`,
+    `verify_handshake_1_and_build_handshake_2(...)`, and
+    `verify_handshake_3(...)`.
+- `entity/python/tests/test_handshake.py`
+  - Tests key-ID extraction, short handshake 1 rejection, handshake 1
+    verification, handshake 2 construction, handshake 3 verification, nonce
+    mismatch handling, and client/server crypto-backed helper compatibility.
+- `entity/python/tests/test_secure_channel.py`
+  - Tests `accept_secure(...)` success, unknown session key ID, wrong first
+    frame type, wrong third frame type, expired key handling, TCP early-close
+    handling, and the context convenience method.
+
+Implementation notes:
+
+- Step 8 implements the cached-key server handshake path only.
+- If the requested session key ID is not in `ctx.session_keys`, Python raises
+  `SecureHandshakeError`.
+- Server-side "request session key by key ID from Auth" remains a later step.
+- `accept_secure(...)` closes the accepted socket if the handshake fails.
+- `SecureChannel` is still a minimal state object. Encrypted
+  `SecureChannel.send(...)` and `SecureChannel.recv(...)` are still future work.
+
+Verification command:
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+```
+
+Current result:
+
+```text
+Ran 108 tests
 OK
 ```

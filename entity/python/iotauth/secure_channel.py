@@ -11,8 +11,14 @@ from typing import Any
 from .auth_messages import NONCE_SIZE
 from .config import TargetServer
 from .context import IoTAuthContext
-from .exceptions import ConfigError, ExpiredKeyError, SecureHandshakeError
-from .handshake import build_handshake_1, verify_handshake_2_and_build_handshake_3
+from .exceptions import ConfigError, ExpiredKeyError, KeyCacheError, SecureHandshakeError
+from .handshake import (
+    build_handshake_1,
+    parse_handshake_1_key_id,
+    verify_handshake_1_and_build_handshake_2,
+    verify_handshake_2_and_build_handshake_3,
+    verify_handshake_3,
+)
 from .keys import SessionKey
 from .messages import IoTSPFrame, MessageType
 from .transports.tcp import connect, recv_frame, send_frame
@@ -89,6 +95,54 @@ def connect_secure(
         raise
 
 
+def accept_secure(
+    ctx: IoTAuthContext,
+    sock: Any,
+    *,
+    timeout: float | None = 5.0,
+    _nonce_factory: NonceFactory = secrets.token_bytes,
+) -> SecureChannel:
+    """Complete the server-side secure handshake on an accepted TCP socket."""
+
+    if timeout is not None and hasattr(sock, "settimeout"):
+        sock.settimeout(timeout)
+    try:
+        handshake_1 = recv_frame(sock)
+        if handshake_1.message_type != MessageType.SKEY_HANDSHAKE_1:
+            raise SecureHandshakeError(
+                f"Expected SKEY_HANDSHAKE_1, received {handshake_1.message_type.name}"
+            )
+
+        key_id = parse_handshake_1_key_id(handshake_1.payload)
+        key = _lookup_session_key(ctx, key_id)
+        _check_session_key_validity(key)
+
+        server_nonce = _nonce_factory(NONCE_SIZE)
+        if len(server_nonce) != NONCE_SIZE:
+            raise SecureHandshakeError(
+                f"server nonce factory must return {NONCE_SIZE} bytes"
+            )
+
+        _, handshake_2_payload = verify_handshake_1_and_build_handshake_2(
+            key,
+            handshake_1.payload,
+            server_nonce,
+        )
+        send_frame(sock, IoTSPFrame(MessageType.SKEY_HANDSHAKE_2, handshake_2_payload))
+
+        handshake_3 = recv_frame(sock)
+        if handshake_3.message_type != MessageType.SKEY_HANDSHAKE_3:
+            raise SecureHandshakeError(
+                f"Expected SKEY_HANDSHAKE_3, received {handshake_3.message_type.name}"
+            )
+        verify_handshake_3(key, handshake_3.payload, server_nonce)
+        _check_session_key_validity(key)
+        return SecureChannel(socket=sock, session_key=key)
+    except Exception:
+        _close_socket(sock)
+        raise
+
+
 def session_key_is_expired(key: SessionKey, *, now_ms: int | None = None) -> bool:
     if key.abs_validity is None:
         return False
@@ -136,6 +190,15 @@ def _open_socket(
 def _check_session_key_validity(key: SessionKey) -> None:
     if session_key_is_expired(key):
         raise ExpiredKeyError(f"Session key is expired: {key.id.hex()}")
+
+
+def _lookup_session_key(ctx: IoTAuthContext, key_id: bytes) -> SessionKey:
+    try:
+        return ctx.session_keys.require(key_id)
+    except KeyCacheError as exc:
+        raise SecureHandshakeError(
+            f"Session key not found for handshake: {key_id.hex()}"
+        ) from exc
 
 
 def _close_socket(sock: Any) -> None:

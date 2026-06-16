@@ -46,9 +46,12 @@ from .handshake import (
     HANDSHAKE_REPLY_NONCE_PRESENT,
     HandshakePayload,
     build_handshake_1,
+    parse_handshake_1_key_id,
     parse_handshake_payload,
     serialize_handshake_payload,
+    verify_handshake_1_and_build_handshake_2,
     verify_handshake_2_and_build_handshake_3,
+    verify_handshake_3,
 )
 from .crypto import (
     decrypt_request_with_distribution_key,
@@ -72,11 +75,17 @@ from .serialization import (
     parse_frame,
     serialize_frame,
 )
-from .secure_channel import SecureChannel, connect_secure, session_key_is_expired
+from .secure_channel import (
+    SecureChannel,
+    accept_secure,
+    connect_secure,
+    session_key_is_expired,
+)
 from .transports.tcp import recv_frame, send_frame
 
 __all__ = [
     "AUTH_ID_SIZE",
+    "accept_secure",
     "AuthConnectionError",
     "AuthAlertPayload",
     "AuthHelloPayload",
@@ -116,6 +125,7 @@ __all__ = [
     "parse_buffered_string",
     "parse_distribution_key_record",
     "parse_frame",
+    "parse_handshake_1_key_id",
     "parse_handshake_payload",
     "parse_session_key_record",
     "parse_session_key_response_payload",
@@ -143,7 +153,9 @@ __all__ = [
     "TargetServer",
     "UnsupportedCryptoError",
     "verify_and_decrypt_from_auth",
+    "verify_handshake_1_and_build_handshake_2",
     "verify_handshake_2_and_build_handshake_3",
+    "verify_handshake_3",
     "verify_sha256",
     "load_config",
 ]
