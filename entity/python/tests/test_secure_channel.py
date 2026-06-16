@@ -7,11 +7,15 @@ from iotauth import (
     EntityConfig,
     EntityInfo,
     ExpiredKeyError,
+    InvalidSequenceNumberError,
     IoTAuthContext,
     IoTSPFrame,
+    MessageIntegrityError,
     MessageType,
+    SecureChannelClosed,
     SecureChannel,
     SecureHandshakeError,
+    SerializationError,
     SessionConfig,
     SessionKey,
     SessionKeyCache,
@@ -21,6 +25,13 @@ from iotauth import (
     parse_frame,
     serialize_frame,
     session_key_is_expired,
+    symmetric_encrypt_authenticate,
+    symmetric_decrypt_authenticate,
+)
+from iotauth.secure_channel import (
+    MAX_SEQUENCE_NUMBER,
+    _parse_secure_message,
+    _serialize_secure_message,
 )
 
 
@@ -49,6 +60,11 @@ class FakeSocket:
 
     def close(self):
         self.closed = True
+
+
+class FailingSendSocket(FakeSocket):
+    def sendall(self, data):
+        raise OSError("write failed")
 
 
 def socket_factory_for(fake_socket):
@@ -362,6 +378,170 @@ class SecureChannelTests(unittest.TestCase):
             self.assertEqual(ctx.accept_secure(fake, timeout=1.0), "channel")
 
         acc.assert_called_once_with(ctx, fake, timeout=1.0)
+
+    def test_serializes_and_parses_secure_message_plaintext(self):
+        plaintext = _serialize_secure_message(0, b"hello")
+
+        self.assertEqual(plaintext[:8], b"\x00" * 8)
+        self.assertEqual(_parse_secure_message(plaintext), (0, b"hello"))
+
+    def test_rejects_short_secure_message_plaintext(self):
+        with self.assertRaisesRegex(SerializationError, "sequence"):
+            _parse_secure_message(b"short")
+
+    def test_rejects_sequence_number_overflow(self):
+        with self.assertRaises(InvalidSequenceNumberError):
+            _serialize_secure_message(MAX_SEQUENCE_NUMBER + 1, b"payload")
+
+    def test_send_writes_secure_comm_message_and_increments_sequence(self):
+        key = session_key()
+        fake = FakeSocket()
+        channel = SecureChannel(fake, key)
+
+        channel.send(b"hello")
+
+        sent = parse_frame(fake.sent[0])
+        self.assertEqual(sent.message_type, MessageType.SECURE_COMM_MSG)
+        decrypted = symmetric_decrypt_authenticate(
+            sent.payload,
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
+        self.assertEqual(_parse_secure_message(decrypted), (0, b"hello"))
+        self.assertEqual(channel.send_sequence, 1)
+
+    def test_failed_send_does_not_increment_sequence(self):
+        channel = SecureChannel(FailingSendSocket(), session_key())
+
+        with self.assertRaises(AuthConnectionError):
+            channel.send(b"hello")
+
+        self.assertEqual(channel.send_sequence, 0)
+
+    def test_send_after_close_raises_channel_closed(self):
+        channel = SecureChannel(FakeSocket(), session_key())
+        channel.close()
+
+        with self.assertRaises(SecureChannelClosed):
+            channel.send(b"hello")
+
+    def test_send_with_expired_key_raises(self):
+        channel = SecureChannel(FakeSocket(), session_key(abs_validity=1000))
+
+        with self.assertRaises(ExpiredKeyError):
+            channel.send(b"hello")
+
+    def test_recv_decrypts_secure_comm_message_and_increments_sequence(self):
+        key = session_key()
+        encrypted = symmetric_encrypt_authenticate(
+            _serialize_secure_message(0, b"hello"),
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
+        channel = SecureChannel(
+            FakeSocket(frame(MessageType.SECURE_COMM_MSG, encrypted)),
+            key,
+        )
+
+        self.assertEqual(channel.recv(), b"hello")
+        self.assertEqual(channel.receive_sequence, 1)
+
+    def test_recv_rejects_wrong_message_type(self):
+        channel = SecureChannel(FakeSocket(frame(MessageType.AUTH_ALERT, b"\x01")), session_key())
+
+        with self.assertRaisesRegex(SerializationError, "SECURE_COMM_MSG"):
+            channel.recv()
+
+    def test_recv_rejects_sequence_mismatch(self):
+        key = session_key()
+        encrypted = symmetric_encrypt_authenticate(
+            _serialize_secure_message(1, b"hello"),
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
+        channel = SecureChannel(
+            FakeSocket(frame(MessageType.SECURE_COMM_MSG, encrypted)),
+            key,
+        )
+
+        with self.assertRaises(InvalidSequenceNumberError):
+            channel.recv()
+        self.assertEqual(channel.receive_sequence, 0)
+
+    def test_recv_rejects_tampered_payload(self):
+        key = session_key()
+        encrypted = symmetric_encrypt_authenticate(
+            _serialize_secure_message(0, b"hello"),
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
+        tampered = encrypted[:-1] + bytes([encrypted[-1] ^ 1])
+        channel = SecureChannel(
+            FakeSocket(frame(MessageType.SECURE_COMM_MSG, tampered)),
+            key,
+        )
+
+        with self.assertRaises(MessageIntegrityError):
+            channel.recv()
+
+    def test_recv_after_close_raises_channel_closed(self):
+        channel = SecureChannel(FakeSocket(), session_key())
+        channel.close()
+
+        with self.assertRaises(SecureChannelClosed):
+            channel.recv()
+
+    def test_recv_with_expired_key_raises(self):
+        key = session_key(abs_validity=1000)
+        encrypted = symmetric_encrypt_authenticate(
+            _serialize_secure_message(0, b"hello"),
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
+        channel = SecureChannel(
+            FakeSocket(frame(MessageType.SECURE_COMM_MSG, encrypted)),
+            key,
+        )
+
+        with self.assertRaises(ExpiredKeyError):
+            channel.recv()
+
+    def test_recv_translates_early_close_to_channel_closed(self):
+        channel = SecureChannel(FakeSocket(), session_key())
+
+        with self.assertRaises(SecureChannelClosed):
+            channel.recv()
+        self.assertTrue(channel.closed)
+
+    def test_secure_channel_round_trip_updates_independent_counters(self):
+        key = session_key()
+        client_socket = FakeSocket()
+        server_socket = FakeSocket()
+        client = SecureChannel(client_socket, key)
+        server = SecureChannel(server_socket, key)
+
+        client.send(b"hello")
+        server_socket.incoming.extend(client_socket.sent.pop(0))
+        self.assertEqual(server.recv(), b"hello")
+
+        server.send(b"ack")
+        client_socket.incoming.extend(server_socket.sent.pop(0))
+        self.assertEqual(client.recv(), b"ack")
+
+        self.assertEqual(client.send_sequence, 1)
+        self.assertEqual(client.receive_sequence, 1)
+        self.assertEqual(server.send_sequence, 1)
+        self.assertEqual(server.receive_sequence, 1)
 
 
 if __name__ == "__main__":

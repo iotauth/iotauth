@@ -11,7 +11,17 @@ from typing import Any
 from .auth_messages import NONCE_SIZE
 from .config import TargetServer
 from .context import IoTAuthContext
-from .exceptions import ConfigError, ExpiredKeyError, KeyCacheError, SecureHandshakeError
+from .crypto import symmetric_decrypt_authenticate, symmetric_encrypt_authenticate
+from .exceptions import (
+    AuthConnectionError,
+    ConfigError,
+    ExpiredKeyError,
+    InvalidSequenceNumberError,
+    KeyCacheError,
+    SecureChannelClosed,
+    SecureHandshakeError,
+    SerializationError,
+)
 from .handshake import (
     build_handshake_1,
     parse_handshake_1_key_id,
@@ -21,11 +31,14 @@ from .handshake import (
 )
 from .keys import SessionKey
 from .messages import IoTSPFrame, MessageType
+from .serialization import decode_uint_be, encode_uint_be
 from .transports.tcp import connect, recv_frame, send_frame
 
 
 SocketFactory = Callable[[str, int, float | None], Any]
 NonceFactory = Callable[[int], bytes]
+SEQ_NUM_SIZE = 8
+MAX_SEQUENCE_NUMBER = (1 << (SEQ_NUM_SIZE * 8)) - 1
 
 
 @dataclass
@@ -36,12 +49,44 @@ class SecureChannel:
     receive_sequence: int = 0
     closed: bool = False
 
+    def send(self, data: bytes) -> None:
+        _ensure_channel_open(self)
+        _check_session_key_validity(self.session_key)
+        payload = _coerce_payload(data)
+        encrypted = _encrypt_secure_message(self, payload)
+        send_frame(self.socket, IoTSPFrame(MessageType.SECURE_COMM_MSG, encrypted))
+        self.send_sequence += 1
+
+    def recv(self) -> bytes:
+        _ensure_channel_open(self)
+        try:
+            frame = recv_frame(self.socket)
+        except AuthConnectionError as exc:
+            if "closed" in str(exc).lower():
+                self.close()
+                raise SecureChannelClosed(
+                    "Secure channel closed while receiving"
+                ) from exc
+            raise
+        if frame.message_type != MessageType.SECURE_COMM_MSG:
+            raise SerializationError(
+                f"Expected SECURE_COMM_MSG, received {frame.message_type.name}"
+            )
+
+        payload = _decrypt_secure_message(self, frame.payload)
+        _check_session_key_validity(self.session_key)
+        self.receive_sequence += 1
+        return payload
+
     def close(self) -> None:
         if self.closed:
             return
         close = getattr(self.socket, "close", None)
         if close is not None:
-            close()
+            try:
+                close()
+            except OSError:
+                pass
         self.closed = True
 
 
@@ -151,6 +196,47 @@ def session_key_is_expired(key: SessionKey, *, now_ms: int | None = None) -> boo
     return now_ms >= key.abs_validity
 
 
+def _serialize_secure_message(sequence: int, data: bytes) -> bytes:
+    if sequence > MAX_SEQUENCE_NUMBER:
+        raise InvalidSequenceNumberError("Secure message sequence number overflow")
+    return encode_uint_be(sequence, SEQ_NUM_SIZE) + data
+
+
+def _parse_secure_message(plaintext: bytes) -> tuple[int, bytes]:
+    if len(plaintext) < SEQ_NUM_SIZE:
+        raise SerializationError("Secure message is missing sequence number")
+    sequence = decode_uint_be(plaintext[:SEQ_NUM_SIZE])
+    return sequence, plaintext[SEQ_NUM_SIZE:]
+
+
+def _encrypt_secure_message(channel: SecureChannel, data: bytes) -> bytes:
+    plaintext = _serialize_secure_message(channel.send_sequence, data)
+    return symmetric_encrypt_authenticate(
+        plaintext,
+        channel.session_key.cipher_key,
+        channel.session_key.mac_key,
+        channel.session_key.encryption_mode,
+        channel.session_key.hmac_enabled,
+    )
+
+
+def _decrypt_secure_message(channel: SecureChannel, encrypted: bytes) -> bytes:
+    plaintext = symmetric_decrypt_authenticate(
+        encrypted,
+        channel.session_key.cipher_key,
+        channel.session_key.mac_key,
+        channel.session_key.encryption_mode,
+        channel.session_key.hmac_enabled,
+    )
+    sequence, payload = _parse_secure_message(plaintext)
+    if sequence != channel.receive_sequence:
+        raise InvalidSequenceNumberError(
+            "Secure message sequence number mismatch: "
+            f"expected {channel.receive_sequence}, got {sequence}"
+        )
+    return payload
+
+
 def _resolve_target(
     ctx: IoTAuthContext,
     *,
@@ -190,6 +276,18 @@ def _open_socket(
 def _check_session_key_validity(key: SessionKey) -> None:
     if session_key_is_expired(key):
         raise ExpiredKeyError(f"Session key is expired: {key.id.hex()}")
+
+
+def _ensure_channel_open(channel: SecureChannel) -> None:
+    if channel.closed:
+        raise SecureChannelClosed("Secure channel is closed")
+
+
+def _coerce_payload(data: bytes) -> bytes:
+    try:
+        return bytes(data)
+    except TypeError as exc:
+        raise SerializationError("SecureChannel payload must be bytes-like") from exc
 
 
 def _lookup_session_key(ctx: IoTAuthContext, key_id: bytes) -> SessionKey:

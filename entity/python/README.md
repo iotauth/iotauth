@@ -2247,7 +2247,7 @@ When implementation begins, keep examples small and runnable:
 
 ## Current status
 
-Steps 1 through 8 now have implementation and tests. The API is still growing
+Steps 1 through 9 now have implementation and tests. The API is still growing
 step by step, so the sections above should be treated as both design notes and
 learning notes for the current implementation.
 
@@ -3691,5 +3691,450 @@ Current result:
 
 ```text
 Ran 108 tests
+OK
+```
+
+## Step 9: SecureChannel message send/receive design
+
+After Steps 7 and 8, Python can create a `SecureChannel` from either side of a
+TCP connection:
+
+- Client side: `connect_secure(ctx, key=...)`
+- Server side: `accept_secure(ctx, sock)`
+
+But the channel is still only a state object. Step 9 should make
+`SecureChannel` useful by adding encrypted application-data messages:
+
+```python
+channel.send(b"hello")
+reply = channel.recv()
+```
+
+This step should implement `SECURE_COMM_MSG` send/receive with sequence-number
+protection. It should not yet implement a long-running server loop, examples,
+asyncio, UDP, or graceful `FIN_SECURE_COMM` close behavior beyond basic local
+socket close.
+
+### Goal
+
+At the end of Step 9, two already-handshaken Python channels should be able to
+exchange encrypted bytes:
+
+```python
+client_channel.send(b"hello")
+data = server_channel.recv()
+
+server_channel.send(b"ack")
+reply = client_channel.recv()
+```
+
+The application should only see plaintext bytes. The channel should handle:
+
+- sequence-number prefixing,
+- encryption/authentication,
+- IoTSP framing,
+- decrypt/auth verification,
+- sequence-number validation,
+- sequence counter updates.
+
+### Why this comes next
+
+Steps 7 and 8 prove both entities have the same session key. Step 9 uses that
+session key for the actual protected data path.
+
+This is the first step where the Python API behaves like the intended IoTAuth
+entity API instead of only doing setup. After Step 9, the remaining work can
+move up a level into listener loops and examples.
+
+### C mental model
+
+The C secure-message path is in `entity/c/src/c_secure_comm.c` and
+`entity/c/src/c_api.c`:
+
+```c
+send_SECURE_COMM_message(...)
+decrypt_received_message(...)
+send_secure_message(...)
+read_secure_message(...)
+```
+
+C send flow:
+
+1. Check the session key is still valid.
+2. Build plaintext as `sequence_number || application_payload`.
+3. Encrypt/authenticate with the session key.
+4. Increment `sent_seq_num`.
+5. Send an IoTSP frame with message type `SECURE_COMM_MSG`.
+
+C receive flow:
+
+1. Read one IoTSP frame.
+2. Require message type `SECURE_COMM_MSG`.
+3. Decrypt/authenticate with the session key.
+4. Parse the sequence number.
+5. Require it to equal `received_seq_num`.
+6. Check the session key is still valid.
+7. Increment `received_seq_num`.
+8. Return application plaintext after the sequence-number prefix.
+
+### Node mental model
+
+The Node secure-message path is in:
+
+- `entity/node/accessors/node_modules/iotSecureSocket.js`
+- `entity/node/accessors/node_modules/common.js`
+
+Node send flow:
+
+```javascript
+serializeEncryptSessionMessage(
+  {seqNum: this.writeSeqNum, data: data},
+  this.sessionKey,
+  this.sessionCryptoSpec
+)
+```
+
+Node receive flow:
+
+```javascript
+var ret = common.parseSessionMessage(decryptedBytes);
+if (ret.seqNum != this.readSeqNum) {
+    return {success: false, error: "seqNum does not match"};
+}
+```
+
+Python should mirror this model directly.
+
+### Wire format
+
+The decrypted secure message plaintext should be:
+
+```text
+sequence_number: 8 bytes, unsigned big-endian
+application_payload: remaining bytes
+```
+
+The encrypted IoTSP frame should be:
+
+```text
+message_type: SECURE_COMM_MSG
+payload: symmetric_encrypt_authenticate(sequence_number || application_payload)
+```
+
+Sequence numbers start at zero:
+
+- `SecureChannel.send_sequence = 0`
+- `SecureChannel.receive_sequence = 0`
+
+After a successful send:
+
+- encrypt and send using the current `send_sequence`,
+- then increment `send_sequence` by one.
+
+After a successful receive:
+
+- decrypt and parse the incoming sequence number,
+- require it equals the current `receive_sequence`,
+- then increment `receive_sequence` by one.
+
+### Proposed Python module changes
+
+Step 9 should build mostly in:
+
+```text
+entity/python/iotauth/
+  secure_channel.py
+```
+
+Suggested additions:
+
+- `SecureChannel.send(data: bytes) -> None`
+- `SecureChannel.recv() -> bytes`
+- `SecureChannel.close() -> None` already exists, but may need stricter closed
+  state handling.
+- `_encrypt_secure_message(channel, data) -> bytes`
+- `_decrypt_secure_message(channel, encrypted) -> bytes`
+- `_serialize_secure_message(sequence, data) -> bytes`
+- `_parse_secure_message(plaintext) -> tuple[int, bytes]`
+
+If the helpers become too large, a later cleanup can move message-body helpers
+into a separate `secure_messages.py`. For Step 9, keeping them near
+`SecureChannel` is reasonable because the channel owns the counters.
+
+### Proposed public API
+
+Step 9 should make these existing channel objects useful:
+
+```python
+channel.send(b"hello")
+data = channel.recv()
+channel.close()
+```
+
+Behavior:
+
+- `send(...)` accepts bytes-like data and writes one `SECURE_COMM_MSG` frame.
+- `recv(...)` reads one frame and returns plaintext bytes.
+- `close(...)` marks the channel closed and closes the underlying socket.
+
+Open choice:
+
+- We can support only `bytes` in the first implementation for clarity.
+- If we support `bytearray` or `memoryview`, convert them to `bytes` at the API
+  boundary.
+
+### Error model additions
+
+Step 9 should add the error classes already listed in the earlier error model:
+
+- `SecureChannelClosed`: send/recv attempted after close, or socket closes
+  cleanly before a complete message arrives.
+- `InvalidSequenceNumberError`: decrypted sequence number does not equal the
+  expected receive sequence number.
+
+Existing errors should still be used:
+
+- `AuthConnectionError`: socket read/write failure.
+- `SerializationError`: malformed decrypted secure-message plaintext.
+- `MessageIntegrityError`: decrypt/MAC/authentication failure.
+- `ExpiredKeyError`: session key is expired before send or receive completes.
+- `SecureHandshakeError`: should not normally be used in Step 9 because the
+  handshake is already done.
+
+Open choice:
+
+- `recv_frame(...)` currently raises `AuthConnectionError` on early close.
+  Step 9 can either let that bubble out or translate it to
+  `SecureChannelClosed`. Translating inside `SecureChannel.recv()` is nicer for
+  channel users.
+
+### Session-key validity
+
+Step 9 should reuse:
+
+```python
+session_key_is_expired(channel.session_key)
+```
+
+Suggested behavior:
+
+- Check before `send(...)`.
+- Check after decrypting and before accepting a received message.
+- Raise `ExpiredKeyError` if expired.
+
+C checks key validity on both send and receive paths, so Python should do the
+same.
+
+### Sequence-number rules
+
+Send rules:
+
+- Use current `send_sequence`.
+- Encode it as 8-byte unsigned big-endian.
+- Encrypt and send.
+- Increment only after successful `send_frame(...)`.
+
+Receive rules:
+
+- Decrypt first.
+- Parse the first 8 bytes as unsigned big-endian.
+- If it does not equal `receive_sequence`, raise
+  `InvalidSequenceNumberError`.
+- Increment only after the sequence number is accepted.
+
+Overflow rule:
+
+- The sequence number must fit in 8 bytes.
+- If `send_sequence > 0xFFFFFFFFFFFFFFFF`, raise `InvalidSequenceNumberError`
+  or `SerializationError`. `InvalidSequenceNumberError` is clearer at the
+  channel level.
+
+### Close behavior
+
+Step 9 can keep close behavior simple:
+
+```python
+channel.close()
+```
+
+Expected behavior:
+
+- If already closed, do nothing.
+- Close the underlying socket if it has `close()`.
+- Set `closed=True`.
+- `send(...)` and `recv(...)` after close raise `SecureChannelClosed`.
+
+`FIN_SECURE_COMM` can remain a later milestone. The C and Node code include
+`FIN_SECURE_COMM`, but the current first milestone needs working TCP
+application data before graceful protocol close.
+
+### Tests to add
+
+Secure message serialization tests:
+
+- Serialize sequence `0` and payload `b"hello"` into `8-byte-seq || payload`.
+- Parse secure message plaintext back into `(sequence, payload)`.
+- Reject plaintext shorter than 8 bytes.
+- Reject sequence numbers that do not fit in 8 bytes.
+
+Channel send tests:
+
+- `channel.send(b"hello")` sends a `SECURE_COMM_MSG` frame.
+- Sent frame decrypts to sequence `0` plus payload `b"hello"`.
+- `send_sequence` increments after successful send.
+- Failed socket write does not increment `send_sequence`.
+- Sending after close raises `SecureChannelClosed`.
+- Sending with expired key raises `ExpiredKeyError`.
+
+Channel receive tests:
+
+- `channel.recv()` decrypts a valid `SECURE_COMM_MSG` and returns payload.
+- `receive_sequence` increments after successful receive.
+- Wrong message type raises `SerializationError` or `SecureChannelClosed`
+  depending on the chosen error boundary.
+- Sequence mismatch raises `InvalidSequenceNumberError`.
+- Tampered encrypted payload raises `MessageIntegrityError`.
+- Receiving after close raises `SecureChannelClosed`.
+- Receiving with expired key raises `ExpiredKeyError`.
+
+Round-trip tests:
+
+- Create two `SecureChannel` objects with connected fake sockets or a socket
+  pair.
+- Send from client channel, receive on server channel.
+- Send from server channel, receive on client channel.
+- Verify both channels maintain independent send and receive counters.
+
+### Step 9 repo references
+
+Python references from previous steps:
+
+- `entity/python/iotauth/secure_channel.py`
+  - `SecureChannel`
+  - `connect_secure(...)`
+  - `accept_secure(...)`
+  - `session_key_is_expired(...)`
+- `entity/python/iotauth/crypto.py`
+  - `symmetric_encrypt_authenticate(...)`
+  - `symmetric_decrypt_authenticate(...)`
+- `entity/python/iotauth/messages.py`
+  - `MessageType.SECURE_COMM_MSG`
+  - `MessageType.FIN_SECURE_COMM`
+  - `IoTSPFrame`
+- `entity/python/iotauth/transports/tcp.py`
+  - `send_frame(...)`
+  - `recv_frame(...)`
+- `entity/python/iotauth/serialization/binary.py`
+  - `encode_uint_be(...)`
+  - `decode_uint_be(...)`
+- `entity/python/iotauth/exceptions.py`
+  - Add `SecureChannelClosed`.
+  - Add `InvalidSequenceNumberError`.
+  - Reuse `ExpiredKeyError`.
+  - Reuse `MessageIntegrityError`.
+
+C references:
+
+- `entity/c/src/c_secure_comm.c`
+  - `send_SECURE_COMM_message(...)`
+  - `decrypt_received_message(...)`
+- `entity/c/src/c_api.c`
+  - `send_secure_message(...)`
+  - `read_secure_message(...)`
+- `entity/c/src/c_api.h`
+  - `SEQ_NUM_SIZE`
+  - `MAX_SECURE_COMM_MSG_LENGTH`
+
+Node references:
+
+- `entity/node/accessors/node_modules/iotSecureSocket.js`
+  - `IoTSecureSocket.prototype.send(...)`
+  - `IoTSecureSocket.prototype.receive(...)`
+- `entity/node/accessors/node_modules/common.js`
+  - `SEQ_NUM_SIZE`
+  - `serializeEncryptSessionMessage(...)`
+  - `parseDecryptSessionMessage(...)`
+  - `parseSessionMessage(...)`
+
+### Learning notes
+
+Topics worth studying for this step:
+
+- Why authenticated encryption or encrypt-then-MAC protects message integrity.
+- Replay protection with monotonically increasing sequence numbers.
+- Big-endian integer encoding as a wire-format convention.
+- State machines: why counters should only update after a successful operation.
+- Designing APIs that translate low-level socket failures into domain-specific
+  channel errors.
+
+### Expected verification command after implementation
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+```
+
+Documentation status:
+
+- Step 9 is documented here.
+
+### Step 9 implementation references
+
+The Step 9 secure-channel message send/receive layer has now been implemented.
+
+Python files:
+
+- `entity/python/iotauth/secure_channel.py`
+  - `SecureChannel.send(...)`: encrypts one application payload, wraps it in a
+    `SECURE_COMM_MSG` IoTSP frame, writes it to the socket, and increments
+    `send_sequence` after a successful write.
+  - `SecureChannel.recv(...)`: reads one `SECURE_COMM_MSG` frame, decrypts and
+    verifies it, validates the sequence number, increments `receive_sequence`,
+    and returns application plaintext bytes.
+  - `SecureChannel.close(...)`: now ignores socket close `OSError`s and marks
+    the channel closed.
+  - `_serialize_secure_message(...)`: serializes
+    `8-byte sequence || application payload`.
+  - `_parse_secure_message(...)`: parses decrypted secure-message plaintext.
+  - `_encrypt_secure_message(...)`: encrypts/authenticates a secure message
+    body with the channel's session key.
+  - `_decrypt_secure_message(...)`: decrypts/authenticates a secure message
+    body and validates the receive sequence number.
+  - `SEQ_NUM_SIZE`: set to 8 bytes to match C and Node wire format.
+  - `MAX_SEQUENCE_NUMBER`: maximum 8-byte unsigned sequence value.
+- `entity/python/iotauth/exceptions.py`
+  - Added `SecureChannelClosed`.
+  - Added `InvalidSequenceNumberError`.
+- `entity/python/iotauth/__init__.py`
+  - Exports `SecureChannelClosed` and `InvalidSequenceNumberError`.
+- `entity/python/tests/test_secure_channel.py`
+  - Tests secure-message serialization and parsing.
+  - Tests channel send frame type, encryption, and sequence increment.
+  - Tests failed sends do not increment sequence numbers.
+  - Tests receive decrypts valid messages and increments receive sequence.
+  - Tests sequence mismatch, tampering, expired keys, closed channel behavior,
+    wrong message type, early close translation, and channel round trips.
+
+Implementation notes:
+
+- Secure message plaintext is `sequence_number || payload`, where the sequence
+  number is an 8-byte unsigned big-endian integer.
+- `send_sequence` increments only after `send_frame(...)` succeeds.
+- `receive_sequence` increments only after the decrypted sequence number matches
+  the expected value.
+- `SecureChannel.recv(...)` translates TCP early close into
+  `SecureChannelClosed`.
+- `FIN_SECURE_COMM` is still not implemented. `close(...)` is local socket
+  cleanup only.
+
+Verification command:
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+```
+
+Current result:
+
+```text
+Ran 123 tests
 OK
 ```

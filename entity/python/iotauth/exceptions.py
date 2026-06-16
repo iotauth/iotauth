@@ -43,3 +43,11 @@ class SecureHandshakeError(IoTAuthError):
 
 class ExpiredKeyError(IoTAuthError):
     """Raised when an expired key is used for a secure operation."""
+
+
+class SecureChannelClosed(IoTAuthError):
+    """Raised when a secure channel operation is attempted on a closed channel."""
+
+
+class InvalidSequenceNumberError(IoTAuthError):
+    """Raised when secure channel sequence-number validation fails."""
