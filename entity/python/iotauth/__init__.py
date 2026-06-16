@@ -9,6 +9,7 @@ from .config import (
     load_config,
 )
 from .context import IoTAuthContext
+from .client import SecureClient
 from .auth_service import distribution_key_is_expired, request_session_keys
 from .auth_messages import (
     AUTH_ID_SIZE,
@@ -83,6 +84,7 @@ from .secure_channel import (
     connect_secure,
     session_key_is_expired,
 )
+from .server import SecureServer
 from .transports.tcp import recv_frame, send_frame
 
 __all__ = [
@@ -141,7 +143,9 @@ __all__ = [
     "serialize_session_key_request_payload",
     "SecureChannel",
     "SecureChannelClosed",
+    "SecureClient",
     "SecureHandshakeError",
+    "SecureServer",
     "SessionConfig",
     "SessionKey",
     "SessionKeyCache",

@@ -2247,7 +2247,7 @@ When implementation begins, keep examples small and runnable:
 
 ## Current status
 
-Steps 1 through 9 now have implementation and tests. The API is still growing
+Steps 1 through 10 now have implementation and tests. The API is still growing
 step by step, so the sections above should be treated as both design notes and
 learning notes for the current implementation.
 
@@ -4136,5 +4136,412 @@ Current result:
 
 ```text
 Ran 123 tests
+OK
+```
+
+## Step 10: high-level client/server API design
+
+After Step 9, the low-level protocol pieces are usable:
+
+- `IoTAuthContext.from_config(...)`
+- `ctx.request_session_keys(...)`
+- `ctx.connect_secure(...)`
+- `ctx.accept_secure(...)`
+- `SecureChannel.send(...)`
+- `SecureChannel.recv(...)`
+
+Step 10 should make those pieces easier for application developers to use by
+adding high-level client and server wrappers. These wrappers should not invent
+new wire behavior. Their job is to call the existing lower-level APIs in the
+right order.
+
+This is the difference between "all protocol tools exist" and "the Python API
+feels pleasant to use."
+
+### Goal
+
+At the end of Step 10, client code should look like this:
+
+```python
+from iotauth import IoTAuthContext, SecureClient
+
+ctx = IoTAuthContext.from_config("entity/python/examples/configs/client.config")
+
+with SecureClient(ctx) as client:
+    client.connect()
+    client.send(b"hello")
+    reply = client.recv()
+```
+
+Server code should be able to handle one accepted connection like this:
+
+```python
+from iotauth import IoTAuthContext, SecureServer
+
+ctx = IoTAuthContext.from_config("entity/python/examples/configs/server.config")
+server = SecureServer(ctx)
+
+channel = server.serve_once()
+data = channel.recv()
+channel.send(b"ack: " + data)
+```
+
+The first server API should prefer `serve_once()` over `serve_forever()`.
+`serve_once()` is easier to test, easier to understand, and enough for the first
+examples.
+
+### Why this comes next
+
+The current API is powerful but still manual. A user must understand the whole
+workflow:
+
+1. Load context.
+2. Request session keys.
+3. Pick a session key.
+4. Resolve the target server.
+5. Connect securely.
+6. Send and receive on the channel.
+7. Close the channel.
+
+`SecureClient` should own that client-side workflow.
+
+On the server side, a user must currently:
+
+1. Create a listening socket.
+2. Bind and listen.
+3. Accept a TCP connection.
+4. Call `ctx.accept_secure(...)`.
+5. Remember to close everything.
+
+`SecureServer` should own that server-side setup for the common case.
+
+### C mental model
+
+In C, application code does not normally call every tiny helper directly. It
+uses higher-level API functions around the lower-level protocol operations:
+
+```c
+init_SST(...)
+send_session_key_req_via_TCP(...)
+secure_connect_to_server_with_socket(...)
+server_secure_comm_setup(...)
+send_secure_message(...)
+read_secure_message(...)
+```
+
+Python Step 10 should provide the same kind of ergonomic layer, but in a
+Pythonic object style.
+
+The lower-level Python functions should remain public and testable. The new
+classes simply organize them for normal application code.
+
+### Proposed Python modules
+
+Step 10 should add:
+
+```text
+entity/python/iotauth/
+  client.py
+  server.py
+```
+
+Suggested responsibilities:
+
+- `client.py`
+  - Define `SecureClient`.
+  - Request session keys when needed.
+  - Pick a session key.
+  - Connect to the configured or overridden target.
+  - Delegate `send(...)`, `recv(...)`, and `close(...)` to `SecureChannel`.
+  - Support context-manager usage.
+- `server.py`
+  - Define `SecureServer`.
+  - Create, bind, listen, and close a TCP server socket.
+  - Accept one connection.
+  - Call `ctx.accept_secure(...)`.
+  - Return a `SecureChannel`.
+  - Support context-manager usage.
+
+### SecureClient API
+
+Proposed first version:
+
+```python
+class SecureClient:
+    def __init__(
+        self,
+        ctx: IoTAuthContext,
+        *,
+        key: SessionKey | None = None,
+        purpose: dict[str, object] | str | None = None,
+        host: str | None = None,
+        port: int | None = None,
+        timeout: float | None = 5.0,
+    ):
+        ...
+
+    def connect(self) -> SecureChannel:
+        ...
+
+    def send(self, data: bytes) -> None:
+        ...
+
+    def recv(self) -> bytes:
+        ...
+
+    def close(self) -> None:
+        ...
+
+    def __enter__(self) -> SecureClient:
+        ...
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        ...
+```
+
+Behavior:
+
+- If a `key` is provided, use it directly.
+- If no `key` is provided, call `ctx.request_session_keys(...)` and use the
+  first returned key.
+- `connect()` should call `ctx.connect_secure(...)`.
+- `send(...)` and `recv(...)` should require an active channel.
+- `close()` should close the active channel if one exists.
+- `__exit__` should always close the channel.
+
+Open choice:
+
+- Should `__enter__` call `connect()` automatically?
+- Recommended first behavior: `__enter__` returns `self`, and the user calls
+  `connect()` explicitly. This avoids surprising network I/O just because a
+  `with` block starts.
+
+### SecureServer API
+
+Proposed first version:
+
+```python
+class SecureServer:
+    def __init__(
+        self,
+        ctx: IoTAuthContext,
+        *,
+        host: str | None = None,
+        port: int | None = None,
+        backlog: int = 5,
+        timeout: float | None = 5.0,
+    ):
+        ...
+
+    def listen(self) -> None:
+        ...
+
+    def serve_once(self) -> SecureChannel:
+        ...
+
+    def close(self) -> None:
+        ...
+
+    def __enter__(self) -> SecureServer:
+        ...
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        ...
+```
+
+Behavior:
+
+- If `host` and `port` are provided, bind to those.
+- If not provided, use `ctx.config.targets[0]` for now.
+- `listen()` creates and starts the listening socket.
+- `serve_once()` calls `listen()` if needed, accepts one TCP connection, then
+  calls `ctx.accept_secure(client_socket)`.
+- `close()` closes the listening socket.
+
+Open choice:
+
+- A server config may need a more explicit "bind address" field later. Current
+  config uses `entity.server.ip.address` and `entity.server.port.number`, which
+  is enough for first examples.
+
+### Error behavior
+
+`SecureClient` should reuse lower-level errors:
+
+- `ConfigError`: no target or invalid target override.
+- `AuthConnectionError`: TCP connect/read/write failure.
+- `AuthProtocolError`: Auth session-key request failure.
+- `SecureHandshakeError`: secure handshake failure.
+- `SecureChannelClosed`: send/recv before connect or after close.
+- `ExpiredKeyError`: expired session key.
+
+`SecureServer` should use:
+
+- `ConfigError`: no bind target or invalid bind parameters.
+- `AuthConnectionError`: listening socket, accept, read, or write failure.
+- `SecureHandshakeError`: secure handshake failure.
+- `SecureChannelClosed`: operations after close if applicable.
+
+Open choice:
+
+- Raw `OSError` from `socket.bind(...)`, `listen(...)`, or `accept(...)` should
+  probably be translated into `AuthConnectionError`, even though the name says
+  "Auth". We may later rename or add a more generic `TransportError`, but for
+  now reusing `AuthConnectionError` keeps the error model small.
+
+### Testing plan
+
+Client tests:
+
+- `SecureClient.connect()` uses a provided session key without requesting one.
+- `SecureClient.connect()` requests session keys when no key is provided.
+- `SecureClient.connect()` stores the returned `SecureChannel`.
+- `SecureClient.send(...)` delegates to the active channel.
+- `SecureClient.recv(...)` delegates to the active channel.
+- `SecureClient.send(...)` before connect raises `SecureChannelClosed`.
+- `SecureClient.close()` closes the active channel.
+- Context manager calls `close()` on exit.
+
+Server tests:
+
+- `SecureServer.listen()` binds and listens once.
+- `SecureServer.serve_once()` accepts one socket and calls `ctx.accept_secure`.
+- `SecureServer.serve_once()` returns the accepted `SecureChannel`.
+- `SecureServer.close()` closes the listening socket.
+- Context manager calls `close()` on exit.
+- Socket setup failures are translated into `AuthConnectionError`.
+
+Integration-style unit tests:
+
+- Use fake sockets to prove `SecureClient` calls `ctx.connect_secure(...)`.
+- Use fake listening socket to prove `SecureServer` calls
+  `ctx.accept_secure(...)`.
+
+Real end-to-end integration with actual TCP sockets can wait for the example
+step.
+
+### Step 10 repo references
+
+Python references from previous steps:
+
+- `entity/python/iotauth/context.py`
+  - `IoTAuthContext.request_session_keys(...)`
+  - `IoTAuthContext.connect_secure(...)`
+  - `IoTAuthContext.accept_secure(...)`
+- `entity/python/iotauth/secure_channel.py`
+  - `SecureChannel`
+  - `connect_secure(...)`
+  - `accept_secure(...)`
+  - `SecureChannel.send(...)`
+  - `SecureChannel.recv(...)`
+  - `SecureChannel.close(...)`
+- `entity/python/iotauth/config.py`
+  - `TargetServer`
+  - `EntityConfig.targets`
+- `entity/python/iotauth/exceptions.py`
+  - `AuthConnectionError`
+  - `ConfigError`
+  - `SecureChannelClosed`
+  - `SecureHandshakeError`
+
+C references:
+
+- `entity/c/src/c_api.c`
+  - high-level secure connect, secure server setup, send, and read APIs.
+- `entity/c/examples/server_client_example`
+  - intended simple client/server application shape.
+
+Node references:
+
+- `entity/node/accessors/SecureCommClient.js`
+  - application-facing client accessor behavior.
+- `entity/node/accessors/SecureCommServer.js`
+  - application-facing server accessor behavior.
+- `entity/node/accessors/node_modules/iotSecureClient.js`
+  - lower-level client connector that `SecureClient` conceptually wraps.
+- `entity/node/accessors/node_modules/iotSecureServer.js`
+  - lower-level server handshake logic that `SecureServer` conceptually wraps.
+
+### Learning notes
+
+Topics worth studying for this step:
+
+- Python context managers:
+  <https://docs.python.org/3/reference/datamodel.html#context-managers>
+- Object composition: wrapping a lower-level object instead of inheriting from
+  it.
+- API ergonomics: designing a friendly front door while keeping lower-level
+  escape hatches available.
+- Socket server lifecycle: create, bind, listen, accept, close.
+
+### Expected verification command after implementation
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+```
+
+Documentation status:
+
+- Step 10 is documented here.
+
+### Step 10 implementation references
+
+The Step 10 high-level client/server API layer has now been implemented.
+
+Python files:
+
+- `entity/python/iotauth/client.py`
+  - `SecureClient`: high-level client wrapper around `IoTAuthContext`,
+    session-key request, `ctx.connect_secure(...)`, and `SecureChannel`.
+  - `SecureClient.connect(...)`: uses a provided session key when available, or
+    requests session keys and connects with the first returned key.
+  - `SecureClient.send(...)`: delegates to the active channel.
+  - `SecureClient.recv(...)`: delegates to the active channel.
+  - `SecureClient.close(...)`: closes the active channel.
+  - `SecureClient.__enter__(...)` / `__exit__(...)`: context-manager support.
+- `entity/python/iotauth/server.py`
+  - `SecureServer`: high-level server wrapper around listening socket setup,
+    `accept()`, and `ctx.accept_secure(...)`.
+  - `SecureServer.listen(...)`: creates, binds, and listens on a TCP socket.
+  - `SecureServer.serve_once(...)`: accepts one TCP connection and returns the
+    secure channel created by `ctx.accept_secure(...)`.
+  - `SecureServer.close(...)`: closes the listening socket.
+  - `SecureServer.__enter__(...)` / `__exit__(...)`: context-manager support.
+- `entity/python/iotauth/__init__.py`
+  - Exports `SecureClient`.
+  - Exports `SecureServer`.
+- `entity/python/tests/test_client.py`
+  - Tests provided-key connect, auto session-key request, channel storage,
+    send/recv delegation, send before connect, close, and context-manager
+    cleanup.
+- `entity/python/tests/test_server.py`
+  - Tests listen/bind behavior, host/port override, `serve_once(...)`
+    delegation, close behavior, context-manager cleanup, bind failure
+    translation, and accept failure translation.
+
+Implementation notes:
+
+- `SecureClient.__enter__()` does not connect automatically. The user still
+  calls `connect()` explicitly, which avoids hidden network I/O when entering a
+  `with` block.
+- `SecureClient` keeps lower-level APIs available. It simply owns the common
+  client workflow.
+- `SecureServer` starts with `serve_once()` only. A full `serve_forever()` loop
+  remains future work.
+- `SecureServer` translates listening socket setup and accept failures into
+  `AuthConnectionError`.
+- `SecureServer` currently binds to the first configured target when host/port
+  are not provided.
+
+Verification command:
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+```
+
+Current result:
+
+```text
+Ran 136 tests
 OK
 ```
