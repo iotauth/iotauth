@@ -53,20 +53,18 @@ entity/python/
     server.py
     transports.py
   tests/
-    test_auth_messages.py
+  tests/
+    helpers.py
     test_auth_service.py
-    test_client.py
     test_config.py
     test_context.py
-    test_credentials.py
     test_crypto.py
     test_handshake.py
     test_keys.py
-    test_messages.py
+    test_protocol.py
     test_secure_channel.py
-    test_serialization.py
-    test_server.py
-    test_tcp_transport.py
+    test_wire.py
+    test_wrappers.py
 ```
 
 ## File purpose
@@ -107,28 +105,33 @@ one API layer so changes can be checked in small pieces.
 
 | File | Purpose |
 | --- | --- |
-| `tests/test_auth_messages.py` | Tests Auth payload builders and parsers. |
+| `tests/helpers.py` | Shared mock objects (e.g., `FakeSocket`, `make_session_key`) for the test suite. |
 | `tests/test_auth_service.py` | Tests Auth session-key request behavior and error handling. |
-| `tests/test_client.py` | Tests the high-level `SecureClient` wrapper. |
 | `tests/test_config.py` | Tests configuration parsing and validation. |
-| `tests/test_context.py` | Tests the shared `IoTAuthContext` convenience API. |
-| `tests/test_credentials.py` | Tests credential loading helpers. |
+| `tests/test_context.py` | Tests the shared `IoTAuthContext` API and credential loading. |
 | `tests/test_crypto.py` | Tests cryptographic helper behavior. |
 | `tests/test_handshake.py` | Tests secure handshake payload encoding and decoding. |
 | `tests/test_keys.py` | Tests key models and key cache behavior. |
-| `tests/test_messages.py` | Tests IoTSP message type and frame helpers. |
+| `tests/test_protocol.py` | Tests IoTSP message type helpers and Auth payload builders/parsers. |
 | `tests/test_secure_channel.py` | Tests secure handshake and encrypted channel behavior. |
-| `tests/test_serialization.py` | Tests binary serialization helpers. |
-| `tests/test_server.py` | Tests the high-level `SecureServer` wrapper. |
-| `tests/test_tcp_transport.py` | Tests TCP transport helpers. |
+| `tests/test_wire.py` | Tests binary serialization primitives and TCP transport helpers. |
+| `tests/test_wrappers.py` | Tests the high-level `SecureClient` and `SecureServer` wrappers. |
 
 ## Running tests
 
-From the repository root:
+To run the full test suite with natural-language output (e.g. `Testing [capability] ... passed`):
 
 ```bash
-PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python -m unittest discover -s entity/python/tests
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python entity/python/run_tests.py
 ```
+
+To run an individual test file, pass the module path:
+
+```bash
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python entity/python/run_tests.py tests.test_secure_channel
+```
+
+> **Note on Test Dependencies**: All test files and test cases in this suite are **completely independent**. There is no shared global state or cross-file dependency. You can safely run any test file (or single test method) completely on its own.
 
 If the virtual environment has not been created yet:
 

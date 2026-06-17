@@ -4,9 +4,25 @@ import unittest
 from unittest.mock import patch
 
 from iotauth import CredentialError, IoTAuthContext, load_config
+from iotauth.credentials import load_entity_private_key
+
+
+class CredentialLoadingTests(unittest.TestCase):
+    """Tests for loading entity private keys and Auth public certificates."""
+
+    def test_missing_cryptography_dependency_is_clear(self):
+        with TemporaryDirectory() as temp_dir:
+            key_path = Path(temp_dir) / "entity.pem"
+            key_path.write_text("not a real key", encoding="utf-8")
+
+            with patch("builtins.__import__", side_effect=ImportError("missing")):
+                with self.assertRaisesRegex(CredentialError, "cryptography package"):
+                    load_entity_private_key(key_path)
 
 
 class IoTAuthContextTests(unittest.TestCase):
+    """Tests for parsing configurations and initializing the runtime context."""
+
     def test_from_entity_config_loads_credentials_and_empty_cache(self):
         with TemporaryDirectory() as temp_dir:
             config = self._load_config(Path(temp_dir))
@@ -77,4 +93,4 @@ class IoTAuthContextTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

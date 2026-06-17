@@ -1,3 +1,5 @@
+"""Tests for the consolidated iotauth.protocol module."""
+
 import unittest
 
 from iotauth import (
@@ -11,6 +13,7 @@ from iotauth import (
     SessionKeyRequestPayload,
     decode_uint_be,
     encode_uint_be,
+    message_type_from_byte,
     parse_auth_alert_payload,
     parse_auth_hello_payload,
     parse_buffered_string,
@@ -50,12 +53,20 @@ def session_key_record(
     )
 
 
+class ProtocolTypesTests(unittest.TestCase):
+    """Tests for protocol constants, enums, and basic types."""
+
+    def test_message_type_from_byte_rejects_unknown_value(self):
+        with self.assertRaisesRegex(SerializationError, "Unknown"):
+            message_type_from_byte(255)
+
+
 class AuthPayloadTests(unittest.TestCase):
+    """Tests for parsing basic Auth payloads like Hello and Alert."""
+
     def test_parses_auth_hello_payload(self):
         payload = encode_uint_be(101, 4) + b"a" * NONCE_SIZE
-
         parsed = parse_auth_hello_payload(payload)
-
         self.assertEqual(parsed, AuthHelloPayload(auth_id=101, nonce=b"a" * 8))
 
     def test_rejects_invalid_auth_hello_length(self):
@@ -71,11 +82,11 @@ class AuthPayloadTests(unittest.TestCase):
 
 
 class BufferedStringTests(unittest.TestCase):
+    """Tests for the buffered string serialization helpers used in Auth payloads."""
+
     def test_round_trips_utf8_buffered_string(self):
         encoded = serialize_buffered_string("net1.client-µ")
-
         value, consumed = parse_buffered_string(encoded)
-
         self.assertEqual(value, "net1.client-µ")
         self.assertEqual(consumed, len(encoded))
 
@@ -85,6 +96,8 @@ class BufferedStringTests(unittest.TestCase):
 
 
 class SessionKeyRequestTests(unittest.TestCase):
+    """Tests for serializing session key requests to Auth."""
+
     def test_serializes_session_key_request_with_dict_purpose(self):
         request = SessionKeyRequestPayload(
             entity_nonce=b"e" * 8,
@@ -140,6 +153,8 @@ class SessionKeyRequestTests(unittest.TestCase):
 
 
 class KeyRecordTests(unittest.TestCase):
+    """Tests for parsing key records returned by Auth."""
+
     def test_parses_distribution_key_record(self):
         record = (
             encode_uint_be(0x010203040506, 6)
@@ -148,9 +163,7 @@ class KeyRecordTests(unittest.TestCase):
             + b"\x20"
             + b"m" * 32
         )
-
         key = parse_distribution_key_record(record)
-
         self.assertEqual(
             key,
             DistributionKey(
@@ -163,9 +176,7 @@ class KeyRecordTests(unittest.TestCase):
 
     def test_parses_session_key_record(self):
         record = session_key_record()
-
         key, consumed = parse_session_key_record(record, 0, session_config())
-
         self.assertEqual(consumed, len(record))
         self.assertEqual(
             key,
@@ -187,6 +198,8 @@ class KeyRecordTests(unittest.TestCase):
 
 
 class SessionKeyResponseTests(unittest.TestCase):
+    """Tests for parsing the full session key response payload."""
+
     def test_parses_cleartext_session_key_response(self):
         key_record = session_key_record()
         payload = (
@@ -219,4 +232,4 @@ class SessionKeyResponseTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

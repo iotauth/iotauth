@@ -22,6 +22,8 @@ from iotauth import (
     serialize_frame,
 )
 
+from tests.helpers import FakeSocket
+
 
 ENTITY_NONCE = b"e" * 8
 AUTH_NONCE = b"a" * 8
@@ -30,29 +32,6 @@ AUTH_NONCE = b"a" * 8
 class FakeKey:
     key_size = 2048
 
-
-class FakeSocket:
-    def __init__(self, incoming):
-        self.incoming = bytearray(incoming)
-        self.sent = []
-        self.closed = False
-        self.timeout = None
-
-    def recv(self, size):
-        if not self.incoming:
-            return b""
-        chunk = bytes(self.incoming[:size])
-        del self.incoming[:size]
-        return chunk
-
-    def sendall(self, data):
-        self.sent.append(data)
-
-    def settimeout(self, timeout):
-        self.timeout = timeout
-
-    def close(self):
-        self.closed = True
 
 
 def config(purposes=None):
@@ -127,6 +106,8 @@ def socket_factory_for(fake_socket):
 
 
 class AuthServiceTests(unittest.TestCase):
+    """Tests for the auth service protocol and session key negotiation."""
+
     def test_distribution_key_expiration_uses_epoch_milliseconds(self):
         key = DistributionKey(
             cipher_key=b"c" * 16,
@@ -301,4 +282,4 @@ class AuthServiceTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

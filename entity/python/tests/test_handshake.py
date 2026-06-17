@@ -26,17 +26,7 @@ CLIENT_NONCE = b"c" * 8
 SERVER_NONCE = b"s" * 8
 
 
-def session_key():
-    return SessionKey(
-        id=b"12345678",
-        cipher_key=b"k" * 16,
-        mac_key=b"m" * 32,
-        abs_validity=0xFFFFFFFFFFFF,
-        rel_validity=60000,
-        encryption_mode="AES_128_CBC",
-        hmac_enabled=True,
-        permanent_distribution_key=False,
-    )
+from tests.helpers import make_session_key
 
 
 def has_cryptography():
@@ -51,6 +41,8 @@ CRYPTOGRAPHY_AVAILABLE = has_cryptography()
 
 
 class HandshakePayloadTests(unittest.TestCase):
+    """Tests for handshake payload serialization and deserialization."""
+
     def test_serializes_nonce_only_payload(self):
         payload = serialize_handshake_payload(HandshakePayload(nonce=CLIENT_NONCE))
 
@@ -101,12 +93,14 @@ class HandshakePayloadTests(unittest.TestCase):
 
 
 class HandshakeBuilderTests(unittest.TestCase):
+    """Tests for the handshake message building and verification helpers."""
+
     def test_build_handshake_1_prefixes_session_key_id(self):
         with patch(
             "iotauth.handshake.symmetric_encrypt_authenticate",
             return_value=b"encrypted",
         ):
-            payload = build_handshake_1(session_key(), CLIENT_NONCE)
+            payload = build_handshake_1(make_session_key(), CLIENT_NONCE)
 
         self.assertEqual(payload, b"12345678encrypted")
 
@@ -129,7 +123,7 @@ class HandshakeBuilderTests(unittest.TestCase):
             return_value=b"handshake2",
         ):
             client_nonce, handshake_2 = verify_handshake_1_and_build_handshake_2(
-                session_key(),
+                make_session_key(),
                 b"12345678encrypted-handshake1",
                 SERVER_NONCE,
             )
@@ -147,7 +141,7 @@ class HandshakeBuilderTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(SecureHandshakeError, "client nonce"):
                 verify_handshake_1_and_build_handshake_2(
-                    session_key(),
+                    make_session_key(),
                     b"12345678encrypted-handshake1",
                     SERVER_NONCE,
                 )
@@ -164,7 +158,7 @@ class HandshakeBuilderTests(unittest.TestCase):
             return_value=b"handshake3",
         ):
             server_nonce, handshake_3 = verify_handshake_2_and_build_handshake_3(
-                session_key(),
+                make_session_key(),
                 b"encrypted-handshake2",
                 CLIENT_NONCE,
             )
@@ -182,7 +176,7 @@ class HandshakeBuilderTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(SecureHandshakeError, "reply nonce"):
                 verify_handshake_2_and_build_handshake_3(
-                    session_key(),
+                    make_session_key(),
                     b"encrypted-handshake2",
                     CLIENT_NONCE,
                 )
@@ -196,7 +190,7 @@ class HandshakeBuilderTests(unittest.TestCase):
             return_value=clear_handshake_3,
         ):
             parsed = verify_handshake_3(
-                session_key(),
+                make_session_key(),
                 b"encrypted-handshake3",
                 SERVER_NONCE,
             )
@@ -213,7 +207,7 @@ class HandshakeBuilderTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(SecureHandshakeError, "reply nonce"):
                 verify_handshake_3(
-                    session_key(),
+                    make_session_key(),
                     b"encrypted-handshake3",
                     SERVER_NONCE,
                 )
@@ -221,8 +215,10 @@ class HandshakeBuilderTests(unittest.TestCase):
 
 @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
 class HandshakeCryptoTests(unittest.TestCase):
+    """Tests for handshake cryptography operations."""
+
     def test_build_handshake_1_decrypts_to_client_nonce(self):
-        key = session_key()
+        key = make_session_key()
 
         encrypted = build_handshake_1(key, CLIENT_NONCE)
         plaintext = symmetric_decrypt_authenticate(
@@ -239,7 +235,7 @@ class HandshakeCryptoTests(unittest.TestCase):
         )
 
     def test_server_and_client_handshake_helpers_round_trip(self):
-        key = session_key()
+        key = make_session_key()
         handshake_1 = build_handshake_1(key, CLIENT_NONCE)
 
         client_nonce, handshake_2 = verify_handshake_1_and_build_handshake_2(
@@ -259,7 +255,7 @@ class HandshakeCryptoTests(unittest.TestCase):
         self.assertEqual(parsed_handshake_3.reply_nonce, SERVER_NONCE)
 
     def test_tampered_handshake_2_raises_integrity_error(self):
-        key = session_key()
+        key = make_session_key()
         clear_handshake_2 = serialize_handshake_payload(
             HandshakePayload(nonce=SERVER_NONCE, reply_nonce=CLIENT_NONCE)
         )
@@ -279,4 +275,4 @@ class HandshakeCryptoTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

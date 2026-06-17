@@ -6,6 +6,8 @@ from iotauth import ConfigError, load_config
 
 
 class LoadConfigTests(unittest.TestCase):
+    """Tests for parsing IoTAuth entity and server configurations."""
+
     def test_loads_c_style_config(self):
         with TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -135,4 +137,4 @@ class LoadConfigTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

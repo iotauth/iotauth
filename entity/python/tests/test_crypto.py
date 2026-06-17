@@ -28,6 +28,8 @@ CRYPTOGRAPHY_AVAILABLE = has_cryptography()
 
 
 class CryptoDependencyTests(unittest.TestCase):
+    """Tests for cryptography package dependency injection."""
+
     def test_missing_cryptography_dependency_is_clear(self):
         with patch("builtins.__import__", side_effect=ImportError("missing")):
             with self.assertRaisesRegex(UnsupportedCryptoError, "cryptography"):
@@ -35,6 +37,8 @@ class CryptoDependencyTests(unittest.TestCase):
 
 
 class DistributionKeyWrapperTests(unittest.TestCase):
+    """Tests for distribution key payload packaging."""
+
     @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_distribution_key_wrapper_preserves_sender_name(self):
         key = DistributionKey(
@@ -65,6 +69,8 @@ class DistributionKeyWrapperTests(unittest.TestCase):
 
 @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
 class SymmetricCryptoTests(unittest.TestCase):
+    """Tests for AES symmetric encryption and HMAC authentication."""
+
     def test_aes_cbc_round_trip_with_hmac(self):
         self._round_trip("AES_128_CBC", hmac_enabled=True)
 
@@ -109,6 +115,8 @@ class SymmetricCryptoTests(unittest.TestCase):
 
 @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
 class PublicKeyCryptoTests(unittest.TestCase):
+    """Tests for RSA public key encryption and signing."""
+
     def setUp(self):
         crypto = _load_crypto_backend()
         self.private_key = crypto["rsa"].generate_private_key(
@@ -165,4 +173,4 @@ class PublicKeyCryptoTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

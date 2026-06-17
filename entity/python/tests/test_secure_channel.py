@@ -33,33 +33,22 @@ from iotauth.secure_channel import (
     _parse_secure_message,
     _serialize_secure_message,
 )
+from iotauth.crypto import _load_crypto_backend
+
+from tests.helpers import FakeSocket, make_session_key
+
+def has_cryptography():
+    try:
+        _load_crypto_backend()
+        return True
+    except Exception:
+        return False
+
+CRYPTOGRAPHY_AVAILABLE = has_cryptography()
 
 
 CLIENT_NONCE = b"c" * 8
 
-
-class FakeSocket:
-    def __init__(self, incoming=b""):
-        self.incoming = bytearray(incoming)
-        self.sent = []
-        self.closed = False
-        self.timeout = None
-
-    def recv(self, size):
-        if not self.incoming:
-            return b""
-        chunk = bytes(self.incoming[:size])
-        del self.incoming[:size]
-        return chunk
-
-    def sendall(self, data):
-        self.sent.append(data)
-
-    def settimeout(self, timeout):
-        self.timeout = timeout
-
-    def close(self):
-        self.closed = True
 
 
 class FailingSendSocket(FakeSocket):
@@ -74,18 +63,6 @@ def socket_factory_for(fake_socket):
 
     return factory
 
-
-def session_key(abs_validity=0xFFFFFFFFFFFF):
-    return SessionKey(
-        id=b"12345678",
-        cipher_key=b"k" * 16,
-        mac_key=b"m" * 32,
-        abs_validity=abs_validity,
-        rel_validity=60000,
-        encryption_mode="AES_128_CBC",
-        hmac_enabled=True,
-        permanent_distribution_key=False,
-    )
 
 
 def context(targets=None):
@@ -127,15 +104,17 @@ def frame(message_type, payload):
 
 
 class SecureChannelTests(unittest.TestCase):
+    """Tests for the secure session channel and communication."""
+
     def test_session_key_expiration_uses_epoch_milliseconds(self):
-        key = session_key(abs_validity=1000)
+        key = make_session_key(abs_validity=1000)
 
         self.assertFalse(session_key_is_expired(key, now_ms=999))
         self.assertTrue(session_key_is_expired(key, now_ms=1000))
 
     def test_connect_secure_completes_client_handshake(self):
         fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_2, b"handshake2"))
-        key = session_key()
+        key = make_session_key()
 
         with patch(
             "iotauth.secure_channel.build_handshake_1",
@@ -179,7 +158,7 @@ class SecureChannelTests(unittest.TestCase):
         ):
             connect_secure(
                 context(),
-                key=session_key(),
+                key=make_session_key(),
                 host="example.test",
                 port=12345,
                 timeout=1.5,
@@ -200,7 +179,7 @@ class SecureChannelTests(unittest.TestCase):
             with self.assertRaisesRegex(SecureHandshakeError, "SKEY_HANDSHAKE_2"):
                 connect_secure(
                     context(),
-                    key=session_key(),
+                    key=make_session_key(),
                     _socket_factory=socket_factory_for(fake),
                     _nonce_factory=lambda size: CLIENT_NONCE,
                 )
@@ -220,7 +199,7 @@ class SecureChannelTests(unittest.TestCase):
             with self.assertRaisesRegex(SecureHandshakeError, "nonce"):
                 connect_secure(
                     context(),
-                    key=session_key(),
+                    key=make_session_key(),
                     _socket_factory=socket_factory_for(fake),
                     _nonce_factory=lambda size: CLIENT_NONCE,
                 )
@@ -233,7 +212,7 @@ class SecureChannelTests(unittest.TestCase):
         with self.assertRaises(ExpiredKeyError):
             connect_secure(
                 context(),
-                key=session_key(abs_validity=1000),
+                key=make_session_key(abs_validity=1000),
                 _socket_factory=socket_factory_for(fake),
                 _nonce_factory=lambda size: CLIENT_NONCE,
             )
@@ -251,7 +230,7 @@ class SecureChannelTests(unittest.TestCase):
             with self.assertRaises(AuthConnectionError):
                 connect_secure(
                     context(),
-                    key=session_key(),
+                    key=make_session_key(),
                     _socket_factory=socket_factory_for(fake),
                     _nonce_factory=lambda size: CLIENT_NONCE,
                 )
@@ -260,7 +239,7 @@ class SecureChannelTests(unittest.TestCase):
 
     def test_context_convenience_method_delegates_to_secure_channel(self):
         ctx = context()
-        key = session_key()
+        key = make_session_key()
         with patch("iotauth.secure_channel.connect_secure", return_value="channel") as conn:
             self.assertEqual(ctx.connect_secure(key=key, timeout=1.0), "channel")
 
@@ -273,7 +252,7 @@ class SecureChannelTests(unittest.TestCase):
         )
 
     def test_accept_secure_completes_server_handshake(self):
-        key = session_key()
+        key = make_session_key()
         fake = FakeSocket(
             frame(MessageType.SKEY_HANDSHAKE_1, b"12345678handshake1")
             + frame(MessageType.SKEY_HANDSHAKE_3, b"handshake3")
@@ -319,7 +298,7 @@ class SecureChannelTests(unittest.TestCase):
 
         with self.assertRaisesRegex(SecureHandshakeError, "SKEY_HANDSHAKE_1"):
             accept_secure(
-                context_with_key(session_key()),
+                context_with_key(make_session_key()),
                 fake,
                 _nonce_factory=lambda size: b"s" * 8,
             )
@@ -327,7 +306,7 @@ class SecureChannelTests(unittest.TestCase):
         self.assertTrue(fake.closed)
 
     def test_accept_secure_wrong_third_frame_type_raises_handshake_error(self):
-        key = session_key()
+        key = make_session_key()
         fake = FakeSocket(
             frame(MessageType.SKEY_HANDSHAKE_1, b"12345678handshake1")
             + frame(MessageType.AUTH_ALERT, b"\x01")
@@ -347,7 +326,7 @@ class SecureChannelTests(unittest.TestCase):
         self.assertTrue(fake.closed)
 
     def test_accept_secure_expired_session_key_raises(self):
-        key = session_key(abs_validity=1000)
+        key = make_session_key(abs_validity=1000)
         fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_1, b"12345678handshake1"))
 
         with self.assertRaises(ExpiredKeyError):
@@ -364,7 +343,7 @@ class SecureChannelTests(unittest.TestCase):
 
         with self.assertRaises(AuthConnectionError):
             accept_secure(
-                context_with_key(session_key()),
+                context_with_key(make_session_key()),
                 fake,
                 _nonce_factory=lambda size: b"s" * 8,
             )
@@ -393,8 +372,9 @@ class SecureChannelTests(unittest.TestCase):
         with self.assertRaises(InvalidSequenceNumberError):
             _serialize_secure_message(MAX_SEQUENCE_NUMBER + 1, b"payload")
 
+    @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_send_writes_secure_comm_message_and_increments_sequence(self):
-        key = session_key()
+        key = make_session_key()
         fake = FakeSocket()
         channel = SecureChannel(fake, key)
 
@@ -412,8 +392,9 @@ class SecureChannelTests(unittest.TestCase):
         self.assertEqual(_parse_secure_message(decrypted), (0, b"hello"))
         self.assertEqual(channel.send_sequence, 1)
 
+    @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_failed_send_does_not_increment_sequence(self):
-        channel = SecureChannel(FailingSendSocket(), session_key())
+        channel = SecureChannel(FailingSendSocket(), make_session_key())
 
         with self.assertRaises(AuthConnectionError):
             channel.send(b"hello")
@@ -421,20 +402,23 @@ class SecureChannelTests(unittest.TestCase):
         self.assertEqual(channel.send_sequence, 0)
 
     def test_send_after_close_raises_channel_closed(self):
-        channel = SecureChannel(FakeSocket(), session_key())
+        channel = SecureChannel(FakeSocket(), make_session_key())
         channel.close()
 
         with self.assertRaises(SecureChannelClosed):
             channel.send(b"hello")
 
     def test_send_with_expired_key_raises(self):
-        channel = SecureChannel(FakeSocket(), session_key(abs_validity=1000))
+        """Test that send with expired key raises ExpiredKeyError."""
+        channel = SecureChannel(FakeSocket(), make_session_key(abs_validity=1000))
 
         with self.assertRaises(ExpiredKeyError):
             channel.send(b"hello")
 
+    @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_recv_decrypts_secure_comm_message_and_increments_sequence(self):
-        key = session_key()
+        """Test that recv decrypts and increments sequence."""
+        key = make_session_key()
         encrypted = symmetric_encrypt_authenticate(
             _serialize_secure_message(0, b"hello"),
             key.cipher_key,
@@ -451,13 +435,14 @@ class SecureChannelTests(unittest.TestCase):
         self.assertEqual(channel.receive_sequence, 1)
 
     def test_recv_rejects_wrong_message_type(self):
-        channel = SecureChannel(FakeSocket(frame(MessageType.AUTH_ALERT, b"\x01")), session_key())
+        channel = SecureChannel(FakeSocket(frame(MessageType.AUTH_ALERT, b"\x01")), make_session_key())
 
         with self.assertRaisesRegex(SerializationError, "SECURE_COMM_MSG"):
             channel.recv()
 
+    @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_recv_rejects_sequence_mismatch(self):
-        key = session_key()
+        key = make_session_key()
         encrypted = symmetric_encrypt_authenticate(
             _serialize_secure_message(1, b"hello"),
             key.cipher_key,
@@ -474,8 +459,9 @@ class SecureChannelTests(unittest.TestCase):
             channel.recv()
         self.assertEqual(channel.receive_sequence, 0)
 
+    @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_recv_rejects_tampered_payload(self):
-        key = session_key()
+        key = make_session_key()
         encrypted = symmetric_encrypt_authenticate(
             _serialize_secure_message(0, b"hello"),
             key.cipher_key,
@@ -493,14 +479,15 @@ class SecureChannelTests(unittest.TestCase):
             channel.recv()
 
     def test_recv_after_close_raises_channel_closed(self):
-        channel = SecureChannel(FakeSocket(), session_key())
+        channel = SecureChannel(FakeSocket(), make_session_key())
         channel.close()
 
         with self.assertRaises(SecureChannelClosed):
             channel.recv()
 
+    @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_recv_with_expired_key_raises(self):
-        key = session_key(abs_validity=1000)
+        key = make_session_key(abs_validity=1000)
         encrypted = symmetric_encrypt_authenticate(
             _serialize_secure_message(0, b"hello"),
             key.cipher_key,
@@ -517,14 +504,15 @@ class SecureChannelTests(unittest.TestCase):
             channel.recv()
 
     def test_recv_translates_early_close_to_channel_closed(self):
-        channel = SecureChannel(FakeSocket(), session_key())
+        channel = SecureChannel(FakeSocket(), make_session_key())
 
         with self.assertRaises(SecureChannelClosed):
             channel.recv()
         self.assertTrue(channel.closed)
 
+    @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_secure_channel_round_trip_updates_independent_counters(self):
-        key = session_key()
+        key = make_session_key()
         client_socket = FakeSocket()
         server_socket = FakeSocket()
         client = SecureChannel(client_socket, key)
@@ -545,4 +533,4 @@ class SecureChannelTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

@@ -1,6 +1,9 @@
+"""Tests for wire-level serialization and transport helpers."""
+
 import unittest
 
 from iotauth import (
+    AuthConnectionError,
     IoTSPFrame,
     MessageType,
     SerializationError,
@@ -9,11 +12,17 @@ from iotauth import (
     encode_uint_be,
     encode_varint,
     parse_frame,
+    recv_frame,
+    send_frame,
     serialize_frame,
 )
 
+from tests.helpers import FakeSocket
+
 
 class VarintTests(unittest.TestCase):
+    """Tests for variable-length integer encoding."""
+
     def test_encodes_known_values(self):
         examples = {
             0: b"\x00",
@@ -42,6 +51,8 @@ class VarintTests(unittest.TestCase):
 
 
 class UnsignedBigEndianTests(unittest.TestCase):
+    """Tests for fixed-length big-endian integer encoding."""
+
     def test_round_trips_common_lengths(self):
         examples = [
             (1, 1),
@@ -70,16 +81,15 @@ class UnsignedBigEndianTests(unittest.TestCase):
 
 
 class IoTSPFrameTests(unittest.TestCase):
+    """Tests for IoTSP frame serialization and parsing."""
+
     def test_serializes_frame_to_expected_bytes(self):
         frame = IoTSPFrame(MessageType.SECURE_COMM_MSG, b"abc")
-
         self.assertEqual(serialize_frame(frame), b"\x21\x03abc")
 
     def test_parses_frame_round_trip(self):
         frame = IoTSPFrame(MessageType.SKEY_HANDSHAKE_1, b"payload")
-
         parsed = parse_frame(serialize_frame(frame))
-
         self.assertEqual(parsed, frame)
 
     def test_rejects_empty_frame(self):
@@ -100,9 +110,35 @@ class IoTSPFrameTests(unittest.TestCase):
 
     def test_can_allow_trailing_bytes(self):
         parsed = parse_frame(b"\x21\x03abcx", allow_trailing=True)
-
         self.assertEqual(parsed, IoTSPFrame(MessageType.SECURE_COMM_MSG, b"abc"))
 
 
+class TCPTransportTests(unittest.TestCase):
+    """Tests for reading and writing IoTSP frames over sockets."""
+
+    def test_recv_frame_reads_fragmented_frame(self):
+        frame = IoTSPFrame(MessageType.SECURE_COMM_MSG, b"a" * 130)
+        sock = FakeSocket(serialize_frame(frame))
+        parsed = recv_frame(sock)
+        self.assertEqual(parsed, frame)
+
+    def test_recv_frame_rejects_oversized_payload(self):
+        frame = IoTSPFrame(MessageType.SECURE_COMM_MSG, b"a" * 10)
+        sock = FakeSocket(serialize_frame(frame))
+        with self.assertRaisesRegex(SerializationError, "exceeds"):
+            recv_frame(sock, max_payload_size=3)
+
+    def test_recv_frame_rejects_early_close(self):
+        sock = FakeSocket(b"\x21\x05ab")
+        with self.assertRaisesRegex(AuthConnectionError, "closed"):
+            recv_frame(sock)
+
+    def test_send_frame_writes_serialized_frame(self):
+        frame = IoTSPFrame(MessageType.AUTH_ALERT, b"\x01")
+        sock = FakeSocket()
+        send_frame(sock, frame)
+        self.assertEqual(sock.sent, [serialize_frame(frame)])
+
+
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)
