@@ -33,6 +33,7 @@ The Python API currently includes:
 ```text
 entity/python/
   README.md
+  pyproject.toml
   API_REFERENCE.md
   API_implementation_REDME.md
   entity_server.py
@@ -74,6 +75,7 @@ entity/python/
 | File | Purpose |
 | --- | --- |
 | `README.md` | Main guide to the Python directory structure and file responsibilities. |
+| `pyproject.toml` | Package definition file that makes `iotauth` pip-installable. |
 | `API_REFERENCE.md` | Developer-facing reference for public classes, functions, examples, and exceptions. |
 | `API_implementation_REDME.md` | Detailed step-by-step API design, theory, implementation notes, and references. |
 | `entity_server.py` | Existing legacy Python server file. It is currently outside the new API work. |
@@ -117,28 +119,43 @@ one API layer so changes can be checked in small pieces.
 | `tests/test_wire.py` | Tests binary serialization primitives and TCP transport helpers. |
 | `tests/test_wrappers.py` | Tests the high-level `SecureClient` and `SecureServer` wrappers. |
 
-## Running tests
+## Installation and Running
+
+Before running tests or examples, create a virtual environment and install the package locally:
+
+```bash
+cd entity/python
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -e .
+```
+
+This installs the `iotauth` package in editable mode. You **do not** need to mess with `PYTHONPATH` as long as your virtual environment is activated.
+
+### Running tests
 
 To run the full test suite with natural-language output (e.g. `Testing [capability] ... passed`):
 
 ```bash
-PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python entity/python/run_all_tests.py
+python run_tests.py
 ```
 
-To run an individual test file, you can pass its file path (or module path):
+To run an individual test file, pass its path:
 
 ```bash
-PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python entity/python/run_tests.py tests/test_secure_channel.py
+python run_tests.py tests/test_secure_channel.py
 ```
 
 > **Note on Test Dependencies**: All test files and test cases in this suite are **completely independent**. There is no shared global state or cross-file dependency. You can safely run any test file (or single test method) completely on its own.
 
-If the virtual environment has not been created yet:
+### Running examples
+
+To run the example server or client, activate the environment and run them directly:
 
 ```bash
-python3 -m venv entity/python/.venv
-entity/python/.venv/bin/python -m pip install --upgrade pip
-entity/python/.venv/bin/python -m pip install cryptography
+python examples/pyServer.py
+python examples/pyClient.py
 ```
 
 ## Notes for future work

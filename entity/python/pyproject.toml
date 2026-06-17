@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iotauth"
+version = "0.1.0"
+description = "Python entity API for IoTAuth"
+dependencies = [
+    "cryptography"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["iotauth", "iotauth.*"]
