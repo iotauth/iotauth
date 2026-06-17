@@ -158,7 +158,21 @@ def accept_secure(
             )
 
         key_id = parse_handshake_1_key_id(handshake_1.payload)
-        key = _lookup_session_key(ctx, key_id)
+        try:
+            key = _lookup_session_key(ctx, key_id)
+        except SecureHandshakeError:
+            # If the server doesn't have the key, ask Auth for it
+            purpose = {"keyId": int.from_bytes(key_id, "big")}
+            try:
+                keys = ctx.request_session_keys(purpose=purpose, count=1, timeout=timeout)
+                if not keys:
+                    raise SecureHandshakeError(f"Auth returned no keys for keyId: {key_id.hex()}")
+                key = keys[0]
+            except Exception as exc:
+                raise SecureHandshakeError(
+                    f"Failed to fetch session key {key_id.hex()} from Auth: {exc}"
+                ) from exc
+
         _check_session_key_validity(key)
 
         server_nonce = _nonce_factory(NONCE_SIZE)
