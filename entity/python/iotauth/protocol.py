@@ -260,7 +260,8 @@ def parse_session_key_response_payload(
         offset += consumed
 
     if offset < len(view) and not allow_trailing:
-        raise SerializationError("Session key response contains trailing bytes")
+        trailing = len(view) - offset
+        raise SerializationError(f"Session key response contains {trailing} trailing bytes")
 
     return SessionKeyResponsePayload(
         entity_nonce=entity_nonce,

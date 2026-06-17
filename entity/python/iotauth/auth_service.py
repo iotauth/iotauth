@@ -174,7 +174,9 @@ def _handle_session_key_response(
             f"received {frame.message_type.name}"
         )
 
-    response = parse_session_key_response_payload(plaintext, ctx.config.session)
+    response = parse_session_key_response_payload(
+        plaintext, ctx.config.session, allow_trailing=True
+    )
     if response.entity_nonce != entity_nonce:
         raise AuthProtocolError("Auth response nonce did not match entity nonce")
 
