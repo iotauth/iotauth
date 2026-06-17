@@ -1,7 +1,7 @@
 import os
 import sys
 
-from iotauth import IoTAuthContext, IoTAuthError, SecureServer
+from iotauth import IoTAuthContext, IoTAuthError, SecureServer, SecureChannelClosed
 
 
 def main():
@@ -33,6 +33,8 @@ def main():
                 reply = b"Server Echo: " + data
                 channel.send(reply)
 
+    except SecureChannelClosed:
+        print("Client disconnected.")
     except IoTAuthError as exc:
         print(f"Server error: {exc}")
         sys.exit(1)
