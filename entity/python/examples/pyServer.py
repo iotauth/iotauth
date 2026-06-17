@@ -20,6 +20,7 @@ def main():
             channel = server.serve_once()
             print("Secure connection established!")
 
+            message_count = 1
             while True:
                 # Wait for encrypted data from the client
                 data = channel.recv()
@@ -27,11 +28,12 @@ def main():
                     print("Client disconnected.")
                     break
 
-                print(f"Received secure message: {data.decode('utf-8')}")
+                print(f"LOG: Received: {data.decode('utf-8')}")
 
                 # Echo the data back securely
-                reply = b"Server Echo: " + data
-                channel.send(reply)
+                reply_str = "Hello client" if message_count == 1 else f"Hello client {message_count}"
+                channel.send(reply_str.encode('utf-8'))
+                message_count += 1
 
     except SecureChannelClosed:
         print("Client disconnected.")
