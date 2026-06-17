@@ -50,7 +50,13 @@ if __name__ == '__main__':
     loader = unittest.TestLoader()
     
     if len(sys.argv) > 1:
-        suite = loader.loadTestsFromNames(sys.argv[1:])
+        args = []
+        for arg in sys.argv[1:]:
+            if arg.endswith('.py'):
+                # Convert file path like tests/test_secure_channel.py to module tests.test_secure_channel
+                arg = arg[:-3].replace(os.sep, '.')
+            args.append(arg)
+        suite = loader.loadTestsFromNames(args)
     else:
         suite = loader.discover('tests')
         

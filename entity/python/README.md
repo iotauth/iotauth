@@ -122,13 +122,13 @@ one API layer so changes can be checked in small pieces.
 To run the full test suite with natural-language output (e.g. `Testing [capability] ... passed`):
 
 ```bash
-PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python entity/python/run_tests.py
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python entity/python/run_all_tests.py
 ```
 
-To run an individual test file, pass the module path:
+To run an individual test file, you can pass its file path (or module path):
 
 ```bash
-PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python entity/python/run_tests.py tests.test_secure_channel
+PYTHONPATH=entity/python PYTHONDONTWRITEBYTECODE=1 entity/python/.venv/bin/python entity/python/run_tests.py tests/test_secure_channel.py
 ```
 
 > **Note on Test Dependencies**: All test files and test cases in this suite are **completely independent**. There is no shared global state or cross-file dependency. You can safely run any test file (or single test method) completely on its own.
