@@ -7,8 +7,10 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from .auth_messages import (
+from .protocol import (
     NONCE_SIZE,
+    IoTSPFrame,
+    MessageType,
     SessionKeyRequestPayload,
     parse_auth_alert_payload,
     parse_auth_hello_payload,
@@ -25,8 +27,7 @@ from .crypto import (
 )
 from .exceptions import AuthConnectionError, AuthProtocolError, ConfigError, SerializationError
 from .keys import DistributionKey, SessionKey
-from .messages import IoTSPFrame, MessageType
-from .transports.tcp import connect, recv_frame, send_frame
+from .transports import close_socket, connect, recv_frame, send_frame
 
 
 AUTH_ALERT_MESSAGES = {
@@ -82,7 +83,7 @@ def request_session_keys(
         response_frame = recv_frame(sock)
         return _handle_session_key_response(ctx, response_frame, entity_nonce)
     finally:
-        _close_socket(sock)
+        close_socket(sock)
 
 
 def distribution_key_is_expired(
@@ -114,14 +115,7 @@ def _open_auth_socket(
     return sock
 
 
-def _close_socket(sock: Any) -> None:
-    close = getattr(sock, "close", None)
-    if close is None:
-        return
-    try:
-        close()
-    except OSError:
-        pass
+
 
 
 def _select_purpose(

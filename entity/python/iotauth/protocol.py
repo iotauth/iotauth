@@ -1,27 +1,135 @@
-"""Auth-facing payload serializers and parsers for IoTAuth entities."""
+"""IoTAuth protocol message types, frame objects, and Auth payload helpers.
+
+This module combines message-type definitions, the IoTSP frame container, and
+Auth-facing payload serializers and parsers into a single protocol module.
+"""
 
 from __future__ import annotations
 
 import json
 from collections.abc import Buffer
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Any
 
 from .config import SessionConfig
 from .exceptions import KeyCacheError, SerializationError
-from .keys import DistributionKey, SessionKey
+from .keys import SESSION_KEY_ID_SIZE, DistributionKey, SessionKey
 from .serialization import decode_uint_be, decode_varint, encode_uint_be, encode_varint
 
 
+# ---------------------------------------------------------------------------
+# Protocol constants
+# ---------------------------------------------------------------------------
+
 AUTH_ID_SIZE = 4
 NONCE_SIZE = 8
-SESSION_KEY_ID_SIZE = 8
 DIST_KEY_EXPIRATION_TIME_SIZE = 6
 KEY_EXPIRATION_TIME_SIZE = 6
 REL_VALIDITY_SIZE = 6
 MAC_KEY_SIZE = 32
 AES_128_KEY_SIZE = 16
 
+
+# ---------------------------------------------------------------------------
+# Message types
+# ---------------------------------------------------------------------------
+
+class MessageType(IntEnum):
+    AUTH_HELLO = 0
+    ENTITY_HELLO = 1
+    AUTH_SESSION_KEY_REQ = 10
+    AUTH_SESSION_KEY_RESP = 11
+    SESSION_KEY_REQ_IN_PUB_ENC = 20
+    SESSION_KEY_RESP_WITH_DIST_KEY = 21
+    SESSION_KEY_REQ = 22
+    SESSION_KEY_RESP = 23
+    SESSION_KEY_RESP_FOR_DELEGATION = 24
+    SESSION_KEY_RESP_FOR_DELEGATION_WITH_DIST_KEY = 25
+    SKEY_HANDSHAKE_1 = 30
+    SKEY_HANDSHAKE_2 = 31
+    SKEY_HANDSHAKE_3 = 32
+    SECURE_COMM_MSG = 33
+    FIN_SECURE_COMM = 34
+    SECURE_PUB = 40
+    MIGRATION_REQ_WITH_SIGN = 50
+    MIGRATION_RESP_WITH_SIGN = 51
+    MIGRATION_REQ_WITH_MAC = 52
+    MIGRATION_RESP_WITH_MAC = 53
+    ADD_READER_REQ_IN_PUB_ENC = 60
+    ADD_READER_RESP_WITH_DIST_KEY = 61
+    ADD_READER_REQ = 62
+    ADD_READER_RESP = 63
+    DELEGATED_ACCESS_REQ_IN_PUB_ENC = 70
+    DELEGATED_ACCESS_RESP_WITH_DIST_KEY = 71
+    DELEGATED_ACCESS_REQ = 72
+    DELEGATED_ACCESS_RESP = 73
+    PRIVILEGED_REQ_IN_PUB_ENC = 80
+    PRIVILEGED_RESP_WITH_DIST_KEY = 81
+    PRIVILEGED_REQ = 82
+    PRIVILEGED_RESP = 83
+    AUTH_ALERT = 100
+
+
+# ---------------------------------------------------------------------------
+# IoTSP frame container
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class IoTSPFrame:
+    message_type: MessageType
+    payload: bytes
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.message_type, MessageType):
+            object.__setattr__(
+                self, "message_type", message_type_from_byte(int(self.message_type))
+            )
+        if not isinstance(self.payload, bytes):
+            raise SerializationError("IoTSPFrame payload must be bytes")
+
+
+def message_type_from_byte(value: int) -> MessageType:
+    try:
+        return MessageType(value)
+    except ValueError as exc:
+        raise SerializationError(f"Unknown IoTAuth message type: {value}") from exc
+
+
+def serialize_frame(frame: IoTSPFrame) -> bytes:
+    """Serialize an IoTSP frame as message type, payload length, and payload."""
+
+    return bytes([int(frame.message_type)]) + encode_varint(len(frame.payload)) + frame.payload
+
+
+def parse_frame(data: Buffer, *, allow_trailing: bool = False) -> IoTSPFrame:
+    """Parse an IoTSP frame from bytes."""
+
+    view = memoryview(data)
+    if len(view) < 1:
+        raise SerializationError("IoTSP frame is empty")
+
+    message_type = message_type_from_byte(view[0])
+    payload_length, length_size = decode_varint(view, 1)
+    payload_start = 1 + length_size
+    payload_end = payload_start + payload_length
+
+    if payload_end > len(view):
+        raise SerializationError(
+            "IoTSP frame payload length exceeds available data"
+        )
+    if payload_end < len(view) and not allow_trailing:
+        raise SerializationError("IoTSP frame contains trailing bytes")
+
+    return IoTSPFrame(
+        message_type=message_type,
+        payload=bytes(view[payload_start:payload_end]),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Auth payload dataclasses
+# ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
 class AuthHelloPayload:
@@ -50,6 +158,10 @@ class SessionKeyResponsePayload:
     crypto_spec: dict[str, Any] | str
     session_keys: list[SessionKey]
 
+
+# ---------------------------------------------------------------------------
+# Payload builders and parsers
+# ---------------------------------------------------------------------------
 
 def parse_auth_hello_payload(payload: Buffer) -> AuthHelloPayload:
     view = memoryview(payload)
@@ -228,6 +340,10 @@ def parse_session_key_record(
 
     return key, cursor - offset
 
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
 
 def _serialize_purpose(purpose: dict[str, Any] | str) -> str:
     if isinstance(purpose, str):

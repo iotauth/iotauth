@@ -8,6 +8,9 @@ receiving protected messages.
 The step-by-step learning and implementation notes were moved to
 [API_implementation_REDME.md](./API_implementation_REDME.md).
 
+For developer-facing class, function, and usage details, see
+[API_REFERENCE.md](./API_REFERENCE.md).
+
 ## Current scope
 
 The Python API currently includes:
@@ -30,11 +33,11 @@ The Python API currently includes:
 ```text
 entity/python/
   README.md
+  API_REFERENCE.md
   API_implementation_REDME.md
   entity_server.py
   iotauth/
     __init__.py
-    auth_messages.py
     auth_service.py
     client.py
     config.py
@@ -44,15 +47,11 @@ entity/python/
     exceptions.py
     handshake.py
     keys.py
-    messages.py
+    protocol.py
     secure_channel.py
+    serialization.py
     server.py
-    serialization/
-      __init__.py
-      binary.py
-    transports/
-      __init__.py
-      tcp.py
+    transports.py
   tests/
     test_auth_messages.py
     test_auth_service.py
@@ -77,6 +76,7 @@ entity/python/
 | File | Purpose |
 | --- | --- |
 | `README.md` | Main guide to the Python directory structure and file responsibilities. |
+| `API_REFERENCE.md` | Developer-facing reference for public classes, functions, examples, and exceptions. |
 | `API_implementation_REDME.md` | Detailed step-by-step API design, theory, implementation notes, and references. |
 | `entity_server.py` | Existing legacy Python server file. It is currently outside the new API work. |
 
@@ -85,7 +85,6 @@ entity/python/
 | File | Purpose |
 | --- | --- |
 | `iotauth/__init__.py` | Public package exports, so callers can import the main API objects from `iotauth`. |
-| `iotauth/auth_messages.py` | Builds and parses Auth protocol payloads such as hello, session-key requests, responses, alerts, and key records. |
 | `iotauth/auth_service.py` | Connects to Auth and performs the session-key request workflow. |
 | `iotauth/client.py` | High-level client API for connecting to Auth, requesting keys, and opening secure peer connections. |
 | `iotauth/config.py` | Loads and validates entity configuration files into typed Python dataclasses. |
@@ -95,18 +94,11 @@ entity/python/
 | `iotauth/exceptions.py` | Central exception hierarchy for configuration, credentials, serialization, Auth, crypto, and secure-channel errors. |
 | `iotauth/handshake.py` | Builds and parses secure handshake payloads for `SKEY_HANDSHAKE_1`, `SKEY_HANDSHAKE_2`, and `SKEY_HANDSHAKE_3`. |
 | `iotauth/keys.py` | Defines session key and distribution key models plus the in-memory session key cache. |
-| `iotauth/messages.py` | Defines IoTSP message types and the `IoTSPFrame` container. |
+| `iotauth/protocol.py` | Combines IoTSP message types, frame containers, and Auth protocol payload serialization and parsing helpers. |
 | `iotauth/secure_channel.py` | Implements the secure handshake and the encrypted `SecureChannel` send/receive API. |
+| `iotauth/serialization.py` | Binary serialization primitives for variable-length integers and multi-byte integers. |
 | `iotauth/server.py` | High-level server API for listening for peers and accepting secure connections. |
-
-### Subpackages
-
-| File | Purpose |
-| --- | --- |
-| `iotauth/serialization/__init__.py` | Exports serialization helpers from the serialization subpackage. |
-| `iotauth/serialization/binary.py` | Encodes and decodes integers, variable-length fields, and IoTSP frames in binary form. |
-| `iotauth/transports/__init__.py` | Exports transport helpers from the transports subpackage. |
-| `iotauth/transports/tcp.py` | Provides TCP connect, listen, accept, send-frame, and receive-frame helpers. |
+| `iotauth/transports.py` | Provides TCP connect, listen, accept, send-frame, receive-frame, and socket-cleanup helpers. |
 
 ### Tests
 

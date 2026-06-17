@@ -9,6 +9,7 @@ from typing import Any
 from .context import IoTAuthContext
 from .exceptions import AuthConnectionError, ConfigError
 from .secure_channel import SecureChannel
+from .transports import close_socket
 
 
 ListenSocketFactory = Callable[[], Any]
@@ -48,7 +49,7 @@ class SecureServer:
             sock.bind((host, port))
             sock.listen(self.backlog)
         except OSError as exc:
-            _close_socket(sock)
+            close_socket(sock)
             raise AuthConnectionError(
                 f"Could not listen on {host}:{port}: {exc}"
             ) from exc
@@ -66,7 +67,7 @@ class SecureServer:
     def close(self) -> None:
         if self._socket is None:
             return
-        _close_socket(self._socket)
+        close_socket(self._socket)
         self._socket = None
 
     def __enter__(self) -> "SecureServer":
@@ -90,12 +91,3 @@ class SecureServer:
             return self._socket_factory()
         return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-
-def _close_socket(sock: Any) -> None:
-    close = getattr(sock, "close", None)
-    if close is None:
-        return
-    try:
-        close()
-    except OSError:
-        pass

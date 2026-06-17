@@ -5,10 +5,9 @@ from __future__ import annotations
 import socket
 from typing import Any
 
-from ..exceptions import AuthConnectionError, SerializationError
-from ..messages import IoTSPFrame, message_type_from_byte
-from ..serialization import decode_varint, serialize_frame
-from ..serialization.binary import MAX_VARINT_BYTES
+from .exceptions import AuthConnectionError, SerializationError
+from .protocol import IoTSPFrame, message_type_from_byte
+from .serialization import decode_varint, encode_varint, MAX_VARINT_BYTES
 
 
 DEFAULT_MAX_PAYLOAD_SIZE = 65536
@@ -27,6 +26,8 @@ def connect(host: str, port: int, *, timeout: float | None = 5.0) -> socket.sock
 
 def send_frame(sock: Any, frame: IoTSPFrame) -> None:
     """Send one complete IoTSP frame to a stream socket."""
+
+    from .protocol import serialize_frame
 
     try:
         sock.sendall(serialize_frame(frame))
@@ -62,6 +63,18 @@ def recv_frame(
             return IoTSPFrame(message_type, payload)
 
     raise SerializationError("Variable-length integer is too long")
+
+
+def close_socket(sock: Any) -> None:
+    """Safely close a socket, ignoring errors."""
+
+    close = getattr(sock, "close", None)
+    if close is None:
+        return
+    try:
+        close()
+    except OSError:
+        pass
 
 
 def _recv_exact(sock: Any, size: int) -> bytes:

@@ -11,20 +11,25 @@ from .config import (
 from .context import IoTAuthContext
 from .client import SecureClient
 from .auth_service import distribution_key_is_expired, request_session_keys
-from .auth_messages import (
+from .protocol import (
     AUTH_ID_SIZE,
     NONCE_SIZE,
     AuthAlertPayload,
     AuthHelloPayload,
+    IoTSPFrame,
+    MessageType,
     SessionKeyRequestPayload,
     SessionKeyResponsePayload,
+    message_type_from_byte,
     parse_auth_alert_payload,
     parse_auth_hello_payload,
     parse_buffered_string,
     parse_distribution_key_record,
+    parse_frame,
     parse_session_key_record,
     parse_session_key_response_payload,
     serialize_buffered_string,
+    serialize_frame,
     serialize_session_key_request_payload,
 )
 from .exceptions import (
@@ -69,14 +74,11 @@ from .crypto import (
     verify_sha256,
 )
 from .keys import DistributionKey, SessionKey, SessionKeyCache
-from .messages import IoTSPFrame, MessageType, message_type_from_byte
 from .serialization import (
     decode_uint_be,
     decode_varint,
     encode_uint_be,
     encode_varint,
-    parse_frame,
-    serialize_frame,
 )
 from .secure_channel import (
     SecureChannel,
@@ -85,7 +87,7 @@ from .secure_channel import (
     session_key_is_expired,
 )
 from .server import SecureServer
-from .transports.tcp import recv_frame, send_frame
+from .transports import recv_frame, send_frame
 
 __all__ = [
     "AUTH_ID_SIZE",

@@ -8,7 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from .auth_messages import NONCE_SIZE
+from .protocol import NONCE_SIZE, IoTSPFrame, MessageType
 from .config import TargetServer
 from .context import IoTAuthContext
 from .crypto import symmetric_decrypt_authenticate, symmetric_encrypt_authenticate
@@ -30,9 +30,8 @@ from .handshake import (
     verify_handshake_3,
 )
 from .keys import SessionKey
-from .messages import IoTSPFrame, MessageType
 from .serialization import decode_uint_be, encode_uint_be
-from .transports.tcp import connect, recv_frame, send_frame
+from .transports import close_socket, connect, recv_frame, send_frame
 
 
 SocketFactory = Callable[[str, int, float | None], Any]
@@ -136,7 +135,7 @@ def connect_secure(
         _check_session_key_validity(key)
         return SecureChannel(socket=sock, session_key=key)
     except Exception:
-        _close_socket(sock)
+        close_socket(sock)
         raise
 
 
@@ -184,7 +183,7 @@ def accept_secure(
         _check_session_key_validity(key)
         return SecureChannel(socket=sock, session_key=key)
     except Exception:
-        _close_socket(sock)
+        close_socket(sock)
         raise
 
 
@@ -299,11 +298,4 @@ def _lookup_session_key(ctx: IoTAuthContext, key_id: bytes) -> SessionKey:
         ) from exc
 
 
-def _close_socket(sock: Any) -> None:
-    close = getattr(sock, "close", None)
-    if close is None:
-        return
-    try:
-        close()
-    except OSError:
-        pass
+

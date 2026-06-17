@@ -1,11 +1,10 @@
-"""Binary serialization helpers for IoTAuth protocol frames."""
+"""Binary serialization helpers for IoTAuth protocol data."""
 
 from __future__ import annotations
 
 from collections.abc import Buffer
 
-from ..exceptions import SerializationError
-from ..messages import IoTSPFrame, message_type_from_byte
+from .exceptions import SerializationError
 
 
 MAX_VARINT_BYTES = 5
@@ -81,34 +80,3 @@ def decode_uint_be(data: Buffer) -> int:
     if len(view) < 1:
         raise SerializationError("Unsigned big-endian integer buffer is empty")
     return int.from_bytes(view, "big")
-
-
-def serialize_frame(frame: IoTSPFrame) -> bytes:
-    """Serialize an IoTSP frame as message type, payload length, and payload."""
-
-    return bytes([int(frame.message_type)]) + encode_varint(len(frame.payload)) + frame.payload
-
-
-def parse_frame(data: Buffer, *, allow_trailing: bool = False) -> IoTSPFrame:
-    """Parse an IoTSP frame from bytes."""
-
-    view = memoryview(data)
-    if len(view) < 1:
-        raise SerializationError("IoTSP frame is empty")
-
-    message_type = message_type_from_byte(view[0])
-    payload_length, length_size = decode_varint(view, 1)
-    payload_start = 1 + length_size
-    payload_end = payload_start + payload_length
-
-    if payload_end > len(view):
-        raise SerializationError(
-            "IoTSP frame payload length exceeds available data"
-        )
-    if payload_end < len(view) and not allow_trailing:
-        raise SerializationError("IoTSP frame contains trailing bytes")
-
-    return IoTSPFrame(
-        message_type=message_type,
-        payload=bytes(view[payload_start:payload_end]),
-    )

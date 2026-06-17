@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Buffer
 from dataclasses import dataclass
 
-from .auth_messages import NONCE_SIZE
+from .protocol import NONCE_SIZE, _require_nonce
 from .crypto import symmetric_decrypt_authenticate, symmetric_encrypt_authenticate
 from .exceptions import SecureHandshakeError, SerializationError
 from .keys import SESSION_KEY_ID_SIZE, SessionKey
@@ -195,9 +195,7 @@ def _decrypt_handshake_payload(key: SessionKey, encrypted: bytes) -> bytes:
     )
 
 
-def _require_nonce(value: bytes, field_name: str) -> None:
-    if len(value) != NONCE_SIZE:
-        raise SerializationError(f"{field_name} must be {NONCE_SIZE} bytes")
+
 
 
 def _require_available(
