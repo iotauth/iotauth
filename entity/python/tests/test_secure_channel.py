@@ -281,15 +281,51 @@ class SecureChannelTests(unittest.TestCase):
         self.assertEqual(sent, IoTSPFrame(MessageType.SKEY_HANDSHAKE_2, b"handshake2"))
         self.assertFalse(fake.closed)
 
-    def test_accept_secure_unknown_session_key_raises_handshake_error(self):
-        fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_1, b"87654321handshake1"))
+    def test_accept_secure_unknown_session_key_fetches_from_auth(self):
+        key = make_session_key(key_id=b"87654321")
+        fake = FakeSocket(
+            frame(MessageType.SKEY_HANDSHAKE_1, b"87654321handshake1")
+            + frame(MessageType.SKEY_HANDSHAKE_3, b"handshake3")
+        )
+        ctx = context()
 
-        with self.assertRaisesRegex(SecureHandshakeError, "not found"):
-            accept_secure(
-                context(),
+        with patch(
+            "iotauth.secure_channel.verify_handshake_1_and_build_handshake_2",
+            return_value=(CLIENT_NONCE, b"handshake2"),
+        ), patch(
+            "iotauth.secure_channel.verify_handshake_3",
+            return_value=None,
+        ), patch(
+            "iotauth.context.IoTAuthContext.request_session_keys",
+            return_value=[key],
+        ) as req_keys:
+            channel = accept_secure(
+                ctx,
                 fake,
                 _nonce_factory=lambda size: b"s" * 8,
             )
+
+        self.assertIs(channel.session_key, key)
+        req_keys.assert_called_once_with(
+            purpose={"keyId": int.from_bytes(b"87654321", "big")},
+            count=1,
+            timeout=5.0,
+        )
+
+    def test_accept_secure_unknown_session_key_raises_if_auth_fails(self):
+        fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_1, b"87654321handshake1"))
+        ctx = context()
+
+        with patch(
+            "iotauth.context.IoTAuthContext.request_session_keys",
+            return_value=[],
+        ):
+            with self.assertRaisesRegex(SecureHandshakeError, "no keys for keyId"):
+                accept_secure(
+                    ctx,
+                    fake,
+                    _nonce_factory=lambda size: b"s" * 8,
+                )
 
         self.assertTrue(fake.closed)
 
