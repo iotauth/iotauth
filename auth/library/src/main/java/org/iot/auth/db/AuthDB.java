@@ -497,4 +497,41 @@ public class AuthDB {
     public boolean removeDelegationInfo(List<String> CPTIDs) throws SQLException, ClassNotFoundException {
         return sqLiteConnector.deleteDelegationInfoByIDs(CPTIDs);
     }
+
+    public String allPrivilegesToString() throws SQLException, org.json.simple.parser.ParseException {
+        StringBuilder sb = new StringBuilder();
+        boolean init = true;
+        for (DelegationPrivilegeTable p : sqLiteConnector.selectAllPrivileges()) {
+            if (init) {
+                init = false;
+            } else {
+                sb.append("\n");
+            }
+            sb.append(p.toJSONObject().toJSONString());
+        }
+        return sb.toString();
+    }
+
+    public String allDelegationInfoToString() throws SQLException {
+        StringBuilder sb = new StringBuilder();
+        boolean init = true;
+        for (DelegationInfoTable d : sqLiteConnector.selectAllDelegationInfo()) {
+            if (init) {
+                init = false;
+            } else {
+                sb.append("\n");
+            }
+            sb.append(d.toJSONObject().toJSONString());
+        }
+        return sb.toString();
+    }
+
+    public boolean insertPrivilege(DelegationPrivilegeTable privilegeTable) throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.insertRecords(privilegeTable);
+    }
+
+    public boolean removePrivilege(String privilegeType, String privilegedGroup, String subject, String object)
+            throws SQLException, ClassNotFoundException {
+        return sqLiteConnector.deletePrivilegeByKey(privilegeType, privilegedGroup, subject, object);
+    }
 }

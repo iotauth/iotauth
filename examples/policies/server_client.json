@@ -6,6 +6,8 @@
     "MaxNumSessionKeyOwners": 2,
     "SessionCryptoSpec": "AES-128-CBC:SHA256",
     "AbsoluteValidity": "1*day",
-    "RelativeValidity": "2*hour"
+    "RelativeValidity": "2*hour",
+    "Expiration": "Infinity",
+    "IsDelegated": 0
   }
 ]

@@ -2,7 +2,7 @@
 ---
 This directory includes entities written in [Node.js](https://nodejs.org/).
 
-To initialize Node.js example entities, required npm packages should be installed and configurations for example entities should be generated. This initialization can be done using a script in this directory, [initNodeEntities.sh](https://github.com/iotauth/iotauth/blob/master/entity/node/initNodeEntities.sh).
+To initialize Node.js example entities, required npm packages should be installed and configurations for example entities should be generated. This initialization can be done using a script in this directory, [initNodeEntities.sh](https://github.com/iotauth/iotauth/blob/main/entity/node/initNodeEntities.sh).
 
 # Directory structure
 ---
@@ -16,7 +16,7 @@ To initialize Node.js example entities, required npm packages should be installe
 # Required external packages ([npm](https://www.npmjs.com/))
 ---
 
-The entities written in Node.js require external *npm* packages. These packages are specified in [package.json](https://github.com/iotauth/iotauth/blob/master/entity/node/package.json) that is included in this directory.
+The entities written in Node.js require external *npm* packages. These packages are specified in [package.json](https://github.com/iotauth/iotauth/blob/main/entity/node/package.json) that is included in this directory.
 
 To install these *npm* packages locally, enter 'npm install' while in this directory (iotauth/entity/node/). The npm packages will be installed under the directory, *iotauth/entity/node/node_modules*.
 
@@ -24,4 +24,4 @@ To install these *npm* packages locally, enter 'npm install' while in this direc
 
 - **sleep**: For testing time-outed entities.
 
-- **JSON2**: For generation of configuration files for entities in a readable JSON format, used by [configGenenerator.js](https://github.com/iotauth/iotauth/blob/master/entity/node/example_entities/configs/configGenenerator.js) under iotauth/entity/node/example_entities/configs/.
+- **JSON2**: For generation of configuration files for entities in a readable JSON format, used by [configGenenerator.js](https://github.com/iotauth/iotauth/blob/main/entity/node/example_entities/configs/configGenenerator.js) under iotauth/entity/node/example_entities/configs/.

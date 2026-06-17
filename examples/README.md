@@ -7,7 +7,7 @@ The scripts are used to clean and generate credentials (certificates and keystor
 
 # Example details
 ---
-![Image of Example Auths and entities](https://raw.githubusercontent.com/iotauth/iotauth/master/examples/figures/example_description.png)
+![Image of Example Auths and entities](https://raw.githubusercontent.com/iotauth/iotauth/main/examples/figures/example_description.png)
 
 The figure above illustrates the example with two Auths (`Auth101` and `Auth102`) and their example entities. 
 `Auth101` (Auth with ID 101) is an authorization entity for network 1 (net1), and it has two registered entities, namely, `net1.server` and `net1.client`. 
@@ -65,6 +65,21 @@ This script uses following helper script.
 ### cleanAll.sh
 
 This scripts deletes all credentials of example Auths and entities, and deletes databases for example Auths.
+
+### scripts/
+
+The [`scripts/`](scripts/) subdirectory contains automated end-to-end integration test scripts that build, configure, start Auth, and run a client/server pair in a single command. Four scripts cover every combination of C and Node.js entities:
+
+| Script | Client | Server |
+|--------|--------|--------|
+| `c_client_node_server_test.sh` | C `entity_client` | Node `server.js` |
+| `c_client_c_server_test.sh` | C `entity_client` | C `entity_server` |
+| `node_client_c_server_test.sh` | Node `autoClient.js` | C `entity_server` |
+| `node_client_node_server_test.sh` | Node `autoClient.js` | Node `server.js` |
+
+The `node_client_*` scripts use `autoClient.js`, which automatically reconnects every ~10 seconds and sends two messages (`"data2"` then `"data1"`) per connection.
+
+See [`scripts/README.md`](scripts/README.md) for detailed descriptions of each script, including expected messages, termination behavior, and verified output.
 
 # How to run examples
 ---
@@ -141,7 +156,7 @@ $ make
 
 4. Run `./entity_client ../c_client.config` in a separate terminal, to execute net1.client.
 
-See https://github.com/iotauth/sst-c-api/tree/master/examples/ for more examples.
+See https://github.com/iotauth/sst-c-api/tree/main/examples/ for more examples.
 
 ### To run example entities written in Cape Code
 
@@ -155,4 +170,3 @@ See https://github.com/iotauth/sst-c-api/tree/master/examples/ for more examples
 4. Make sure Auth101 is running.
 
 5. Run `SecureCommServer.xml` first then also run `SecureCommClient.xml`.
-

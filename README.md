@@ -7,21 +7,21 @@ The architecture provides security guarantees while addressing IoT-related issue
 The architectural concept of locally centralized, globally distributed authentication and authorization is illustrated in our magazine article [[IT Professional '17](https://ieeexplore.ieee.org/document/8057722/)].
 Our ACM journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/3375837)] presents a secure migration technique as a recovery mechanism from Denial-of-Service (DoS) attacks or failures.
 In 2023, we released the C API for SST, which was introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
-We also applied SST for securing the large-scale key-value storage [[SIGMOD '25](https://dl.acm.org/doi/10.1145/3725354)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
-Furthermore, we built SST Testbed [[ICIT '26](https://ieeexplore.ieee.org/document/11490150)] a testbed for experimenting with attacks and defenses for distributed embedded systems and IoT using SST, which also won the **[1st place](https://2025.esweek.org/awards-2025/) in the Embedded System Software Competition (ESSC) at ESWEEK '25** ([[YouTube Video of SST Testbed](https://www.youtube.com/watch?v=DU9cHmDfRYI)]).
+We also applied SST for securing large-scale key-value storage [[SIGMOD '25](https://dl.acm.org/doi/10.1145/3725354)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
+Furthermore, we built SST Testbed [[ICIT '26](https://ieeexplore.ieee.org/document/11490150)], a testbed for experimenting with attacks and defenses for distributed embedded systems and IoT using SST, which also won the **[1st place](https://2025.esweek.org/awards-2025/) in the Embedded System Software Competition (ESSC) at ESWEEK '25** ([[YouTube Video of SST Testbed](https://www.youtube.com/watch?v=DU9cHmDfRYI)]).
 
 More publications on SST or using SST include [[SmartSP '24](https://arxiv.org/abs/2411.13441)], [[FDL '23](https://ieeexplore.ieee.org/document/10272133)], and [[SenSys '23 - Poster Abstract]](https://dl.acm.org/doi/10.1145/3625687.3628408).
 
 For the most in-depth technical document of SST, please refer to this Ph.D. dissertation [[UC Berkeley '17](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-139.html)].
 
-This repository includes 1) an open-source Java implementation of Auth and 2) sample codes for local entities to use Auth (authentication/authorization) services provided by Auth in various programming languages for different platforms.
+This repository includes 1) an open-source Java implementation of Auth and 2) sample code for local entities to use Auth (authentication/authorization) services provided by Auth in various programming languages for different platforms.
 
-
+Please visit the [SST website](https://iotauth.github.io/) for more information.
 
 # Prerequisites
 ---
 
-1. OpenSSL command line tools for creating certificates and keystores of Auths and example entities
+1. OpenSSL command-line tools for creating certificates and keystores of Auths and example entities
 2. Java 11 or above
 3. [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing Java project of Auth
 4. [Maven CLI (command line interface)](http://maven.apache.org/ref/3.1.0/maven-embedder/cli.html) for building Auth from the command line
@@ -31,21 +31,22 @@ This repository includes 1) an open-source Java implementation of Auth and 2) sa
 ---
 - **android**: Directory for SST's Auth and entities for the Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
-- **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/master/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
-- **examples**: Directory for scripts and descriptions to run example Auths and entities.
+- **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/main/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
+- **examples**: Directory for scripts and descriptions to run example Auths and entities. The [`examples/scripts/`](examples/scripts/) subdirectory contains automated end-to-end integration test scripts covering all combinations of C and Node.js clients and servers — see [`examples/scripts/README.md`](examples/scripts/README.md).
 
 # Quick start for SST
 ---
-Please check [QUICKSTART.md](https://github.com/iotauth/iotauth/blob/master/QUICKSTART.md) for a quick start of SST.
+Please check [QUICKSTART.md](https://github.com/iotauth/iotauth/blob/main/QUICKSTART.md) for a quick start of SST.
 
 # Detailed examples with Auths and entities
 ---
-See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/master/examples/README.md) for a fully working example.
+See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/main/examples/README.md) for a fully working example.
 
 # Contributors
 ---
 ## Active Contributors
 - [Hokeun Kim](https://hokeun.github.io/) (Assistant Professor at Arizona State University)
+- [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (Senior Scientific Programmer, Polaris Wireless)
 - [Dongha Kim](https://github.com/Jakio815) (Ph.D. Student at Arizona State University)
 - [Carlos Beltran Quinonez](https://github.com/CarlosBeltranQ) (M.S. Student at Arizona State University)
 - [Sunyoung Kim](https://github.com/sunnykim638) (Undergraduate Student at Arizona State University)
@@ -54,7 +55,6 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 - [Krutyanjay Shinde](https://github.com/kjshinde) (M.S. Graduate, Volunteer Researcher at Arizona State University)
 
 ## Former Contributors
-- [Salomon Lee](https://www.linkedin.com/in/salomon-lee-637b0921) (CTO at AlcaCruz Inc.)
 - [Eunsuk Kang](https://eskang.github.io/) (Associate Professor at Carnegie Mellon University)
 - [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/) (CEO at Xronos Inc.)
 - [Taekyung Kim](https://github.com/LukeKimm) (Commissioned Officer in the Republic of Korea Army)
@@ -73,4 +73,4 @@ This project is currently intended for academic and research purposes, although 
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP), a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 This work was supported in part by the National Research Foundation of Korea (NRF) grants funded by the Korea government (MSIT).
 
-*Last updated on May 12, 2026*
+*Last updated on June 12, 2026*

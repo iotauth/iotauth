@@ -94,7 +94,8 @@ def service_connection(key, mask, file_manager_dict, file_metadata_table, distri
             recv_data_from_auth = client_sock.recv(entity_server.READ_BYTES_NUM)
             # Continue the loop if no data received
             if len(recv_data_from_auth) == 0:
-                continue
+                print("Connection to Auth server closed unexpectedly.")
+                break
             # Process the received data to get the session key
             entity_server.get_session_key(recv_data_from_auth, file_manager_dict, client_sock, distribution_key, comm_session_key, nonce_auth)
 
@@ -151,6 +152,7 @@ def main():
         sys.exit(1)
 
     manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    manager_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     manager_socket.bind((host, port))
     manager_socket.listen()
     print(f"Listening on {(host, port)}")
