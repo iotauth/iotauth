@@ -4545,3 +4545,24 @@ Current result:
 Ran 136 tests
 OK
 ```
+
+## Pythonic Restructure (Refactor Phase)
+
+After completing the initial step-by-step implementation, the `iotauth` codebase was restructured. Originally, the code was planned and written following a C-style background, where declarations and implementations were artificially separated into many small files and nested directories (similar to header and source files). To align with Python best practices, we moved to a flatter, more cohesive module structure.
+
+### Main Package Consolidation
+
+- **`protocol.py`**: The previously separate `messages.py` (for base IoTSP messages) and `auth_messages.py` (for Auth payload builders) were merged into a single `protocol.py` module. Separating them was an unnecessary artifact of C-style design; grouping them makes it much easier to import and manage protocol logic.
+- **Flattened Directories**: The nested `serialization/` and `transports/` directories (which were going to contain `binary.py`, `tcp.py`, etc.) were flattened into single modules: `serialization.py` and `transports.py`. This avoids overly deep imports like `from iotauth.serialization.binary import ...` in favor of simpler, flatter imports.
+
+### Test Suite Consolidation
+
+To mirror the newly flattened main package, the test suite was also heavily consolidated to improve maintainability and remove C-style code fragmentation:
+
+- **Shared Helpers**: Extracted common test fixtures (like `FakeSocket` and `make_session_key`) into `tests/helpers.py`.
+- **Protocol Tests**: Merged `test_messages.py` and `test_auth_messages.py` into a unified `test_protocol.py`.
+- **Wire Tests**: Merged `test_serialization.py` and `test_tcp_transport.py` into `test_wire.py`.
+- **Context & Wrapper Tests**: Merged `test_credentials.py` into `test_context.py` and merged `test_client.py` with `test_server.py` into `test_wrappers.py`.
+- **Verbosity & Output**: Updated the test runner to use `verbosity=2` and introduced a custom `run_tests.py` script that formats standard `unittest` output into readable natural language sentences.
+
+This restructuring reduced the test suite from 14 scattered files down to 9 highly focused modules, making the entire architecture flatter, more Pythonic, and significantly easier to extend.
