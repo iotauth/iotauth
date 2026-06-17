@@ -9,6 +9,7 @@ from .config import (
     load_config,
 )
 from .context import IoTAuthContext
+from .credentials import load_auth_public_key, load_entity_private_key
 from .client import SecureClient
 from .auth_service import distribution_key_is_expired, request_session_keys
 from .protocol import (
@@ -167,5 +168,7 @@ __all__ = [
     "verify_handshake_2_and_build_handshake_3",
     "verify_handshake_3",
     "verify_sha256",
+    "load_auth_public_key",
     "load_config",
+    "load_entity_private_key",
 ]
