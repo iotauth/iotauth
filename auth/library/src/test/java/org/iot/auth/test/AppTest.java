@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
@@ -42,6 +41,7 @@ import org.iot.auth.io.Buffer;
 import org.iot.auth.message.MessageType;
 import org.iot.auth.message.impl.AuthHello;
 import org.iot.auth.util.DateHelper;
+import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -861,5 +861,104 @@ public class AppTest {
         Assert.assertEquals("5", value);
         sqLiteConnector.close();
         destroyTestAuthDB(testDbFileName);
+    }
+
+    /**
+     * Inserts a {@link CommunicationPolicyTable} record with a non-null Context JSON string and
+     * verifies that the Context is persisted and retrieved correctly from the database.
+     *
+     * @throws SQLException            if a database access error occurs
+     * @throws ClassNotFoundException  if the SQLite JDBC driver is not on the classpath
+     * @throws IOException             if the database file cannot be accessed
+     */
+    @Test
+    @Category(org.iot.auth.db.CommunicationPolicy.class)
+    public void testCommPolicyContextColumn() throws SQLException, ClassNotFoundException, IOException {
+        final String testDbFileName = testDbPath + "testCommPolicyContextColumn" + "_auth.db";
+        destroyTestAuthDB(testDbFileName);
+        createTestAuthDB(testDbFileName);
+        SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);
+        sqLiteConnector.initialize(databaseKey);
+        sqLiteConnector.DEBUG = true;
+
+        String contextJson = "{\"Number of People\":{\"Max\":3},"
+                + "\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},"
+                + "\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}";
+
+        CommunicationPolicyTable policy = new CommunicationPolicyTable();
+        policy.setID(0);
+        policy.setReqGroup("Clients");
+        policy.setTargetTypeVal("Group");
+        policy.setTarget("Servers");
+        policy.setMaxNumSessionKeyOwners(2);
+        policy.setSessionCryptoSpec("AES-128-CBC:SHA256");
+        policy.setAbsValidityStr("1*day");
+        policy.setRelValidityStr("20*sec");
+        policy.setContext(contextJson);
+        Assert.assertTrue(sqLiteConnector.insertRecords(policy));
+
+        // policy with null Context
+        policy.setID(1);
+        policy.setReqGroup("PtClients");
+        policy.setTarget("PtServers");
+        policy.setContext(null);
+        Assert.assertTrue(sqLiteConnector.insertRecords(policy));
+
+        List<CommunicationPolicyTable> policies = sqLiteConnector.selectAllPolicies();
+        Assert.assertEquals(2, policies.size());
+
+        CommunicationPolicyTable withContext = policies.get(0);
+        Assert.assertEquals(contextJson, withContext.getContext());
+
+        CommunicationPolicyTable withoutContext = policies.get(1);
+        Assert.assertNull(withoutContext.getContext());
+
+        sqLiteConnector.close();
+        destroyTestAuthDB(testDbFileName);
+    }
+
+    /**
+     * Verifies that {@link org.iot.auth.db.ContextVerifier} correctly evaluates all three
+     * supported condition types: numeric Max, Allowed list, and Time-of-Day Min/Max range.
+     */
+    @Test
+    public void testContextVerifier() {
+        String policyContextJson = "{\"Number of People\":{\"Max\":3},"
+                + "\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},"
+                + "\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}";
+
+        // Passing context: all conditions satisfied
+        JSONObject passing = new JSONObject();
+        passing.put("Number of People", 2L);
+        passing.put("Location", "Classroom");
+        passing.put("Time of Day", "10:30");
+        Assert.assertTrue(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, passing));
+
+        // Failing: Number of People exceeds Max
+        JSONObject tooManyPeople = new JSONObject();
+        tooManyPeople.put("Number of People", 5L);
+        tooManyPeople.put("Location", "Classroom");
+        tooManyPeople.put("Time of Day", "10:30");
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, tooManyPeople));
+
+        // Failing: Location not in Allowed list
+        JSONObject wrongLocation = new JSONObject();
+        wrongLocation.put("Number of People", 2L);
+        wrongLocation.put("Location", "Cafeteria");
+        wrongLocation.put("Time of Day", "10:30");
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, wrongLocation));
+
+        // Failing: Time of Day outside range
+        JSONObject outsideHours = new JSONObject();
+        outsideHours.put("Number of People", 2L);
+        outsideHours.put("Location", "Meeting Room");
+        outsideHours.put("Time of Day", "20:00");
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, outsideHours));
+
+        // Null policy context: always passes
+        Assert.assertTrue(org.iot.auth.db.ContextVerifier.verifyContext(null, null));
+
+        // Non-null policy context but no request context: fails
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, null));
     }
 }
