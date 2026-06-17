@@ -38,7 +38,22 @@
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
 			},
-			"backupToAuthIds": []
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.server", "host": "localhost", "port": 21100, "group": "Servers"}
+			],
+			"contextList": [
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "10:30"},
+				{"Number of People": 1, "Location": "Meeting Room", "Time of Day": "14:00"},
+				{"Number of People": 4, "Location": "Classroom", "Time of Day": "12:00"},
+				{"Number of People": 2, "Location": "Cafeteria", "Time of Day": "11:00"},
+				{"Number of People": 1, "Location": "Classroom", "Time of Day": "08:30"},
+				{"Number of People": 3, "Location": "Classroom", "Time of Day": "09:00"},
+				{"Number of People": 2, "Location": "Meeting Room", "Time of Day": "19:00"},
+				{"Number of People": 3, "Location": "Meeting Room", "Time of Day": "17:59"},
+				{"Number of People": 5, "Location": "Office", "Time of Day": "23:00"},
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "18:01"}
+			]
 		},
 		{
 			"group": "Servers",
@@ -78,7 +93,10 @@
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
 			},
-			"backupToAuthIds": []
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.adminServer", "host": "localhost", "port": 21200, "group": "AdminServers"}
+			]
 		},
 		{
 			"group": "AdminServers",

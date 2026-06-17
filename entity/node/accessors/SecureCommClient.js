@@ -348,7 +348,11 @@ function serverHostPortInputHandler(serverHostPort) {
 	    			handleSessionKeyResp, serverHostPort);
 	    	}
 	    	else {
-	    		sendSessionKeyRequest({group: 'Servers'}, parameters.numKeysPerRequest,
+	    		var purpose = {group: 'Servers'};
+	    		if (parameters.context !== undefined && parameters.context !== null) {
+	    		    purpose.context = parameters.context;
+	    		}
+	    		sendSessionKeyRequest(purpose, parameters.numKeysPerRequest,
 	    			handleSessionKeyResp, serverHostPort);
 	    	}
 	    }
@@ -374,7 +378,11 @@ function serverHostPortInputHandlerResource(serverHostPort, resourceName) {
                     handleSessionKeyResp, serverHostPort);
             }
             else {
-                sendSessionKeyRequest({group: resourceName}, parameters.numKeysPerRequest,
+                var purpose = {group: resourceName};
+                if (parameters.context !== undefined && parameters.context !== null) {
+                    purpose.context = parameters.context;
+                }
+                sendSessionKeyRequest(purpose, parameters.numKeysPerRequest,
                     handleSessionKeyResp, serverHostPort);
             }
         }
@@ -455,6 +463,10 @@ SecureCommClient.prototype.setOutputHandler = function(key, handler) {
 
 SecureCommClient.prototype.getTargetServerInfoList = function() {
 	return entityConfig.targetServerInfoList;
+}
+
+SecureCommClient.prototype.getContextList = function() {
+    return entityConfig.contextList || null;
 }
 
 SecureCommClient.prototype.getEntityInfo = function() {
