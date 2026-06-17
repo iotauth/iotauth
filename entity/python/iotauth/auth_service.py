@@ -208,7 +208,7 @@ def _decrypt_response_with_new_distribution_key(
         distribution_key.cipher_key,
         distribution_key.mac_key,
         ctx.config.session.encryption_mode,
-        False,
+        distribution_key.mac_key is not None,
     )
 
 
@@ -224,7 +224,7 @@ def _decrypt_response_with_existing_distribution_key(
         ctx.distribution_key.cipher_key,
         ctx.distribution_key.mac_key,
         ctx.config.session.encryption_mode,
-        False,
+        ctx.distribution_key.mac_key is not None,
     )
 
 
