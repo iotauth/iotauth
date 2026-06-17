@@ -13,15 +13,19 @@ def main():
             print("Connecting to server...")
             client.connect()
             
-            message = b"Hello from the new Python API!"
-            print(f"Sending: {message.decode('utf-8')}")
-            
-            # Encrypt and send data
-            client.send(message)
-            
-            # Receive and decrypt the reply
-            reply = client.recv()
-            print(f"Received reply: {reply.decode('utf-8')}")
+            messages = [
+                b"Message 1: Hello from the new Python API!",
+                b"Message 2: Testing multiple messages...",
+                b"Message 3: Goodbye!"
+            ]
+            for msg in messages:
+                print(f"Sending: {msg.decode('utf-8')}")
+                # Encrypt and send data
+                client.send(msg)
+                
+                # Receive and decrypt the reply
+                reply = client.recv()
+                print(f"Received reply: {reply.decode('utf-8')}\n")
             
     except IoTAuthError as exc:
         print(f"Client error: {exc}")
