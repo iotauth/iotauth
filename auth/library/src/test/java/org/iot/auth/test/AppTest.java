@@ -959,7 +959,6 @@ public class AppTest {
         Assert.assertTrue(org.iot.auth.db.ContextVerifier.verifyContext(null, null));
 
         // Non-null policy context but no request context: fails
-        // Non-null policy context but no request context: fails
         Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, null));
 
         // Malformed policy context JSON: fails gracefully
