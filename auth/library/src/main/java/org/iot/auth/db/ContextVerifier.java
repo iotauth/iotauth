@@ -125,7 +125,13 @@ public class ContextVerifier {
     private static long toLong(Object obj) {
         if (obj instanceof Long) return (Long) obj;
         if (obj instanceof Integer) return ((Integer) obj).longValue();
-        if (obj instanceof Double) return ((Double) obj).longValue();
+        if (obj instanceof Double) {
+            double d = (Double) obj;
+            if (d != Math.floor(d)) {
+                throw new IllegalArgumentException("Non-integer numeric value not allowed: " + d);
+            }
+            return (long) d;
+        }
         return Long.parseLong(obj.toString());
     }
 
