@@ -1,9 +1,9 @@
-# This workflow runs the four entity integration tests (all combinations of
-# C and Node.js clients and servers) in sequence.  The first script handles
-# the full build and credential setup.  If it succeeds, the remaining three
+# This workflow runs the nine entity integration tests (all combinations of
+# C, Node.js, and Python clients and servers) in sequence.  The first script handles
+# the full build and credential setup.  If it succeeds, the remaining eight
 # scripts reuse those artifacts (--no-build --no-setup).  If the first script
 # fails, each subsequent script runs its own full build and setup so it is
-# independent.  All four tests always run; the job fails if any of them fails.
+# independent.  All nine tests always run; the job fails if any of them fails.
 
 # Author: Hokeun Kim
 
@@ -36,6 +36,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
       - name: Install C build tools
         run: sudo apt-get install -y cmake make gcc libssl-dev
@@ -85,6 +90,66 @@ jobs:
             ./node_client_node_server_test.sh
           fi
 
+      - name: Run c_client_python_server_test
+        id: test5
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./c_client_python_server_test.sh --no-build --no-setup
+          else
+            ./c_client_python_server_test.sh
+          fi
+
+      - name: Run node_client_python_server_test
+        id: test6
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./node_client_python_server_test.sh --no-build --no-setup
+          else
+            ./node_client_python_server_test.sh
+          fi
+
+      - name: Run python_client_c_server_test
+        id: test7
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./python_client_c_server_test.sh --no-build --no-setup
+          else
+            ./python_client_c_server_test.sh
+          fi
+
+      - name: Run python_client_node_server_test
+        id: test8
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./python_client_node_server_test.sh --no-build --no-setup
+          else
+            ./python_client_node_server_test.sh
+          fi
+
+      - name: Run python_client_python_server_test
+        id: test9
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./python_client_python_server_test.sh --no-build --no-setup
+          else
+            ./python_client_python_server_test.sh
+          fi
+
       - name: Fail if any test failed
         if: always()
         run: |
@@ -93,9 +158,14 @@ jobs:
             "${{ steps.test1.outcome }}" \
             "${{ steps.test2.outcome }}" \
             "${{ steps.test3.outcome }}" \
-            "${{ steps.test4.outcome }}"; do
+            "${{ steps.test4.outcome }}" \
+            "${{ steps.test5.outcome }}" \
+            "${{ steps.test6.outcome }}" \
+            "${{ steps.test7.outcome }}" \
+            "${{ steps.test8.outcome }}" \
+            "${{ steps.test9.outcome }}"; do
             if [ "$outcome" != "success" ]; then
-              echo "A test step did not succeed (outcome: $outcome)."
+              echo "A test step did not succeed."
               result=1
             fi
           done
