@@ -99,7 +99,8 @@ public class ContextVerifier {
                     return false;
                 }
             } else {
-                logger.warn("Unknown context requirement type for '{}': {}", conditionName, requirement);
+                logger.error("Unknown context requirement type for '{}': {}", conditionName, requirement);
+                return false;
             }
         }
         return true;
