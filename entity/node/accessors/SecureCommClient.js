@@ -328,7 +328,10 @@ serverHostPort = {
 	port: 21200
 }
 */
-function serverHostPortInputHandler(serverHostPort) {
+function serverHostPortInputHandler(serverHostPort, resourceName) {
+	if (resourceName === undefined) {
+		resourceName = 'Servers';
+	}
 	if (serverHostPort == null) {
 		console.log('ServerHostPort is null, trying to close previous socket...');
 		if (currentSecureClient) {
@@ -348,7 +351,7 @@ function serverHostPortInputHandler(serverHostPort) {
 	    			handleSessionKeyResp, serverHostPort);
 	    	}
 	    	else {
-	    		var purpose = {group: 'Servers'};
+	    		let purpose = {group: resourceName};
 	    		if (parameters.context !== undefined && parameters.context !== null) {
 	    		    purpose.context = parameters.context;
 	    		}
@@ -357,36 +360,6 @@ function serverHostPortInputHandler(serverHostPort) {
 	    	}
 	    }
 	}
-}
-function serverHostPortInputHandlerResource(serverHostPort, resourceName) {
-    if (serverHostPort == null) {
-        console.log('ServerHostPort is null, trying to close previous socket...');
-        if (currentSecureClient) {
-            currentSecureClient.close();
-            currentSecureClient = null;
-        }
-    }
-    else {
-        if (currentSessionKeyList.length > 0) {
-            initSecureCommWithSessionKey(currentSessionKeyList.shift(),
-                serverHostPort.host, serverHostPort.port);
-        }
-        else {
-            // hack to support exp2
-            if (parameters.keyId) {
-                sendSessionKeyRequest({keyId: parameters.keyId}, 1,
-                    handleSessionKeyResp, serverHostPort);
-            }
-            else {
-                var purpose = {group: resourceName};
-                if (parameters.context !== undefined && parameters.context !== null) {
-                    purpose.context = parameters.context;
-                }
-                sendSessionKeyRequest(purpose, parameters.numKeysPerRequest,
-                    handleSessionKeyResp, serverHostPort);
-            }
-        }
-    }
 }
 
 function toSendInputHandler(toSend) {
@@ -439,7 +412,7 @@ SecureCommClient.prototype.provideInput = function(port, input) {
 
 SecureCommClient.prototype.provideInputResource = function(port, input, resourceName) {
     if (port == 'serverHostPort') {
-        serverHostPortInputHandlerResource(input, resourceName);
+        serverHostPortInputHandler(input, resourceName);
     }
     else if (port == 'toSend') {
         toSendInputHandler(input);

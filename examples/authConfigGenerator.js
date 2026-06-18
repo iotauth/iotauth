@@ -177,7 +177,7 @@ function generateDelegationPrivilegeTables(){
 
 // generate client policy tables
 function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity, context) {
-    var policy = {
+    const policy = {
         RequestingGroup: requestingGroup,
         TargetType: 'Group',
         Target: target,

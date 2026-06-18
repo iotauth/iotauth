@@ -56,8 +56,8 @@ secureCommClient.setOutputHandler('connected', connectedHandler);
 secureCommClient.setOutputHandler('error', errorHandler);
 secureCommClient.setOutputHandler('received', receivedHandler);
 
-var contextList = secureCommClient.getContextList();
-var contextIdx = 0;
+const contextList = secureCommClient.getContextList();
+let contextIdx = 0;
 
 // For publish-subscribe experiments based individual secure connection using proposed approach
 if (process.argv.length > 5) {
@@ -137,7 +137,7 @@ function commandInterpreter() {
                     console.error('Context list exhausted: all ' + contextList.length + ' contexts have been used. No more contexts available.');
                     return;
                 }
-                var nextContext = contextList[contextIdx];
+                const nextContext = contextList[contextIdx];
                 contextIdx++;
                 console.log('[Context ' + contextIdx + '/' + contextList.length + '] Sending: ' + JSON.stringify(nextContext));
                 secureCommClient.setParameter('context', nextContext);
