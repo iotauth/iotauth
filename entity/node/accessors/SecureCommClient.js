@@ -328,7 +328,7 @@ serverHostPort = {
 	port: 21200
 }
 */
-function serverHostPortInputHandler(serverHostPort, resourceName) {
+function serverInputHandler(serverHostPort, resourceName) {
 	if (resourceName === undefined) {
 		resourceName = 'Servers';
 	}
@@ -401,22 +401,13 @@ SecureCommClient.prototype.initialize = function() {
 	console.log('current parameters: ' + util.inspect(parameters));
 }
 
-SecureCommClient.prototype.provideInput = function(port, input) {
+SecureCommClient.prototype.provideInput = function(port, input, resourceName) {
 	if (port == 'serverHostPort') {
-		serverHostPortInputHandler(input);
+		serverInputHandler(input, resourceName);
 	}
 	else if (port == 'toSend') {
 		toSendInputHandler(input);
 	}
-}
-
-SecureCommClient.prototype.provideInputResource = function(port, input, resourceName) {
-    if (port == 'serverHostPort') {
-        serverHostPortInputHandler(input, resourceName);
-    }
-    else if (port == 'toSend') {
-        toSendInputHandler(input);
-    }
 }
 
 SecureCommClient.prototype.setParameter = function(key, value) {
