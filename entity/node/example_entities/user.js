@@ -129,7 +129,7 @@ function commandInterpreter() {
                 commServerInfo = targetServerInfoList[0];
             }
             const resourceName = commServerInfo.name.split('.')[1].replace(/^./, c => c.toUpperCase());
-            console.log('initComm command targeted to ' + commServerInfo.name + " resource name" + resourceName);
+            console.log('initComm command targeted to ' + commServerInfo.name + ' (group: ' + resourceName + ')');
             secureCommClient.provideInput('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, resourceName);
 
         }
