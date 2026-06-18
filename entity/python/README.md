@@ -151,12 +151,7 @@ python run_tests.py tests/test_secure_channel.py
 
 ### Running examples
 
-To run the example server or client, activate the environment and run them directly:
-
-```bash
-python examples/pyServer.py
-python examples/pyClient.py
-```
+For detailed instructions on how to run the example server and client, including how to specify configuration file paths and use timeout arguments, please see the [Examples README](examples/README.md).
 
 ## Notes for future work
 
