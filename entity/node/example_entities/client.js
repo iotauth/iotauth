@@ -56,6 +56,9 @@ secureCommClient.setOutputHandler('connected', connectedHandler);
 secureCommClient.setOutputHandler('error', errorHandler);
 secureCommClient.setOutputHandler('received', receivedHandler);
 
+const contextList = secureCommClient.getContextList();
+let contextIdx = 0;
+
 // For publish-subscribe experiments based individual secure connection using proposed approach
 if (process.argv.length > 5) {
     var commandArg = process.argv[3];
@@ -85,7 +88,26 @@ function commandInterpreter() {
             message = input.slice(idx + 1);
         }
 
-        if (command == 'initComm') {
+        if (command == 'help') {
+            console.log('Available commands:');
+            console.log('  help                        Show this help message');
+            console.log('  initComm [server] [port]    Initialize secure communication with a server');
+            console.log('                              (default: first server in targetServerInfoList)');
+            if (contextList !== null) {
+                console.log('                              Automatically attaches the next context from');
+                console.log('                              contextList [' + contextIdx + '/' + contextList.length + ' used]');
+            }
+            console.log('  finComm  (or f)             Close the current secure communication');
+            console.log('  send <message>              Send a plaintext message to the connected server');
+            console.log('  sendFile [filepath]         Send a binary file (default: ../data_examples/data.bin)');
+            console.log('  skReq [numKeys]             Request session keys for caching (default: 3)');
+            console.log('  numKeys [n]                 Set number of session keys per request (default: 3)');
+            console.log('  saveData [filepath]         Save last received data to a file');
+            console.log('  showKeys                    Show current distribution key and session keys');
+            console.log('  showSocket                  Show current secure client socket info');
+            console.log('  mig                         Migrate to a trusted Auth');
+        }
+        else if (command == 'initComm') {
             var targetServerInfoList = secureCommClient.getTargetServerInfoList();
             var commServerInfo = null;
             if (message != undefined) {
@@ -110,9 +132,20 @@ function commandInterpreter() {
             else {
                 commServerInfo = targetServerInfoList[0];
             }
-            const resourceName = commServerInfo.name.split('.')[1].replace(/^./, c => c.toUpperCase());
-            console.log('initComm command targeted to ' + commServerInfo.name + " resource name" + resourceName);
-            secureCommClient.provideInputResource('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, resourceName);
+            if (contextList !== null) {
+                if (contextIdx >= contextList.length) {
+                    console.error('Context list exhausted: all ' + contextList.length + ' contexts have been used. No more contexts available.');
+                    return;
+                }
+                const nextContext = contextList[contextIdx];
+                contextIdx++;
+                console.log('[Context ' + contextIdx + '/' + contextList.length + '] Sending: ' + JSON.stringify(nextContext));
+                secureCommClient.setParameter('context', nextContext);
+            }
+            const resourceName = commServerInfo.group ||
+                commServerInfo.name.split('.')[1].replace(/^./, c => c.toUpperCase());
+            console.log('initComm command targeted to ' + commServerInfo.name + ' (group: ' + resourceName + ')');
+            secureCommClient.provideInput('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, resourceName);
 
         }
         else if (command == 'finComm' || command == 'f') {

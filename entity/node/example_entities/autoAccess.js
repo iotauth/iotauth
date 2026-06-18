@@ -31,7 +31,7 @@ async function runTest(nodeConfig, resourceName, groupName, timeoutMs = 10000) {
 
         const startNs = process.hrtime.bigint();
 
-        client.provideInputResource(
+        client.provideInput(
             "serverHostPort",
             { host: commServerInfo.host, port: commServerInfo.port },
             groupName
