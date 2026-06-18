@@ -61,7 +61,7 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./c_client_node_server_test.sh --no-build --no-setup
+            ./c_client_node_server_test.sh --no-build --no-setup --stop-existing
           else
             ./c_client_node_server_test.sh
           fi
@@ -73,7 +73,7 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./node_client_c_server_test.sh --no-build --no-setup
+            ./node_client_c_server_test.sh --no-build --no-setup --stop-existing
           else
             ./node_client_c_server_test.sh
           fi
@@ -85,7 +85,7 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./node_client_node_server_test.sh --no-build --no-setup
+            ./node_client_node_server_test.sh --no-build --no-setup --stop-existing
           else
             ./node_client_node_server_test.sh
           fi
@@ -97,7 +97,7 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./c_client_python_server_test.sh --no-build --no-setup
+            ./c_client_python_server_test.sh --no-build --no-setup --stop-existing
           else
             ./c_client_python_server_test.sh
           fi
@@ -109,7 +109,7 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./node_client_python_server_test.sh --no-build --no-setup
+            ./node_client_python_server_test.sh --no-build --no-setup --stop-existing
           else
             ./node_client_python_server_test.sh
           fi
@@ -121,7 +121,7 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./python_client_c_server_test.sh --no-build --no-setup
+            ./python_client_c_server_test.sh --no-build --no-setup --stop-existing
           else
             ./python_client_c_server_test.sh
           fi
@@ -133,7 +133,7 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./python_client_node_server_test.sh --no-build --no-setup
+            ./python_client_node_server_test.sh --no-build --no-setup --stop-existing
           else
             ./python_client_node_server_test.sh
           fi
@@ -145,7 +145,7 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./python_client_python_server_test.sh --no-build --no-setup
+            ./python_client_python_server_test.sh --no-build --no-setup --stop-existing
           else
             ./python_client_python_server_test.sh
           fi
