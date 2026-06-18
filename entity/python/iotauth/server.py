@@ -25,7 +25,7 @@ class SecureServer:
         host: str | None = None,
         port: int | None = None,
         backlog: int = 5,
-        timeout: float | None = 5.0,
+        timeout: float | None = 60.0, # Make default timeout 1 min
         _socket_factory: ListenSocketFactory | None = None,
     ):
         self.ctx = ctx
