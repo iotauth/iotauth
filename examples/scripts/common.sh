@@ -274,7 +274,10 @@ cleanup() {
 		kill "$pid" 2>/dev/null || true
 	done
 	for pid in "$CLIENT_PID" "$SERVER_TAIL_PID" "$AUTH_TAIL_PID" "$SERVER_PID" "$AUTH_PID"; do
-		[[ -n "$pid" ]] && kill "$pid" 2>/dev/null || true
+		if [[ -n "$pid" ]]; then
+			pkill -P "$pid" 2>/dev/null || true
+			kill "$pid" 2>/dev/null || true
+		fi
 	done
 	for pid in "$CLIENT_PID" "$SERVER_TAIL_PID" "$AUTH_TAIL_PID" "$SERVER_PID" "$AUTH_PID"; do
 		[[ -n "$pid" ]] && wait "$pid" 2>/dev/null || true
