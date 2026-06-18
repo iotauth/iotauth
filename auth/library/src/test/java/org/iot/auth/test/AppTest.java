@@ -965,5 +965,51 @@ public class AppTest {
         // Malformed policy context JSON: fails gracefully
         Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(
                 "{not valid json", new JSONObject()));
+
+        // Boundary values are inclusive for both numeric and time ranges.
+        JSONObject boundary = new JSONObject();
+        boundary.put("Number of People", 3L);
+        boundary.put("Location", "Meeting Room");
+        boundary.put("Time of Day", "09:00");
+        Assert.assertTrue(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, boundary));
+
+        // Time given in HH:mm:ss format is accepted and compared correctly.
+        JSONObject withSeconds = new JSONObject();
+        withSeconds.put("Number of People", 1L);
+        withSeconds.put("Location", "Classroom");
+        withSeconds.put("Time of Day", "17:59:59");
+        Assert.assertTrue(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, withSeconds));
+
+        // Format mismatch: time condition but an integer-formatted value is provided.
+        JSONObject timeFormatMismatch = new JSONObject();
+        timeFormatMismatch.put("Number of People", 2L);
+        timeFormatMismatch.put("Location", "Classroom");
+        timeFormatMismatch.put("Time of Day", 1030L);
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(policyContextJson, timeFormatMismatch));
+
+        // Numeric range with both Min and Max (integers), value within bounds.
+        String numericRangePolicy = "{\"Temperature\":{\"Min\":18,\"Max\":26}}";
+        JSONObject inRange = new JSONObject();
+        inRange.put("Temperature", 22L);
+        Assert.assertTrue(org.iot.auth.db.ContextVerifier.verifyContext(numericRangePolicy, inRange));
+
+        // Numeric range, value below Min: fails.
+        JSONObject belowMin = new JSONObject();
+        belowMin.put("Temperature", 10L);
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(numericRangePolicy, belowMin));
+
+        // Format mismatch: numeric range but a time-formatted value is provided.
+        JSONObject numericFormatMismatch = new JSONObject();
+        numericFormatMismatch.put("Temperature", "12:00");
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(numericRangePolicy, numericFormatMismatch));
+
+        // Time range expressed with only a Max bound (single-bound, time format).
+        String maxOnlyTimePolicy = "{\"Curfew\":{\"Max\":\"22:00\"}}";
+        JSONObject beforeCurfew = new JSONObject();
+        beforeCurfew.put("Curfew", "21:30");
+        Assert.assertTrue(org.iot.auth.db.ContextVerifier.verifyContext(maxOnlyTimePolicy, beforeCurfew));
+        JSONObject afterCurfew = new JSONObject();
+        afterCurfew.put("Curfew", "23:00");
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(maxOnlyTimePolicy, afterCurfew));
     }
 }
