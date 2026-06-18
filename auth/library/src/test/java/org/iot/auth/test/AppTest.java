@@ -1003,6 +1003,11 @@ public class AppTest {
         numericFormatMismatch.put("Temperature", "12:00");
         Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(numericRangePolicy, numericFormatMismatch));
 
+        // Floating-point values are not a supported format: fails.
+        JSONObject floatingPoint = new JSONObject();
+        floatingPoint.put("Temperature", 22.5);
+        Assert.assertFalse(org.iot.auth.db.ContextVerifier.verifyContext(numericRangePolicy, floatingPoint));
+
         // Time range expressed with only a Max bound (single-bound, time format).
         String maxOnlyTimePolicy = "{\"Curfew\":{\"Max\":\"22:00\"}}";
         JSONObject beforeCurfew = new JSONObject();

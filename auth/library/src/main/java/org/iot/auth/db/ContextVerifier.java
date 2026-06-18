@@ -147,15 +147,15 @@ public class ContextVerifier {
         }
 
         if (providedFormat == ValueFormat.INTEGER) {
-            long value = toLong(providedValue);
-            if (minObj != null && value < toLong(minObj)) {
+            int value = Integer.parseInt(providedValue.toString());
+            if (minObj != null && value < Integer.parseInt(minObj.toString())) {
                 logger.error("Context '{}' value {} is below minimum of {}.",
-                        conditionName, value, toLong(minObj));
+                        conditionName, value, minObj);
                 return false;
             }
-            if (maxObj != null && value > toLong(maxObj)) {
+            if (maxObj != null && value > Integer.parseInt(maxObj.toString())) {
                 logger.error("Context '{}' value {} exceeds maximum of {}.",
-                        conditionName, value, toLong(maxObj));
+                        conditionName, value, maxObj);
                 return false;
             }
         } else { // TIME
@@ -177,7 +177,8 @@ public class ContextVerifier {
     /**
      * Detects the format of a value for range comparison. A value is an INTEGER if
      * it is an integral number (or a string parseable as one), or a TIME if it is a
-     * string in {@code HH:mm} or {@code HH:mm:ss} format.
+     * string in {@code HH:mm} or {@code HH:mm:ss} format. Floating-point numeric
+     * values are not supported and yield null.
      *
      * @param value the value to inspect.
      * @return the detected {@link ValueFormat}, or null if not recognized.
@@ -186,13 +187,13 @@ public class ContextVerifier {
         if (value instanceof Long || value instanceof Integer) {
             return ValueFormat.INTEGER;
         }
-        if (value instanceof Double) {
-            double d = (Double) value;
-            return (d == Math.floor(d) && !Double.isInfinite(d)) ? ValueFormat.INTEGER : null;
+        if (value instanceof Number) {
+            // Floating-point numeric values (e.g. Double) are not a supported format.
+            return null;
         }
         String s = value.toString();
         try {
-            Long.parseLong(s);
+            Integer.parseInt(s);
             return ValueFormat.INTEGER;
         } catch (NumberFormatException e) {
             // Not an integer; fall through to time check.
@@ -215,19 +216,6 @@ public class ContextVerifier {
         } catch (DateTimeParseException e) {
             return null;
         }
-    }
-
-    private static long toLong(Object obj) {
-        if (obj instanceof Long) return (Long) obj;
-        if (obj instanceof Integer) return ((Integer) obj).longValue();
-        if (obj instanceof Double) {
-            double d = (Double) obj;
-            if (d != Math.floor(d)) {
-                throw new IllegalArgumentException("Non-integer numeric value not allowed: " + d);
-            }
-            return (long) d;
-        }
-        return Long.parseLong(obj.toString());
     }
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm[:ss]");
