@@ -1,6 +1,6 @@
 import os
 import sys
-from iotauth import IoTAuthContext, SecureClient, IoTAuthError
+from iotauth import IoTAuthContext, SecureClient, IoTAuthError, AuthConnectionError
 
 def main():
     print("Loading client context...")
@@ -12,6 +12,7 @@ def main():
         with SecureClient(ctx) as client:
             print("Connecting to server...")
             client.connect()
+            client.channel.socket.settimeout(1.0)
             
             messages = [
                 b"Hello server",
@@ -24,8 +25,14 @@ def main():
                 client.send(msg)
                 
                 # Receive and decrypt the reply
-                reply = client.recv()
-                print(f"LOG: Received: {reply.decode('utf-8')}")
+                try:
+                    reply = client.recv()
+                    print(f"LOG: Received: {reply.decode('utf-8')}")
+                except AuthConnectionError as exc:
+                    if "timed out" in str(exc).lower():
+                        print("No reply received (timeout), continuing...")
+                    else:
+                        raise
             
     except IoTAuthError as exc:
         print(f"Client error: {exc}")
