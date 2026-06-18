@@ -33,6 +33,7 @@ prepare_test() {
 		require_command npm
 		require_command python3
 		build_auth
+		build_python_entities
 	fi
 	if [[ "$RUN_SETUP" == true ]]; then
 		run_setup

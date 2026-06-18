@@ -91,6 +91,10 @@ build_c_entities() {
 	run_step cmake --build "$SST_ROOT/entity/c/examples/server_client_example/build"
 }
 
+build_python_entities() {
+	run_step bash -c "cd $(quote_for_shell "$SST_ROOT/entity/python") && ./initPythonEntities.sh"
+}
+
 run_setup() {
 	require_command node
 	require_command npm
