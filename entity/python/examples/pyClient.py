@@ -1,11 +1,15 @@
+import argparse
 import os
 import sys
 from iotauth import IoTAuthContext, SecureClient, IoTAuthError, AuthConnectionError
 
 def main():
+    parser = argparse.ArgumentParser(description="IoTAuth Python Client Example")
+    parser.add_argument("config_path", help="Path to the client config file")
+    args = parser.parse_args()
+
     print("Loading client context...")
-    config_path = os.path.join(os.path.dirname(__file__), "configs/pyClient.config")
-    ctx = IoTAuthContext.from_config(config_path)
+    ctx = IoTAuthContext.from_config(args.config_path)
 
     try:
         # SecureClient handles Auth session key requests and the peer handshake
