@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 
@@ -5,13 +6,23 @@ from iotauth import IoTAuthContext, IoTAuthError, SecureServer, SecureChannelClo
 
 
 def main():
+    parser = argparse.ArgumentParser(description="IoTAuth Python Server Example")
+    parser.add_argument("-to", "--timeout", type=float, default=60.0, help="Timeout value for server (default 60)")
+    parser.add_argument("-m", "--minutes", action="store_true", help="Treat timeout value as minutes")
+    parser.add_argument("-s", "--seconds", action="store_true", help="Treat timeout value as seconds (default)")
+    args = parser.parse_args()
+
+    timeout_val = args.timeout
+    if args.minutes:
+        timeout_val *= 60.0
+
     print("Loading server context...")
     config_path = os.path.join(os.path.dirname(__file__), "configs/pyServer.config")
     ctx = IoTAuthContext.from_config(config_path)
 
     try:
         # SecureServer automatically binds to the host/port in the config
-        with SecureServer(ctx) as server:
+        with SecureServer(ctx, timeout=timeout_val) as server:
             print(
                 f"Listening securely on {ctx.config.targets[0].host}:{ctx.config.targets[0].port}..."
             )
