@@ -1,8 +1,14 @@
 """Config parsing for IoTAuth Python entities.
 
-The parser intentionally starts with the C-style dotted ``.config`` files used
-by the existing entity examples. It returns typed dataclasses so later modules
-can consume validated configuration instead of raw strings.
+Supports two config file formats:
+- **Properties format**: The original C-style dotted ``key=value`` files used
+  by existing C and Python entity examples.
+- **JSON format**: The format produced by ``generateAll.sh`` for Node.js
+  entities (``entity/node/example_entities/configs/``). This is now the
+  preferred format.
+
+The parser auto-detects the format based on the first non-whitespace character
+of the file. Both formats return the same typed ``EntityConfig`` dataclasses.
 """
 
 from __future__ import annotations
@@ -89,8 +95,14 @@ class EntityConfig:
 def load_config(path: str | Path, *, validate_paths: bool = True) -> EntityConfig:
     """Load and validate an IoTAuth entity config file.
 
+    Auto-detects the file format:
+    - If the file starts with ``{``, it is parsed as the JSON format produced
+      by ``generateAll.sh`` for Node.js entities.
+    - Otherwise it is parsed as the C-style dotted ``key=value`` properties
+      format used by the original C and Python entity examples.
+
     Args:
-        path: Path to a C-style dotted property config file.
+        path: Path to the config file (either JSON or properties format).
         validate_paths: When true, referenced key files must exist.
 
     Raises:
@@ -104,7 +116,176 @@ def load_config(path: str | Path, *, validate_paths: bool = True) -> EntityConfi
     if not config_path.is_file():
         raise ConfigError(f"Config path is not a file: {config_path}")
 
-    raw = _read_properties(config_path)
+    try:
+        text = config_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ConfigError(f"Could not read config file {config_path}: {exc}") from exc
+
+    if text.lstrip().startswith("{"):
+        return _load_json_config(config_path, text, validate_paths=validate_paths)
+    return _load_properties_config(config_path, text, validate_paths=validate_paths)
+
+
+def _load_json_config(
+    config_path: Path, text: str, *, validate_paths: bool
+) -> EntityConfig:
+    """Parse a Node.js-style JSON config file into an EntityConfig."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ConfigError(f"Invalid JSON in config file {config_path}: {exc}") from exc
+
+    def _require(obj: dict, key: str, context: str = "") -> Any:
+        if key not in obj:
+            loc = f"{context}.{key}" if context else key
+            raise ConfigError(f"Missing required JSON field: {loc!r}")
+        return obj[key]
+
+    # Node.js resolves relative paths from the example_entities/ directory
+    # (the working directory when the Node entity process runs), NOT from the
+    # config file's own directory. The config files live two levels deep at
+    # configs/<net>/<name>.config, so the Node.js "base" is config_path.parent.parent.parent.
+    json_path_anchor = config_path.parent.parent.parent
+
+    def _resolve_json_path(value: str, key: str) -> Path:
+        candidate = Path(value)
+        if not candidate.is_absolute():
+            candidate = json_path_anchor / candidate
+        candidate = candidate.resolve(strict=False)
+        if validate_paths and not candidate.is_file():
+            raise ConfigError(f"{key} does not point to an existing file: {candidate}")
+        return candidate
+
+    entity_info = _require(data, "entityInfo")
+    auth_info = _require(data, "authInfo")
+    crypto_info = _require(data, "cryptoInfo")
+
+    entity_name = _require(entity_info, "name", "entityInfo")
+    if not isinstance(entity_name, str) or not entity_name.strip():
+        raise ConfigError("entityInfo.name must be a non-empty string")
+
+    # `entityInfo.group` is the entity's OWN group membership (e.g. "Clients"),
+    # NOT the purpose it wants to use for session key requests.
+    # For a client config (has targetServerInfoList), the session key purpose is
+    # the name of the first target server: {"name": "net1.server"}.
+    # For a server config (has listeningServerInfo), no purpose is needed since
+    # servers don't initiate session key requests.
+    # We defer building `purposes` until after we've parsed targetServerInfoList.
+
+    protocol = str(_require(entity_info, "distProtocol", "entityInfo")).upper()
+    if protocol not in SUPPORTED_PROTOCOLS:
+        supported = ", ".join(sorted(SUPPORTED_PROTOCOLS))
+        raise ConfigError(
+            f"Unsupported entityInfo.distProtocol {protocol!r}; supported: {supported}"
+        )
+
+    permanent_dist_key = bool(entity_info.get("usePermanentDistKey", False))
+
+    private_key_str = _require(entity_info, "privateKey", "entityInfo")
+    entity_private_key = _resolve_json_path(
+        private_key_str, "entityInfo.privateKey"
+    )
+
+    auth_id_raw = _require(auth_info, "id", "authInfo")
+    try:
+        auth_id = int(auth_id_raw)
+    except (TypeError, ValueError) as exc:
+        raise ConfigError(f"authInfo.id must be an integer, got {auth_id_raw!r}") from exc
+
+    auth_host = str(_require(auth_info, "host", "authInfo"))
+    auth_port_raw = _require(auth_info, "port", "authInfo")
+    try:
+        auth_port = int(auth_port_raw)
+    except (TypeError, ValueError) as exc:
+        raise ConfigError(f"authInfo.port must be an integer, got {auth_port_raw!r}") from exc
+    if not 1 <= auth_port <= 65535:
+        raise ConfigError(f"authInfo.port must be in range 1..65535, got {auth_port}")
+
+    auth_public_key_str = _require(auth_info, "publicKey", "authInfo")
+    auth_public_key = _resolve_json_path(
+        auth_public_key_str, "authInfo.publicKey"
+    )
+
+    session_crypto = _require(crypto_info, "sessionCryptoSpec", "cryptoInfo")
+    dist_crypto = _require(crypto_info, "distributionCryptoSpec", "cryptoInfo")
+
+    session_cipher_raw = _require(session_crypto, "cipher", "cryptoInfo.sessionCryptoSpec")
+    encryption_mode = _normalize_cipher(session_cipher_raw, "cryptoInfo.sessionCryptoSpec.cipher")
+
+    dist_cipher_raw = _require(dist_crypto, "cipher", "cryptoInfo.distributionCryptoSpec")
+    distribution_encryption_mode = _normalize_cipher(
+        dist_cipher_raw, "cryptoInfo.distributionCryptoSpec.cipher"
+    )
+
+    # Build targets list. Server configs have listeningServerInfo; client
+    # configs have targetServerInfoList. We always populate targets[0] as
+    # the primary endpoint.
+    targets: list[TargetServer] = []
+    if "listeningServerInfo" in data:
+        listen = data["listeningServerInfo"]
+        targets.append(
+            TargetServer(
+                host=str(_require(listen, "host", "listeningServerInfo")),
+                port=int(_require(listen, "port", "listeningServerInfo")),
+            )
+        )
+    if "targetServerInfoList" in data:
+        for entry in data["targetServerInfoList"]:
+            targets.append(
+                TargetServer(
+                    name=entry.get("name"),
+                    host=str(_require(entry, "host", "targetServerInfoList[]")),
+                    port=int(_require(entry, "port", "targetServerInfoList[]")),
+                )
+            )
+
+    # Derive session key purposes.
+    # Node.js hardcodes {group: 'Servers'} for all client→server session key
+    # requests (SecureCommClient.js line 351). We match that here.
+    # Server configs (listeningServerInfo only) never initiate session key
+    # requests so they get empty purposes.
+    purposes: list[dict[str, Any] | str] = []
+    if "targetServerInfoList" in data:
+        purposes = [{"group": "Servers"}]
+
+    return EntityConfig(
+        entity=EntityInfo(name=entity_name, private_key_path=entity_private_key),
+        auth=AuthInfo(
+            id=auth_id,
+            host=auth_host,
+            port=auth_port,
+            public_key_path=auth_public_key,
+        ),
+        session=SessionConfig(
+            protocol=protocol,
+            encryption_mode=encryption_mode,
+            distribution_encryption_mode=distribution_encryption_mode,
+            hmac_enabled=True,
+            permanent_distribution_key=permanent_dist_key,
+        ),
+        purposes=purposes,
+        num_keys=1,
+        targets=targets,
+        distribution_cipher_key_path=None,
+        distribution_mac_key_path=None,
+    )
+
+
+
+def _normalize_cipher(value: str, key: str) -> str:
+    """Convert a JSON cipher name like 'AES-128-CBC' to 'AES_128_CBC'."""
+    normalized = value.replace("-", "_")
+    if normalized not in SUPPORTED_ENCRYPTION_MODES:
+        supported = ", ".join(sorted(SUPPORTED_ENCRYPTION_MODES))
+        raise ConfigError(f"Unsupported {key} {value!r}; supported: {supported}")
+    return normalized
+
+
+def _load_properties_config(
+    config_path: Path, text: str, *, validate_paths: bool
+) -> EntityConfig:
+    """Parse the original C-style dotted key=value properties config file."""
+    raw = _read_properties_text(config_path, text)
     _reject_unknown_keys(raw)
     _require_keys(raw, REQUIRED_KEYS)
 
@@ -177,14 +358,19 @@ def load_config(path: str | Path, *, validate_paths: bool = True) -> EntityConfi
 
 
 def _read_properties(config_path: Path) -> dict[str, str]:
-    result: dict[str, str] = {}
-
+    """Read a properties file from disk and parse it (legacy helper)."""
     try:
-        lines = config_path.read_text(encoding="utf-8").splitlines()
+        text = config_path.read_text(encoding="utf-8")
     except OSError as exc:
         raise ConfigError(f"Could not read config file {config_path}: {exc}") from exc
+    return _read_properties_text(config_path, text)
 
-    for line_number, original_line in enumerate(lines, start=1):
+
+def _read_properties_text(config_path: Path, text: str) -> dict[str, str]:
+    """Parse a key=value properties string into a dict."""
+    result: dict[str, str] = {}
+
+    for line_number, original_line in enumerate(text.splitlines(), start=1):
         line = original_line.strip()
         if not line or line.startswith("#") or line.startswith("//"):
             continue
