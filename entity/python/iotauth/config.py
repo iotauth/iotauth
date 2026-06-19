@@ -141,11 +141,10 @@ def _load_json_config(
             raise ConfigError(f"Missing required JSON field: {loc!r}")
         return obj[key]
 
-    # Node.js resolves relative paths from the example_entities/ directory
-    # (the working directory when the Node entity process runs), NOT from the
-    # config file's own directory. The config files live two levels deep at
-    # configs/<net>/<name>.config, so the Node.js "base" is config_path.parent.parent.parent.
-    json_path_anchor = config_path.parent.parent.parent
+    # Relative paths in the JSON config are resolved from the current working
+    # directory, not from the config file's directory. This matches the behavior
+    # of the Node.js entities, which run with `example_entities/` as their CWD.
+    json_path_anchor = Path.cwd()
 
     def _resolve_json_path(value: str, key: str) -> Path:
         candidate = Path(value)
