@@ -1,0 +1,24 @@
+name: Python Formatting
+
+on:
+  push:
+    paths:
+      - 'entity/python/**'
+  pull_request:
+    paths:
+      - 'entity/python/**'
+
+jobs:
+  ruff:
+    name: Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: check entity/python
+
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: format --check entity/python
