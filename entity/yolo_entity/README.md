@@ -88,7 +88,7 @@ The main Python script (`yolo_client.py`) will be structured into modular, objec
 
 3. **`AuthCommunicator` (Class)**
    - Utilizes the `iotauth` Python package (`IoTAuthContext`).
-   - Called by the `PersonDetector` to request a session key (`ctx.request_session_keys()`) once a person is successfully detected according to the criteria.
+   - **Trigger Criteria**: The entity tracks the number of people in the frame. A session key request is triggered *every time a new person enters the frame* (i.e., when the current number of people is greater than the previous number of people).
    - Responsible for packaging the current detection state (like the "Number of People") into a JSON object and passing it as the `context` argument when requesting the session key.
 
 4. **Main Loop**
