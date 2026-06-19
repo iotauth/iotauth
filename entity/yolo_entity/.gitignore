@@ -1,0 +1,14 @@
+# Ignore YOLO model weights
+*.pt
+
+# Ignore Python virtual environments
+.venv/
+env/
+venv/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore yolo weights
+*.pt
