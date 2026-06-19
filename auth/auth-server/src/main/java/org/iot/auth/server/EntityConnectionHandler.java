@@ -624,6 +624,8 @@ public abstract class EntityConnectionHandler {
         long currentTime = new java.util.Date().getTime();
 
         JSONObject purpose = sessionKeyReq.getPurpose();
+        JSONObject requestContext = (purpose.containsKey("context") && purpose.get("context") instanceof JSONObject)
+                ? (JSONObject) purpose.get("context") : null;
         SessionKeyReqPurpose reqPurpose = new SessionKeyReqPurpose(purpose);
 
         SymmetricKeyCryptoSpec cryptoSpec = null;
@@ -644,6 +646,11 @@ public abstract class EntityConnectionHandler {
                     server.removeCommunicationPolicies(Collections.singletonList(policyId));
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
+                }
+                if (communicationPolicy.getContext() != null
+                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
+                    throw new InvalidSessionKeyTargetException(
+                            "Context verification failed for policy: " + purpose);
                 }
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
@@ -667,6 +674,11 @@ public abstract class EntityConnectionHandler {
                     server.removeCommunicationPolicies(Collections.singletonList(policyId));
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
+                }
+                if (communicationPolicy.getContext() != null
+                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
+                    throw new InvalidSessionKeyTargetException(
+                            "Context verification failed for policy: " + purpose);
                 }
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 SessionKeyPurpose sessionKeyPurpose =
@@ -767,6 +779,11 @@ public abstract class EntityConnectionHandler {
                     server.removeCommunicationPolicies(Collections.singletonList(policyId));
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
+                }
+                if (communicationPolicy.getContext() != null
+                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
+                    throw new InvalidSessionKeyTargetException(
+                            "Context verification failed for policy: " + purpose);
                 }
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
