@@ -95,9 +95,9 @@ echo "[test] Starting Python client (running twice to satisfy C server)."
 (
 	cd "$SST_ROOT/entity/python/examples"
 	source ../.venv/bin/activate
-	python3 pyClient.py configs/pyClient.config
+	python3 pyClient.py ../../node/example_entities/configs/net1/client.config
 	sleep 2
-	exec python3 pyClient.py configs/pyClient.config
+	exec python3 pyClient.py ../../node/example_entities/configs/net1/client.config
 ) >"$CLIENT_LOG" 2>&1 &
 CLIENT_PID=$!
 (

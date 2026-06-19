@@ -84,7 +84,7 @@ start_auth
 
 echo "[test] Starting Python server in a loop to handle multiple C client connections."
 start_service server bash -c \
-	"cd $(quote_for_shell "$SST_ROOT/entity/python/examples") && source ../.venv/bin/activate && while true; do python3 -u pyServer.py -n 2 configs/pyServer.config; sleep 0.5; done"
+	"cd $(quote_for_shell "$SST_ROOT/entity/python/examples") && source ../.venv/bin/activate && while true; do python3 -u pyServer.py -n 2 ../../node/example_entities/configs/net1/server.config; sleep 0.5; done"
 wait_for_port 21100 "Python server"
 
 echo "[test] Running C client."

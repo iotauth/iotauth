@@ -89,7 +89,7 @@ echo "[test] Running Python client."
 (
 	cd "$SST_ROOT/entity/python/examples"
 	source ../.venv/bin/activate
-	exec python3 pyClient.py configs/pyClient.config
+	exec python3 pyClient.py ../../node/example_entities/configs/net1/client.config
 ) >"$CLIENT_LOG" 2>&1 &
 CLIENT_PID=$!
 (
