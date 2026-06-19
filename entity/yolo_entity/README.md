@@ -13,7 +13,7 @@ This folder contains the implementation for an IoT Auth entity that uses a YOLO 
 The entity will:
 1. Run a YOLO model (e.g., using OpenCV or Ultralytics) to process a video stream.
 2. Detect persons in the stream.
-3. Based on specific criteria (e.g., a person is detected for a certain amount of time or within a certain region), trigger a session key request from the IoT Auth server.
+3. Based on specific criteria (e.g., a person is detected for a certain amount of time or within a certain region), trigger a session key request from the IoT Auth server. The request will include the "Number of People" detected in the JSON `context` field, allowing the Auth Server to enforce context-based communication policies.
 4. Use the session key for secure communication as needed.
 
 ## YOLO Library Research
@@ -89,9 +89,32 @@ The main Python script (`yolo_client.py`) will be structured into modular, objec
 3. **`AuthCommunicator` (Class)**
    - Utilizes the `iotauth` Python package (`IoTAuthContext`).
    - Called by the `PersonDetector` to request a session key (`ctx.request_session_keys()`) once a person is successfully detected according to the criteria.
+   - Responsible for packaging the current detection state (like the "Number of People") into a JSON object and passing it as the `context` argument when requesting the session key.
 
 4. **Main Loop**
    - Coordinates the detector and the communicator.
+
+### Context-Based Communication
+When the `AuthCommunicator` requests a session key, it sends a JSON `context` object to the Auth Server containing variables about the current state. For this project, the context will explicitly include the **Number of People** detected in the frame:
+```json
+{
+  "Number of People": 2
+}
+```
+The Auth Server evaluates this context against its database policies (e.g., `{"Number of People": {"Min": 1}}`) before deciding whether to grant the session key.
+
+### Configuring Auth Server Policies
+The Auth Server's database is populated using `.graph` files. Since the project already has `examples/configs/context_based.graph` which utilizes the `"Number of People"` field, we will simply append our YOLO entity to that existing file and adjust the `commPolicies` definition to enforce our exact context constraints:
+```json
+"commPolicies": [
+    {
+        "RequestingGroup": "YOLO_Clients",
+        "Target": "Alert_Servers",
+        "Context": "{\"Number of People\":{\"Min\":1}}"
+    }
+]
+```
+A graph generator script then processes this file to build the SQLite `auth.db` with these rules pre-configured.
 
 ## Setup
 
