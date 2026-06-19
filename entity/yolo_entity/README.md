@@ -5,6 +5,7 @@ This folder contains the implementation for an IoT Auth entity that uses a YOLO 
 ## Table of Contents
 - [Goal](#goal)
 - [YOLO Library Research](#yolo-library-research)
+- [Architecture](#architecture)
 - [Setup](#setup)
 - [Usage](#usage)
 
@@ -69,6 +70,28 @@ Because YOLOv8 (Ultralytics) runs on PyTorch, it automatically inherits excellen
 
 **Final Selection:**
 Based on the lack of disk space constraints and the need for seamless, cross-platform hardware acceleration (Mac GPU, Windows CUDA, and CPU fallback), **Ultralytics YOLOv8** has been selected as the official library for this entity.
+
+## Architecture
+
+The main Python script (`yolo_client.py`) will be structured into modular, object-oriented classes:
+
+1. **`HardwareDetector` (Helper)**
+   - Includes a function to automatically detect the best available hardware using PyTorch.
+   - On Mac, it selects Apple's Metal Performance Shaders (`mps`).
+   - On Windows with an NVIDIA GPU, it selects `cuda`.
+   - Otherwise, it falls back to `cpu`.
+
+2. **`PersonDetector` (Class)**
+   - Initializes the YOLOv8 model (`yolov8n.pt`) with the device selected by the `HardwareDetector`.
+   - Connects to the webcam or video stream.
+   - Processes frames to detect persons and tracks when specific detection criteria are met (e.g., confidence thresholds, consecutive frames).
+
+3. **`AuthCommunicator` (Class)**
+   - Utilizes the `iotauth` Python package (`IoTAuthContext`).
+   - Called by the `PersonDetector` to request a session key (`ctx.request_session_keys()`) once a person is successfully detected according to the criteria.
+
+4. **Main Loop**
+   - Coordinates the detector and the communicator.
 
 ## Setup
 
