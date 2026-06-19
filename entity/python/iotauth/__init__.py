@@ -1,5 +1,7 @@
 """Python entity API for IoTAuth."""
 
+from .auth_service import distribution_key_is_expired, request_session_keys
+from .client import SecureClient
 from .config import (
     AuthInfo,
     EntityConfig,
@@ -10,8 +12,48 @@ from .config import (
 )
 from .context import IoTAuthContext
 from .credentials import load_auth_public_key, load_entity_private_key
-from .client import SecureClient
-from .auth_service import distribution_key_is_expired, request_session_keys
+from .crypto import (
+    decrypt_request_with_distribution_key,
+    encrypt_and_sign_for_auth,
+    encrypt_request_with_distribution_key,
+    private_decrypt,
+    public_encrypt,
+    sign_sha256,
+    symmetric_decrypt_authenticate,
+    symmetric_encrypt_authenticate,
+    verify_and_decrypt_from_auth,
+    verify_sha256,
+)
+from .exceptions import (
+    AuthConnectionError,
+    AuthProtocolError,
+    ConfigError,
+    CredentialError,
+    ExpiredKeyError,
+    InvalidSequenceNumberError,
+    IoTAuthError,
+    KeyCacheError,
+    MessageIntegrityError,
+    SecureChannelClosed,
+    SecureHandshakeError,
+    SerializationError,
+    UnsupportedCryptoError,
+)
+from .handshake import (
+    HANDSHAKE_DH_PARAM_PRESENT,
+    HANDSHAKE_FIXED_SIZE,
+    HANDSHAKE_NONCE_PRESENT,
+    HANDSHAKE_REPLY_NONCE_PRESENT,
+    HandshakePayload,
+    build_handshake_1,
+    parse_handshake_1_key_id,
+    parse_handshake_payload,
+    serialize_handshake_payload,
+    verify_handshake_1_and_build_handshake_2,
+    verify_handshake_2_and_build_handshake_3,
+    verify_handshake_3,
+)
+from .keys import DistributionKey, SessionKey, SessionKeyCache
 from .protocol import (
     AUTH_ID_SIZE,
     NONCE_SIZE,
@@ -33,59 +75,17 @@ from .protocol import (
     serialize_frame,
     serialize_session_key_request_payload,
 )
-from .exceptions import (
-    AuthConnectionError,
-    AuthProtocolError,
-    ConfigError,
-    CredentialError,
-    ExpiredKeyError,
-    InvalidSequenceNumberError,
-    IoTAuthError,
-    KeyCacheError,
-    MessageIntegrityError,
-    SerializationError,
-    SecureChannelClosed,
-    SecureHandshakeError,
-    UnsupportedCryptoError,
-)
-from .handshake import (
-    HANDSHAKE_DH_PARAM_PRESENT,
-    HANDSHAKE_FIXED_SIZE,
-    HANDSHAKE_NONCE_PRESENT,
-    HANDSHAKE_REPLY_NONCE_PRESENT,
-    HandshakePayload,
-    build_handshake_1,
-    parse_handshake_1_key_id,
-    parse_handshake_payload,
-    serialize_handshake_payload,
-    verify_handshake_1_and_build_handshake_2,
-    verify_handshake_2_and_build_handshake_3,
-    verify_handshake_3,
-)
-from .crypto import (
-    decrypt_request_with_distribution_key,
-    encrypt_and_sign_for_auth,
-    encrypt_request_with_distribution_key,
-    private_decrypt,
-    public_encrypt,
-    sign_sha256,
-    symmetric_decrypt_authenticate,
-    symmetric_encrypt_authenticate,
-    verify_and_decrypt_from_auth,
-    verify_sha256,
-)
-from .keys import DistributionKey, SessionKey, SessionKeyCache
-from .serialization import (
-    decode_uint_be,
-    decode_varint,
-    encode_uint_be,
-    encode_varint,
-)
 from .secure_channel import (
     SecureChannel,
     accept_secure,
     connect_secure,
     session_key_is_expired,
+)
+from .serialization import (
+    decode_uint_be,
+    decode_varint,
+    encode_uint_be,
+    encode_varint,
 )
 from .server import SecureServer
 from .transports import recv_frame, send_frame

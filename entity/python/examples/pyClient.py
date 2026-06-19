@@ -1,7 +1,8 @@
 import argparse
-import os
 import sys
-from iotauth import IoTAuthContext, SecureClient, IoTAuthError, AuthConnectionError
+
+from iotauth import AuthConnectionError, IoTAuthContext, IoTAuthError, SecureClient
+
 
 def main():
     parser = argparse.ArgumentParser(description="IoTAuth Python Client Example")
@@ -17,17 +18,17 @@ def main():
             print("Connecting to server...")
             client.connect()
             client.channel.socket.settimeout(1.0)
-            
+
             messages = [
                 b"Hello server",
                 b"Hello server - second message",
-                b"Hello server - third message"
+                b"Hello server - third message",
             ]
             for msg in messages:
                 print(f"Sending: {msg.decode('utf-8')}")
                 # Encrypt and send data
                 client.send(msg)
-                
+
                 # Receive and decrypt the reply
                 try:
                     reply = client.recv()
@@ -37,10 +38,11 @@ def main():
                         print("No reply received (timeout), continuing...")
                     else:
                         raise
-            
+
     except IoTAuthError as exc:
         print(f"Client error: {exc}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -59,7 +59,7 @@ class SecureClient:
         if self.channel is not None:
             self.channel.close()
 
-    def __enter__(self) -> "SecureClient":
+    def __enter__(self) -> SecureClient:
         return self
 
     def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:

@@ -7,8 +7,7 @@ from typing import Any
 
 from .exceptions import AuthConnectionError, SerializationError
 from .protocol import IoTSPFrame, message_type_from_byte
-from .serialization import decode_varint, encode_varint, MAX_VARINT_BYTES
-
+from .serialization import MAX_VARINT_BYTES, decode_varint
 
 DEFAULT_MAX_PAYLOAD_SIZE = 65536
 
@@ -19,9 +18,7 @@ def connect(host: str, port: int, *, timeout: float | None = 5.0) -> socket.sock
     try:
         return socket.create_connection((host, port), timeout=timeout)
     except OSError as exc:
-        raise AuthConnectionError(
-            f"Could not connect to {host}:{port}: {exc}"
-        ) from exc
+        raise AuthConnectionError(f"Could not connect to {host}:{port}: {exc}") from exc
 
 
 def send_frame(sock: Any, frame: IoTSPFrame) -> None:
@@ -35,9 +32,7 @@ def send_frame(sock: Any, frame: IoTSPFrame) -> None:
         raise AuthConnectionError(f"Could not send IoTSP frame: {exc}") from exc
 
 
-def recv_frame(
-    sock: Any, *, max_payload_size: int = DEFAULT_MAX_PAYLOAD_SIZE
-) -> IoTSPFrame:
+def recv_frame(sock: Any, *, max_payload_size: int = DEFAULT_MAX_PAYLOAD_SIZE) -> IoTSPFrame:
     """Read one complete IoTSP frame from a stream socket."""
 
     if max_payload_size < 0:
@@ -56,8 +51,7 @@ def recv_frame(
                 raise SerializationError("IoTSP frame length used trailing bytes")
             if payload_length > max_payload_size:
                 raise SerializationError(
-                    f"IoTSP payload length {payload_length} exceeds "
-                    f"maximum {max_payload_size}"
+                    f"IoTSP payload length {payload_length} exceeds maximum {max_payload_size}"
                 )
             payload = _recv_exact(sock, payload_length)
             return IoTSPFrame(message_type, payload)

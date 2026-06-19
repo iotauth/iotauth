@@ -16,7 +16,6 @@ from iotauth import (
     send_frame,
     serialize_frame,
 )
-
 from tests.helpers import FakeSocket
 
 
