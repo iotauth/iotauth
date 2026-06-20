@@ -1,15 +1,14 @@
+import os
 import socket
-import os
 import sqlite3
-import os
+
 from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.PublicKey import RSA
-from Crypto.Signature import pkcs1_15
 from Crypto.Hash import HMAC, SHA256
+from Crypto.Protocol.KDF import PBKDF2
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
+from Crypto.Signature import pkcs1_15
 from Crypto.Util.Padding import pad, unpad
-from Crypto.Protocol.KDF import PBKDF2
 
 KEY_LEN = 32
 PBKDF2_ITER = 480_000
@@ -36,6 +35,7 @@ DATA_DOWNLOAD_REQ = 1
 DOWNLOAD_RESP = 2
 database_name = "file_system_manager.db"
 
+
 def load_config(path: str, config_dict: dict) -> None:
     """Loads configuration data from a file into a provided dictionary.
 
@@ -47,10 +47,11 @@ def load_config(path: str, config_dict: dict) -> None:
         FileNotFoundError: If the file at the given path does not exist.
         IOError: If the file is not readable.
     """
-    f = open(path, 'r')
+    f = open(path)
     while True:
         line = f.readline()
-        if not line: break
+        if not line:
+            break
         index = line.split("=")[0]
         content = line.split("=")[1].strip("\n")
         if index == "name":
@@ -79,6 +80,7 @@ def load_config(path: str, config_dict: dict) -> None:
             break
     f.close()
 
+
 def write_in_n_bytes(num_key: int, key_size: int) -> bytearray:
     """Writes an integer into a byte array of specified size.
 
@@ -91,8 +93,9 @@ def write_in_n_bytes(num_key: int, key_size: int) -> bytearray:
     """
     buffer = bytearray(key_size)
     for i in range(key_size):
-        buffer[i] = num_key >> 8*(key_size-i-1)
+        buffer[i] = num_key >> 8 * (key_size - i - 1)
     return buffer
+
 
 def num_to_var_length_int(num: int) -> bytearray:
     """Converts an integer to a variable length byte array.
@@ -105,7 +108,7 @@ def num_to_var_length_int(num: int) -> bytearray:
     """
     var_buf_size = 1
     buffer = bytearray(4)
-    while (num > 127):
+    while num > 127:
         buffer[var_buf_size - 1] = 128 | num & 127
         var_buf_size += 1
         num >>= 7
@@ -114,6 +117,7 @@ def num_to_var_length_int(num: int) -> bytearray:
     for i in range(var_buf_size):
         buf[i] = buffer[i]
     return buf
+
 
 def var_length_int_to_num(buffer: bytearray) -> tuple:
     """Converts a variable length byte array back to an integer.
@@ -127,11 +131,12 @@ def var_length_int_to_num(buffer: bytearray) -> tuple:
     number = 0
     buffer_num = 0
     for i in range(len(buffer)):
-        number |= (buffer[i] & 127) << 7*i
+        number |= (buffer[i] & 127) << 7 * i
         if (buffer[i] & 128) == 0:
             buffer_num = i + 1
             break
     return number, buffer_num
+
 
 def read_unsigned_int_BE(buffer: bytearray, size: int) -> int:
     """Reads an unsigned integer in big-endian format from the given buffer.
@@ -144,8 +149,9 @@ def read_unsigned_int_BE(buffer: bytearray, size: int) -> int:
     """
     num = 0
     for i in range(size):
-       num |= buffer[i] << 8 *(size-1-i)
+        num |= buffer[i] << 8 * (size - 1 - i)
     return num
+
 
 def parse_sessionkey(buffer: bytearray, session_key: dict) -> None:
     """Parses session key information from a byte array and stores it in a dictionary.
@@ -155,19 +161,20 @@ def parse_sessionkey(buffer: bytearray, session_key: dict) -> None:
         session_key (dict): A dictionary to store the parsed session key information.
     """
     index = 0
-    session_key["sessionkey_id"] = buffer[:SESSION_KEY_ID_SIZE] 
+    session_key["sessionkey_id"] = buffer[:SESSION_KEY_ID_SIZE]
     index += SESSION_KEY_ID_SIZE
-    session_key["abs_validity"] = buffer[index:index+ABS_VALIDITY_SIZE]
+    session_key["abs_validity"] = buffer[index : index + ABS_VALIDITY_SIZE]
     index += ABS_VALIDITY_SIZE
-    session_key["rel_validity"] = buffer[index:index+REL_VALIDITY_SIZE]
+    session_key["rel_validity"] = buffer[index : index + REL_VALIDITY_SIZE]
     index += REL_VALIDITY_SIZE
     cipher_key_size = buffer[index]
     index += 1
-    session_key["cipher_key"] = buffer[index:index+cipher_key_size]
+    session_key["cipher_key"] = buffer[index : index + cipher_key_size]
     index += cipher_key_size
     mac_key_size = buffer[index]
     index += 1
-    session_key["mac_key"] = buffer[index:index+mac_key_size]
+    session_key["mac_key"] = buffer[index : index + mac_key_size]
+
 
 def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> bytearray:
     """Encrypts data using AES-CBC and appends an HMAC-SHA256 tag.
@@ -199,6 +206,7 @@ def symmetric_encrypt_hmac(key_dir: dict, buffer: bytes) -> bytearray:
 
     # Final output: IV + ciphertext + HMAC
     return bytearray(enc_total_buf + hmac_tag)
+
 
 def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> bytes:
     """Decrypts AES-CBC encrypted data and verifies HMAC-SHA256 tag.
@@ -237,6 +245,7 @@ def symmetric_decrypt_hmac(key_dir: dict, enc_buf: bytes, hmac_buf: bytes) -> by
 
     return decrypted_buf
 
+
 def load_pubkey(key_dir: str) -> RSA.RsaKey:
     """Loads an RSA public key from a file.
 
@@ -250,7 +259,7 @@ def load_pubkey(key_dir: str) -> RSA.RsaKey:
         if not os.path.isfile(key_dir):
             raise FileNotFoundError(f"Key file not found: {key_dir}")
 
-        with open(key_dir, "r") as f:
+        with open(key_dir) as f:
             key_data = f.read()
 
         public_key = RSA.import_key(key_data)
@@ -261,6 +270,7 @@ def load_pubkey(key_dir: str) -> RSA.RsaKey:
     except Exception as e:
         print(f"[ERROR] Unexpected error while loading public key: {e}")
     return public_key
+
 
 def load_privkey(key_dir: str) -> RSA.RsaKey:
     """Loads an RSA private key from a file.
@@ -275,7 +285,7 @@ def load_privkey(key_dir: str) -> RSA.RsaKey:
         if not os.path.exists(key_dir):
             raise FileNotFoundError(f"Key file not found: {key_dir}")
 
-        with open(key_dir, "r") as f:
+        with open(key_dir) as f:
             key_data = f.read()
 
         private_key = RSA.import_key(key_data)
@@ -286,6 +296,7 @@ def load_privkey(key_dir: str) -> RSA.RsaKey:
     except Exception as e:
         print(f"[ERROR] Unexpected error while loading private key: {e}")
     return private_key
+
 
 def asymmetric_encrypt(message: bytes, pubkey: RSA.RsaKey) -> bytes:
     """Encrypts a message using an RSA public key.
@@ -302,6 +313,7 @@ def asymmetric_encrypt(message: bytes, pubkey: RSA.RsaKey) -> bytes:
     # Encrypt the message
     ciphertext = cipher.encrypt(bytes(message))
     return ciphertext
+
 
 def asymmetric_decrypt(message: bytes, privkey: RSA.RsaKey) -> bytes:
     """Decrypts a message using an RSA private key.
@@ -335,6 +347,7 @@ def sha256_sign(message: bytes, privkey: RSA.RsaKey) -> bytes:
     signature = pkcs1_15.new(privkey).sign(h)
     return signature
 
+
 def sha256_verify(sign: bytes, data: bytes, pubkey: RSA.RsaKey) -> None:
     """Verifies an SHA256 signature using an RSA public key.
 
@@ -351,7 +364,10 @@ def sha256_verify(sign: bytes, data: bytes, pubkey: RSA.RsaKey) -> None:
         print(" verification failed.")
         raise
 
-def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entity: bytes) -> bytearray:
+
+def serialize_message_for_auth(
+    config_dict: dict, nonce_auth: bytes, nonce_entity: bytes
+) -> bytearray:
     """Serializes message for authentication using given directory and nonce.
 
     Args:
@@ -363,28 +379,38 @@ def serialize_message_for_auth(config_dict: dict, nonce_auth: bytes, nonce_entit
     """
     buffer_key_len = 4
     max_buffer_len = 4
-    message_length = (NONCE_SIZE * 2 + buffer_key_len+len(config_dict["name"]) 
-                                     + len(config_dict["purpose"]) + max_buffer_len * 2)
+    message_length = (
+        NONCE_SIZE * 2
+        + buffer_key_len
+        + len(config_dict["name"])
+        + len(config_dict["purpose"])
+        + max_buffer_len * 2
+    )
     serialize_message = bytearray(message_length)
     index = 0
     serialize_message[index:8] = nonce_entity
     index += NONCE_SIZE
-    serialize_message[index:index+NONCE_SIZE] = nonce_auth
+    serialize_message[index : index + NONCE_SIZE] = nonce_auth
     index += NONCE_SIZE
-    buffer_key = write_in_n_bytes(int(config_dict["number_key"]), key_size = buffer_key_len)
-    serialize_message[index:index+buffer_key_len] = buffer_key
+    buffer_key = write_in_n_bytes(int(config_dict["number_key"]), key_size=buffer_key_len)
+    serialize_message[index : index + buffer_key_len] = buffer_key
     index += buffer_key_len
     buffer_name_len = num_to_var_length_int(len(config_dict["name"]))
-    serialize_message[index:index+len(buffer_name_len)] = buffer_name_len
+    serialize_message[index : index + len(buffer_name_len)] = buffer_name_len
     index += len(buffer_name_len)
-    serialize_message[index:index+len(config_dict["name"])] = str(config_dict["name"]).encode('utf-8')
+    serialize_message[index : index + len(config_dict["name"])] = str(config_dict["name"]).encode(
+        "utf-8"
+    )
     index += len(config_dict["name"])
     buffer_purpose_len = num_to_var_length_int(len(config_dict["purpose"]))
-    serialize_message[index:+len(buffer_purpose_len)] = buffer_purpose_len
+    serialize_message[index : +len(buffer_purpose_len)] = buffer_purpose_len
     index += len(buffer_purpose_len)
-    serialize_message[index:index+len(config_dict["purpose"])] = str(config_dict["purpose"]).encode('utf-8')
+    serialize_message[index : index + len(config_dict["purpose"])] = str(
+        config_dict["purpose"]
+    ).encode("utf-8")
     print(serialize_message)
-    return serialize_message     
+    return serialize_message
+
 
 def auth_socket_connect(config_dict: dict) -> socket.socket:
     """Establishes a socket connection for authentication.
@@ -401,6 +427,7 @@ def auth_socket_connect(config_dict: dict) -> socket.socket:
     client_sock.connect((Host, int(Port)))
     return client_sock
 
+
 def parse_sessionkey_id(recv: bytearray, config_dict: dict) -> bytes:
     """Parses session key ID from received data and updates filesystem manager directory.
 
@@ -414,14 +441,17 @@ def parse_sessionkey_id(recv: bytearray, config_dict: dict) -> bytes:
     key_id = recv[:SESSION_KEY_ID_SIZE]
     key_id_int = 0
     for i in range(SESSION_KEY_ID_SIZE):
-        key_id_int += (int(key_id[i]) << 8*(7-i))
+        key_id_int += int(key_id[i]) << 8 * (7 - i)
     # Change key id for purpose
     config_dict["purpose"] = f'{{"keyId": {str(key_id_int)}}}'
     print(config_dict["purpose"])
     encrypted_buf = recv[SESSION_KEY_ID_SIZE:]
     return encrypted_buf
 
-def parse_distributionkey(buffer: bytearray, pubkey: RSA.RsaKey, privkey: RSA.RsaKey, distribution_key: dict) -> None:
+
+def parse_distributionkey(
+    buffer: bytearray, pubkey: RSA.RsaKey, privkey: RSA.RsaKey, distribution_key: dict
+) -> None:
     """Parses distribution key from the buffer using public and private keys.
 
     Args:
@@ -431,14 +461,24 @@ def parse_distributionkey(buffer: bytearray, pubkey: RSA.RsaKey, privkey: RSA.Rs
         distribution_key (dict): A dictionary to store the parsed distribution key data.
     """
     sign_data = buffer[:RSA_KEY_SIZE]
-    sign_sign = buffer[RSA_KEY_SIZE:RSA_KEY_SIZE*2]
+    sign_sign = buffer[RSA_KEY_SIZE : RSA_KEY_SIZE * 2]
     sha256_verify(sign_sign, sign_data, pubkey)
     plaintext = asymmetric_decrypt(sign_data, privkey)
     distribution_key["abs_validity"] = plaintext[:ABS_VALIDITY_SIZE]
-    distribution_key["cipher_key"] = plaintext[ABS_VALIDITY_SIZE+1:ABS_VALIDITY_SIZE+1+plaintext[6]]
-    distribution_key["mac_key"] = plaintext[ABS_VALIDITY_SIZE+1+1+plaintext[6]:]
+    distribution_key["cipher_key"] = plaintext[
+        ABS_VALIDITY_SIZE + 1 : ABS_VALIDITY_SIZE + 1 + plaintext[6]
+    ]
+    distribution_key["mac_key"] = plaintext[ABS_VALIDITY_SIZE + 1 + 1 + plaintext[6] :]
 
-def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, distribution_key: dict, session_key: dict, nonce_entity: bytes):
+
+def get_session_key(
+    buffer: bytearray,
+    config_dict: dict,
+    sock: socket.socket,
+    distribution_key: dict,
+    session_key: dict,
+    nonce_entity: bytes,
+):
     """Handles the process of receiving and processing a session key.
 
     Args:
@@ -458,53 +498,62 @@ def get_session_key(buffer: bytearray, config_dict: dict, sock: socket.socket, d
 
     if msg_type == AUTH_HELLO:
         # Extract and validate auth_id (big-endian)
-        received_auth_id = read_unsigned_int_BE(buffer[1+length_buf:], AUTH_ID_LEN)
-        expected_auth_id = int(config_dict['authid'])
+        received_auth_id = read_unsigned_int_BE(buffer[1 + length_buf :], AUTH_ID_LEN)
+        expected_auth_id = int(config_dict["authid"])
         if received_auth_id != expected_auth_id:
             print("Auth ID NOT matched.")
-            return 
+            return
         # Handle AUTH_HELLO message
-        nonce_auth = buffer[AUTH_ID_LEN+1+length_buf:]
+        nonce_auth = buffer[AUTH_ID_LEN + 1 + length_buf :]
         serialize_message = serialize_message_for_auth(config_dict, nonce_auth, nonce_entity)
-        ciphertext = asymmetric_encrypt(serialize_message, config_dict['pubkey'])
-        signature = sha256_sign(ciphertext, config_dict['privkey'])
-        buffer = bytearray(len(ciphertext)+len(signature))
-        buffer[:len(ciphertext)] = ciphertext
-        buffer[len(ciphertext):] = signature
+        ciphertext = asymmetric_encrypt(serialize_message, config_dict["pubkey"])
+        signature = sha256_sign(ciphertext, config_dict["privkey"])
+        buffer = bytearray(len(ciphertext) + len(signature))
+        buffer[: len(ciphertext)] = ciphertext
+        buffer[len(ciphertext) :] = signature
         # Send session key request
         total_buffer = make_sender_buffer(buffer, SESSION_KEY_REQ_IN_PUB_ENC)
         sock.send(bytes(total_buffer))
     elif msg_type == SESSION_KEY_RESP_WITH_DIST_KEY:
         # Handle SESSION_KEY_RESP_WITH_DIST_KEY message
-        recv_data = buffer[1+length_buf:]
-        parse_distributionkey(recv_data, config_dict['pubkey'], config_dict['privkey'], distribution_key)
-        
-        encrypted_sessionkey = recv_data[RSA_KEY_SIZE*2:]
-        
+        recv_data = buffer[1 + length_buf :]
+        parse_distributionkey(
+            recv_data, config_dict["pubkey"], config_dict["privkey"], distribution_key
+        )
+
+        encrypted_sessionkey = recv_data[RSA_KEY_SIZE * 2 :]
+
         # Separate encrypted session key and MAC key
-        encrypted_buffer = encrypted_sessionkey[:len(encrypted_sessionkey)-len(distribution_key["mac_key"])]
-        received_tag = encrypted_sessionkey[len(encrypted_sessionkey)-len(distribution_key["mac_key"]):]
+        encrypted_buffer = encrypted_sessionkey[
+            : len(encrypted_sessionkey) - len(distribution_key["mac_key"])
+        ]
+        received_tag = encrypted_sessionkey[
+            len(encrypted_sessionkey) - len(distribution_key["mac_key"]) :
+        ]
 
         # Decrypt symmetrically and verify MAC
         decrypted_buf = symmetric_decrypt_hmac(distribution_key, encrypted_buffer, received_tag)
-        
+
         recv_nonce_entity = decrypted_buf[:NONCE_SIZE]
         if nonce_entity != recv_nonce_entity:
             print("Failed for communication with Auth")
             exit()
-        else:    
+        else:
             print("Success for communication with Auth")
 
         # Interpret encrypted data
         crypto_buf, crypto_buf_length = var_length_int_to_num(decrypted_buf[NONCE_SIZE:])
-        crypto_info = decrypted_buf[NONCE_SIZE+crypto_buf_length:NONCE_SIZE+crypto_buf_length+crypto_buf]
+        crypto_info = decrypted_buf[
+            NONCE_SIZE + crypto_buf_length : NONCE_SIZE + crypto_buf_length + crypto_buf
+        ]
         print("Crypto Info: ", crypto_info)
-        sessionkey = decrypted_buf[NONCE_SIZE+crypto_buf_length+crypto_buf:]
+        sessionkey = decrypted_buf[NONCE_SIZE + crypto_buf_length + crypto_buf :]
         number_of_sessionkey = read_unsigned_int_BE(sessionkey, 4)
         print("Number of session key: ", number_of_sessionkey)
         parse_sessionkey(sessionkey[4:], session_key)
         print(session_key)
         print("Success for receiving the session key.")
+
 
 def serialize_handshake(nonce: bytearray, reply_nonce: bytearray) -> bytearray:
     """Serializes the handshake data into a bytearray.
@@ -522,16 +571,17 @@ def serialize_handshake(nonce: bytearray, reply_nonce: bytearray) -> bytearray:
     indicator = 0
     buffer = bytearray(NONCE_SIZE * 2 + 1)
 
-    if (nonce != None):
+    if nonce != None:
         indicator += 1
-        buffer[1:1+NONCE_SIZE] = nonce
+        buffer[1 : 1 + NONCE_SIZE] = nonce
 
-    if (reply_nonce != None):
+    if reply_nonce != None:
         indicator += 1
-        buffer[1+NONCE_SIZE:1+NONCE_SIZE*2] = reply_nonce
+        buffer[1 + NONCE_SIZE : 1 + NONCE_SIZE * 2] = reply_nonce
 
     buffer[0] = indicator
     return buffer
+
 
 def make_sender_buffer(buffer: bytearray, msg_type: int) -> bytearray:
     """Creates a buffer for sending messages.
@@ -548,10 +598,11 @@ def make_sender_buffer(buffer: bytearray, msg_type: int) -> bytearray:
     index = 0
     total_buffer[index] = msg_type
     index += 1
-    total_buffer[index:index + len(num_buffer)] = num_buffer
+    total_buffer[index : index + len(num_buffer)] = num_buffer
     index += len(num_buffer)
-    total_buffer[index:] = buffer    
+    total_buffer[index:] = buffer
     return total_buffer
+
 
 def parse_received_message(buffer: bytearray) -> tuple:
     """Parses a received message buffer.
@@ -564,7 +615,7 @@ def parse_received_message(buffer: bytearray) -> tuple:
     """
     msg_type = buffer[0]
     num, buf_num = var_length_int_to_num(buffer[1:])
-    received_message = buffer[1+buf_num:1+buf_num+num]
+    received_message = buffer[1 + buf_num : 1 + buf_num + num]
     return msg_type, received_message
 
 
@@ -582,7 +633,11 @@ def read_int_from_buf(buffer: bytearray, length: int):
     for i in range(length):
         num |= buffer[i] << 8 * (length - 1 - i)
     return num
-def concat_data(recv_data: bytearray, file_metadata_table: dict, record_history_table: dict, download_list: list) -> bytearray:
+
+
+def concat_data(
+    recv_data: bytearray, file_metadata_table: dict, record_history_table: dict, download_list: list
+) -> bytearray:
     """Concatenates data for a response message.
 
     Args:
@@ -595,22 +650,29 @@ def concat_data(recv_data: bytearray, file_metadata_table: dict, record_history_
         bytearray: The concatenated message.
     """
     name_size = recv_data[1]
-    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    name = recv_data[2 : 2 + name_size].decode("utf-8").strip("\x00")
     file_index = download_num_check(name, download_list)
     res_keyid = file_metadata_table["file_keyid"][file_index]
     res_hashvalue = file_metadata_table["hash_value"][file_index]
     command = "ipfs cat $1 > "
     command = command.replace("$1", res_hashvalue)
-    message = bytearray(3+len(res_keyid)+len(command))
-    message[0] = int(hex(DOWNLOAD_RESP),16)
+    message = bytearray(3 + len(res_keyid) + len(command))
+    message[0] = int(hex(DOWNLOAD_RESP), 16)
     print(message[0])
-    message[1] = int(hex(len(res_keyid)),16)
-    message[2:2+len(res_keyid)] = res_keyid
-    message[2+len(res_keyid)] = int(hex(len(command)),16)
-    message[3+len(res_keyid):3+len(res_keyid)+len(command)] = bytes.fromhex(str(command).encode('utf-8').hex())
-    record_history_table["name"].append(name), record_history_table["hash_value"].append(res_hashvalue), record_history_table["file_keyid"].append(res_keyid)
+    message[1] = int(hex(len(res_keyid)), 16)
+    message[2 : 2 + len(res_keyid)] = res_keyid
+    message[2 + len(res_keyid)] = int(hex(len(command)), 16)
+    message[3 + len(res_keyid) : 3 + len(res_keyid) + len(command)] = bytes.fromhex(
+        str(command).encode("utf-8").hex()
+    )
+    (
+        record_history_table["name"].append(name),
+        record_history_table["hash_value"].append(res_hashvalue),
+        record_history_table["file_keyid"].append(res_keyid),
+    )
     download_list.append(name)
     return message
+
 
 def download_num_check(name: str, download_list: dict) -> int:
     """Checks the number of times a file has been downloaded.
@@ -628,7 +690,8 @@ def download_num_check(name: str, download_list: dict) -> int:
     for i in download_list:
         if i == name:
             num += 1
-    return num  
+    return num
+
 
 def save_info_for_file(recv_data: bytearray, file_metadata_table: dict):
     """Saves file information.
@@ -641,16 +704,26 @@ def save_info_for_file(recv_data: bytearray, file_metadata_table: dict):
         None
     """
     name_size = recv_data[1]
-    name = recv_data[2:2+name_size].decode('utf-8').strip("\x00")
+    name = recv_data[2 : 2 + name_size].decode("utf-8").strip("\x00")
     file_metadata_table["name"].append(name)
-    keyid_size = recv_data[2+name_size]
-    file_keyid = recv_data[3+name_size:3+name_size+keyid_size]
+    keyid_size = recv_data[2 + name_size]
+    file_keyid = recv_data[3 + name_size : 3 + name_size + keyid_size]
     file_metadata_table["file_keyid"].append(file_keyid)
-    hash_value_size = recv_data[3+name_size+keyid_size]
-    hash_value = recv_data[4+name_size+keyid_size:4+name_size+keyid_size+hash_value_size].decode('utf-8')
+    hash_value_size = recv_data[3 + name_size + keyid_size]
+    hash_value = recv_data[
+        4 + name_size + keyid_size : 4 + name_size + keyid_size + hash_value_size
+    ].decode("utf-8")
     file_metadata_table["hash_value"].append(hash_value)
 
-def metadata_response(dec_buf: bytearray, file_metadata_table: dict, record_history_table: dict, download_list: list, session_key: dict, sequential_num: int) -> bytearray:
+
+def metadata_response(
+    dec_buf: bytearray,
+    file_metadata_table: dict,
+    record_history_table: dict,
+    download_list: list,
+    session_key: dict,
+    sequential_num: int,
+) -> bytearray:
     """Generates a response message for data.
 
     Args:
@@ -665,12 +738,15 @@ def metadata_response(dec_buf: bytearray, file_metadata_table: dict, record_hist
         bytearray: The response message.
     """
     seq_buffer = write_in_n_bytes(sequential_num, SEQ_NUM_SIZE)
-    message = concat_data(dec_buf[SEQ_NUM_SIZE:], file_metadata_table, record_history_table, download_list)
+    message = concat_data(
+        dec_buf[SEQ_NUM_SIZE:], file_metadata_table, record_history_table, download_list
+    )
     total_message = bytearray(SEQ_NUM_SIZE + len(message))
-    total_message[:SEQ_NUM_SIZE - 1] = seq_buffer
+    total_message[: SEQ_NUM_SIZE - 1] = seq_buffer
     total_message[SEQ_NUM_SIZE:] = message
     enc_buffer = symmetric_encrypt_hmac(session_key, total_message)
     return make_sender_buffer(enc_buffer, SECURE_COMM_MSG)
+
 
 def dict_to_tuple(metadata_dict: dict) -> list:
     """
@@ -683,12 +759,17 @@ def dict_to_tuple(metadata_dict: dict) -> list:
         list: A list of tuples containing the dictionary data.
     """
     tuple_list = []
-    for i, name in enumerate(metadata_dict['name']):
-        key_id_int = sum(int(byte) << (8 * (7-j)) for j, byte in enumerate(metadata_dict['file_keyid'][i]))
-        tuple_list.append((name, key_id_int, metadata_dict['hash_value'][i]))
+    for i, name in enumerate(metadata_dict["name"]):
+        key_id_int = sum(
+            int(byte) << (8 * (7 - j)) for j, byte in enumerate(metadata_dict["file_keyid"][i])
+        )
+        tuple_list.append((name, key_id_int, metadata_dict["hash_value"][i]))
     return tuple_list
 
-def create_encrypt_database(filename: str, number: str, file_metadata_table: dict, record_history_table: dict) -> None:
+
+def create_encrypt_database(
+    filename: str, number: str, file_metadata_table: dict, record_history_table: dict
+) -> None:
     """
     Encrypts a file using a password and writes it.
 
@@ -726,6 +807,7 @@ def create_encrypt_database(filename: str, number: str, file_metadata_table: dic
         f.write(salt + iv + ciphertext)
 
     print(f"Encrypted database saved: {filename}")
+
 
 def decrypt_with_password(filename: str, number: str) -> bytes:
     """
@@ -770,6 +852,7 @@ def decrypt_with_password(filename: str, number: str) -> bytes:
     print("File decrypted successfully.")
     return decrypted_data
 
+
 def database_to_dict(data: str, dict: dict) -> dict:
     """
     Converts database data into a dictionary.
@@ -784,14 +867,17 @@ def database_to_dict(data: str, dict: dict) -> dict:
     key_id_int = int(data[1])
     key_id_bytes = bytearray(SESSION_KEY_ID_SIZE)
     for k in range(SESSION_KEY_ID_SIZE):
-        key_id_bytes[k] = key_id_int >> 8 * (7-k)
-        key_id_int -= key_id_bytes[k] << 8 * (7-k)
-    dict['name'].append(data[0])
-    dict['file_keyid'].append(key_id_bytes)
-    dict['hash_value'].append(data[2])
+        key_id_bytes[k] = key_id_int >> 8 * (7 - k)
+        key_id_int -= key_id_bytes[k] << 8 * (7 - k)
+    dict["name"].append(data[0])
+    dict["file_keyid"].append(key_id_bytes)
+    dict["hash_value"].append(data[2])
     return dict
 
-def check_database(password, file_name: str, file_metadata_table: dict, record_history_table: dict) -> tuple:
+
+def check_database(
+    password, file_name: str, file_metadata_table: dict, record_history_table: dict
+) -> tuple:
     """
     Checks the existence of a database and retrieves its content.
 
@@ -805,9 +891,9 @@ def check_database(password, file_name: str, file_metadata_table: dict, record_h
     """
     if os.path.isfile(file_name):
         print("Database already exists.")
-        if (password):
+        if password:
             number = password
-        else :
+        else:
             number = input("Press the password for the database: ")
         decrypted_data = decrypt_with_password(file_name, number)
         if decrypted_data == None:
@@ -825,13 +911,12 @@ def check_database(password, file_name: str, file_metadata_table: dict, record_h
             os.remove(file_name)
             print(file_metadata_table, record_history_table)
             return file_metadata_table, record_history_table, number
-                
+
     else:
         print("Database does not exist.")
-        if (password):
+        if password:
             number = password
             print("New database generated using password.")
-        else :
+        else:
             number = input("Generate the password for the database: ")
         return file_metadata_table, record_history_table, number
-    

@@ -1,9 +1,6 @@
 name: Python Formatting
 
 on:
-  push:
-    paths:
-      - 'entity/python/**'
   pull_request:
     paths:
       - 'entity/python/**'
