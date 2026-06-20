@@ -53,7 +53,7 @@ var diffieHellmanServerInfoList = [];
 for (var i = 0; i < entityList.length; i++) {
 	var entity = entityList[i];
 	if (entity.host != null && entity.port != null) {
-		var serverInfo = {name: entity.name, host: entity.host, port: entity.port};
+		var serverInfo = {name: entity.name, host: entity.host, port: entity.port, group: entity.group};
 		if (entity.diffieHellman != null) {
 			diffieHellmanServerInfoList.push(serverInfo);
 		}
@@ -192,6 +192,9 @@ for (var i = 0; i < entityList.length; i++) {
 	}
 	else {
 		entityConfig.targetServerInfoList = getTargetServerInfoList(entity);
+	}
+	if (entity.contextList != null) {
+		entityConfig.contextList = entity.contextList;
 	}
 	writeEntityConfigToFile(entity, entityConfig);
 	//console.log(entityConfig);

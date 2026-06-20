@@ -224,6 +224,7 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + " TEXT NOT NULL,";
         sql += CommunicationPolicyTable.c.Expiration.name() + " INT NOT NULL,";
         sql += CommunicationPolicyTable.c.IsDelegated.name() + " INT NOT NULL,";
+        sql += CommunicationPolicyTable.c.Context.name() + " TEXT,";
         sql += "UNIQUE (" + CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
         sql += CommunicationPolicyTable.c.Target.name() + "))";
@@ -383,8 +384,9 @@ public class SQLiteConnector {
         sql += CommunicationPolicyTable.c.AbsoluteValidity.name() + ",";
         sql += CommunicationPolicyTable.c.RelativeValidity.name() + ",";
         sql += CommunicationPolicyTable.c.Expiration.name() + ",";
-        sql += CommunicationPolicyTable.c.IsDelegated.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?)";
+        sql += CommunicationPolicyTable.c.IsDelegated.name() + ",";
+        sql += CommunicationPolicyTable.c.Context.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?)";
         int index = 1;
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         preparedStatement.setLong(index++,policy.getID());
@@ -397,6 +399,11 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,policy.getRelValidityStr());
         preparedStatement.setLong(index++,policy.getExpiration());
         preparedStatement.setLong(index++,policy.getIsDelegated());
+        if (policy.getContext() != null) {
+            preparedStatement.setString(index++, policy.getContext());
+        } else {
+            preparedStatement.setNull(index++, Types.VARCHAR);
+        }
         if (DEBUG) logger.info(preparedStatement.toString());
         int result = preparedStatement.executeUpdate();
         preparedStatement.close();

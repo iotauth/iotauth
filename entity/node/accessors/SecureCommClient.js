@@ -328,7 +328,10 @@ serverHostPort = {
 	port: 21200
 }
 */
-function serverHostPortInputHandler(serverHostPort) {
+function serverInputHandler(serverHostPort, resourceName) {
+	if (resourceName === undefined) {
+		resourceName = 'Servers';
+	}
 	if (serverHostPort == null) {
 		console.log('ServerHostPort is null, trying to close previous socket...');
 		if (currentSecureClient) {
@@ -348,37 +351,15 @@ function serverHostPortInputHandler(serverHostPort) {
 	    			handleSessionKeyResp, serverHostPort);
 	    	}
 	    	else {
-	    		sendSessionKeyRequest({group: 'Servers'}, parameters.numKeysPerRequest,
+	    		let purpose = {group: resourceName};
+	    		if (parameters.context !== undefined && parameters.context !== null) {
+	    		    purpose.context = parameters.context;
+	    		}
+	    		sendSessionKeyRequest(purpose, parameters.numKeysPerRequest,
 	    			handleSessionKeyResp, serverHostPort);
 	    	}
 	    }
 	}
-}
-function serverHostPortInputHandlerResource(serverHostPort, resourceName) {
-    if (serverHostPort == null) {
-        console.log('ServerHostPort is null, trying to close previous socket...');
-        if (currentSecureClient) {
-            currentSecureClient.close();
-            currentSecureClient = null;
-        }
-    }
-    else {
-        if (currentSessionKeyList.length > 0) {
-            initSecureCommWithSessionKey(currentSessionKeyList.shift(),
-                serverHostPort.host, serverHostPort.port);
-        }
-        else {
-            // hack to support exp2
-            if (parameters.keyId) {
-                sendSessionKeyRequest({keyId: parameters.keyId}, 1,
-                    handleSessionKeyResp, serverHostPort);
-            }
-            else {
-                sendSessionKeyRequest({group: resourceName}, parameters.numKeysPerRequest,
-                    handleSessionKeyResp, serverHostPort);
-            }
-        }
-    }
 }
 
 function toSendInputHandler(toSend) {
@@ -420,22 +401,13 @@ SecureCommClient.prototype.initialize = function() {
 	console.log('current parameters: ' + util.inspect(parameters));
 }
 
-SecureCommClient.prototype.provideInput = function(port, input) {
+SecureCommClient.prototype.provideInput = function(port, input, resourceName) {
 	if (port == 'serverHostPort') {
-		serverHostPortInputHandler(input);
+		serverInputHandler(input, resourceName);
 	}
 	else if (port == 'toSend') {
 		toSendInputHandler(input);
 	}
-}
-
-SecureCommClient.prototype.provideInputResource = function(port, input, resourceName) {
-    if (port == 'serverHostPort') {
-        serverHostPortInputHandlerResource(input, resourceName);
-    }
-    else if (port == 'toSend') {
-        toSendInputHandler(input);
-    }
 }
 
 SecureCommClient.prototype.setParameter = function(key, value) {
@@ -455,6 +427,10 @@ SecureCommClient.prototype.setOutputHandler = function(key, handler) {
 
 SecureCommClient.prototype.getTargetServerInfoList = function() {
 	return entityConfig.targetServerInfoList;
+}
+
+SecureCommClient.prototype.getContextList = function() {
+    return entityConfig.contextList || null;
 }
 
 SecureCommClient.prototype.getEntityInfo = function() {

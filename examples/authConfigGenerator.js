@@ -176,8 +176,8 @@ function generateDelegationPrivilegeTables(){
 }
 
 // generate client policy tables
-function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
-    list.push({
+function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity, context) {
+    const policy = {
         RequestingGroup: requestingGroup,
         TargetType: 'Group',
         Target: target,
@@ -186,10 +186,12 @@ function addServerClientPolicy(list, requestingGroup, target, absoluteValidity, 
         AbsoluteValidity: absoluteValidity,
         RelativeValidity: relativeValidity,
         Expiration: "Infinity",
-        IsDelegated: 0
-    });
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
+    };
+    list.push(policy);
 }
-function addPubSubPolicy(list, requestingGroup, isPub) {
+function addPubSubPolicy(list, requestingGroup, isPub, context) {
     list.push({
         RequestingGroup: requestingGroup,
         TargetType: isPub ? 'PubTopic' : 'SubTopic',
@@ -199,11 +201,12 @@ function addPubSubPolicy(list, requestingGroup, isPub) {
         AbsoluteValidity: '6*hour',
         RelativeValidity: '3*hour',
         Expiration: "Infinity",
-        IsDelegated: 0
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
     });
 }
 // Add policy for upload and download files
-function addUploadDownloadlPolicy(list, requestingGroup, target) {
+function addUploadDownloadlPolicy(list, requestingGroup, target, context) {
     list.push({
         RequestingGroup: requestingGroup,
         TargetType: 'FileSharing',
@@ -213,11 +216,12 @@ function addUploadDownloadlPolicy(list, requestingGroup, target) {
         AbsoluteValidity: '365*day',
         RelativeValidity: '365*day',
         Expiration: "Infinity",
-        IsDelegated: 0
-    });    
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
+    });
 }
 // generate client policy tables
-function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity, context) {
     list.push({
         RequestingGroup: requestingGroup,
         TargetType: 'Group',
@@ -227,7 +231,8 @@ function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteVa
         AbsoluteValidity: absoluteValidity,
         RelativeValidity: relativeValidity,
         Expiration: "Infinity",
-        IsDelegated: 0
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
     });
     list.push({
         RequestingGroup: target,
@@ -238,12 +243,13 @@ function addComputeCompactionCTRPolicy(list, requestingGroup, target, absoluteVa
         AbsoluteValidity: absoluteValidity,
         RelativeValidity: relativeValidity,
         Expiration: "Infinity",
-        IsDelegated: 0
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
     });
 }
 
 // generate client policy tables
-function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity, context) {
     list.push({
         RequestingGroup: requestingGroup,
         TargetType: 'Group',
@@ -253,7 +259,8 @@ function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteVa
         AbsoluteValidity: absoluteValidity,
         RelativeValidity: relativeValidity,
         Expiration: "Infinity",
-        IsDelegated: 0
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
     });
     list.push({
         RequestingGroup: target,
@@ -264,12 +271,13 @@ function addComputeCompactionGCMPolicy(list, requestingGroup, target, absoluteVa
         AbsoluteValidity: absoluteValidity,
         RelativeValidity: relativeValidity,
         Expiration: "Infinity",
-        IsDelegated: 0
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
     });
 }
 
 // generate client policy tables
-function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity, context) {
     list.push({
         RequestingGroup: requestingGroup,
         TargetType: 'Group',
@@ -279,7 +287,8 @@ function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteVa
         AbsoluteValidity: absoluteValidity,
         RelativeValidity: relativeValidity,
         Expiration: "Infinity",
-        IsDelegated: 0
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
     });
     list.push({
         RequestingGroup: target,
@@ -290,10 +299,11 @@ function addComputeCompactionCBCPolicy(list, requestingGroup, target, absoluteVa
         AbsoluteValidity: absoluteValidity,
         RelativeValidity: relativeValidity,
         Expiration: "Infinity",
-        IsDelegated: 0
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
     });
 }
-function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity) {
+function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, relativeValidity, context) {
     list.push({
         RequestingGroup: requestingGroup,
         TargetType: 'Delegation',
@@ -303,7 +313,8 @@ function addDelegationPolicy(list, requestingGroup, target, absoluteValidity, re
         AbsoluteValidity: absoluteValidity,
         RelativeValidity: relativeValidity,
         Expiration: "Infinity",
-        IsDelegated: 0
+        IsDelegated: 0,
+        Context: context !== undefined ? context : null
     });
 }
 
@@ -311,6 +322,8 @@ function generateCommunicationPolicyTables() {
     var policyList = [];
     if (policiesOverride) {
         policyList.push(...policiesOverride);
+    } else if (graph.commPolicies) {
+        policyList.push(...graph.commPolicies);
     } else {
         addServerClientPolicy(policyList, 'Clients', 'Servers', '1*day', '2*hour');
         addServerClientPolicy(policyList, 'PtClients', 'Servers', '1*day', '2*hour');

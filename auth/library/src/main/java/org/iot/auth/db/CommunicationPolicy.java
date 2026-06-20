@@ -37,6 +37,7 @@ public class CommunicationPolicy {
         this.relValidity = communicationPolicyTable.getRelValidity();
         this.expiration = communicationPolicyTable.getExpiration();
         this.isDelegated = communicationPolicyTable.getIsDelegated();
+        this.context = communicationPolicyTable.getContext();
     }
 
     public long getId() {
@@ -72,6 +73,10 @@ public class CommunicationPolicy {
         return isDelegated;
     }
 
+    public String getContext() {
+        return context;
+    }
+
     public String toString() {
         return "ID " + id + "\tRequestingGroup: " + reqGroup + "\tTargetType: " + targetType + "\tTarget: " + target +
                 "\t" + sessionCryptoSpec.toString() +
@@ -91,4 +96,5 @@ public class CommunicationPolicy {
     private long relValidity;
     private long expiration;
     private int isDelegated;
+    private String context;
 }
