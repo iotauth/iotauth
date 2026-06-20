@@ -565,17 +565,17 @@ def serialize_handshake(nonce: bytearray, reply_nonce: bytearray) -> bytearray:
     Returns:
         bytearray: The serialized handshake data.
     """
-    if (nonce == None) & (reply_nonce == None):
+    if (nonce is None) & (reply_nonce is None):
         print("Error: handshake should include at least one nonce.\n")
 
     indicator = 0
     buffer = bytearray(NONCE_SIZE * 2 + 1)
 
-    if nonce != None:
+    if nonce is not None:
         indicator += 1
         buffer[1 : 1 + NONCE_SIZE] = nonce
 
-    if reply_nonce != None:
+    if reply_nonce is not None:
         indicator += 1
         buffer[1 + NONCE_SIZE : 1 + NONCE_SIZE * 2] = reply_nonce
 
@@ -896,7 +896,7 @@ def check_database(
         else:
             number = input("Press the password for the database: ")
         decrypted_data = decrypt_with_password(file_name, number)
-        if decrypted_data == None:
+        if decrypted_data is None:
             print("decryption was not applied!!")
             os.remove(file_name)
             return file_metadata_table, record_history_table, number

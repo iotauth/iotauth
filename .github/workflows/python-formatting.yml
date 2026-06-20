@@ -14,8 +14,10 @@ jobs:
 
       - uses: astral-sh/ruff-action@v3
         with:
-          args: check entity/python
+          args: check
+          src: entity/python
 
       - uses: astral-sh/ruff-action@v3
         with:
-          args: format --check entity/python
+          args: format --check
+          src: entity/python
