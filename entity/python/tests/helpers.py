@@ -37,6 +37,7 @@ class FakeListenSocket:
         self.bound = None
         self.listened = None
         self.timeout = None
+        self.sockopt = None
         self.closed = False
         self.fail_bind = fail_bind
         self.fail_accept = fail_accept
