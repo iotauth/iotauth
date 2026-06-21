@@ -94,6 +94,7 @@ CLIENT_PID=$!
 (
 	tail -n +1 -f "$CLIENT_LOG" 2>/dev/null | sed -u "s/^/[client] /"
 ) &
+TAIL_PID=$!
 
 echo "[test] Waiting for Python client to complete."
 elapsed=0
