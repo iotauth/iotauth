@@ -389,7 +389,7 @@ class SecureChannelTests(unittest.TestCase):
         self.assertTrue(fake.closed)
 
     def test_accept_secure_tcp_early_close_raises_auth_connection_error(self):
-        fake = FakeSocket()
+        fake = FakeSocket(eof_on_empty=True)
 
         with self.assertRaises(AuthConnectionError):
             accept_secure(
@@ -556,7 +556,7 @@ class SecureChannelTests(unittest.TestCase):
             channel.recv()
 
     def test_recv_translates_early_close_to_channel_closed(self):
-        channel = SecureChannel(FakeSocket(), make_session_key())
+        channel = SecureChannel(FakeSocket(eof_on_empty=True), make_session_key())
 
         with self.assertRaises(SecureChannelClosed):
             channel.recv()
