@@ -37,9 +37,9 @@ These are the high-level directories and their purposes:
 For deep API documentation, consult [API_REFERENCE.md](API_REFERENCE.md). 
 > TO DO :- add API references to the iotauth website and link the reference.
 
-## Configuration (.toml)
+## Configuration (`pyproject.toml`)
 
-The Python API uses **TOML** (`.toml`) files for entity configuration. 
+This project uses a `pyproject.toml` file at its root. This is the modern standard for configuring Python projects (replacing older formats like `setup.py` or `requirements.txt`). It contains build system requirements, package metadata, and tool configurations (like Ruff).
 If you are new to TOML, you can read the official quick-start guide and specification at [toml.io](https://toml.io/en/).
 
 ## Installation and Running
