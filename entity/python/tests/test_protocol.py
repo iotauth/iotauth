@@ -135,7 +135,12 @@ class SessionKeyRequestTests(unittest.TestCase):
 
         payload = serialize_session_key_request_payload(request)
         _, consumed = parse_buffered_string(payload, 20)
-        purpose, _ = parse_buffered_string(payload, 20 + consumed)
+        entity_nonce_size = len(b"e" * 8)
+        auth_nonce_size = len(b"a" * 8)
+        num_keys_size = 4  # fixed-width int
+        name_offset = entity_nonce_size + auth_nonce_size + num_keys_size
+        _, consumed = parse_buffered_string(payload, name_offset)
+        purpose, _ = parse_buffered_string(payload, name_offset + consumed)
 
         self.assertEqual(purpose, '{"keyId":00000000}')
 
