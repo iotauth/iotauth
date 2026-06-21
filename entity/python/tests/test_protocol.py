@@ -156,13 +156,7 @@ class KeyRecordTests(unittest.TestCase):
     """Tests for parsing key records returned by Auth."""
 
     def test_parses_distribution_key_record(self):
-        record = (
-            encode_uint_be(0x010203040506, 6)
-            + b"\x10"
-            + b"c" * 16
-            + b"\x20"
-            + b"m" * 32
-        )
+        record = encode_uint_be(0x010203040506, 6) + b"\x10" + b"c" * 16 + b"\x20" + b"m" * 32
         key = parse_distribution_key_record(record)
         self.assertEqual(
             key,
@@ -212,9 +206,7 @@ class SessionKeyResponseTests(unittest.TestCase):
         response = parse_session_key_response_payload(payload, session_config())
 
         self.assertEqual(response.entity_nonce, b"e" * 8)
-        self.assertEqual(
-            response.crypto_spec, {"cipher": "AES-128-CBC", "mac": "SHA256"}
-        )
+        self.assertEqual(response.crypto_spec, {"cipher": "AES-128-CBC", "mac": "SHA256"})
         self.assertEqual(len(response.session_keys), 1)
         self.assertEqual(response.session_keys[0].id, b"12345678")
 

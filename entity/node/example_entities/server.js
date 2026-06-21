@@ -81,7 +81,23 @@ function commandInterpreter() {
             message = input.slice(idx + 1);
         }
 
-        if (command == 'showKeys') {
+        if (command == 'help') {
+            console.log('Available commands:');
+            console.log('  help                        Show this help message');
+            console.log('  send <message>              Send message to all connected clients');
+            console.log('  sendTo <socketID> <msg>     Send message to a specific client by socket ID');
+            console.log('  sendFile [filepath]         Send a binary file to all connected clients');
+            console.log('                              (default: ../data_examples/data.bin)');
+            console.log('  sendFileTo <id> [filepath]  Send a binary file to a specific client');
+            console.log('  skReq [numKeys]             Request session keys for future clients (default: 3)');
+            console.log('  skReqPub [numKeys]          Request session keys for publish topic (default: 1)');
+            console.log('  saveData [filepath]         Save last received data to a file');
+            console.log('  showKeys                    Show current distribution key and session keys');
+            console.log('  showSocket                  Show current secure server socket info');
+            console.log('  mig                         Migrate to a trusted Auth');
+            console.log('  finComm  (or f)             End all active secure communications');
+        }
+        else if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');
             console.log(secureCommServer.showKeys());
         }

@@ -5,11 +5,10 @@ from __future__ import annotations
 from collections.abc import Buffer
 from dataclasses import dataclass
 
-from .protocol import NONCE_SIZE, _require_nonce
 from .crypto import symmetric_decrypt_authenticate, symmetric_encrypt_authenticate
 from .exceptions import SecureHandshakeError, SerializationError
 from .keys import SESSION_KEY_ID_SIZE, SessionKey
-
+from .protocol import NONCE_SIZE, _require_nonce
 
 HANDSHAKE_NONCE_PRESENT = 0x01
 HANDSHAKE_REPLY_NONCE_PRESENT = 0x02
@@ -119,9 +118,7 @@ def verify_handshake_2_and_build_handshake_3(
     if payload.nonce is None:
         raise SecureHandshakeError("Handshake 2 is missing server nonce")
 
-    response_plaintext = serialize_handshake_payload(
-        HandshakePayload(reply_nonce=payload.nonce)
-    )
+    response_plaintext = serialize_handshake_payload(HandshakePayload(reply_nonce=payload.nonce))
     return payload.nonce, _encrypt_handshake_payload(key, response_plaintext)
 
 
@@ -195,11 +192,6 @@ def _decrypt_handshake_payload(key: SessionKey, encrypted: bytes) -> bytes:
     )
 
 
-
-
-
-def _require_available(
-    view: memoryview, start: int, size: int, field_name: str
-) -> None:
+def _require_available(view: memoryview, start: int, size: int, field_name: str) -> None:
     if start + size > len(view):
         raise SerializationError(f"Handshake payload is missing {field_name}")

@@ -8,7 +8,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from .protocol import NONCE_SIZE, IoTSPFrame, MessageType
 from .config import TargetServer
 from .context import IoTAuthContext
 from .crypto import symmetric_decrypt_authenticate, symmetric_encrypt_authenticate
@@ -30,9 +29,9 @@ from .handshake import (
     verify_handshake_3,
 )
 from .keys import SessionKey
+from .protocol import NONCE_SIZE, IoTSPFrame, MessageType
 from .serialization import decode_uint_be, encode_uint_be
 from .transports import close_socket, connect, recv_frame, send_frame
-
 
 SocketFactory = Callable[[str, int, float | None], Any]
 NonceFactory = Callable[[int], bytes]
@@ -63,9 +62,7 @@ class SecureChannel:
         except AuthConnectionError as exc:
             if "closed" in str(exc).lower():
                 self.close()
-                raise SecureChannelClosed(
-                    "Secure channel closed while receiving"
-                ) from exc
+                raise SecureChannelClosed("Secure channel closed while receiving") from exc
             raise
         if frame.message_type != MessageType.SECURE_COMM_MSG:
             raise SerializationError(
@@ -113,9 +110,7 @@ def connect_secure(
     try:
         client_nonce = _nonce_factory(NONCE_SIZE)
         if len(client_nonce) != NONCE_SIZE:
-            raise SecureHandshakeError(
-                f"client nonce factory must return {NONCE_SIZE} bytes"
-            )
+            raise SecureHandshakeError(f"client nonce factory must return {NONCE_SIZE} bytes")
 
         handshake_1 = build_handshake_1(key, client_nonce)
         send_frame(sock, IoTSPFrame(MessageType.SKEY_HANDSHAKE_1, handshake_1))
@@ -177,9 +172,7 @@ def accept_secure(
 
         server_nonce = _nonce_factory(NONCE_SIZE)
         if len(server_nonce) != NONCE_SIZE:
-            raise SecureHandshakeError(
-                f"server nonce factory must return {NONCE_SIZE} bytes"
-            )
+            raise SecureHandshakeError(f"server nonce factory must return {NONCE_SIZE} bytes")
 
         _, handshake_2_payload = verify_handshake_1_and_build_handshake_2(
             key,
@@ -307,9 +300,4 @@ def _lookup_session_key(ctx: IoTAuthContext, key_id: bytes) -> SessionKey:
     try:
         return ctx.session_keys.require(key_id)
     except KeyCacheError as exc:
-        raise SecureHandshakeError(
-            f"Session key not found for handshake: {key_id.hex()}"
-        ) from exc
-
-
-
+        raise SecureHandshakeError(f"Session key not found for handshake: {key_id.hex()}") from exc

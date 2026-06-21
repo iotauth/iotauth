@@ -87,21 +87,15 @@ class SymmetricCryptoTests(unittest.TestCase):
         tampered = envelope[:-1] + bytes([envelope[-1] ^ 1])
 
         with self.assertRaises(MessageIntegrityError):
-            symmetric_decrypt_authenticate(
-                tampered, b"c" * 16, b"m" * 32, "AES_128_CBC", True
-            )
+            symmetric_decrypt_authenticate(tampered, b"c" * 16, b"m" * 32, "AES_128_CBC", True)
 
     def test_rejects_wrong_aes_key_length(self):
         with self.assertRaisesRegex(UnsupportedCryptoError, "AES-128"):
-            symmetric_encrypt_authenticate(
-                b"payload", b"short", b"m" * 32, "AES_128_CBC", True
-            )
+            symmetric_encrypt_authenticate(b"payload", b"short", b"m" * 32, "AES_128_CBC", True)
 
     def test_rejects_unsupported_encryption_mode(self):
         with self.assertRaisesRegex(UnsupportedCryptoError, "Unsupported"):
-            symmetric_encrypt_authenticate(
-                b"payload", b"c" * 16, b"m" * 32, "AES_999", True
-            )
+            symmetric_encrypt_authenticate(b"payload", b"c" * 16, b"m" * 32, "AES_999", True)
 
     def _round_trip(self, mode, hmac_enabled):
         envelope = symmetric_encrypt_authenticate(

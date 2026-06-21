@@ -6,7 +6,6 @@ from collections.abc import Buffer
 
 from .exceptions import SerializationError
 
-
 MAX_VARINT_BYTES = 5
 MAX_VARINT_VALUE = 0xFFFFFFFF
 
@@ -17,9 +16,7 @@ def encode_varint(value: int) -> bytes:
     if value < 0:
         raise SerializationError("Variable-length integer must not be negative")
     if value > MAX_VARINT_VALUE:
-        raise SerializationError(
-            f"Variable-length integer exceeds {MAX_VARINT_VALUE}"
-        )
+        raise SerializationError(f"Variable-length integer exceeds {MAX_VARINT_VALUE}")
 
     encoded = bytearray()
     while value > 127:
@@ -50,9 +47,7 @@ def decode_varint(data: Buffer, offset: int = 0) -> tuple[int, int]:
         value |= (byte & 0x7F) << (7 * index)
         if byte & 0x80 == 0:
             if value > MAX_VARINT_VALUE:
-                raise SerializationError(
-                    f"Variable-length integer exceeds {MAX_VARINT_VALUE}"
-                )
+                raise SerializationError(f"Variable-length integer exceeds {MAX_VARINT_VALUE}")
             return value, index + 1
 
     raise SerializationError("Variable-length integer is too long")

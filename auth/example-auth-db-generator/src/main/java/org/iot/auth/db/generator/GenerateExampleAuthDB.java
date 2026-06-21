@@ -273,6 +273,10 @@ public class GenerateExampleAuthDB {
                     communicationPolicyTable.setExpiration(new Date().getTime() + DateHelper.parseTimePeriod(expiration));
                 }
                 communicationPolicyTable.setIsDelegated(convertObjectToInteger(jsonObject.get(CommunicationPolicyTable.c.IsDelegated.name())));
+                if (jsonObject.containsKey(CommunicationPolicyTable.c.Context.name())) {
+                    Object contextObj = jsonObject.get(CommunicationPolicyTable.c.Context.name());
+                    communicationPolicyTable.setContext(contextObj != null ? contextObj.toString() : null);
+                }
                 sqLiteConnector.insertRecords(communicationPolicyTable);
                 nextCommPolicyID++;
             }

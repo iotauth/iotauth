@@ -1,21 +1,32 @@
 import argparse
-import os
 import sys
 
-from iotauth import IoTAuthContext, IoTAuthError, SecureServer, SecureChannelClosed
+from iotauth import IoTAuthContext, IoTAuthError, SecureChannelClosed, SecureServer
 
 
 def main():
     parser = argparse.ArgumentParser(description="IoTAuth Python Server Example")
-    parser.add_argument("-to", "--timeout", type=float, default=60.0, help="Timeout value for server (default 60)")
-    parser.add_argument("-m", "--minutes", action="store_true", help="Treat timeout value as minutes")
-    parser.add_argument("-s", "--seconds", action="store_true", help="Treat timeout value as seconds (default)")
-    parser.add_argument("-n", "--max-messages", type=int, default=0, help="Maximum number of messages to process per connection before closing (0 = unlimited)")
+    parser.add_argument(
+        "-to", "--timeout", type=float, default=60.0, help="Timeout value for server (default 60)"
+    )
+    parser.add_argument(
+        "-m", "--minutes", action="store_true", help="Treat timeout value as minutes"
+    )
+    parser.add_argument(
+        "-s", "--seconds", action="store_true", help="Treat timeout value as seconds (default)"
+    )
+    parser.add_argument(
+        "-n",
+        "--max-messages",
+        type=int,
+        default=0,
+        help="Maximum number of messages to process per connection before closing (0 = unlimited)",
+    )
     parser.add_argument("config_path", help="Path to the server config file")
     args = parser.parse_args()
 
     timeout_val = args.timeout
-    if args.minutes: # calcualte time out value in seconds
+    if args.minutes:  # calcualte time out value in seconds
         timeout_val *= 60.0
 
     print("Loading server context...")
@@ -24,9 +35,8 @@ def main():
     try:
         # SecureServer automatically binds to the host/port in the config
         with SecureServer(ctx, timeout=timeout_val) as server:
-            print(
-                f"Listening securely on {ctx.config.targets[0].host}:{ctx.config.targets[0].port}..."
-            )
+            target = ctx.config.targets[0]
+            print(f"Listening securely on {target.host}:{target.port}...")
 
             # serve_once() accepts a TCP connection and completes auth connection
             channel = server.serve_once()
@@ -43,14 +53,16 @@ def main():
                 print(f"LOG: Received: {data.decode('utf-8')}")
 
                 # Echo the data back securely
-                reply_str = "Hello client" if message_count == 1 else f"Hello client {message_count}"
-                channel.send(reply_str.encode('utf-8'))
-                
+                reply_str = (
+                    "Hello client" if message_count == 1 else f"Hello client {message_count}"
+                )
+                channel.send(reply_str.encode("utf-8"))
+
                 if args.max_messages > 0 and message_count >= args.max_messages:
                     print(f"Reached max messages ({args.max_messages}), closing connection.")
                     channel.close()
                     break
-                
+
                 message_count += 1
 
     except SecureChannelClosed:

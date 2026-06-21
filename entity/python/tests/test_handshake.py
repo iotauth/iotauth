@@ -9,7 +9,6 @@ from iotauth import (
     MessageIntegrityError,
     SecureHandshakeError,
     SerializationError,
-    SessionKey,
     build_handshake_1,
     parse_handshake_1_key_id,
     parse_handshake_payload,
@@ -20,13 +19,10 @@ from iotauth import (
     verify_handshake_3,
 )
 from iotauth.crypto import _load_crypto_backend
-
+from tests.helpers import make_session_key
 
 CLIENT_NONCE = b"c" * 8
 SERVER_NONCE = b"s" * 8
-
-
-from tests.helpers import make_session_key
 
 
 def has_cryptography():
@@ -51,9 +47,7 @@ class HandshakePayloadTests(unittest.TestCase):
         self.assertEqual(len(payload), HANDSHAKE_FIXED_SIZE)
 
     def test_serializes_reply_nonce_only_payload(self):
-        payload = serialize_handshake_payload(
-            HandshakePayload(reply_nonce=SERVER_NONCE)
-        )
+        payload = serialize_handshake_payload(HandshakePayload(reply_nonce=SERVER_NONCE))
 
         self.assertEqual(payload[0], HANDSHAKE_REPLY_NONCE_PRESENT)
         self.assertEqual(payload[9:17], SERVER_NONCE)
@@ -78,9 +72,7 @@ class HandshakePayloadTests(unittest.TestCase):
         self.assertEqual(parsed, HandshakePayload(nonce=CLIENT_NONCE))
 
     def test_parses_nonce_plus_reply_nonce_payload(self):
-        parsed = parse_handshake_payload(
-            bytes([0x03]) + SERVER_NONCE + CLIENT_NONCE
-        )
+        parsed = parse_handshake_payload(bytes([0x03]) + SERVER_NONCE + CLIENT_NONCE)
 
         self.assertEqual(
             parsed,
@@ -112,15 +104,16 @@ class HandshakeBuilderTests(unittest.TestCase):
             parse_handshake_1_key_id(b"short")
 
     def test_verify_handshake_1_builds_handshake_2(self):
-        clear_handshake_1 = serialize_handshake_payload(
-            HandshakePayload(nonce=CLIENT_NONCE)
-        )
-        with patch(
-            "iotauth.handshake.symmetric_decrypt_authenticate",
-            return_value=clear_handshake_1,
-        ), patch(
-            "iotauth.handshake.symmetric_encrypt_authenticate",
-            return_value=b"handshake2",
+        clear_handshake_1 = serialize_handshake_payload(HandshakePayload(nonce=CLIENT_NONCE))
+        with (
+            patch(
+                "iotauth.handshake.symmetric_decrypt_authenticate",
+                return_value=clear_handshake_1,
+            ),
+            patch(
+                "iotauth.handshake.symmetric_encrypt_authenticate",
+                return_value=b"handshake2",
+            ),
         ):
             client_nonce, handshake_2 = verify_handshake_1_and_build_handshake_2(
                 make_session_key(),
@@ -132,9 +125,7 @@ class HandshakeBuilderTests(unittest.TestCase):
         self.assertEqual(handshake_2, b"handshake2")
 
     def test_verify_handshake_1_rejects_missing_client_nonce(self):
-        clear_handshake_1 = serialize_handshake_payload(
-            HandshakePayload(reply_nonce=SERVER_NONCE)
-        )
+        clear_handshake_1 = serialize_handshake_payload(HandshakePayload(reply_nonce=SERVER_NONCE))
         with patch(
             "iotauth.handshake.symmetric_decrypt_authenticate",
             return_value=clear_handshake_1,
@@ -150,12 +141,15 @@ class HandshakeBuilderTests(unittest.TestCase):
         clear_handshake_2 = serialize_handshake_payload(
             HandshakePayload(nonce=SERVER_NONCE, reply_nonce=CLIENT_NONCE)
         )
-        with patch(
-            "iotauth.handshake.symmetric_decrypt_authenticate",
-            return_value=clear_handshake_2,
-        ), patch(
-            "iotauth.handshake.symmetric_encrypt_authenticate",
-            return_value=b"handshake3",
+        with (
+            patch(
+                "iotauth.handshake.symmetric_decrypt_authenticate",
+                return_value=clear_handshake_2,
+            ),
+            patch(
+                "iotauth.handshake.symmetric_encrypt_authenticate",
+                return_value=b"handshake3",
+            ),
         ):
             server_nonce, handshake_3 = verify_handshake_2_and_build_handshake_3(
                 make_session_key(),
@@ -182,9 +176,7 @@ class HandshakeBuilderTests(unittest.TestCase):
                 )
 
     def test_verify_handshake_3_accepts_matching_reply_nonce(self):
-        clear_handshake_3 = serialize_handshake_payload(
-            HandshakePayload(reply_nonce=SERVER_NONCE)
-        )
+        clear_handshake_3 = serialize_handshake_payload(HandshakePayload(reply_nonce=SERVER_NONCE))
         with patch(
             "iotauth.handshake.symmetric_decrypt_authenticate",
             return_value=clear_handshake_3,
@@ -198,9 +190,7 @@ class HandshakeBuilderTests(unittest.TestCase):
         self.assertEqual(parsed.reply_nonce, SERVER_NONCE)
 
     def test_verify_handshake_3_rejects_nonce_mismatch(self):
-        clear_handshake_3 = serialize_handshake_payload(
-            HandshakePayload(reply_nonce=b"x" * 8)
-        )
+        clear_handshake_3 = serialize_handshake_payload(HandshakePayload(reply_nonce=b"x" * 8))
         with patch(
             "iotauth.handshake.symmetric_decrypt_authenticate",
             return_value=clear_handshake_3,

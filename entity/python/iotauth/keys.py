@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from .exceptions import KeyCacheError
 
-
 SESSION_KEY_ID_SIZE = 8
 MAX_SESSION_KEY = 10
 

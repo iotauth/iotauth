@@ -1,6 +1,6 @@
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 from unittest.mock import patch
 
 from iotauth import CredentialError, IoTAuthContext, load_config
@@ -59,9 +59,7 @@ class IoTAuthContextTests(unittest.TestCase):
 
     def test_permanent_distribution_key_mode_is_deferred(self):
         with TemporaryDirectory() as temp_dir:
-            config = self._load_config(
-                Path(temp_dir), extra_lines=["PermanentDistKeyMode=on"]
-            )
+            config = self._load_config(Path(temp_dir), extra_lines=["PermanentDistKeyMode=on"])
 
             with self.assertRaisesRegex(CredentialError, "Permanent distribution key"):
                 IoTAuthContext.from_entity_config(config)

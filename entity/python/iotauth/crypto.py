@@ -10,7 +10,6 @@ from .context import IoTAuthContext
 from .exceptions import MessageIntegrityError, SerializationError, UnsupportedCryptoError
 from .keys import DistributionKey
 
-
 AES_128_KEY_SIZE = 16
 AES_128_CBC_IV_SIZE = 16
 AES_128_CTR_IV_SIZE = 16
@@ -25,9 +24,7 @@ def public_encrypt(payload: bytes, public_key: Any) -> bytes:
     try:
         return public_key.encrypt(payload, _oaep_padding(crypto))
     except ValueError as exc:
-        raise UnsupportedCryptoError(
-            "Payload is too large for direct RSA/OAEP encryption"
-        ) from exc
+        raise UnsupportedCryptoError("Payload is too large for direct RSA/OAEP encryption") from exc
 
 
 def private_decrypt(ciphertext: bytes, private_key: Any) -> bytes:
@@ -240,9 +237,7 @@ def _cipher(
         return Cipher(algorithms.AES(key), modes.CTR(iv))
     if mode == "AES_128_GCM":
         gcm_mode = (
-            modes.GCM(iv)
-            if encrypting
-            else modes.GCM(iv, tag, min_tag_length=AES_GCM_TAG_SIZE)
+            modes.GCM(iv) if encrypting else modes.GCM(iv, tag, min_tag_length=AES_GCM_TAG_SIZE)
         )
         return Cipher(algorithms.AES(key), gcm_mode)
     raise UnsupportedCryptoError(f"Unsupported encryption mode: {mode}")
@@ -257,16 +252,12 @@ def _hmac_sha256(data: bytes, mac_key: bytes | None, crypto: dict[str, Any]) -> 
 
 def _validate_cipher_key(cipher_key: bytes) -> None:
     if len(cipher_key) != AES_128_KEY_SIZE:
-        raise UnsupportedCryptoError(
-            f"AES-128 cipher key must be {AES_128_KEY_SIZE} bytes"
-        )
+        raise UnsupportedCryptoError(f"AES-128 cipher key must be {AES_128_KEY_SIZE} bytes")
 
 
 def _validate_mac_key(mac_key: bytes | None) -> None:
     if mac_key is None or len(mac_key) != HMAC_SHA256_SIZE:
-        raise UnsupportedCryptoError(
-            f"HMAC-SHA256 key must be {HMAC_SHA256_SIZE} bytes"
-        )
+        raise UnsupportedCryptoError(f"HMAC-SHA256 key must be {HMAC_SHA256_SIZE} bytes")
 
 
 def _iv_size(mode: str) -> int:
@@ -300,7 +291,8 @@ def _require_rsa_private_key(private_key: Any, crypto: dict[str, Any]) -> None:
 def _load_crypto_backend() -> dict[str, Any]:
     try:
         from cryptography.exceptions import InvalidSignature
-        from cryptography.hazmat.primitives import hashes, hmac, padding as padding_sym
+        from cryptography.hazmat.primitives import hashes, hmac
+        from cryptography.hazmat.primitives import padding as padding_sym
         from cryptography.hazmat.primitives.asymmetric import padding, rsa
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     except ImportError as exc:

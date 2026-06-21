@@ -159,3 +159,29 @@ The implementation diary in `API_implementation_REDME.md` is still the best
 place for planned steps and deeper explanations. This README should stay short
 and practical: what exists, where it lives, and what each file is responsible
 for.
+
+## Contributing
+
+### Code style
+
+This directory uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
+
+Install:
+```bash
+brew install ruff
+# or
+pip install ruff
+```
+
+Check for issues:
+```bash
+ruff check .
+```
+
+Auto-fix and format:
+```bash
+ruff check --fix .
+ruff format .
+```
+
+Ruff is configured in `pyproject.toml`. All contributions should pass `ruff check .` with no errors before submitting a pull request.

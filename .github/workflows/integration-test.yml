@@ -165,7 +165,7 @@ jobs:
             "${{ steps.test8.outcome }}" \
             "${{ steps.test9.outcome }}"; do
             if [ "$outcome" != "success" ]; then
-              echo "A test step did not succeed."
+              echo "A test step did not succeed (outcome: $outcome)."
               result=1
             fi
           done

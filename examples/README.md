@@ -40,6 +40,11 @@ For more usage of this script, use ``node defaultGraphGenerator.js --help``.
 
 - For descriptions of the graph files and how to generate them, see [`examples/configs/README.md`](configs/README.md).
 
+  Available graph files include:
+  - `default.graph` — standard two-Auth, two-network topology
+  - `privilege.graph` — multi-level delegated-access workflow
+  - `context_based.graph` — context-based authorization example (single Auth; policies enforce conditions such as number of people, location allowlist, and time-of-day range before issuing session keys)
+
 Here are other Node.js script files that are internally used in `generateAll.sh`
 
 - `examples/initConfigs.sh`: This initializes Node.js modules used by other Node.js scripts inside `generateAll.sh` (install required npm modules).

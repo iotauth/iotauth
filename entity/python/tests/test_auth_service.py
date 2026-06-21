@@ -21,9 +21,7 @@ from iotauth import (
     serialize_buffered_string,
     serialize_frame,
 )
-
 from tests.helpers import FakeSocket
-
 
 ENTITY_NONCE = b"e" * 8
 AUTH_NONCE = b"a" * 8
@@ -31,7 +29,6 @@ AUTH_NONCE = b"a" * 8
 
 class FakeKey:
     key_size = 2048
-
 
 
 def config(purposes=None):
@@ -81,21 +78,12 @@ def session_key_record(key_id=b"12345678"):
 
 def session_key_response_payload(entity_nonce=ENTITY_NONCE):
     return (
-        entity_nonce
-        + serialize_buffered_string("{}")
-        + encode_uint_be(1, 4)
-        + session_key_record()
+        entity_nonce + serialize_buffered_string("{}") + encode_uint_be(1, 4) + session_key_record()
     )
 
 
 def distribution_key_record():
-    return (
-        encode_uint_be(0xFFFFFFFFFFFF, 6)
-        + b"\x10"
-        + b"d" * 16
-        + b"\x20"
-        + b"n" * 32
-    )
+    return encode_uint_be(0xFFFFFFFFFFFF, 6) + b"\x10" + b"d" * 16 + b"\x20" + b"n" * 32
 
 
 def socket_factory_for(fake_socket):
@@ -204,12 +192,15 @@ class AuthServiceTests(unittest.TestCase):
         ctx = context(distribution_key=key)
         fake = FakeSocket(auth_hello() + frame(MessageType.SESSION_KEY_RESP, b"enc"))
 
-        with patch(
-            "iotauth.auth_service.encrypt_request_with_distribution_key",
-            return_value=b"dist-protected",
-        ), patch(
-            "iotauth.auth_service.symmetric_decrypt_authenticate",
-            return_value=session_key_response_payload(),
+        with (
+            patch(
+                "iotauth.auth_service.encrypt_request_with_distribution_key",
+                return_value=b"dist-protected",
+            ),
+            patch(
+                "iotauth.auth_service.symmetric_decrypt_authenticate",
+                return_value=session_key_response_payload(),
+            ),
         ):
             keys = request_session_keys(
                 ctx,
@@ -225,19 +216,22 @@ class AuthServiceTests(unittest.TestCase):
         ctx = context()
         response_payload = b"x" * 512 + b"encrypted-session-response"
         fake = FakeSocket(
-            auth_hello()
-            + frame(MessageType.SESSION_KEY_RESP_WITH_DIST_KEY, response_payload)
+            auth_hello() + frame(MessageType.SESSION_KEY_RESP_WITH_DIST_KEY, response_payload)
         )
 
-        with patch(
-            "iotauth.auth_service.encrypt_and_sign_for_auth",
-            return_value=b"public-protected",
-        ), patch(
-            "iotauth.auth_service.verify_and_decrypt_from_auth",
-            return_value=distribution_key_record(),
-        ), patch(
-            "iotauth.auth_service.symmetric_decrypt_authenticate",
-            return_value=session_key_response_payload(),
+        with (
+            patch(
+                "iotauth.auth_service.encrypt_and_sign_for_auth",
+                return_value=b"public-protected",
+            ),
+            patch(
+                "iotauth.auth_service.verify_and_decrypt_from_auth",
+                return_value=distribution_key_record(),
+            ),
+            patch(
+                "iotauth.auth_service.symmetric_decrypt_authenticate",
+                return_value=session_key_response_payload(),
+            ),
         ):
             keys = request_session_keys(
                 ctx,
@@ -259,12 +253,15 @@ class AuthServiceTests(unittest.TestCase):
         )
         fake = FakeSocket(auth_hello() + frame(MessageType.SESSION_KEY_RESP, b"enc"))
 
-        with patch(
-            "iotauth.auth_service.encrypt_request_with_distribution_key",
-            return_value=b"dist-protected",
-        ), patch(
-            "iotauth.auth_service.symmetric_decrypt_authenticate",
-            return_value=session_key_response_payload(entity_nonce=b"z" * 8),
+        with (
+            patch(
+                "iotauth.auth_service.encrypt_request_with_distribution_key",
+                return_value=b"dist-protected",
+            ),
+            patch(
+                "iotauth.auth_service.symmetric_decrypt_authenticate",
+                return_value=session_key_response_payload(entity_nonce=b"z" * 8),
+            ),
         ):
             with self.assertRaisesRegex(AuthProtocolError, "nonce"):
                 request_session_keys(

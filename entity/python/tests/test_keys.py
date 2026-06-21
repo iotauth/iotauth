@@ -1,9 +1,8 @@
 import unittest
 
-from iotauth import KeyCacheError, SessionKey, SessionKeyCache
-
-
+from iotauth import KeyCacheError, SessionKeyCache
 from tests.helpers import make_session_key
+
 
 class SessionKeyCacheTests(unittest.TestCase):
     """Tests for the session key cache data structure."""
