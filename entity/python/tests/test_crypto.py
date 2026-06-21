@@ -31,7 +31,15 @@ class CryptoDependencyTests(unittest.TestCase):
     """Tests for cryptography package dependency injection."""
 
     def test_missing_cryptography_dependency_is_clear(self):
-        with patch.dict("sys.modules", {"cryptography": None, "cryptography.hazmat": None, "cryptography.hazmat.primitives": None, "cryptography.hazmat.primitives.serialization": None}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "cryptography": None,
+                "cryptography.hazmat": None,
+                "cryptography.hazmat.primitives": None,
+                "cryptography.hazmat.primitives.serialization": None,
+            },
+        ):
             with self.assertRaisesRegex(UnsupportedCryptoError, "cryptography"):
                 _load_crypto_backend()
 

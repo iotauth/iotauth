@@ -15,7 +15,15 @@ class CredentialLoadingTests(unittest.TestCase):
             key_path = Path(temp_dir) / "entity.pem"
             key_path.write_text("not a real key", encoding="utf-8")
 
-            with patch.dict("sys.modules", {"cryptography": None, "cryptography.hazmat": None, "cryptography.hazmat.primitives": None, "cryptography.hazmat.primitives.serialization": None}):
+            with patch.dict(
+                "sys.modules",
+                {
+                    "cryptography": None,
+                    "cryptography.hazmat": None,
+                    "cryptography.hazmat.primitives": None,
+                    "cryptography.hazmat.primitives.serialization": None,
+                },
+            ):
                 with self.assertRaisesRegex(CredentialError, "cryptography package"):
                     load_entity_private_key(key_path)
 
