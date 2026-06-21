@@ -56,8 +56,9 @@ with SecureServer(ctx) as server:
     channel.send(b"ack")
 ```
 
-The server must already have the session key in `ctx.session_keys` before it can
-accept a secure handshake from a peer.
+When a client connects, the server reads the session key ID from the handshake
+and looks it up in `ctx.session_keys`. If the key is not cached, it is fetched
+from Auth. It then completes the handshake and establishes a secure channel.
 
 ## High-level API
 
