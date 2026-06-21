@@ -62,7 +62,7 @@ if __name__ == "__main__":
             args.append(arg)
         suite = loader.loadTestsFromNames(args)
     else:
-        suite = loader.discover("tests")
+        suite = loader.discover(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests"))
 
     runner = NaturalLanguageTestRunner(verbosity=2)
     result = runner.run(suite)
