@@ -54,7 +54,6 @@ entity/python/
     server.py
     transports.py
   tests/
-  tests/
     helpers.py
     test_auth_service.py
     test_config.py
