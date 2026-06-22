@@ -195,11 +195,19 @@ def accept_secure(
 
 
 def session_key_is_expired(key: SessionKey, *, now_ms: int | None = None) -> bool:
-    if key.abs_validity is None:
+    if key.abs_validity is None and key.rel_validity is None:
         return False
     if now_ms is None:
         now_ms = int(time.time() * 1000)
-    return now_ms >= key.abs_validity
+        
+    if key.abs_validity is not None and now_ms >= key.abs_validity:
+        return True
+        
+    if key.rel_validity is not None and key.first_use_ms is not None:
+        if now_ms >= key.first_use_ms + key.rel_validity:
+            return True
+            
+    return False
 
 
 def _serialize_secure_message(sequence: int, data: bytes) -> bytes:
@@ -280,7 +288,10 @@ def _open_socket(
 
 
 def _check_session_key_validity(key: SessionKey) -> None:
-    if session_key_is_expired(key):
+    now_ms = int(time.time() * 1000)
+    if key.first_use_ms is None:
+        key.first_use_ms = now_ms
+    if session_key_is_expired(key, now_ms=now_ms):
         raise ExpiredKeyError(f"Session key is expired: {key.id.hex()}")
 
 
