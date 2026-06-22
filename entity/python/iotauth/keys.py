@@ -10,7 +10,7 @@ SESSION_KEY_ID_SIZE = 8
 MAX_SESSION_KEY = 10
 
 
-@dataclass(frozen=True)
+@dataclass
 class SessionKey:
     id: bytes
     cipher_key: bytes
@@ -20,6 +20,7 @@ class SessionKey:
     encryption_mode: str
     hmac_enabled: bool
     permanent_distribution_key: bool
+    first_use_ms: int | None = None
 
     def __post_init__(self) -> None:
         if len(self.id) != SESSION_KEY_ID_SIZE:
