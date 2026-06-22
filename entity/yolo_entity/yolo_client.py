@@ -20,7 +20,23 @@ class AuthCommunicator:
             self.ctx = None
         else:
             print(f"AuthCommunicator: Initializing IoTAuthContext with config: {config_path}")
-            self.ctx = IoTAuthContext(config_path)
+            import os
+            import pathlib
+            
+            abs_config_path = pathlib.Path(config_path).resolve()
+            original_cwd = os.getcwd()
+            
+            # The iotauth library strictly resolves relative paths in the config based on CWD.
+            # If the user provides a node example config, it expects CWD to be `example_entities/`.
+            expected_anchor = abs_config_path.parent.parent.parent
+            if expected_anchor.name == 'example_entities':
+                print(f" -> Automatically adjusting CWD to '{expected_anchor.name}' for path resolution.")
+                os.chdir(expected_anchor)
+                
+            try:
+                self.ctx = IoTAuthContext.from_config(str(abs_config_path))
+            finally:
+                os.chdir(original_cwd)
 
     def trigger_session_key_request(self, people_count):
         """Requests a session key with the current context."""
@@ -31,7 +47,7 @@ class AuthCommunicator:
             return
 
         purpose_payload = {
-            "group": "Alert_Servers", # This should match the Target in our .graph policy
+            "group": "Servers", # The default target group in default.graph
             "context": {
                 "Number of People": people_count
             }

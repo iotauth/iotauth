@@ -22,3 +22,4 @@ dist/
 venv/
 env/
 entity/python/.venv/
+*.pt
