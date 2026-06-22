@@ -199,14 +199,14 @@ def session_key_is_expired(key: SessionKey, *, now_ms: int | None = None) -> boo
         return False
     if now_ms is None:
         now_ms = int(time.time() * 1000)
-        
+
     if key.abs_validity is not None and now_ms >= key.abs_validity:
         return True
-        
+
     if key.rel_validity is not None and key.first_use_ms is not None:
         if now_ms >= key.first_use_ms + key.rel_validity:
             return True
-            
+
     return False
 
 

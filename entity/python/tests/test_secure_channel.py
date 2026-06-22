@@ -113,19 +113,19 @@ class SecureChannelTests(unittest.TestCase):
     def test_session_key_relative_expiration(self):
         # Key with absolute expiration far in the future
         key = make_session_key(abs_validity=100000, rel_validity=2000)
-        
+
         # Before first use, it's not expired
         self.assertFalse(session_key_is_expired(key, now_ms=0))
-        
+
         # Mark first use
         key.first_use_ms = 1000
-        
+
         # 1 second after first use
         self.assertFalse(session_key_is_expired(key, now_ms=2000))
-        
+
         # 2 seconds after first use (exactly at relative expiration)
         self.assertTrue(session_key_is_expired(key, now_ms=3000))
-        
+
         # 3 seconds after first use
         self.assertTrue(session_key_is_expired(key, now_ms=4000))
 
