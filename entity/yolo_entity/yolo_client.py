@@ -2,6 +2,7 @@ import cv2
 import torch
 import argparse
 import datetime
+import json
 from ultralytics import YOLO
 import os
 import pathlib
@@ -9,8 +10,10 @@ import pathlib
 # Import iotauth if available
 try:
     from iotauth.context import IoTAuthContext
+    from iotauth.secure_channel import session_key_is_expired
 except ImportError:
     IoTAuthContext = None
+    session_key_is_expired = None
     print("Warning: iotauth package not found in current environment.")
 
 
@@ -45,6 +48,22 @@ class AuthCommunicator:
         
         if self.mock_mode:
             print(" -> [MOCK] Session key request skipped.")
+            return
+
+        # Check if we already have a valid session key for the Servers group
+        valid_key_found = False
+        for key in self.ctx.session_keys.values():
+            if not session_key_is_expired(key):
+                try:
+                    purpose_dict = json.loads(key.purpose)
+                    if purpose_dict.get("group") == "Servers":
+                        valid_key_found = True
+                        break
+                except Exception:
+                    pass
+        
+        if valid_key_found:
+            print(" -> A valid session key for 'Servers' already exists in cache. Skipping request to save network bandwidth!")
             return
 
         # Get current time in HH:MM format
