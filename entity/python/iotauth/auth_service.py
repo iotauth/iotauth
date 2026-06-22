@@ -140,6 +140,7 @@ def _protect_session_key_request(ctx: IoTAuthContext, payload: bytes) -> tuple[b
             payload,
             ctx.config.entity.name,
             ctx.distribution_key,
+            hmac_enabled=ctx.distribution_key.mac_key is not None,
         ),
         MessageType.SESSION_KEY_REQ,
     )
