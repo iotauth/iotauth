@@ -228,7 +228,7 @@ def main():
     
     with SecureServer(ctx) as server:
         server.listen()
-        print(f"Listening for connections...")
+        print(f"Listening for connections on {ctx.config.targets[0].host}:{ctx.config.targets[0].port}...")
         try:
             while True:
                 channel = server.serve_once()
