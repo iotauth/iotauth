@@ -1,0 +1,13 @@
+name: sst-c-api Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  sst-c-api-tests:
+    uses: iotauth/sst-c-api/.github/workflows/ci.yml@main
+    with:
+      iotauth-ref: ${{ github.sha }}

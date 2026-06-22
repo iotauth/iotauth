@@ -22,11 +22,6 @@ on:
         type: string
 
 jobs:
-  sst-c-api-tests:
-    uses: iotauth/sst-c-api/.github/workflows/ci.yml@main
-    with:
-      iotauth-ref: ${{ github.sha }}
-
   integration-test:
     runs-on: ubuntu-latest
 
