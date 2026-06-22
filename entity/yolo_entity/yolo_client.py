@@ -1,6 +1,7 @@
 import cv2
 import torch
 import argparse
+import datetime
 from ultralytics import YOLO
 import os
 import pathlib
@@ -46,10 +47,15 @@ class AuthCommunicator:
             print(" -> [MOCK] Session key request skipped.")
             return
 
+        # Get current time in HH:MM format
+        current_time = datetime.datetime.now().strftime("%H:%M")
+        
         purpose_payload = {
             "group": "Servers", # The default target group in default.graph
             "context": {
-                "Number of People": people_count
+                "Number of People": people_count,
+                "Location": "Classroom",
+                "Time of Day": current_time
             }
         }
         

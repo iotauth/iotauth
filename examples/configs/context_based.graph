@@ -133,7 +133,7 @@
 			"RelativeValidity": "2*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
-			"Context": "{\"Number of People\":{\"Max\":3},\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}"
+			"Context": "{\"Number of People\":{\"Max\":1},\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}"
 		},
 		{
 			"RequestingGroup": "AdminClients",
