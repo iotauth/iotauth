@@ -23,6 +23,7 @@ on:
 
 jobs:
   sst-c-api-tests:
+    if: github.event_name != 'workflow_call'
     uses: iotauth/sst-c-api/.github/workflows/ci.yml@main
     with:
       iotauth-ref: ${{ github.sha }}
