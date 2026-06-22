@@ -2,6 +2,8 @@ import cv2
 import torch
 import argparse
 from ultralytics import YOLO
+import os
+import pathlib
 
 # Import iotauth if available
 try:
@@ -20,9 +22,7 @@ class AuthCommunicator:
             self.ctx = None
         else:
             print(f"AuthCommunicator: Initializing IoTAuthContext with config: {config_path}")
-            import os
-            import pathlib
-            
+
             abs_config_path = pathlib.Path(config_path).resolve()
             original_cwd = os.getcwd()
             
@@ -98,8 +98,8 @@ class PersonDetector:
 
     def process_frame(self, frame):
         """Runs inference on a single frame and tracks detection state."""
-        # classes=[0] filters the results to only show persons
-        results = self.model(frame, device=self.device, classes=[self.PERSON_CLASS_ID], verbose=False)
+        # classes=[0] filters to only show persons. conf=0.90 enforces 90%+ confidence threshold
+        results = self.model(frame, device=self.device, classes=[self.PERSON_CLASS_ID], conf=0.90, verbose=False)
         
         # The results list contains one Result object per image (we only passed 1 frame)
         result = results[0]
@@ -119,6 +119,7 @@ class PersonDetector:
 
 
 def main():
+    # get config file from arguments
     parser = argparse.ArgumentParser(description="YOLO Person Detection IoT Auth Client")
     parser.add_argument('--config', type=str, help='Path to the entity .config file', default=None)
     args = parser.parse_args()

@@ -1,3 +1,4 @@
 ultralytics
 opencv-python
 -e ../python
+ruff
