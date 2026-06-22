@@ -1,6 +1,6 @@
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 from unittest.mock import patch
 
 from iotauth import CredentialError, IoTAuthContext, load_config
@@ -15,7 +15,15 @@ class CredentialLoadingTests(unittest.TestCase):
             key_path = Path(temp_dir) / "entity.pem"
             key_path.write_text("not a real key", encoding="utf-8")
 
-            with patch("builtins.__import__", side_effect=ImportError("missing")):
+            with patch.dict(
+                "sys.modules",
+                {
+                    "cryptography": None,
+                    "cryptography.hazmat": None,
+                    "cryptography.hazmat.primitives": None,
+                    "cryptography.hazmat.primitives.serialization": None,
+                },
+            ):
                 with self.assertRaisesRegex(CredentialError, "cryptography package"):
                     load_entity_private_key(key_path)
 
@@ -59,9 +67,7 @@ class IoTAuthContextTests(unittest.TestCase):
 
     def test_permanent_distribution_key_mode_is_deferred(self):
         with TemporaryDirectory() as temp_dir:
-            config = self._load_config(
-                Path(temp_dir), extra_lines=["PermanentDistKeyMode=on"]
-            )
+            config = self._load_config(Path(temp_dir), extra_lines=["PermanentDistKeyMode=on"])
 
             with self.assertRaisesRegex(CredentialError, "Permanent distribution key"):
                 IoTAuthContext.from_entity_config(config)

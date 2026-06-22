@@ -16,7 +16,6 @@ from iotauth import (
     send_frame,
     serialize_frame,
 )
-
 from tests.helpers import FakeSocket
 
 
@@ -129,9 +128,17 @@ class TCPTransportTests(unittest.TestCase):
             recv_frame(sock, max_payload_size=3)
 
     def test_recv_frame_rejects_early_close(self):
-        sock = FakeSocket(b"\x21\x05ab")
+        sock = FakeSocket(b"\x21\x05ab", eof_on_empty=True)
         with self.assertRaisesRegex(AuthConnectionError, "closed"):
             recv_frame(sock)
+
+    def test_recv_frame_translates_timeout_to_auth_connection_error(self):
+        class TimeoutSocket:
+            def recv(self, size):
+                raise TimeoutError("socket timed out")
+
+        with self.assertRaisesRegex(AuthConnectionError, "timed out"):
+            recv_frame(TimeoutSocket())
 
     def test_send_frame_writes_serialized_frame(self):
         frame = IoTSPFrame(MessageType.AUTH_ALERT, b"\x01")

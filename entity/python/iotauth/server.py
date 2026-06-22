@@ -11,7 +11,6 @@ from .exceptions import AuthConnectionError, ConfigError
 from .secure_channel import SecureChannel
 from .transports import close_socket
 
-
 ListenSocketFactory = Callable[[], Any]
 
 
@@ -25,7 +24,7 @@ class SecureServer:
         host: str | None = None,
         port: int | None = None,
         backlog: int = 5,
-        timeout: float | None = 60.0, # Make default timeout 1 min
+        timeout: float | None = 60.0,  # Make default timeout 1 min
         _socket_factory: ListenSocketFactory | None = None,
     ):
         self.ctx = ctx
@@ -50,9 +49,7 @@ class SecureServer:
             sock.listen(self.backlog)
         except OSError as exc:
             close_socket(sock)
-            raise AuthConnectionError(
-                f"Could not listen on {host}:{port}: {exc}"
-            ) from exc
+            raise AuthConnectionError(f"Could not listen on {host}:{port}: {exc}") from exc
         self._socket = sock
 
     def serve_once(self) -> SecureChannel:
@@ -70,7 +67,7 @@ class SecureServer:
         close_socket(self._socket)
         self._socket = None
 
-    def __enter__(self) -> "SecureServer":
+    def __enter__(self) -> SecureServer:
         return self
 
     def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
@@ -90,4 +87,3 @@ class SecureServer:
         if self._socket_factory is not None:
             return self._socket_factory()
         return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-

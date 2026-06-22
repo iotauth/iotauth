@@ -21,26 +21,21 @@ class IoTAuthContext:
     session_keys: SessionKeyCache
 
     @classmethod
-    def from_config(
-        cls, path: str | Path, *, validate_paths: bool = True
-    ) -> "IoTAuthContext":
+    def from_config(cls, path: str | Path, *, validate_paths: bool = True) -> IoTAuthContext:
         config = load_config(path, validate_paths=validate_paths)
         return cls.from_entity_config(config)
 
     @classmethod
-    def from_entity_config(cls, config: EntityConfig) -> "IoTAuthContext":
+    def from_entity_config(cls, config: EntityConfig) -> IoTAuthContext:
         if config.session.permanent_distribution_key:
             raise CredentialError(
-                "Permanent distribution key mode is not implemented in the "
-                "Python API yet"
+                "Permanent distribution key mode is not implemented in the Python API yet"
             )
 
         return cls(
             config=config,
             auth_public_key=load_auth_public_key(config.auth.public_key_path),
-            entity_private_key=load_entity_private_key(
-                config.entity.private_key_path
-            ),
+            entity_private_key=load_entity_private_key(config.entity.private_key_path),
             distribution_key=None,
             session_keys=SessionKeyCache(),
         )

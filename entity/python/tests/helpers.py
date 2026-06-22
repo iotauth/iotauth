@@ -4,15 +4,18 @@ from iotauth import SessionKey
 
 
 class FakeSocket:
-    def __init__(self, incoming=b""):
+    def __init__(self, incoming=b"", eof_on_empty=False):
         self.incoming = bytearray(incoming)
         self.sent = []
         self.closed = False
         self.timeout = None
+        self.eof_on_empty = eof_on_empty
 
     def recv(self, size):
-        if self.closed or not self.incoming:
+        if self.closed or (not self.incoming and self.eof_on_empty):
             return b""
+        if not self.incoming:
+            raise BlockingIOError()
         chunk = bytes(self.incoming[:size])
         del self.incoming[:size]
         return chunk
@@ -34,6 +37,7 @@ class FakeListenSocket:
         self.bound = None
         self.listened = None
         self.timeout = None
+        self.sockopt = None
         self.closed = False
         self.fail_bind = fail_bind
         self.fail_accept = fail_accept

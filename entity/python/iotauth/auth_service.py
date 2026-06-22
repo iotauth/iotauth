@@ -7,6 +7,15 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from .context import IoTAuthContext
+from .crypto import (
+    encrypt_and_sign_for_auth,
+    encrypt_request_with_distribution_key,
+    symmetric_decrypt_authenticate,
+    verify_and_decrypt_from_auth,
+)
+from .exceptions import AuthConnectionError, AuthProtocolError, ConfigError, SerializationError
+from .keys import DistributionKey, SessionKey
 from .protocol import (
     NONCE_SIZE,
     IoTSPFrame,
@@ -18,17 +27,7 @@ from .protocol import (
     parse_session_key_response_payload,
     serialize_session_key_request_payload,
 )
-from .context import IoTAuthContext
-from .crypto import (
-    encrypt_and_sign_for_auth,
-    encrypt_request_with_distribution_key,
-    symmetric_decrypt_authenticate,
-    verify_and_decrypt_from_auth,
-)
-from .exceptions import AuthConnectionError, AuthProtocolError, ConfigError, SerializationError
-from .keys import DistributionKey, SessionKey
 from .transports import close_socket, connect, recv_frame, send_frame
-
 
 AUTH_ALERT_MESSAGES = {
     0: "invalid distribution key",
@@ -62,9 +61,7 @@ def request_session_keys(
         hello = _parse_expected_auth_hello(ctx, hello_frame)
         entity_nonce = _nonce_factory(NONCE_SIZE)
         if len(entity_nonce) != NONCE_SIZE:
-            raise AuthProtocolError(
-                f"entity nonce factory must return {NONCE_SIZE} bytes"
-            )
+            raise AuthProtocolError(f"entity nonce factory must return {NONCE_SIZE} bytes")
 
         request_payload = serialize_session_key_request_payload(
             SessionKeyRequestPayload(
@@ -75,9 +72,7 @@ def request_session_keys(
                 purpose=request_purpose,
             )
         )
-        protected_payload, message_type = _protect_session_key_request(
-            ctx, request_payload
-        )
+        protected_payload, message_type = _protect_session_key_request(ctx, request_payload)
         send_frame(sock, IoTSPFrame(message_type, protected_payload))
 
         response_frame = recv_frame(sock)
@@ -86,9 +81,7 @@ def request_session_keys(
         close_socket(sock)
 
 
-def distribution_key_is_expired(
-    key: DistributionKey, *, now_ms: int | None = None
-) -> bool:
+def distribution_key_is_expired(key: DistributionKey, *, now_ms: int | None = None) -> bool:
     """Return true when a distribution key's absolute validity has passed."""
 
     if key.abs_validity is None:
@@ -115,9 +108,6 @@ def _open_auth_socket(
     return sock
 
 
-
-
-
 def _select_purpose(
     ctx: IoTAuthContext, purpose: dict[str, object] | str | None
 ) -> dict[str, object] | str:
@@ -132,9 +122,7 @@ def _parse_expected_auth_hello(ctx: IoTAuthContext, frame: IoTSPFrame) -> Any:
     if frame.message_type == MessageType.AUTH_ALERT:
         _raise_auth_alert(frame.payload)
     if frame.message_type != MessageType.AUTH_HELLO:
-        raise AuthProtocolError(
-            f"Expected AUTH_HELLO, received {frame.message_type.name}"
-        )
+        raise AuthProtocolError(f"Expected AUTH_HELLO, received {frame.message_type.name}")
     hello = parse_auth_hello_payload(frame.payload)
     if hello.auth_id != ctx.config.auth.id:
         raise AuthProtocolError(
@@ -143,9 +131,7 @@ def _parse_expected_auth_hello(ctx: IoTAuthContext, frame: IoTSPFrame) -> Any:
     return hello
 
 
-def _protect_session_key_request(
-    ctx: IoTAuthContext, payload: bytes
-) -> tuple[bytes, MessageType]:
+def _protect_session_key_request(ctx: IoTAuthContext, payload: bytes) -> tuple[bytes, MessageType]:
     if ctx.distribution_key is None or distribution_key_is_expired(ctx.distribution_key):
         return encrypt_and_sign_for_auth(payload, ctx), MessageType.SESSION_KEY_REQ_IN_PUB_ENC
 
@@ -154,6 +140,7 @@ def _protect_session_key_request(
             payload,
             ctx.config.entity.name,
             ctx.distribution_key,
+            hmac_enabled=ctx.distribution_key.mac_key is not None,
         ),
         MessageType.SESSION_KEY_REQ,
     )
@@ -185,15 +172,11 @@ def _handle_session_key_response(
     return response.session_keys
 
 
-def _decrypt_response_with_new_distribution_key(
-    ctx: IoTAuthContext, payload: bytes
-) -> bytes:
+def _decrypt_response_with_new_distribution_key(ctx: IoTAuthContext, payload: bytes) -> bytes:
     encrypted_size = _rsa_key_size_bytes(ctx.entity_private_key)
     signed_dist_key_size = encrypted_size * 2
     if len(payload) <= signed_dist_key_size:
-        raise SerializationError(
-            "SESSION_KEY_RESP_WITH_DIST_KEY is missing encrypted session keys"
-        )
+        raise SerializationError("SESSION_KEY_RESP_WITH_DIST_KEY is missing encrypted session keys")
 
     distribution_record = verify_and_decrypt_from_auth(
         payload[:signed_dist_key_size], ctx, encrypted_size
@@ -212,13 +195,9 @@ def _decrypt_response_with_new_distribution_key(
     )
 
 
-def _decrypt_response_with_existing_distribution_key(
-    ctx: IoTAuthContext, payload: bytes
-) -> bytes:
+def _decrypt_response_with_existing_distribution_key(ctx: IoTAuthContext, payload: bytes) -> bytes:
     if ctx.distribution_key is None:
-        raise AuthProtocolError(
-            "Received SESSION_KEY_RESP but no distribution key is available"
-        )
+        raise AuthProtocolError("Received SESSION_KEY_RESP but no distribution key is available")
     return symmetric_decrypt_authenticate(
         payload,
         ctx.distribution_key.cipher_key,

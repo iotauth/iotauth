@@ -20,7 +20,6 @@ from typing import Any
 
 from .exceptions import ConfigError
 
-
 SUPPORTED_PROTOCOLS = {"TCP"}
 SUPPORTED_ENCRYPTION_MODES = {"AES_128_CBC", "AES_128_CTR", "AES_128_GCM"}
 
@@ -126,9 +125,7 @@ def load_config(path: str | Path, *, validate_paths: bool = True) -> EntityConfi
     return _load_properties_config(config_path, text, validate_paths=validate_paths)
 
 
-def _load_json_config(
-    config_path: Path, text: str, *, validate_paths: bool
-) -> EntityConfig:
+def _load_json_config(config_path: Path, text: str, *, validate_paths: bool) -> EntityConfig:
     """Parse a Node.js-style JSON config file into an EntityConfig."""
     try:
         data = json.loads(text)
@@ -181,9 +178,7 @@ def _load_json_config(
     permanent_dist_key = bool(entity_info.get("usePermanentDistKey", False))
 
     private_key_str = _require(entity_info, "privateKey", "entityInfo")
-    entity_private_key = _resolve_json_path(
-        private_key_str, "entityInfo.privateKey"
-    )
+    entity_private_key = _resolve_json_path(private_key_str, "entityInfo.privateKey")
 
     auth_id_raw = _require(auth_info, "id", "authInfo")
     try:
@@ -201,9 +196,7 @@ def _load_json_config(
         raise ConfigError(f"authInfo.port must be in range 1..65535, got {auth_port}")
 
     auth_public_key_str = _require(auth_info, "publicKey", "authInfo")
-    auth_public_key = _resolve_json_path(
-        auth_public_key_str, "authInfo.publicKey"
-    )
+    auth_public_key = _resolve_json_path(auth_public_key_str, "authInfo.publicKey")
 
     session_crypto = _require(crypto_info, "sessionCryptoSpec", "cryptoInfo")
     dist_crypto = _require(crypto_info, "distributionCryptoSpec", "cryptoInfo")
@@ -270,7 +263,6 @@ def _load_json_config(
     )
 
 
-
 def _normalize_cipher(value: str, key: str) -> str:
     """Convert a JSON cipher name like 'AES-128-CBC' to 'AES_128_CBC'."""
     normalized = value.replace("-", "_")
@@ -280,9 +272,7 @@ def _normalize_cipher(value: str, key: str) -> str:
     return normalized
 
 
-def _load_properties_config(
-    config_path: Path, text: str, *, validate_paths: bool
-) -> EntityConfig:
+def _load_properties_config(config_path: Path, text: str, *, validate_paths: bool) -> EntityConfig:
     """Parse the original C-style dotted key=value properties config file."""
     raw = _read_properties_text(config_path, text)
     _reject_unknown_keys(raw)
@@ -326,9 +316,7 @@ def _load_properties_config(
     dist_cipher_key = _resolve_optional_path(
         config_path, raw, "distKey.cipherkey.path", validate_paths
     )
-    dist_mac_key = _resolve_optional_path(
-        config_path, raw, "distkey.mackey.path", validate_paths
-    )
+    dist_mac_key = _resolve_optional_path(config_path, raw, "distkey.mackey.path", validate_paths)
 
     targets = _parse_targets(raw)
     purposes = _parse_purposes(raw)
@@ -444,9 +432,7 @@ def _parse_on_off(value: str, key: str) -> bool:
     raise ConfigError(f"{key} must be on/off, 1/0, true/false, or yes/no")
 
 
-def _resolve_path(
-    config_path: Path, value: str, key: str, validate_paths: bool
-) -> Path:
+def _resolve_path(config_path: Path, value: str, key: str, validate_paths: bool) -> Path:
     candidate = Path(value).expanduser()
     if not candidate.is_absolute():
         candidate = config_path.parent / candidate
@@ -504,9 +490,7 @@ def _parse_targets(raw: dict[str, str]) -> list[TargetServer]:
         target = indexed_targets[index]
         missing = sorted({"host", "port"} - target.keys())
         if missing:
-            raise ConfigError(
-                f"targetServerInfo entry {index} is missing: {', '.join(missing)}"
-            )
+            raise ConfigError(f"targetServerInfo entry {index} is missing: {', '.join(missing)}")
         port_raw = {"targetServerInfo.port": target["port"]}
         targets.append(
             TargetServer(

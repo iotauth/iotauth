@@ -135,7 +135,12 @@ class SessionKeyRequestTests(unittest.TestCase):
 
         payload = serialize_session_key_request_payload(request)
         _, consumed = parse_buffered_string(payload, 20)
-        purpose, _ = parse_buffered_string(payload, 20 + consumed)
+        entity_nonce_size = len(b"e" * 8)
+        auth_nonce_size = len(b"a" * 8)
+        num_keys_size = 4  # fixed-width int
+        name_offset = entity_nonce_size + auth_nonce_size + num_keys_size
+        _, consumed = parse_buffered_string(payload, name_offset)
+        purpose, _ = parse_buffered_string(payload, name_offset + consumed)
 
         self.assertEqual(purpose, '{"keyId":00000000}')
 
@@ -156,13 +161,7 @@ class KeyRecordTests(unittest.TestCase):
     """Tests for parsing key records returned by Auth."""
 
     def test_parses_distribution_key_record(self):
-        record = (
-            encode_uint_be(0x010203040506, 6)
-            + b"\x10"
-            + b"c" * 16
-            + b"\x20"
-            + b"m" * 32
-        )
+        record = encode_uint_be(0x010203040506, 6) + b"\x10" + b"c" * 16 + b"\x20" + b"m" * 32
         key = parse_distribution_key_record(record)
         self.assertEqual(
             key,
@@ -212,9 +211,7 @@ class SessionKeyResponseTests(unittest.TestCase):
         response = parse_session_key_response_payload(payload, session_config())
 
         self.assertEqual(response.entity_nonce, b"e" * 8)
-        self.assertEqual(
-            response.crypto_spec, {"cipher": "AES-128-CBC", "mac": "SHA256"}
-        )
+        self.assertEqual(response.crypto_spec, {"cipher": "AES-128-CBC", "mac": "SHA256"})
         self.assertEqual(len(response.session_keys), 1)
         self.assertEqual(response.session_keys[0].id, b"12345678")
 

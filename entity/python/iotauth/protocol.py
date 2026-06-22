@@ -17,7 +17,6 @@ from .exceptions import KeyCacheError, SerializationError
 from .keys import SESSION_KEY_ID_SIZE, DistributionKey, SessionKey
 from .serialization import decode_uint_be, decode_varint, encode_uint_be, encode_varint
 
-
 # ---------------------------------------------------------------------------
 # Protocol constants
 # ---------------------------------------------------------------------------
@@ -34,6 +33,7 @@ AES_128_KEY_SIZE = 16
 # ---------------------------------------------------------------------------
 # Message types
 # ---------------------------------------------------------------------------
+
 
 class MessageType(IntEnum):
     AUTH_HELLO = 0
@@ -75,6 +75,7 @@ class MessageType(IntEnum):
 # IoTSP frame container
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class IoTSPFrame:
     message_type: MessageType
@@ -82,9 +83,7 @@ class IoTSPFrame:
 
     def __post_init__(self) -> None:
         if not isinstance(self.message_type, MessageType):
-            object.__setattr__(
-                self, "message_type", message_type_from_byte(int(self.message_type))
-            )
+            object.__setattr__(self, "message_type", message_type_from_byte(int(self.message_type)))
         if not isinstance(self.payload, bytes):
             raise SerializationError("IoTSPFrame payload must be bytes")
 
@@ -115,9 +114,7 @@ def parse_frame(data: Buffer, *, allow_trailing: bool = False) -> IoTSPFrame:
     payload_end = payload_start + payload_length
 
     if payload_end > len(view):
-        raise SerializationError(
-            "IoTSP frame payload length exceeds available data"
-        )
+        raise SerializationError("IoTSP frame payload length exceeds available data")
     if payload_end < len(view) and not allow_trailing:
         raise SerializationError("IoTSP frame contains trailing bytes")
 
@@ -130,6 +127,7 @@ def parse_frame(data: Buffer, *, allow_trailing: bool = False) -> IoTSPFrame:
 # ---------------------------------------------------------------------------
 # Auth payload dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class AuthHelloPayload:
@@ -162,6 +160,7 @@ class SessionKeyResponsePayload:
 # ---------------------------------------------------------------------------
 # Payload builders and parsers
 # ---------------------------------------------------------------------------
+
 
 def parse_auth_hello_payload(payload: Buffer) -> AuthHelloPayload:
     view = memoryview(payload)
@@ -282,9 +281,7 @@ def parse_distribution_key_record(
     if cursor + DIST_KEY_EXPIRATION_TIME_SIZE > len(view):
         raise SerializationError("Distribution key record is missing validity")
 
-    abs_validity = decode_uint_be(
-        view[cursor : cursor + DIST_KEY_EXPIRATION_TIME_SIZE]
-    )
+    abs_validity = decode_uint_be(view[cursor : cursor + DIST_KEY_EXPIRATION_TIME_SIZE])
     cursor += DIST_KEY_EXPIRATION_TIME_SIZE
 
     cipher_key, cursor = _parse_sized_bytes(view, cursor, "distribution cipher key")
@@ -346,6 +343,7 @@ def parse_session_key_record(
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _serialize_purpose(purpose: dict[str, Any] | str) -> str:
     if isinstance(purpose, str):
         return purpose
@@ -357,9 +355,7 @@ def _require_nonce(value: bytes, field_name: str) -> None:
         raise SerializationError(f"{field_name} must be {NONCE_SIZE} bytes")
 
 
-def _parse_sized_bytes(
-    view: memoryview, offset: int, field_name: str
-) -> tuple[bytes, int]:
+def _parse_sized_bytes(view: memoryview, offset: int, field_name: str) -> tuple[bytes, int]:
     if offset >= len(view):
         raise SerializationError(f"{field_name} size byte is missing")
     size = view[offset]

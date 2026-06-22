@@ -12,12 +12,11 @@ from iotauth import (
     IoTSPFrame,
     MessageIntegrityError,
     MessageType,
-    SecureChannelClosed,
     SecureChannel,
+    SecureChannelClosed,
     SecureHandshakeError,
     SerializationError,
     SessionConfig,
-    SessionKey,
     SessionKeyCache,
     TargetServer,
     accept_secure,
@@ -25,17 +24,17 @@ from iotauth import (
     parse_frame,
     serialize_frame,
     session_key_is_expired,
-    symmetric_encrypt_authenticate,
     symmetric_decrypt_authenticate,
+    symmetric_encrypt_authenticate,
 )
+from iotauth.crypto import _load_crypto_backend
 from iotauth.secure_channel import (
     MAX_SEQUENCE_NUMBER,
     _parse_secure_message,
     _serialize_secure_message,
 )
-from iotauth.crypto import _load_crypto_backend
-
 from tests.helpers import FakeSocket, make_session_key
+
 
 def has_cryptography():
     try:
@@ -44,11 +43,11 @@ def has_cryptography():
     except Exception:
         return False
 
+
 CRYPTOGRAPHY_AVAILABLE = has_cryptography()
 
 
 CLIENT_NONCE = b"c" * 8
-
 
 
 class FailingSendSocket(FakeSocket):
@@ -62,7 +61,6 @@ def socket_factory_for(fake_socket):
         return fake_socket
 
     return factory
-
 
 
 def context(targets=None):
@@ -116,13 +114,16 @@ class SecureChannelTests(unittest.TestCase):
         fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_2, b"handshake2"))
         key = make_session_key()
 
-        with patch(
-            "iotauth.secure_channel.build_handshake_1",
-            return_value=b"handshake1",
-        ) as build_h1, patch(
-            "iotauth.secure_channel.verify_handshake_2_and_build_handshake_3",
-            return_value=(b"s" * 8, b"handshake3"),
-        ) as verify_h2:
+        with (
+            patch(
+                "iotauth.secure_channel.build_handshake_1",
+                return_value=b"handshake1",
+            ) as build_h1,
+            patch(
+                "iotauth.secure_channel.verify_handshake_2_and_build_handshake_3",
+                return_value=(b"s" * 8, b"handshake3"),
+            ) as verify_h2,
+        ):
             channel = connect_secure(
                 context(),
                 key=key,
@@ -149,12 +150,15 @@ class SecureChannelTests(unittest.TestCase):
     def test_connect_secure_allows_host_port_override(self):
         fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_2, b"handshake2"))
 
-        with patch(
-            "iotauth.secure_channel.build_handshake_1",
-            return_value=b"handshake1",
-        ), patch(
-            "iotauth.secure_channel.verify_handshake_2_and_build_handshake_3",
-            return_value=(b"s" * 8, b"handshake3"),
+        with (
+            patch(
+                "iotauth.secure_channel.build_handshake_1",
+                return_value=b"handshake1",
+            ),
+            patch(
+                "iotauth.secure_channel.verify_handshake_2_and_build_handshake_3",
+                return_value=(b"s" * 8, b"handshake3"),
+            ),
         ):
             connect_secure(
                 context(),
@@ -189,12 +193,15 @@ class SecureChannelTests(unittest.TestCase):
     def test_nonce_mismatch_closes_socket_and_raises(self):
         fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_2, b"handshake2"))
 
-        with patch(
-            "iotauth.secure_channel.build_handshake_1",
-            return_value=b"handshake1",
-        ), patch(
-            "iotauth.secure_channel.verify_handshake_2_and_build_handshake_3",
-            side_effect=SecureHandshakeError("nonce mismatch"),
+        with (
+            patch(
+                "iotauth.secure_channel.build_handshake_1",
+                return_value=b"handshake1",
+            ),
+            patch(
+                "iotauth.secure_channel.verify_handshake_2_and_build_handshake_3",
+                side_effect=SecureHandshakeError("nonce mismatch"),
+            ),
         ):
             with self.assertRaisesRegex(SecureHandshakeError, "nonce"):
                 connect_secure(
@@ -258,13 +265,16 @@ class SecureChannelTests(unittest.TestCase):
             + frame(MessageType.SKEY_HANDSHAKE_3, b"handshake3")
         )
 
-        with patch(
-            "iotauth.secure_channel.verify_handshake_1_and_build_handshake_2",
-            return_value=(CLIENT_NONCE, b"handshake2"),
-        ) as verify_h1, patch(
-            "iotauth.secure_channel.verify_handshake_3",
-            return_value=None,
-        ) as verify_h3:
+        with (
+            patch(
+                "iotauth.secure_channel.verify_handshake_1_and_build_handshake_2",
+                return_value=(CLIENT_NONCE, b"handshake2"),
+            ) as verify_h1,
+            patch(
+                "iotauth.secure_channel.verify_handshake_3",
+                return_value=None,
+            ) as verify_h3,
+        ):
             channel = accept_secure(
                 context_with_key(key),
                 fake,
@@ -289,16 +299,20 @@ class SecureChannelTests(unittest.TestCase):
         )
         ctx = context()
 
-        with patch(
-            "iotauth.secure_channel.verify_handshake_1_and_build_handshake_2",
-            return_value=(CLIENT_NONCE, b"handshake2"),
-        ), patch(
-            "iotauth.secure_channel.verify_handshake_3",
-            return_value=None,
-        ), patch(
-            "iotauth.context.IoTAuthContext.request_session_keys",
-            return_value=[key],
-        ) as req_keys:
+        with (
+            patch(
+                "iotauth.secure_channel.verify_handshake_1_and_build_handshake_2",
+                return_value=(CLIENT_NONCE, b"handshake2"),
+            ),
+            patch(
+                "iotauth.secure_channel.verify_handshake_3",
+                return_value=None,
+            ),
+            patch(
+                "iotauth.context.IoTAuthContext.request_session_keys",
+                return_value=[key],
+            ) as req_keys,
+        ):
             channel = accept_secure(
                 ctx,
                 fake,
@@ -375,7 +389,7 @@ class SecureChannelTests(unittest.TestCase):
         self.assertTrue(fake.closed)
 
     def test_accept_secure_tcp_early_close_raises_auth_connection_error(self):
-        fake = FakeSocket()
+        fake = FakeSocket(eof_on_empty=True)
 
         with self.assertRaises(AuthConnectionError):
             accept_secure(
@@ -471,7 +485,9 @@ class SecureChannelTests(unittest.TestCase):
         self.assertEqual(channel.receive_sequence, 1)
 
     def test_recv_rejects_wrong_message_type(self):
-        channel = SecureChannel(FakeSocket(frame(MessageType.AUTH_ALERT, b"\x01")), make_session_key())
+        channel = SecureChannel(
+            FakeSocket(frame(MessageType.AUTH_ALERT, b"\x01")), make_session_key()
+        )
 
         with self.assertRaisesRegex(SerializationError, "SECURE_COMM_MSG"):
             channel.recv()
@@ -540,7 +556,7 @@ class SecureChannelTests(unittest.TestCase):
             channel.recv()
 
     def test_recv_translates_early_close_to_channel_closed(self):
-        channel = SecureChannel(FakeSocket(), make_session_key())
+        channel = SecureChannel(FakeSocket(eof_on_empty=True), make_session_key())
 
         with self.assertRaises(SecureChannelClosed):
             channel.recv()

@@ -5,8 +5,6 @@ intended to give Python programs a small, readable interface for requesting
 session keys from Auth, completing the IoTSP secure handshake, and sending or
 receiving protected messages.
 
-The step-by-step learning and implementation notes were moved to
-[API_implementation_REDME.md](./API_implementation_REDME.md).
 
 For developer-facing class, function, and usage details, see
 [API_REFERENCE.md](./API_REFERENCE.md).
@@ -30,94 +28,19 @@ The Python API currently includes:
 
 ## Directory structure
 
-```text
-entity/python/
-  README.md
-  pyproject.toml
-  API_REFERENCE.md
-  API_implementation_REDME.md
-  entity_server.py
-  iotauth/
-    __init__.py
-    auth_service.py
-    client.py
-    config.py
-    context.py
-    credentials.py
-    crypto.py
-    exceptions.py
-    handshake.py
-    keys.py
-    protocol.py
-    secure_channel.py
-    serialization.py
-    server.py
-    transports.py
-  tests/
-  tests/
-    helpers.py
-    test_auth_service.py
-    test_config.py
-    test_context.py
-    test_crypto.py
-    test_handshake.py
-    test_keys.py
-    test_protocol.py
-    test_secure_channel.py
-    test_wire.py
-    test_wrappers.py
-```
+These are the high-level directories and their purposes:
 
-## File purpose
+- **`iotauth/`**: The core Python API package. This is what developers install and import into their own applications to request keys and create secure channels.
+- **`examples/`**: Working examples of Python servers and clients using the `iotauth` API. See [`examples/README.md`](examples/README.md) for details on running them.
+- **`tests/`**: The automated test suite for the Python API.
 
-### Top-level files
+For deep API documentation, consult [API_REFERENCE.md](API_REFERENCE.md). 
+> TO DO :- add API references to the iotauth website and link the reference.
 
-| File | Purpose |
-| --- | --- |
-| `README.md` | Main guide to the Python directory structure and file responsibilities. |
-| `pyproject.toml` | Package definition file that makes `iotauth` pip-installable. |
-| `API_REFERENCE.md` | Developer-facing reference for public classes, functions, examples, and exceptions. |
-| `API_implementation_REDME.md` | Detailed step-by-step API design, theory, implementation notes, and references. |
-| `entity_server.py` | Existing legacy Python server file. It is currently outside the new API work. |
+## Configuration (`pyproject.toml`)
 
-### Package files
-
-| File | Purpose |
-| --- | --- |
-| `iotauth/__init__.py` | Public package exports, so callers can import the main API objects from `iotauth`. |
-| `iotauth/auth_service.py` | Connects to Auth and performs the session-key request workflow. |
-| `iotauth/client.py` | High-level client API for connecting to Auth, requesting keys, and opening secure peer connections. |
-| `iotauth/config.py` | Loads and validates entity configuration files into typed Python dataclasses. |
-| `iotauth/context.py` | Shared runtime object that combines config, credentials, key cache, Auth access, and secure connection helpers. |
-| `iotauth/credentials.py` | Loads private keys, certificates, and trusted CA certificates from disk. |
-| `iotauth/crypto.py` | Contains low-level cryptographic helpers and higher-level wrappers used by Auth and secure channels. |
-| `iotauth/exceptions.py` | Central exception hierarchy for configuration, credentials, serialization, Auth, crypto, and secure-channel errors. |
-| `iotauth/handshake.py` | Builds and parses secure handshake payloads for `SKEY_HANDSHAKE_1`, `SKEY_HANDSHAKE_2`, and `SKEY_HANDSHAKE_3`. |
-| `iotauth/keys.py` | Defines session key and distribution key models plus the in-memory session key cache. |
-| `iotauth/protocol.py` | Combines IoTSP message types, frame containers, and Auth protocol payload serialization and parsing helpers. |
-| `iotauth/secure_channel.py` | Implements the secure handshake and the encrypted `SecureChannel` send/receive API. |
-| `iotauth/serialization.py` | Binary serialization primitives for variable-length integers and multi-byte integers. |
-| `iotauth/server.py` | High-level server API for listening for peers and accepting secure connections. |
-| `iotauth/transports.py` | Provides TCP connect, listen, accept, send-frame, receive-frame, and socket-cleanup helpers. |
-
-### Tests
-
-The `tests/` directory mirrors the package modules. Each test file focuses on
-one API layer so changes can be checked in small pieces.
-
-| File | Purpose |
-| --- | --- |
-| `tests/helpers.py` | Shared mock objects (e.g., `FakeSocket`, `make_session_key`) for the test suite. |
-| `tests/test_auth_service.py` | Tests Auth session-key request behavior and error handling. |
-| `tests/test_config.py` | Tests configuration parsing and validation. |
-| `tests/test_context.py` | Tests the shared `IoTAuthContext` API and credential loading. |
-| `tests/test_crypto.py` | Tests cryptographic helper behavior. |
-| `tests/test_handshake.py` | Tests secure handshake payload encoding and decoding. |
-| `tests/test_keys.py` | Tests key models and key cache behavior. |
-| `tests/test_protocol.py` | Tests IoTSP message type helpers and Auth payload builders/parsers. |
-| `tests/test_secure_channel.py` | Tests secure handshake and encrypted channel behavior. |
-| `tests/test_wire.py` | Tests binary serialization primitives and TCP transport helpers. |
-| `tests/test_wrappers.py` | Tests the high-level `SecureClient` and `SecureServer` wrappers. |
+This project uses a `pyproject.toml` file at its root. This is the modern standard for configuring Python projects (replacing older formats like `setup.py` or `requirements.txt`). It contains build system requirements, package metadata, and tool configurations (like Ruff).
+If you are new to TOML, you can read the official quick-start guide and specification at [toml.io](https://toml.io/en/).
 
 ## Installation and Running
 
@@ -138,24 +61,44 @@ This installs the `iotauth` package in editable mode. You **do not** need to mes
 To run the full test suite with natural-language output (e.g. `Testing [capability] ... passed`):
 
 ```bash
-python run_tests.py
+python run_all_tests.py
 ```
 
 To run an individual test file, pass its path:
 
 ```bash
-python run_tests.py tests/test_secure_channel.py
+python run_all_tests.py tests/test_secure_channel.py
 ```
 
-> **Note on Test Dependencies**: All test files and test cases in this suite are **completely independent**. There is no shared global state or cross-file dependency. You can safely run any test file (or single test method) completely on its own.
+
 
 ### Running examples
 
 For detailed instructions on how to run the example server and client, including how to specify configuration file paths and use timeout arguments, please see the [Examples README](examples/README.md).
 
-## Notes for future work
 
-The implementation diary in `API_implementation_REDME.md` is still the best
-place for planned steps and deeper explanations. This README should stay short
-and practical: what exists, where it lives, and what each file is responsible
-for.
+## Contributing
+
+### Code style
+
+This directory uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
+
+Install:
+```bash
+brew install ruff
+# or
+pip install ruff
+```
+
+Check for issues:
+```bash
+ruff check .
+```
+
+Auto-fix and format:
+```bash
+ruff check --fix .
+ruff format .
+```
+
+Ruff is configured in `pyproject.toml`. All contributions should pass `ruff check .` with no errors before submitting a pull request.

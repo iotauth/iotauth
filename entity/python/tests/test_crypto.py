@@ -31,7 +31,15 @@ class CryptoDependencyTests(unittest.TestCase):
     """Tests for cryptography package dependency injection."""
 
     def test_missing_cryptography_dependency_is_clear(self):
-        with patch("builtins.__import__", side_effect=ImportError("missing")):
+        with patch.dict(
+            "sys.modules",
+            {
+                "cryptography": None,
+                "cryptography.hazmat": None,
+                "cryptography.hazmat.primitives": None,
+                "cryptography.hazmat.primitives.serialization": None,
+            },
+        ):
             with self.assertRaisesRegex(UnsupportedCryptoError, "cryptography"):
                 _load_crypto_backend()
 
@@ -87,21 +95,15 @@ class SymmetricCryptoTests(unittest.TestCase):
         tampered = envelope[:-1] + bytes([envelope[-1] ^ 1])
 
         with self.assertRaises(MessageIntegrityError):
-            symmetric_decrypt_authenticate(
-                tampered, b"c" * 16, b"m" * 32, "AES_128_CBC", True
-            )
+            symmetric_decrypt_authenticate(tampered, b"c" * 16, b"m" * 32, "AES_128_CBC", True)
 
     def test_rejects_wrong_aes_key_length(self):
         with self.assertRaisesRegex(UnsupportedCryptoError, "AES-128"):
-            symmetric_encrypt_authenticate(
-                b"payload", b"short", b"m" * 32, "AES_128_CBC", True
-            )
+            symmetric_encrypt_authenticate(b"payload", b"short", b"m" * 32, "AES_128_CBC", True)
 
     def test_rejects_unsupported_encryption_mode(self):
         with self.assertRaisesRegex(UnsupportedCryptoError, "Unsupported"):
-            symmetric_encrypt_authenticate(
-                b"payload", b"c" * 16, b"m" * 32, "AES_999", True
-            )
+            symmetric_encrypt_authenticate(b"payload", b"c" * 16, b"m" * 32, "AES_999", True)
 
     def _round_trip(self, mode, hmac_enabled):
         envelope = symmetric_encrypt_authenticate(

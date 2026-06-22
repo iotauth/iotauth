@@ -1,8 +1,7 @@
 # IoTAuth Python API Reference
 
 This document is for developers who want to use the Python IoTAuth entity API.
-For the directory map, see [README.md](./README.md). For the step-by-step
-implementation diary, see [API_implementation_REDME.md](./API_implementation_REDME.md).
+For the directory map, see [README.md](./README.md).
 
 Most application code should import from the package root:
 
@@ -56,8 +55,9 @@ with SecureServer(ctx) as server:
     channel.send(b"ack")
 ```
 
-The server must already have the session key in `ctx.session_keys` before it can
-accept a secure handshake from a peer.
+When a client connects, the server reads the session key ID from the handshake
+and looks it up in `ctx.session_keys`. If the key is not cached, it is fetched
+from Auth. It then completes the handshake and establishes a secure channel.
 
 ## High-level API
 

@@ -11,9 +11,9 @@ name: Entity Integration Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   integration-test:
@@ -28,19 +28,19 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
           cache: maven
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: "lts/*"
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install C build tools
         run: sudo apt-get install -y cmake make gcc libssl-dev
@@ -63,7 +63,7 @@ jobs:
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
             ./c_client_node_server_test.sh --no-build --no-setup --stop-existing
           else
-            ./c_client_node_server_test.sh
+            ./c_client_node_server_test.sh --stop-existing
           fi
 
       - name: Run node_client_c_server_test
@@ -75,7 +75,7 @@ jobs:
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
             ./node_client_c_server_test.sh --no-build --no-setup --stop-existing
           else
-            ./node_client_c_server_test.sh
+            ./node_client_c_server_test.sh --stop-existing
           fi
 
       - name: Run node_client_node_server_test
@@ -87,7 +87,7 @@ jobs:
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
             ./node_client_node_server_test.sh --no-build --no-setup --stop-existing
           else
-            ./node_client_node_server_test.sh
+            ./node_client_node_server_test.sh --stop-existing
           fi
 
       - name: Run c_client_python_server_test
@@ -99,7 +99,7 @@ jobs:
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
             ./c_client_python_server_test.sh --no-build --no-setup --stop-existing
           else
-            ./c_client_python_server_test.sh
+            ./c_client_python_server_test.sh --stop-existing
           fi
 
       - name: Run node_client_python_server_test
@@ -111,7 +111,7 @@ jobs:
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
             ./node_client_python_server_test.sh --no-build --no-setup --stop-existing
           else
-            ./node_client_python_server_test.sh
+            ./node_client_python_server_test.sh --stop-existing
           fi
 
       - name: Run python_client_c_server_test
@@ -123,7 +123,7 @@ jobs:
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
             ./python_client_c_server_test.sh --no-build --no-setup --stop-existing
           else
-            ./python_client_c_server_test.sh
+            ./python_client_c_server_test.sh --stop-existing
           fi
 
       - name: Run python_client_node_server_test
@@ -135,7 +135,7 @@ jobs:
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
             ./python_client_node_server_test.sh --no-build --no-setup --stop-existing
           else
-            ./python_client_node_server_test.sh
+            ./python_client_node_server_test.sh --stop-existing
           fi
 
       - name: Run python_client_python_server_test
@@ -147,7 +147,7 @@ jobs:
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
             ./python_client_python_server_test.sh --no-build --no-setup --stop-existing
           else
-            ./python_client_python_server_test.sh
+            ./python_client_python_server_test.sh --stop-existing
           fi
 
       - name: Fail if any test failed
@@ -165,7 +165,7 @@ jobs:
             "${{ steps.test8.outcome }}" \
             "${{ steps.test9.outcome }}"; do
             if [ "$outcome" != "success" ]; then
-              echo "A test step did not succeed."
+              echo "A test step did not succeed (outcome: $outcome)."
               result=1
             fi
           done

@@ -15,7 +15,6 @@ from iotauth import (
     SessionKeyCache,
     TargetServer,
 )
-
 from tests.helpers import FakeListenSocket, make_session_key
 
 
@@ -148,7 +147,9 @@ class SecureServerTests(unittest.TestCase):
 
     def test_listen_binds_and_listens_once(self):
         fake = FakeListenSocket()
-        server = SecureServer(FakeContext(as_server=True), _socket_factory=lambda: fake, timeout=1.5)
+        server = SecureServer(
+            FakeContext(as_server=True), _socket_factory=lambda: fake, timeout=1.5
+        )
 
         server.listen()
         server.listen()
