@@ -1,125 +1,217 @@
-# from iotauth.entity.python import entity_server
-import selectors
-import sys
-import socket
-import os
-import types
 import argparse
-import secrets
-import selectors
+import os
+import sqlite3
+import threading
+import sys
 
-# Compute absolute path to /entity/python relative to this file
-base_dir = os.path.abspath(os.path.join(__file__, "..", "..", "..", "entity", "python"))
-sys.path.append(base_dir)
-import entity_server
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.padding import PKCS7
 
-node_selector = selectors.DefaultSelector()
+from iotauth import IoTAuthContext, SecureServer
 
-def accept_wrapper(sock):
-    """Accepts a connection and performs necessary setup.
+KEY_LEN = 32
+PBKDF2_ITER = 1000000
+IV_SIZE = 16
+SESSION_KEY_ID_SIZE = 8
+database_name = "file_system.db"
 
-    Args:
-        sock (socket.socket): The listening socket.
+DATA_UPLOAD_REQ = 0
+DATA_DOWNLOAD_REQ = 1
+DOWNLOAD_RESP = 2
 
-    Returns:
-        None
-    """
-    conn, addr = sock.accept()
-    print(f"Accepted connection from {addr}")
-    conn.setblocking(False)
+def get_key(password_str: str, salt: bytes) -> bytes:
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=KEY_LEN,
+        salt=salt,
+        iterations=PBKDF2_ITER,
+    )
+    return kdf.derive(password_str.encode("utf-8"))
 
-    # Setup data for the connection
-    data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
-    events = selectors.EVENT_READ | selectors.EVENT_WRITE
-
-    # Register the connection with the selector
-    node_selector.register(conn, events, data=data)
-
-
-def service_connection(key, mask, file_manager_dict, file_metadata_table, distribution_key, comm_session_key, download_list, sequence_num, record_history_table):
-    """Services an existing connection based on the specified events.
-
-    Args:
-        key (selectors.SelectEvent): The key associated with the file object.
-        mask (int): The event mask.
-
-    Returns:
-        None
-    """
-    sock = key.fileobj
-    data = key.data
-    global payload_max_num
-
-    # If it is not a read event, ignore it.
-    if not (mask & selectors.EVENT_READ):
-        return
+def decrypt_with_password(filename: str, password: str) -> bytes:
+    with open(filename, "rb") as f:
+        file_data = f.read()
+    if len(file_data) < 32:
+        raise ValueError("Invalid encrypted file format.")
+    salt = file_data[:16]
+    iv = file_data[16:32]
+    ciphertext = file_data[32:]
+    
+    key = get_key(password, salt)
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    decryptor = cipher.decryptor()
+    padded_data = decryptor.update(ciphertext) + decryptor.finalize()
+    
+    unpadder = PKCS7(algorithms.AES.block_size).unpadder()
+    try:
+        decrypted_data = unpadder.update(padded_data) + unpadder.finalize()
+    except Exception:
+        print("Invalid password or corrupted file.")
+        return None
         
-    # Attempt to receive data from the socket
-    recv_data = sock.recv(entity_server.READ_BYTES_NUM)
-    # Check for a closed connection
-    if not recv_data:
-        print(f"Closing connection to {data.addr}")
-        node_selector.unregister(sock)
-        return
-    msg_type, received_message = entity_server.parse_received_message(recv_data)
-    # Check for a specific indicator in the received data
-    if msg_type == entity_server.SKEY_HANDSHAKE_1:
-        print("received session key handshake1!\n")
-        # Perform session key handshake
-        encrypted_buf = entity_server.parse_sessionkey_id(received_message, file_manager_dict)
-        client_sock = entity_server.auth_socket_connect(file_manager_dict)
-        nonce_auth = secrets.token_bytes(entity_server.NONCE_SIZE)
+    with open(filename, "wb") as f:
+        f.write(decrypted_data)
+    print("File decrypted successfully.")
+    return decrypted_data
 
+def create_encrypt_database(filename: str, password: str, file_metadata_table: dict, record_history_table: dict):
+    con = sqlite3.connect(filename)
+    cur = con.cursor()
+    cur.execute("CREATE TABLE file_metadata(name, file_keyid, hash_value)")
+    
+    file_metadata_list = []
+    for i, name in enumerate(file_metadata_table["name"]):
+        key_id_bytes = file_metadata_table["file_keyid"][i]
+        key_id_int = int.from_bytes(key_id_bytes, byteorder='big')
+        file_metadata_list.append((name, key_id_int, file_metadata_table["hash_value"][i]))
+        
+    cur.executemany("INSERT INTO file_metadata VALUES(?, ?, ?)", file_metadata_list)
+    
+    cur.execute("CREATE TABLE record_metadata(name, file_keyid, hash_value)")
+    record_metadata_list = []
+    for i, name in enumerate(record_history_table["name"]):
+        key_id_bytes = record_history_table["file_keyid"][i]
+        key_id_int = int.from_bytes(key_id_bytes, byteorder='big')
+        record_metadata_list.append((name, key_id_int, record_history_table["hash_value"][i]))
+        
+    cur.executemany("INSERT INTO record_metadata VALUES(?, ?, ?)", record_metadata_list)
+    con.commit()
+    con.close()
+    
+    salt = os.urandom(16)
+    key = get_key(password, salt)
+    iv = os.urandom(16)
+    
+    with open(filename, "rb") as f:
+        plaintext = f.read()
+        
+    padder = PKCS7(algorithms.AES.block_size).padder()
+    padded_data = padder.update(plaintext) + padder.finalize()
+    
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+    
+    with open(filename, "wb") as f:
+        f.write(salt + iv + ciphertext)
+    print(f"Encrypted database saved: {filename}")
+
+def database_to_dict(data: tuple, db_dict: dict) -> dict:
+    key_id_int = int(data[1])
+    key_id_bytes = key_id_int.to_bytes(SESSION_KEY_ID_SIZE, byteorder='big')
+    db_dict["name"].append(data[0])
+    db_dict["file_keyid"].append(key_id_bytes)
+    db_dict["hash_value"].append(data[2])
+    return db_dict
+
+def check_database(password: str, file_name: str, file_metadata_table: dict, record_history_table: dict):
+    if os.path.isfile(file_name):
+        print("Database already exists.")
+        number = password if password else input("Press the password for the database: ")
+        decrypted_data = decrypt_with_password(file_name, number)
+        if decrypted_data is None:
+            print("decryption was not applied!!")
+            os.remove(file_name)
+            return file_metadata_table, record_history_table, number
+        
+        con = sqlite3.connect(file_name)
+        cur = con.cursor()
+        for row in cur.execute("SELECT * FROM file_metadata"):
+            file_metadata_table = database_to_dict(row, file_metadata_table)
+        for row in cur.execute("SELECT * FROM record_metadata"):
+            record_history_table = database_to_dict(row, record_history_table)
+        con.close()
+        os.remove(file_name)
+        print(file_metadata_table, record_history_table)
+        return file_metadata_table, record_history_table, number
+    else:
+        print("Database does not exist.")
+        if password:
+            number = password
+            print("New database generated using password.")
+        else:
+            number = input("Generate the password for the database: ")
+        return file_metadata_table, record_history_table, number
+
+def save_info_for_file(recv_data: bytes, file_metadata_table: dict):
+    name_size = recv_data[1]
+    name = recv_data[2 : 2 + name_size].decode("utf-8").strip("\x00")
+    file_metadata_table["name"].append(name)
+    keyid_size = recv_data[2 + name_size]
+    file_keyid = recv_data[3 + name_size : 3 + name_size + keyid_size]
+    file_metadata_table["file_keyid"].append(file_keyid)
+    hash_value_size = recv_data[3 + name_size + keyid_size]
+    hash_value = recv_data[
+        4 + name_size + keyid_size : 4 + name_size + keyid_size + hash_value_size
+    ].decode("utf-8")
+    file_metadata_table["hash_value"].append(hash_value)
+
+def download_num_check(name: str, download_list: list) -> int:
+    num = 0
+    if len(download_list) == 0:
+        return num
+    for i in download_list:
+        if i == name:
+            num += 1
+    return num
+
+def concat_data(
+    recv_data: bytes, file_metadata_table: dict, record_history_table: dict, download_list: list
+) -> bytearray:
+    name_size = recv_data[1]
+    name = recv_data[2 : 2 + name_size].decode("utf-8").strip("\x00")
+    file_index = download_num_check(name, download_list)
+    res_keyid = file_metadata_table["file_keyid"][file_index]
+    res_hashvalue = file_metadata_table["hash_value"][file_index]
+    command = "ipfs cat $1 > "
+    command = command.replace("$1", res_hashvalue)
+    
+    message = bytearray(3 + len(res_keyid) + len(command))
+    message[0] = DOWNLOAD_RESP
+    message[1] = len(res_keyid)
+    message[2 : 2 + len(res_keyid)] = res_keyid
+    message[2 + len(res_keyid)] = len(command)
+    message[3 + len(res_keyid) : 3 + len(res_keyid) + len(command)] = bytes.fromhex(
+        str(command).encode("utf-8").hex()
+    )
+    
+    record_history_table["name"].append(name)
+    record_history_table["hash_value"].append(res_hashvalue)
+    record_history_table["file_keyid"].append(res_keyid)
+    
+    download_list.append(name)
+    return message
+
+
+# Global state (thread-safe for simple operations in this demo, but locks could be added)
+file_metadata_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
+record_history_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
+download_list = []
+db_lock = threading.Lock()
+
+def client_handler(channel):
+    try:
         while True:
-            # Check if we have the expected session key
-            if comm_session_key["sessionkey_id"] == received_message[:entity_server.NONCE_SIZE]:
-                print("We have the session key...!!")
-                client_sock.close()
-                # Decrypt the buffer using the session key
-                dec_buf = entity_server.symmetric_decrypt_hmac(comm_session_key, encrypted_buf[:len(encrypted_buf)-entity_server.MAC_KEY_SIZE], encrypted_buf[len(encrypted_buf)-entity_server.MAC_KEY_SIZE:])
-                # Handshake2
-                nonce_entity = dec_buf[1:]
-                nonce_server = secrets.token_bytes(entity_server.NONCE_SIZE)
-                print("nonce_server: ")
-                print(nonce_server)
-                serialized_buffer = entity_server.serialize_handshake(nonce_server, nonce_entity)
-                print("serialized_buffer: ")
-                print(serialized_buffer)
-                enc_buffer = entity_server.symmetric_encrypt_hmac(comm_session_key, serialized_buffer)
-                total_buffer = entity_server.make_sender_buffer(enc_buffer, entity_server.SKEY_HANDSHAKE_2)
-                sock.send(bytes(total_buffer))
-                # Close the client socket and exit the loop
+            recv_data = channel.recv()
+            if not recv_data:
                 break
-            # Receive data from the authentication server
-            recv_data_from_auth = client_sock.recv(entity_server.READ_BYTES_NUM)
-            # Continue the loop if no data received
-            if len(recv_data_from_auth) == 0:
-                print("Connection to Auth server closed unexpectedly.")
-                break
-            # Process the received data to get the session key
-            entity_server.get_session_key(recv_data_from_auth, file_manager_dict, client_sock, distribution_key, comm_session_key, nonce_auth)
-
-    if msg_type == entity_server.SKEY_HANDSHAKE_3:
-        dec_buf = entity_server.symmetric_decrypt_hmac(comm_session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
-        print("received session key handshake3!\n")
-    if msg_type == entity_server.SECURE_COMM_MSG:
-        print("Received secure message!!")
-        dec_buf = entity_server.symmetric_decrypt_hmac(comm_session_key, received_message[:len(received_message)-entity_server.MAC_KEY_SIZE], received_message[len(received_message)-entity_server.MAC_KEY_SIZE:])
-        seq_num = entity_server.read_int_from_buf(dec_buf, entity_server.SEQ_NUM_SIZE)
-        print("Received sequential number:", seq_num)
-        print("Decrypted message:", dec_buf[entity_server.SEQ_NUM_SIZE:])
-        if dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_UPLOAD_REQ:
-            entity_server.save_info_for_file(dec_buf[entity_server.SEQ_NUM_SIZE:], file_metadata_table)
-            print(file_metadata_table)
-        elif dec_buf[entity_server.SEQ_NUM_SIZE] == entity_server.DATA_DOWNLOAD_REQ:
-                total_buffer = entity_server.metadata_response(dec_buf, file_metadata_table, 
-                                                           record_history_table, download_list, comm_session_key, sequence_num)
-                sock.send(bytes(total_buffer))
-                sequence_num += 1
-
-
-
-
+                
+            print("Received secure message!!")
+            msg_type = recv_data[0]
+            
+            with db_lock:
+                if msg_type == DATA_UPLOAD_REQ:
+                    save_info_for_file(recv_data, file_metadata_table)
+                    print(file_metadata_table)
+                elif msg_type == DATA_DOWNLOAD_REQ:
+                    response = concat_data(recv_data, file_metadata_table, record_history_table, download_list)
+                    channel.send(bytes(response))
+    except Exception as e:
+        print(f"Connection closed or error: {e}")
+    finally:
+        channel.close()
 
 def main():
     parser = argparse.ArgumentParser(description="Process config and optional password.")
@@ -127,54 +219,27 @@ def main():
     parser.add_argument("-p", "--password", help="Password for authentication (optional)")
     args = parser.parse_args()
 
-    # Setting directories for config, distribution key, and session key
-    file_manager_dict = {"name" : "", "purpose" : '', "number_key":"", "auth_pubkey_path":"", "privkey_path":"", "auth_ip_address":"", "auth_port_number":"", "port_number":"", "ip_address":"", "network_protocol":"", "pubkey": "", "privkey": ""}
-    distribution_key = {"abs_validity" : "", "cipher_key" : "", "mac_key" : ""}
-    comm_session_key = {"sessionkey_id" : "", "abs_validity" : "", "rel_validity" : "", "cipher_key" : "", "mac_key" : ""}
+    global file_metadata_table, record_history_table
+    file_metadata_table, record_history_table, password = check_database(
+        args.password, database_name, file_metadata_table, record_history_table
+    )
 
-    # Setting directories for managing information of the file
-    file_metadata_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
-    record_history_table = {"name":[] , "file_keyid" : [], "hash_value" : []}
-    download_list = []
-    sequence_num = 0
-
-    # Load config for file system manager and save public and private key in directory.
-    entity_server.load_config(sys.argv[1], file_manager_dict)
-    file_manager_dict["pubkey"] = entity_server.load_pubkey(file_manager_dict["auth_pubkey_path"])
-    file_manager_dict["privkey"] = entity_server.load_privkey(file_manager_dict["privkey_path"])
-
-
-
-    host, port = file_manager_dict["ip_address"], int(file_manager_dict["port_number"])
-    # Prevent binding to all interfaces for security
-    if host in ("", "0.0.0.0"):
-        print("Error: Refusing to bind to all interfaces (empty string or 0.0.0.0). Please specify a dedicated interface IP address in the config file.")
-        sys.exit(1)
-
-    manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    manager_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    manager_socket.bind((host, port))
-    manager_socket.listen()
-    print(f"Listening on {(host, port)}")
-    manager_socket.setblocking(False)
-    node_selector.register(manager_socket, selectors.EVENT_READ, data=None)
-
-    file_metadata_table, record_history_table, password = entity_server.check_database(args.password, entity_server.database_name, file_metadata_table, record_history_table)
-    try:
-        while True:
-            events = node_selector.select(timeout=None)
-            for key, mask in events:
-                if key.data is None:
-                    accept_wrapper(key.fileobj)
-                else:
-                    service_connection(key, mask, file_manager_dict, file_metadata_table, distribution_key, comm_session_key, download_list, sequence_num, record_history_table)
-    except KeyboardInterrupt:
-        print("Caught keyboard interrupt, exiting")
-    finally:
-        manager_socket.close()
-        node_selector.close()
-        entity_server.create_encrypt_database(entity_server.database_name, password, file_metadata_table, record_history_table)
-        print("Finished")
+    ctx = IoTAuthContext.from_config(args.config, validate_paths=False)
+    
+    with SecureServer(ctx) as server:
+        server.listen()
+        print(f"Listening for connections...")
+        try:
+            while True:
+                channel = server.serve_once()
+                t = threading.Thread(target=client_handler, args=(channel,))
+                t.daemon = True
+                t.start()
+        except KeyboardInterrupt:
+            print("Caught keyboard interrupt, exiting")
+        finally:
+            create_encrypt_database(database_name, password, file_metadata_table, record_history_table)
+            print("Finished")
 
 if __name__ == "__main__":
     main()
