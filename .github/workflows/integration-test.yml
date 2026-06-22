@@ -29,7 +29,9 @@ jobs:
       - name: Check out repository with submodules
         uses: actions/checkout@v4
         with:
+          repository: iotauth/iotauth
           submodules: recursive
+          ref: ${{ github.repository == 'iotauth/iotauth' && github.sha || 'main' }}
 
       - name: Check out specific ref of sst-c-api
         if: ${{ inputs.sst-c-api-ref != '' }}
