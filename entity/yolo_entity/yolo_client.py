@@ -20,6 +20,7 @@ except ImportError:
 class AuthCommunicator:
     """Class to handle communication with the IoT Auth Server."""
     def __init__(self, config_path):
+        self.active_secure_channel = None
         self.mock_mode = IoTAuthContext is None or not config_path
         if self.mock_mode:
             print("AuthCommunicator: Running in MOCK mode (No config path provided or iotauth missing).")
@@ -42,47 +43,97 @@ class AuthCommunicator:
             finally:
                 os.chdir(original_cwd)
 
-    def trigger_session_key_request(self, people_count):
-        """Requests a session key with the current context."""
-        print(f"\n[EVENT] Triggering Session Key Request! Context: {{'Number of People': {people_count}}}")
+    def close(self):
+        if self.active_secure_channel:
+            try:
+                self.active_secure_channel.close()
+                print(" -> Secure channel closed gracefully.")
+            except Exception:
+                pass
+
+    def send_detection_alert(self, people_count):
+        """Sends detection alert to the Server, reusing or requesting a session key."""
+        print(f"\n[EVENT] Triggering Detection Alert! Context: {{'Number of People': {people_count}}}")
         
         if self.mock_mode:
-            print(" -> [MOCK] Session key request skipped.")
+            print(" -> [MOCK] Alert message skipped.")
             return
+
+        # Check if we have an active, valid channel
+        if self.active_secure_channel and not self.active_secure_channel.closed:
+            if not session_key_is_expired(self.active_secure_channel.session_key):
+                # We have a valid connection, use it!
+                self._send_message(people_count)
+                return
+            else:
+                print(" -> Active session key expired. Closing channel and fetching new key.")
+                self.active_secure_channel.close()
+                self.active_secure_channel = None
+
+        active_session_key = None
 
         # Check if we already have any valid session key
         # (Since we only ever request keys for 'Servers', any valid key in cache is for 'Servers')
-        valid_key_found = False
         for key in self.ctx.session_keys.values():
             if not session_key_is_expired(key):
-                valid_key_found = True
+                active_session_key = key
                 break
         
-        if valid_key_found:
-            print(" -> A valid session key for 'Servers' already exists in cache. Skipping request to save network bandwidth!")
-            return
-
-        # Get current time in HH:MM format
-        current_time = datetime.datetime.now().strftime("%H:%M")
-        
-        purpose_payload = {
-            "group": "Servers", # The default target group in default.graph
-            "context": {
-                "Number of People": people_count,
-                "Location": "Classroom",
-                "Time of Day": current_time
+        if active_session_key:
+            print(" -> A valid session key for 'Servers' already exists in cache. Skipping Auth request!")
+        else:
+            # Get current time in HH:MM format
+            current_time = datetime.datetime.now().strftime("%H:%M")
+            
+            purpose_payload = {
+                "group": "Servers", # The default target group in default.graph
+                "context": {
+                    "Number of People": people_count,
+                    "Location": "Classroom",
+                    "Time of Day": current_time
+                }
             }
-        }
-        
+            
+            try:
+                print(" -> Requesting session keys from Auth Server...")
+                keys = self.ctx.request_session_keys(purpose=purpose_payload)
+                print(f" -> Success! Received {len(keys)} session key(s).")
+                for i, key in enumerate(keys):
+                    print(f"    Key {i+1} ID: {key.id}")
+                if keys:
+                    active_session_key = keys[0]
+            except Exception as e:
+                print(f" -> Error requesting session keys: {e}")
+                return
+
+        if not active_session_key:
+            print(" -> Failed to obtain a valid session key. Cannot send alert.")
+            return
+            
+        # Establish a new persistent secure connection to the Python Server
         try:
-            print(" -> Requesting session keys from Auth Server...")
-            keys = self.ctx.request_session_keys(purpose=purpose_payload)
-            print(f" -> Success! Received {len(keys)} session key(s).")
-            for i, key in enumerate(keys):
-                print(f"    Key {i+1} ID: {key.id}")
-            # For now, we just receive the keys and discard them
+            print(" -> Establishing secure connection to Python Server at 127.0.0.1:21100...")
+            self.active_secure_channel = self.ctx.connect_secure(
+                key=active_session_key, 
+                host='127.0.0.1', 
+                port=21100
+            )
+            print(" -> Secure channel established! Connection is now persistent.")
+            self._send_message(people_count)
         except Exception as e:
-            print(f" -> Error requesting session keys: {e}")
+            print(f" -> Error communicating with Server: {e}")
+            self.active_secure_channel = None
+
+    def _send_message(self, people_count):
+        try:
+            message = f"Alert: Person detected! Total count: {people_count}".encode('utf-8')
+            self.active_secure_channel.send(message)
+            print(f" -> Sent message securely: {message.decode('utf-8')}")
+        except Exception as e:
+            print(f" -> Failed to send message: {e}")
+            self.active_secure_channel.close()
+            self.active_secure_channel = None
+
 
 
 class HardwareDetector:
@@ -120,7 +171,7 @@ class PersonDetector:
     def process_frame(self, frame):
         """Runs inference on a single frame and tracks detection state."""
         # classes=[0] filters to only show persons. conf=0.90 enforces 90%+ confidence threshold
-        results = self.model(frame, device=self.device, classes=[self.PERSON_CLASS_ID], conf=0.90, verbose=False)
+        results = self.model(frame, device=self.device, classes=[self.PERSON_CLASS_ID], conf=0.70, verbose=False)
         
         # The results list contains one Result object per image (we only passed 1 frame)
         result = results[0]
@@ -130,7 +181,7 @@ class PersonDetector:
         # Trigger an event if a NEW person enters the frame
         if current_people_count > self.previous_people_count:
             print(f"\n[ALERT] Person count increased from {self.previous_people_count} to {current_people_count}!")
-            self.auth_communicator.trigger_session_key_request(current_people_count)
+            self.auth_communicator.send_detection_alert(current_people_count)
             
         self.previous_people_count = current_people_count
             
@@ -182,6 +233,7 @@ def main():
         print("\nInterrupted by user.")
     finally:
         # Clean up
+        auth_comm.close()
         cap.release()
         cv2.destroyAllWindows()
         print("Client shut down safely.")
