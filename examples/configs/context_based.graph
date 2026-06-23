@@ -129,8 +129,8 @@
 			"Target": "Servers",
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
-			"AbsoluteValidity": "1*Min",
-			"RelativeValidity": "2*Min",
+			"AbsoluteValidity": "2*Min",
+			"RelativeValidity": "1*Min",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": "{\"Number of People\":{\"Max\":1},\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}"
