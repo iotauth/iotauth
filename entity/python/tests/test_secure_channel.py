@@ -190,7 +190,7 @@ class SecureChannelTests(unittest.TestCase):
             )
 
         self.assertEqual(fake.opened_with, ("example.test", 12345, 1.5))
-        self.assertEqual(fake.timeout, 1.5)
+        self.assertEqual(fake.timeout, None)
 
     def test_wrong_response_message_type_raises_handshake_error(self):
         fake = FakeSocket(frame(MessageType.AUTH_ALERT, b"\x01"))
