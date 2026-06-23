@@ -50,17 +50,13 @@ class AuthCommunicator:
             print(" -> [MOCK] Session key request skipped.")
             return
 
-        # Check if we already have a valid session key for the Servers group
+        # Check if we already have any valid session key
+        # (Since we only ever request keys for 'Servers', any valid key in cache is for 'Servers')
         valid_key_found = False
         for key in self.ctx.session_keys.values():
             if not session_key_is_expired(key):
-                try:
-                    purpose_dict = json.loads(key.purpose)
-                    if purpose_dict.get("group") == "Servers":
-                        valid_key_found = True
-                        break
-                except Exception:
-                    pass
+                valid_key_found = True
+                break
         
         if valid_key_found:
             print(" -> A valid session key for 'Servers' already exists in cache. Skipping request to save network bandwidth!")
