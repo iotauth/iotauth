@@ -128,6 +128,8 @@ def connect_secure(
         )
         send_frame(sock, IoTSPFrame(MessageType.SKEY_HANDSHAKE_3, handshake_3))
         _check_session_key_validity(key)
+        if hasattr(sock, "settimeout"):
+            sock.settimeout(None)
         return SecureChannel(socket=sock, session_key=key)
     except Exception:
         close_socket(sock)
@@ -142,6 +144,13 @@ def accept_secure(
     _nonce_factory: NonceFactory = secrets.token_bytes,
 ) -> SecureChannel:
     """Complete the server-side secure handshake on an accepted TCP socket."""
+
+    original_timeout = None
+    if hasattr(sock, "gettimeout"):
+        try:
+            original_timeout = sock.gettimeout()
+        except OSError:
+            pass
 
     if timeout is not None and hasattr(sock, "settimeout"):
         sock.settimeout(timeout)
@@ -188,6 +197,8 @@ def accept_secure(
             )
         verify_handshake_3(key, handshake_3.payload, server_nonce)
         _check_session_key_validity(key)
+        if hasattr(sock, "settimeout"):
+            sock.settimeout(original_timeout)
         return SecureChannel(socket=sock, session_key=key)
     except Exception:
         close_socket(sock)
