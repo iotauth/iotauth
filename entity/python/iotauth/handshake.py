@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Buffer
+try:
+    from collections.abc import Buffer
+except ImportError:
+    from typing_extensions import Buffer
 from dataclasses import dataclass
 
 from .crypto import symmetric_decrypt_authenticate, symmetric_encrypt_authenticate
