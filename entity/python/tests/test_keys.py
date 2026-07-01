@@ -11,7 +11,6 @@ class SessionKeyCacheTests(unittest.TestCase):
         cache = SessionKeyCache()
 
         self.assertEqual(len(cache), 0)
-        self.assertTrue(cache.has_room())
 
     def test_adds_and_retrieves_key_by_id(self):
         cache = SessionKeyCache()
@@ -44,12 +43,12 @@ class SessionKeyCacheTests(unittest.TestCase):
 
         self.assertIs(cache.require(b"12345678"), new_key)
 
-    def test_enforces_max_key_count(self):
-        cache = SessionKeyCache(max_keys=1)
-        cache.add(make_session_key())
+    def test_allows_unbounded_key_count(self):
+        cache = SessionKeyCache()
+        for i in range(20):
+            cache.add(make_session_key(f"{i:08d}".encode("ascii")))
 
-        with self.assertRaisesRegex(KeyCacheError, "full"):
-            cache.add(make_session_key(b"87654321"))
+        self.assertEqual(len(cache), 20)
 
 
 if __name__ == "__main__":

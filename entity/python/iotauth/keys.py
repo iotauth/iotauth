@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from .exceptions import KeyCacheError
 
 SESSION_KEY_ID_SIZE = 8
-MAX_SESSION_KEY = 10
 
 
 @dataclass
@@ -48,15 +47,8 @@ class DistributionKey:
 class SessionKeyCache:
     """Small in-memory session-key cache keyed by 8-byte session key ID."""
 
-    def __init__(self, max_keys: int = MAX_SESSION_KEY):
-        if max_keys < 1:
-            raise KeyCacheError("SessionKeyCache max_keys must be at least 1")
-        self._max_keys = max_keys
+    def __init__(self) -> None:
         self._keys: dict[bytes, SessionKey] = {}
-
-    @property
-    def max_keys(self) -> int:
-        return self._max_keys
 
     def __len__(self) -> int:
         return len(self._keys)
@@ -68,8 +60,6 @@ class SessionKeyCache:
     def add(self, key: SessionKey, *, replace: bool = False) -> None:
         if key.id in self._keys and not replace:
             raise KeyCacheError(f"Session key already exists: {key.id.hex()}")
-        if key.id not in self._keys and len(self._keys) >= self._max_keys:
-            raise KeyCacheError(f"Session key cache is full ({self._max_keys} keys)")
         self._keys[key.id] = key
 
     def get(self, key_id: bytes) -> SessionKey | None:
@@ -81,11 +71,6 @@ class SessionKeyCache:
         if key is None:
             raise KeyCacheError(f"Session key not found: {key_id.hex()}")
         return key
-
-    def has_room(self, count: int = 1) -> bool:
-        if count < 0:
-            raise KeyCacheError("count must not be negative")
-        return len(self._keys) + count <= self._max_keys
 
     def values(self) -> tuple[SessionKey, ...]:
         return tuple(self._keys.values())
