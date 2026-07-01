@@ -10,21 +10,19 @@ source "$SCRIPT_DIR/common.sh"
 usage() {
 	echo "Usage: $0 [options]"
 	echo
-	echo "Builds, prepares, runs, and verifies the Node-client-to-Node-server test."
+	echo "Builds, prepares, runs, and verifies the Python-client-to-Node-server test."
 	echo "Default password: 1234"
 	echo
 	echo "Options:"
 	echo "  --password <password>       Auth password used for generation and Auth101."
-	echo "  --client-timeout <seconds>  Max time for the Node client. Default: 45."
+	echo "  --client-timeout <seconds>  Max time for the Python client. Default: 45."
 	echo "  --service-timeout <seconds> Max time to wait for services. Default: 45."
-	echo "  --no-build                  Skip Maven build step."
+	echo "  --no-build                  Skip build step."
 	echo "  --no-setup                  Skip cleanAll.sh/generateAll.sh."
-	echo "  --no-verify                 Run without checking Node server output."
+	echo "  --no-verify                 Run without checking server/client output."
 	echo "  --keep-logs                 Keep logs after the test finishes."
-	echo "  --stop-existing             Stop existing Auth/Node processes on the test ports."
-	echo "  --tmux                      Show Auth, Node server, and Node client in tmux panes."
-	echo "                              After the exchange completes, Auth and Node server are"
-	echo "                              stopped while the tmux panes remain open for inspection."
+	echo "  --stop-existing             Stop existing Auth/Node/Python processes on the test ports."
+	echo "  --tmux                      Show Auth, Node server, and Python client in tmux panes."
 	echo "  -h, --help                  Show this help message."
 }
 
@@ -32,12 +30,13 @@ prepare_test() {
 	if [[ "$RUN_BUILD" == true ]]; then
 		require_command mvn
 		require_command node
-		require_command npm
+		require_command python3
 		build_auth
 	fi
 	if [[ "$RUN_SETUP" == true ]]; then
 		run_setup
 	fi
+	build_python_entities
 }
 
 parse_args "$@"
@@ -45,25 +44,19 @@ check_and_prepare_ports
 prepare_test
 
 if [[ "$USE_TMUX" == true ]]; then
-	SESSION_NAME="sst_node_client_node_server_test_$$"
+	SESSION_NAME="sst_python_client_node_server_test_$$"
 	WAIT_SCRIPT="/tmp/${SESSION_NAME}_wait_and_stop.sh"
 	PASSWORD_ARG="$(quote_for_shell "$AUTH_PASSWORD")"
-	setup_tmux_session "$SESSION_NAME" "Node server" "Node client"
+	setup_tmux_session "$SESSION_NAME" "Node server" "Python client"
 
 	cat >"$WAIT_SCRIPT" <<EOF
 #!/bin/bash
 set +e
 sleep 6
-cd $(quote_for_shell "$SST_ROOT/entity/node/example_entities") || exit 1
-node autoClient.js configs/net1/client.config &
-NODE_CLIENT_PID=\$!
-elapsed=0
-while [[ "\$elapsed" -lt $CLIENT_TIMEOUT ]] && kill -0 "\$NODE_CLIENT_PID" 2>/dev/null; do
-	sleep 1
-	elapsed=\$((elapsed + 1))
-done
-kill "\$NODE_CLIENT_PID" 2>/dev/null || true
-wait "\$NODE_CLIENT_PID" 2>/dev/null || true
+cd $(quote_for_shell "$SST_ROOT/entity/python/examples") || exit 1
+source ../.venv/bin/activate
+python3 pyClient.py configs/pyClient.config
+status=\$?
 tmux send-keys -t $AUTH_PANE_ARG C-c
 tmux send-keys -t $SERVER_PANE_ARG C-c
 sleep 2
@@ -72,7 +65,8 @@ for port in 21900 21901 21100; do
 	if [[ -n "\$pids" ]]; then kill \$pids 2>/dev/null || true; fi
 done
 echo
-echo "[test] Node client finished. Auth and Node server were stopped; panes remain open for inspection."
+echo "[test] Python client exited with status \$status. Auth and Node server were stopped; panes remain open for inspection."
+exit "\$status"
 EOF
 	chmod +x "$WAIT_SCRIPT"
 
@@ -83,7 +77,7 @@ EOF
 	exit 0
 fi
 
-setup_logs "node-client-node-server"
+setup_logs "python-client-node-server"
 start_auth
 
 echo "[test] Starting Node.js server."
@@ -91,10 +85,11 @@ start_service server bash -c \
 	"cd $(quote_for_shell "$SST_ROOT/entity/node/example_entities") && exec node server.js configs/net1/server.config"
 wait_for_log "$SERVER_LOG" "Handler: listening on port" "Node.js server"
 
-echo "[test] Starting Node client."
+echo "[test] Running Python client."
 (
-	cd "$SST_ROOT/entity/node/example_entities"
-	exec node autoClient.js configs/net1/client.config
+	cd "$SST_ROOT/entity/python/examples"
+	source ../.venv/bin/activate
+	exec python3 pyClient.py ../../node/example_entities/configs/net1/client.config
 ) >"$CLIENT_LOG" 2>&1 &
 CLIENT_PID=$!
 (
@@ -102,30 +97,28 @@ CLIENT_PID=$!
 ) &
 TAIL_PID=$!
 
-echo "[test] Waiting for Node server to receive both messages."
+echo "[test] Waiting for Python client to complete."
 elapsed=0
-while [[ "$elapsed" -lt "$CLIENT_TIMEOUT" ]]; do
-	if grep -Fq "data: data1" "$SERVER_LOG" 2>/dev/null; then
-		break
+while kill -0 "$CLIENT_PID" 2>/dev/null; do
+	if [[ "$elapsed" -ge "$CLIENT_TIMEOUT" ]]; then
+		echo "[test] Python client timed out after ${CLIENT_TIMEOUT}s." >&2
+		kill "$CLIENT_PID" 2>/dev/null || true
+		exit 1
 	fi
 	sleep 1
 	elapsed=$((elapsed + 1))
 done
 
-if ! grep -Fq "data: data1" "$SERVER_LOG" 2>/dev/null; then
-	echo "[test] Timed out waiting for Node server to receive messages." >&2
-	exit 1
-fi
-
-kill "$CLIENT_PID" 2>/dev/null || true
 wait "$CLIENT_PID" 2>/dev/null || true
 CLIENT_PID=""
 
 if [[ "$VERIFY_OUTPUT" == true ]]; then
 	echo "[test] Checking Node.js server output."
-	assert_log_contains "$SERVER_LOG" "Handler: socketID:"
-	assert_log_contains "$SERVER_LOG" "data: data2"
-	assert_log_contains "$SERVER_LOG" "data: data1"
+	assert_log_contains "$SERVER_LOG" "data: Hello server"
+	assert_log_contains "$SERVER_LOG" "data: Hello server - second message"
+	assert_log_contains "$SERVER_LOG" "data: Hello server - third message"
+	echo "[test] Checking Python client output."
+	assert_log_contains "$CLIENT_LOG" "No reply received (timeout), continuing..."
 fi
 
-echo "[test] Node-client-to-Node-server test passed."
+echo "[test] Python-client-to-Node-server test passed."

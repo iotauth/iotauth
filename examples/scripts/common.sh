@@ -16,6 +16,7 @@ SERVER_PID=""
 CLIENT_PID=""
 AUTH_TAIL_PID=""
 SERVER_TAIL_PID=""
+TAIL_PID=""
 LOG_DIR="${LOG_DIR:-}"
 declare -a ERROR_WATCHER_PIDS=()
 
@@ -89,6 +90,10 @@ build_c_entities() {
 	run_step cmake -S "$SST_ROOT/entity/c/examples/server_client_example" \
 	              -B "$SST_ROOT/entity/c/examples/server_client_example/build"
 	run_step cmake --build "$SST_ROOT/entity/c/examples/server_client_example/build"
+}
+
+build_python_entities() {
+	run_step bash -c "cd $(quote_for_shell "$SST_ROOT/entity/python") && ./initPythonEntities.sh"
 }
 
 run_setup() {
@@ -273,10 +278,13 @@ cleanup() {
 	for pid in "${ERROR_WATCHER_PIDS[@]+"${ERROR_WATCHER_PIDS[@]}"}"; do
 		kill "$pid" 2>/dev/null || true
 	done
-	for pid in "$CLIENT_PID" "$SERVER_TAIL_PID" "$AUTH_TAIL_PID" "$SERVER_PID" "$AUTH_PID"; do
-		[[ -n "$pid" ]] && kill "$pid" 2>/dev/null || true
+	for pid in "$CLIENT_PID" "$TAIL_PID" "$SERVER_TAIL_PID" "$AUTH_TAIL_PID" "$SERVER_PID" "$AUTH_PID"; do
+		if [[ -n "$pid" ]]; then
+			pkill -P "$pid" 2>/dev/null || true
+			kill "$pid" 2>/dev/null || true
+		fi
 	done
-	for pid in "$CLIENT_PID" "$SERVER_TAIL_PID" "$AUTH_TAIL_PID" "$SERVER_PID" "$AUTH_PID"; do
+	for pid in "$CLIENT_PID" "$TAIL_PID" "$SERVER_TAIL_PID" "$AUTH_TAIL_PID" "$SERVER_PID" "$AUTH_PID"; do
 		[[ -n "$pid" ]] && wait "$pid" 2>/dev/null || true
 	done
 	if [[ "$status" -ne 0 || "$KEEP_LOGS" == true ]]; then
