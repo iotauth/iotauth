@@ -298,7 +298,7 @@ Represents the reusable Auth distribution key returned with session keys.
 ### `SessionKeyCache`
 
 ```python
-cache = SessionKeyCache(max_keys: int = 10)
+cache = SessionKeyCache()
 ```
 
 Small in-memory cache keyed by 8-byte session key ID.
@@ -307,7 +307,6 @@ Small in-memory cache keyed by 8-byte session key ID.
 cache.add(key: SessionKey, *, replace: bool = False) -> None
 cache.get(key_id: bytes) -> SessionKey | None
 cache.require(key_id: bytes) -> SessionKey
-cache.has_room(count: int = 1) -> bool
 cache.values() -> tuple[SessionKey, ...]
 len(cache) -> int
 key_id in cache -> bool
