@@ -1,0 +1,235 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901,
+			"callbackPort": 21903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		}
+	],
+	"authTrusts": [],
+	"assignments": {
+		"net1.client_val_1": 101,
+		"net1.client_val_3": 101,
+		"net1.client_val_5": 101,
+		"net1.client_val_7": 101,
+		"net1.server": 101
+	},
+	"entityList": [
+		{
+			"group": "Clients_val_1",
+			"name": "net1.client_val_1",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Client_val_1",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.server", "host": "localhost", "port": 21100, "group": "Servers"}
+			],
+			"contextList": [
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "10:30"},
+				{"Number of People": 1, "Location": "Meeting Room", "Time of Day": "14:00"},
+				{"Number of People": 4, "Location": "Classroom", "Time of Day": "12:00"},
+				{"Number of People": 2, "Location": "Cafeteria", "Time of Day": "11:00"},
+				{"Number of People": 1, "Location": "Classroom", "Time of Day": "08:30"},
+				{"Number of People": 3, "Location": "Classroom", "Time of Day": "09:00"},
+				{"Number of People": 2, "Location": "Meeting Room", "Time of Day": "19:00"},
+				{"Number of People": 3, "Location": "Meeting Room", "Time of Day": "17:59"},
+				{"Number of People": 5, "Location": "Office", "Time of Day": "23:00"},
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "18:01"}
+			]
+		},
+		{
+			"group": "Clients_val_3",
+			"name": "net1.client_val_3",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Client_val_3",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.server", "host": "localhost", "port": 21100, "group": "Servers"}
+			],
+			"contextList": [
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "10:30"},
+				{"Number of People": 1, "Location": "Meeting Room", "Time of Day": "14:00"},
+				{"Number of People": 4, "Location": "Classroom", "Time of Day": "12:00"},
+				{"Number of People": 2, "Location": "Cafeteria", "Time of Day": "11:00"},
+				{"Number of People": 1, "Location": "Classroom", "Time of Day": "08:30"},
+				{"Number of People": 3, "Location": "Classroom", "Time of Day": "09:00"},
+				{"Number of People": 2, "Location": "Meeting Room", "Time of Day": "19:00"},
+				{"Number of People": 3, "Location": "Meeting Room", "Time of Day": "17:59"},
+				{"Number of People": 5, "Location": "Office", "Time of Day": "23:00"},
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "18:01"}
+			]
+		},
+		{
+			"group": "Clients_val_5",
+			"name": "net1.client_val_5",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Client_val_5",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.server", "host": "localhost", "port": 21100, "group": "Servers"}
+			],
+			"contextList": [
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "10:30"},
+				{"Number of People": 1, "Location": "Meeting Room", "Time of Day": "14:00"},
+				{"Number of People": 4, "Location": "Classroom", "Time of Day": "12:00"},
+				{"Number of People": 2, "Location": "Cafeteria", "Time of Day": "11:00"},
+				{"Number of People": 1, "Location": "Classroom", "Time of Day": "08:30"},
+				{"Number of People": 3, "Location": "Classroom", "Time of Day": "09:00"},
+				{"Number of People": 2, "Location": "Meeting Room", "Time of Day": "19:00"},
+				{"Number of People": 3, "Location": "Meeting Room", "Time of Day": "17:59"},
+				{"Number of People": 5, "Location": "Office", "Time of Day": "23:00"},
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "18:01"}
+			]
+		},
+		{
+			"group": "Clients_val_7",
+			"name": "net1.client_val_7",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Client_val_7",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.server", "host": "localhost", "port": 21100, "group": "Servers"}
+			],
+			"contextList": [
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "10:30"},
+				{"Number of People": 1, "Location": "Meeting Room", "Time of Day": "14:00"},
+				{"Number of People": 4, "Location": "Classroom", "Time of Day": "12:00"},
+				{"Number of People": 2, "Location": "Cafeteria", "Time of Day": "11:00"},
+				{"Number of People": 1, "Location": "Classroom", "Time of Day": "08:30"},
+				{"Number of People": 3, "Location": "Classroom", "Time of Day": "09:00"},
+				{"Number of People": 2, "Location": "Meeting Room", "Time of Day": "19:00"},
+				{"Number of People": 3, "Location": "Meeting Room", "Time of Day": "17:59"},
+				{"Number of People": 5, "Location": "Office", "Time of Day": "23:00"},
+				{"Number of People": 2, "Location": "Classroom", "Time of Day": "18:01"}
+			]
+		},
+		{
+			"group": "Servers",
+			"name": "net1.server",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Server",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": []
+		}
+	],
+	"filesharingLists": [],
+	"privilegeList": [],
+	"commPolicies": [
+		{
+			"RequestingGroup": "Clients_val_1",
+			"TargetType": "Group",
+			"Target": "Servers",
+			"MaxNumSessionKeyOwners": 2,
+			"SessionCryptoSpec": "AES-128-CBC:SHA256",
+			"AbsoluteValidity": "10*Min",
+			"RelativeValidity": "1*sec",
+			"Expiration": "Infinity",
+			"IsDelegated": 0,
+			"Context": "{\"Number of People\":{\"Max\":1},\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}"
+		},
+		{
+			"RequestingGroup": "Clients_val_3",
+			"TargetType": "Group",
+			"Target": "Servers",
+			"MaxNumSessionKeyOwners": 2,
+			"SessionCryptoSpec": "AES-128-CBC:SHA256",
+			"AbsoluteValidity": "10*Min",
+			"RelativeValidity": "3*sec",
+			"Expiration": "Infinity",
+			"IsDelegated": 0,
+			"Context": "{\"Number of People\":{\"Max\":1},\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}"
+		},
+		{
+			"RequestingGroup": "Clients_val_5",
+			"TargetType": "Group",
+			"Target": "Servers",
+			"MaxNumSessionKeyOwners": 2,
+			"SessionCryptoSpec": "AES-128-CBC:SHA256",
+			"AbsoluteValidity": "10*Min",
+			"RelativeValidity": "5*sec",
+			"Expiration": "Infinity",
+			"IsDelegated": 0,
+			"Context": "{\"Number of People\":{\"Max\":1},\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}"
+		},
+		{
+			"RequestingGroup": "Clients_val_7",
+			"TargetType": "Group",
+			"Target": "Servers",
+			"MaxNumSessionKeyOwners": 2,
+			"SessionCryptoSpec": "AES-128-CBC:SHA256",
+			"AbsoluteValidity": "10*Min",
+			"RelativeValidity": "7*sec",
+			"Expiration": "Infinity",
+			"IsDelegated": 0,
+			"Context": "{\"Number of People\":{\"Max\":1},\"Location\":{\"Allowed\":[\"Classroom\",\"Meeting Room\"]},\"Time of Day\":{\"Min\":\"09:00\",\"Max\":\"18:00\"}}"
+		}
+	]
+}
