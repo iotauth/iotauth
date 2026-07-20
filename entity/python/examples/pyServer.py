@@ -52,7 +52,7 @@ def main():
 
                 print(f"LOG: Received: {data.decode('utf-8')}")
 
-                # Echo the data back securely
+                # Send response back securely
                 reply_str = (
                     "Hello client" if message_count == 1 else f"Hello client {message_count}"
                 )

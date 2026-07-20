@@ -28,13 +28,16 @@ The Python API currently includes:
 
 ## Directory structure
 
-These are the high-level directories and their purposes:
+These are the high-level directories and files and their purposes:
 
 - **[`iotauth/`](iotauth)**: The core Python API package. This is what developers install and import into their own applications to request keys and create secure channels.
 - **[`examples/`](examples)**: Working examples of Python servers and clients using the `iotauth` API. See [`examples/README.md`](examples/README.md) for details on running them.
 - **[`tests/`](tests)**: The automated test suite for the Python API.
+- **[`pyproject.toml`](pyproject.toml)**: Build system requirements, package metadata, and tool configurations (including Ruff).
+- **[`run_all_tests.py`](run_all_tests.py)**: Test runner script providing natural-language output for the test suite.
+- **[`initPythonEntities.sh`](initPythonEntities.sh)**: Shell script helper for initializing Python entity directories.
 
-For deep API documentation and guides, consult the [IoTAuth Documentation Website](https://iotauth.github.io/docs/intro) (specifically the [Python API Reference](https://iotauth.github.io/docs/python-api-reference)).
+For API documentation and guides, consult the [IoTAuth Documentation Website](https://iotauth.github.io/docs/intro) (specifically the [Python API Reference](https://iotauth.github.io/docs/python-api-reference)).
 
 ## Configuration (`pyproject.toml`)
 
