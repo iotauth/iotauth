@@ -26,3 +26,8 @@ This directory includes entities in the IoT, to be authenticated/authorized by A
 		- **experimentalConfigs**: Configuration files for entities used for experiments
 
 	- **node_modules**: This directory will be generated after npm installation to store necessary node modules used by entities in JavaScript on Node.js
+
+- **[python](./python)**: API in Python and example entities implemented using the Python API
+	- **[examples](python/examples)**: Working examples of Python servers and clients using the `iotauth` API
+	- **[iotauth](python/iotauth)**: The core Python API package for requesting keys and establishing secure channels
+	- **[tests](python/tests)**: Automated test suite for the Python API

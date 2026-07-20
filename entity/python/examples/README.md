@@ -14,10 +14,10 @@ examples/
 
 | File / Folder | Description |
 | --- | --- |
-| `README.md` | This file. Contains usage instructions for the example scripts. |
-| `pyClient.py` | A high-level client script that connects to the Auth server to request session keys, performs a secure handshake with the peer server, and sequentially sends encrypted payloads while waiting for replies. |
-| `pyServer.py` | A high-level server script that listens for peer connections, verifies the secure handshake, and securely echoes received payloads back to the client. |
-| `configs/` | Directory containing the `.config` files that define credentials, database paths, and networking settings for the entities. |
+| [`README.md`](README.md) | This file. Contains usage instructions for the example scripts. |
+| [`pyClient.py`](pyClient.py) | A high-level client script that connects to the Auth server to request session keys, performs a secure handshake with the peer server, and sequentially sends encrypted payloads while waiting for replies. |
+| [`pyServer.py`](pyServer.py) | A high-level server script that listens for peer connections, verifies the secure handshake, and securely echoes received payloads back to the client. |
+| [`configs/`](configs) | Directory containing the `.config` files that define credentials, database paths, and networking settings for the entities. |
 
 ## Usage
 

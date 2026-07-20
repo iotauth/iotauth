@@ -6,8 +6,8 @@ session keys from Auth, completing the IoTSP secure handshake, and sending or
 receiving protected messages.
 
 
-For developer-facing class, function, and usage details, see
-[API_REFERENCE.md](./API_REFERENCE.md).
+For developer-facing class, function, and usage details, see 
+[Python API Reference](https://iotauth.github.io/docs/python-api-reference) or [Python Guide](https://iotauth.github.io/docs/python-guide) on the IoTAuth documentation site.
 
 ## Current scope
 
@@ -30,12 +30,11 @@ The Python API currently includes:
 
 These are the high-level directories and their purposes:
 
-- **`iotauth/`**: The core Python API package. This is what developers install and import into their own applications to request keys and create secure channels.
-- **`examples/`**: Working examples of Python servers and clients using the `iotauth` API. See [`examples/README.md`](examples/README.md) for details on running them.
-- **`tests/`**: The automated test suite for the Python API.
+- **[`iotauth/`](iotauth)**: The core Python API package. This is what developers install and import into their own applications to request keys and create secure channels.
+- **[`examples/`](examples)**: Working examples of Python servers and clients using the `iotauth` API. See [`examples/README.md`](examples/README.md) for details on running them.
+- **[`tests/`](tests)**: The automated test suite for the Python API.
 
-For deep API documentation, consult [API_REFERENCE.md](API_REFERENCE.md). 
-> TO DO :- add API references to the iotauth website and link the reference.
+For deep API documentation and guides, consult the [IoTAuth Documentation Website](https://iotauth.github.io/docs/intro) (specifically the [Python API Reference](https://iotauth.github.io/docs/python-api-reference)).
 
 ## Configuration (`pyproject.toml`)
 
