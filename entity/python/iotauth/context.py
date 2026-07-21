@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -28,13 +28,17 @@ class IoTAuthContext:
             permanent distribution-key mode.
         distribution_key: Distribution key used to protect Auth requests.
         session_keys: In-memory cache populated by session-key requests.
+
+    Note:
+        Private credentials, distribution keys, and cached session keys are
+        excluded from the object representation to avoid exposing secrets.
     """
 
     config: EntityConfig
     auth_public_key: Any
-    entity_private_key: Any
-    distribution_key: DistributionKey | None
-    session_keys: SessionKeyCache
+    entity_private_key: Any = field(repr=False)
+    distribution_key: DistributionKey | None = field(repr=False)
+    session_keys: SessionKeyCache = field(repr=False)
 
     @classmethod
     def from_config(cls, path: str | Path, *, validate_paths: bool = True) -> IoTAuthContext:

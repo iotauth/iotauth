@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .exceptions import KeyCacheError
 
@@ -27,11 +27,15 @@ class SessionKey:
 
     Raises:
         KeyCacheError: If the identifier or key material is invalid.
+
+    Note:
+        Cipher and MAC key bytes are excluded from the object representation
+        to avoid exposing secrets in logs and tracebacks.
     """
 
     id: bytes
-    cipher_key: bytes
-    mac_key: bytes | None
+    cipher_key: bytes = field(repr=False)
+    mac_key: bytes | None = field(repr=False)
     abs_validity: int | None
     rel_validity: int | None
     encryption_mode: str
@@ -62,10 +66,14 @@ class DistributionKey:
 
     Raises:
         KeyCacheError: If the cipher key is empty.
+
+    Note:
+        Cipher and MAC key bytes are excluded from the object representation
+        to avoid exposing secrets in logs and tracebacks.
     """
 
-    cipher_key: bytes
-    mac_key: bytes | None
+    cipher_key: bytes = field(repr=False)
+    mac_key: bytes | None = field(repr=False)
     abs_validity: int | None
     encryption_mode: str
 
