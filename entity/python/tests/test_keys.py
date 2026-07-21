@@ -1,6 +1,6 @@
 import unittest
 
-from iotauth import KeyCacheError, SessionKeyCache
+from iotauth import DistributionKey, KeyCacheError, SessionKeyCache
 from tests.helpers import make_session_key
 
 
@@ -49,6 +49,42 @@ class SessionKeyCacheTests(unittest.TestCase):
             cache.add(make_session_key(f"{i:08d}".encode("ascii")))
 
         self.assertEqual(len(cache), 20)
+
+
+class KeyRepresentationTests(unittest.TestCase):
+    """Tests that object representations do not expose secret key bytes."""
+
+    def test_session_key_repr_redacts_key_material(self):
+        key = make_session_key(
+            cipher_key=b"session-cipher-secret",
+            mac_key=b"session-mac-secret",
+        )
+
+        representation = repr(key)
+
+        self.assertNotIn("session-cipher-secret", representation)
+        self.assertNotIn("session-mac-secret", representation)
+        self.assertNotIn("cipher_key", representation)
+        self.assertNotIn("mac_key", representation)
+        self.assertIn("id=b'12345678'", representation)
+        self.assertIn("encryption_mode='AES_128_CBC'", representation)
+
+    def test_distribution_key_repr_redacts_key_material(self):
+        key = DistributionKey(
+            cipher_key=b"distribution-cipher-secret",
+            mac_key=b"distribution-mac-secret",
+            abs_validity=123456,
+            encryption_mode="AES_128_CBC",
+        )
+
+        representation = repr(key)
+
+        self.assertNotIn("distribution-cipher-secret", representation)
+        self.assertNotIn("distribution-mac-secret", representation)
+        self.assertNotIn("cipher_key", representation)
+        self.assertNotIn("mac_key", representation)
+        self.assertIn("abs_validity=123456", representation)
+        self.assertIn("encryption_mode='AES_128_CBC'", representation)
 
 
 if __name__ == "__main__":

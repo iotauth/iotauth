@@ -49,6 +49,12 @@ class IoTAuthContextTests(unittest.TestCase):
             self.assertEqual(ctx.entity_private_key, "entity-key")
             self.assertIsNone(ctx.distribution_key)
             self.assertEqual(len(ctx.session_keys), 0)
+            representation = repr(ctx)
+            self.assertNotIn("entity-key", representation)
+            self.assertNotIn("entity_private_key", representation)
+            self.assertNotIn(", distribution_key=", representation)
+            self.assertNotIn("session_keys", representation)
+            self.assertIn("auth-key", representation)
             load_auth.assert_called_once_with(config.auth.public_key_path)
             load_entity.assert_called_once_with(config.entity.private_key_path)
 
@@ -88,6 +94,9 @@ class IoTAuthContextTests(unittest.TestCase):
             self.assertIsNotNone(ctx.distribution_key.abs_validity)
             self.assertIsNone(ctx.auth_public_key)
             self.assertIsNone(ctx.entity_private_key)
+            representation = repr(ctx)
+            self.assertNotIn("0123456789abcdef", representation)
+            self.assertNotIn("mac-secret-key-0123456789abcdef", representation)
 
     def _load_config(self, root, extra_lines=None, omit_rsa_credentials=False):
         return load_config(self._write_config(root, extra_lines, omit_rsa_credentials))
