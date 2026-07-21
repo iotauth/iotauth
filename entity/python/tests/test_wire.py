@@ -2,20 +2,15 @@
 
 import unittest
 
-from iotauth import (
-    AuthConnectionError,
+from iotauth import AuthConnectionError, SerializationError
+from iotauth.protocol import (
     IoTSPFrame,
     MessageType,
-    SerializationError,
-    decode_uint_be,
-    decode_varint,
-    encode_uint_be,
-    encode_varint,
     parse_frame,
-    recv_frame,
-    send_frame,
     serialize_frame,
 )
+from iotauth.serialization import decode_uint_be, decode_varint, encode_uint_be, encode_varint
+from iotauth.transports import recv_frame, send_frame
 from tests.helpers import FakeSocket
 
 

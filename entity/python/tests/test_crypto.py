@@ -7,13 +7,21 @@ from iotauth import (
     MessageIntegrityError,
     SerializationError,
     UnsupportedCryptoError,
-    decrypt_request_with_distribution_key,
-    encrypt_request_with_distribution_key,
-    symmetric_decrypt_authenticate,
-    symmetric_encrypt_authenticate,
 )
 from iotauth.config import AuthInfo, EntityConfig, EntityInfo, SessionConfig, TargetServer
-from iotauth.crypto import _load_crypto_backend
+from iotauth.crypto import (
+    _load_crypto_backend,
+    decrypt_request_with_distribution_key,
+    encrypt_and_sign_for_auth,
+    encrypt_request_with_distribution_key,
+    private_decrypt,
+    public_encrypt,
+    sign_sha256,
+    symmetric_decrypt_authenticate,
+    symmetric_encrypt_authenticate,
+    verify_and_decrypt_from_auth,
+    verify_sha256,
+)
 
 
 def has_cryptography():
@@ -128,15 +136,11 @@ class PublicKeyCryptoTests(unittest.TestCase):
         self.public_key = self.private_key.public_key()
 
     def test_public_encrypt_private_decrypt_round_trip(self):
-        from iotauth import private_decrypt, public_encrypt
-
         ciphertext = public_encrypt(b"payload", self.public_key)
 
         self.assertEqual(private_decrypt(ciphertext, self.private_key), b"payload")
 
     def test_signature_verification_detects_tampering(self):
-        from iotauth import sign_sha256, verify_sha256
-
         signature = sign_sha256(b"payload", self.private_key)
         verify_sha256(b"payload", signature, self.public_key)
 
@@ -144,8 +148,6 @@ class PublicKeyCryptoTests(unittest.TestCase):
             verify_sha256(b"tampered", signature, self.public_key)
 
     def test_encrypt_and_sign_envelope_round_trip(self):
-        from iotauth import encrypt_and_sign_for_auth, verify_and_decrypt_from_auth
-
         config = EntityConfig(
             entity=EntityInfo(name="net1.client", private_key_path=None),
             auth=AuthInfo(id=101, host="127.0.0.1", port=21900, public_key_path=None),

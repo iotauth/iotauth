@@ -10,18 +10,22 @@ from iotauth import (
     EntityConfig,
     EntityInfo,
     IoTAuthContext,
-    IoTSPFrame,
-    MessageType,
     SessionConfig,
     SessionKeyCache,
     TargetServer,
+)
+from iotauth.auth_service import (
     distribution_key_is_expired,
-    encode_uint_be,
-    parse_frame,
     request_session_keys,
+)
+from iotauth.protocol import (
+    IoTSPFrame,
+    MessageType,
+    parse_frame,
     serialize_buffered_string,
     serialize_frame,
 )
+from iotauth.serialization import encode_uint_be
 from tests.helpers import FakeSocket
 
 ENTITY_NONCE = b"e" * 8

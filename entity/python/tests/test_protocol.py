@@ -3,16 +3,16 @@
 import unittest
 
 from iotauth import (
-    NONCE_SIZE,
-    AuthAlertPayload,
-    AuthHelloPayload,
     DistributionKey,
     SerializationError,
     SessionConfig,
     SessionKey,
+)
+from iotauth.protocol import (
+    NONCE_SIZE,
+    AuthAlertPayload,
+    AuthHelloPayload,
     SessionKeyRequestPayload,
-    decode_uint_be,
-    encode_uint_be,
     message_type_from_byte,
     parse_auth_alert_payload,
     parse_auth_hello_payload,
@@ -23,6 +23,7 @@ from iotauth import (
     serialize_buffered_string,
     serialize_session_key_request_payload,
 )
+from iotauth.serialization import decode_uint_be, encode_uint_be
 
 
 def session_config(hmac_enabled=True):

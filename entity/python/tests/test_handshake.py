@@ -1,24 +1,25 @@
 import unittest
 from unittest.mock import patch
 
-from iotauth import (
+from iotauth import MessageIntegrityError, SecureHandshakeError, SerializationError
+from iotauth.crypto import (
+    _load_crypto_backend,
+    symmetric_decrypt_authenticate,
+    symmetric_encrypt_authenticate,
+)
+from iotauth.handshake import (
     HANDSHAKE_FIXED_SIZE,
     HANDSHAKE_NONCE_PRESENT,
     HANDSHAKE_REPLY_NONCE_PRESENT,
     HandshakePayload,
-    MessageIntegrityError,
-    SecureHandshakeError,
-    SerializationError,
     build_handshake_1,
     parse_handshake_1_key_id,
     parse_handshake_payload,
     serialize_handshake_payload,
-    symmetric_decrypt_authenticate,
     verify_handshake_1_and_build_handshake_2,
     verify_handshake_2_and_build_handshake_3,
     verify_handshake_3,
 )
-from iotauth.crypto import _load_crypto_backend
 from tests.helpers import make_session_key
 
 CLIENT_NONCE = b"c" * 8
@@ -249,8 +250,6 @@ class HandshakeCryptoTests(unittest.TestCase):
         clear_handshake_2 = serialize_handshake_payload(
             HandshakePayload(nonce=SERVER_NONCE, reply_nonce=CLIENT_NONCE)
         )
-        from iotauth import symmetric_encrypt_authenticate
-
         encrypted = symmetric_encrypt_authenticate(
             clear_handshake_2,
             key.cipher_key,

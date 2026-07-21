@@ -9,9 +9,7 @@ from iotauth import (
     ExpiredKeyError,
     InvalidSequenceNumberError,
     IoTAuthContext,
-    IoTSPFrame,
     MessageIntegrityError,
-    MessageType,
     SecureChannel,
     SecureChannelClosed,
     SecureHandshakeError,
@@ -19,19 +17,20 @@ from iotauth import (
     SessionConfig,
     SessionKeyCache,
     TargetServer,
-    accept_secure,
-    connect_secure,
-    parse_frame,
-    serialize_frame,
-    session_key_is_expired,
+)
+from iotauth.crypto import (
+    _load_crypto_backend,
     symmetric_decrypt_authenticate,
     symmetric_encrypt_authenticate,
 )
-from iotauth.crypto import _load_crypto_backend
+from iotauth.protocol import IoTSPFrame, MessageType, parse_frame, serialize_frame
 from iotauth.secure_channel import (
     MAX_SEQUENCE_NUMBER,
     _parse_secure_message,
     _serialize_secure_message,
+    accept_secure,
+    connect_secure,
+    session_key_is_expired,
 )
 from tests.helpers import FakeSocket, make_session_key
 
