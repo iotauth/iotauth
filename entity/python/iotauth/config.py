@@ -14,6 +14,7 @@ of the file. Both formats return the same typed ``EntityConfig`` dataclasses.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -28,13 +29,16 @@ REQUIRED_KEYS = {
     "entityInfo.number_key",
     "authInfo.id",
     "sessionKey.encryptionMode",
-    "authInfo.pubkey.path",
-    "entityInfo.privkey.path",
     "auth.ip.address",
     "auth.port.number",
     "entity.server.ip.address",
     "entity.server.port.number",
     "network.protocol",
+}
+
+RSA_CREDENTIAL_KEYS = {
+    "authInfo.pubkey.path",
+    "entityInfo.privkey.path",
 }
 
 OPTIONAL_KEYS = {
@@ -43,7 +47,11 @@ OPTIONAL_KEYS = {
     "PermanentDistKeyMode",
     "distKey.encryptionMode",
     "distKey.cipherkey.path",
+    "distkey.cipherkey.path",
+    "distKey.mackey.path",
     "distkey.mackey.path",
+    "distKey.validity",
+    "distkey.validity",
     "fileSystemManager.ip.address",
     "fileSystemManager.port.number",
 }
@@ -54,13 +62,13 @@ class AuthInfo:
     id: int
     host: str
     port: int
-    public_key_path: Path
+    public_key_path: Path | None
 
 
 @dataclass(frozen=True)
 class EntityInfo:
     name: str
-    private_key_path: Path
+    private_key_path: Path | None
 
 
 @dataclass(frozen=True)
@@ -89,6 +97,7 @@ class EntityConfig:
     targets: list[TargetServer]
     distribution_cipher_key_path: Path | None = None
     distribution_mac_key_path: Path | None = None
+    distribution_key_validity_ms: int | None = None
 
 
 def load_config(path: str | Path, *, validate_paths: bool = True) -> EntityConfig:
@@ -143,12 +152,13 @@ def _load_json_config(config_path: Path, text: str, *, validate_paths: bool) -> 
     # of the Node.js entities, which run with `example_entities/` as their CWD.
     json_path_anchor = Path.cwd()
 
-    def _resolve_json_path(value: str, key: str) -> Path:
+    def _resolve_json_path(value: str, key: str, *, check_exists: bool | None = None) -> Path:
         candidate = Path(value)
         if not candidate.is_absolute():
             candidate = json_path_anchor / candidate
         candidate = candidate.resolve(strict=False)
-        if validate_paths and not candidate.is_file():
+        should_validate = validate_paths if check_exists is None else check_exists
+        if should_validate and not candidate.is_file():
             raise ConfigError(f"{key} does not point to an existing file: {candidate}")
         return candidate
 
@@ -177,8 +187,20 @@ def _load_json_config(config_path: Path, text: str, *, validate_paths: bool) -> 
 
     permanent_dist_key = bool(entity_info.get("usePermanentDistKey", False))
 
-    private_key_str = _require(entity_info, "privateKey", "entityInfo")
-    entity_private_key = _resolve_json_path(private_key_str, "entityInfo.privateKey")
+    private_key_str = (
+        entity_info.get("privateKey")
+        if permanent_dist_key
+        else _require(entity_info, "privateKey", "entityInfo")
+    )
+    entity_private_key = (
+        _resolve_json_path(
+            str(private_key_str),
+            "entityInfo.privateKey",
+            check_exists=False if permanent_dist_key else None,
+        )
+        if private_key_str is not None
+        else None
+    )
 
     auth_id_raw = _require(auth_info, "id", "authInfo")
     try:
@@ -195,8 +217,20 @@ def _load_json_config(config_path: Path, text: str, *, validate_paths: bool) -> 
     if not 1 <= auth_port <= 65535:
         raise ConfigError(f"authInfo.port must be in range 1..65535, got {auth_port}")
 
-    auth_public_key_str = _require(auth_info, "publicKey", "authInfo")
-    auth_public_key = _resolve_json_path(auth_public_key_str, "authInfo.publicKey")
+    auth_public_key_str = (
+        auth_info.get("publicKey")
+        if permanent_dist_key
+        else _require(auth_info, "publicKey", "authInfo")
+    )
+    auth_public_key = (
+        _resolve_json_path(
+            str(auth_public_key_str),
+            "authInfo.publicKey",
+            check_exists=False if permanent_dist_key else None,
+        )
+        if auth_public_key_str is not None
+        else None
+    )
 
     session_crypto = _require(crypto_info, "sessionCryptoSpec", "cryptoInfo")
     dist_crypto = _require(crypto_info, "distributionCryptoSpec", "cryptoInfo")
@@ -240,6 +274,31 @@ def _load_json_config(config_path: Path, text: str, *, validate_paths: bool) -> 
     if "targetServerInfoList" in data:
         purposes = [{"group": "Servers"}]
 
+    dist_cipher_key: Path | None = None
+    dist_mac_key: Path | None = None
+    dist_validity_ms: int | None = None
+    if permanent_dist_key:
+        perm_dict = _require(entity_info, "permanentDistKey", "entityInfo")
+        if not isinstance(perm_dict, dict):
+            raise ConfigError(
+                "entityInfo.permanentDistKey must be a dictionary when usePermanentDistKey is true"
+            )
+        dist_cipher_str = perm_dict.get("cipherKey") or perm_dict.get("cipherKeyFile")
+        if dist_cipher_str is None:
+            raise ConfigError(
+                "Missing required JSON field: 'entityInfo.permanentDistKey.cipherKey'"
+            )
+        dist_cipher_key = _resolve_json_path(
+            str(dist_cipher_str), "entityInfo.permanentDistKey.cipherKey"
+        )
+        mac_key_str = perm_dict.get("macKey") or perm_dict.get("macKeyFile")
+        if mac_key_str is not None:
+            dist_mac_key = _resolve_json_path(
+                str(mac_key_str), "entityInfo.permanentDistKey.macKey"
+            )
+        if "validity" in perm_dict and perm_dict["validity"] is not None:
+            dist_validity_ms = _parse_time_period_ms(perm_dict["validity"])
+
     return EntityConfig(
         entity=EntityInfo(name=entity_name, private_key_path=entity_private_key),
         auth=AuthInfo(
@@ -258,8 +317,9 @@ def _load_json_config(config_path: Path, text: str, *, validate_paths: bool) -> 
         purposes=purposes,
         num_keys=1,
         targets=targets,
-        distribution_cipher_key_path=None,
-        distribution_mac_key_path=None,
+        distribution_cipher_key_path=dist_cipher_key,
+        distribution_mac_key_path=dist_mac_key,
+        distribution_key_validity_ms=dist_validity_ms,
     )
 
 
@@ -272,11 +332,43 @@ def _normalize_cipher(value: str, key: str) -> str:
     return normalized
 
 
+def _parse_time_period_ms(value: Any) -> int | None:
+    """Parse a time period string like '365*day' or '3600*sec' into milliseconds."""
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    s = str(value).strip()
+    if not s:
+        return None
+    replacements = [
+        (r"\*?\s*\bweek\b", "* (1000 * 60 * 60 * 24 * 7)"),
+        (r"\*?\s*\bday\b", "* (1000 * 60 * 60 * 24)"),
+        (r"\*?\s*\bhour\b", "* (1000 * 60 * 60)"),
+        (r"\*?\s*\bmin\b", "* (1000 * 60)"),
+        (r"\*?\s*\bsec\b", "* 1000"),
+    ]
+    for pattern, repl in replacements:
+        s = re.sub(pattern, repl, s, flags=re.IGNORECASE)
+    if not re.fullmatch(r"[\d\s+\-*/().]+", s):
+        raise ConfigError(f"Invalid validity period format: {value!r}")
+    try:
+        return int(eval(s, {"__builtins__": {}}, {}))
+    except Exception as exc:
+        raise ConfigError(f"Could not parse validity period {value!r}: {exc}") from exc
+
+
 def _load_properties_config(config_path: Path, text: str, *, validate_paths: bool) -> EntityConfig:
     """Parse the original C-style dotted key=value properties config file."""
     raw = _read_properties_text(config_path, text)
     _reject_unknown_keys(raw)
     _require_keys(raw, REQUIRED_KEYS)
+
+    permanent_dist_key = _parse_on_off(
+        raw.get("PermanentDistKeyMode", "off"), "PermanentDistKeyMode"
+    )
+    if not permanent_dist_key:
+        _require_keys(raw, RSA_CREDENTIAL_KEYS)
 
     entity_name = _require_non_empty(raw, "entityInfo.name")
     auth_id = _parse_int(raw, "authInfo.id")
@@ -299,24 +391,40 @@ def _load_properties_config(config_path: Path, text: str, *, validate_paths: boo
     )
 
     hmac_enabled = _parse_on_off(raw.get("HmacMode", "on"), "HmacMode")
-    permanent_dist_key = _parse_on_off(
-        raw.get("PermanentDistKeyMode", "off"), "PermanentDistKeyMode"
-    )
 
-    auth_public_key = _resolve_path(
-        config_path, raw["authInfo.pubkey.path"], "authInfo.pubkey.path", validate_paths
+    auth_public_key = (
+        _resolve_path(
+            config_path,
+            raw["authInfo.pubkey.path"],
+            "authInfo.pubkey.path",
+            validate_paths and not permanent_dist_key,
+        )
+        if "authInfo.pubkey.path" in raw
+        else None
     )
-    entity_private_key = _resolve_path(
-        config_path,
-        raw["entityInfo.privkey.path"],
-        "entityInfo.privkey.path",
-        validate_paths,
+    entity_private_key = (
+        _resolve_path(
+            config_path,
+            raw["entityInfo.privkey.path"],
+            "entityInfo.privkey.path",
+            validate_paths and not permanent_dist_key,
+        )
+        if "entityInfo.privkey.path" in raw
+        else None
     )
 
     dist_cipher_key = _resolve_optional_path(
         config_path, raw, "distKey.cipherkey.path", validate_paths
+    ) or _resolve_optional_path(config_path, raw, "distkey.cipherkey.path", validate_paths)
+    dist_mac_key = _resolve_optional_path(
+        config_path, raw, "distkey.mackey.path", validate_paths
+    ) or _resolve_optional_path(config_path, raw, "distKey.mackey.path", validate_paths)
+    if permanent_dist_key and dist_cipher_key is None:
+        raise ConfigError("PermanentDistKeyMode is on but distKey.cipherkey.path is missing")
+
+    dist_validity_ms = _parse_time_period_ms(
+        raw.get("distKey.validity") or raw.get("distkey.validity")
     )
-    dist_mac_key = _resolve_optional_path(config_path, raw, "distkey.mackey.path", validate_paths)
 
     targets = _parse_targets(raw)
     purposes = _parse_purposes(raw)
@@ -341,6 +449,7 @@ def _load_properties_config(config_path: Path, text: str, *, validate_paths: boo
         targets=targets,
         distribution_cipher_key_path=dist_cipher_key,
         distribution_mac_key_path=dist_mac_key,
+        distribution_key_validity_ms=dist_validity_ms,
     )
 
 
@@ -380,7 +489,7 @@ def _read_properties_text(config_path: Path, text: str) -> dict[str, str]:
 
 def _reject_unknown_keys(raw: dict[str, str]) -> None:
     for key in raw:
-        if key in REQUIRED_KEYS or key in OPTIONAL_KEYS:
+        if key in REQUIRED_KEYS or key in RSA_CREDENTIAL_KEYS or key in OPTIONAL_KEYS:
             continue
         if _is_target_server_key(key):
             continue

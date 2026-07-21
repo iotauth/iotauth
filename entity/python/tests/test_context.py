@@ -65,17 +65,34 @@ class IoTAuthContextTests(unittest.TestCase):
             self.assertEqual(ctx.config.entity.name, "net1.client")
             self.assertEqual(ctx.auth_public_key, "auth-key")
 
-    def test_permanent_distribution_key_mode_is_deferred(self):
+    def test_permanent_distribution_key_mode_loads_key(self):
         with TemporaryDirectory() as temp_dir:
-            config = self._load_config(Path(temp_dir), extra_lines=["PermanentDistKeyMode=on"])
+            root = Path(temp_dir)
+            (root / "dist.cipher").write_bytes(b"0123456789abcdef")
+            (root / "dist.mac").write_bytes(b"mac-secret-key-0123456789abcdef")
+            config = self._load_config(
+                root,
+                extra_lines=[
+                    "PermanentDistKeyMode=on",
+                    "distKey.cipherkey.path=dist.cipher",
+                    "distkey.mackey.path=dist.mac",
+                    "distKey.validity=365*day",
+                ],
+                omit_rsa_credentials=True,
+            )
 
-            with self.assertRaisesRegex(CredentialError, "Permanent distribution key"):
-                IoTAuthContext.from_entity_config(config)
+            ctx = IoTAuthContext.from_entity_config(config)
+            self.assertIsNotNone(ctx.distribution_key)
+            self.assertEqual(ctx.distribution_key.cipher_key, b"0123456789abcdef")
+            self.assertEqual(ctx.distribution_key.mac_key, b"mac-secret-key-0123456789abcdef")
+            self.assertIsNotNone(ctx.distribution_key.abs_validity)
+            self.assertIsNone(ctx.auth_public_key)
+            self.assertIsNone(ctx.entity_private_key)
 
-    def _load_config(self, root, extra_lines=None):
-        return load_config(self._write_config(root, extra_lines))
+    def _load_config(self, root, extra_lines=None, omit_rsa_credentials=False):
+        return load_config(self._write_config(root, extra_lines, omit_rsa_credentials))
 
-    def _write_config(self, root, extra_lines=None):
+    def _write_config(self, root, extra_lines=None, omit_rsa_credentials=False):
         (root / "auth.pem").write_text("auth", encoding="utf-8")
         (root / "entity.pem").write_text("entity", encoding="utf-8")
         config_path = root / "client.config"
@@ -93,6 +110,9 @@ class IoTAuthContextTests(unittest.TestCase):
             "entity.server.port.number=21100",
             "network.protocol=TCP",
         ]
+        if omit_rsa_credentials:
+            lines.remove("authInfo.pubkey.path=auth.pem")
+            lines.remove("entityInfo.privkey.path=entity.pem")
         lines.extend(extra_lines or [])
         config_path.write_text("\n".join(lines), encoding="utf-8")
         return config_path

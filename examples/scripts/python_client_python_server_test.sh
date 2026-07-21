@@ -7,6 +7,9 @@ SST_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 source "$SCRIPT_DIR/common.sh"
 
+PYTHON_CLIENT_CONFIG="${PYTHON_CLIENT_CONFIG:-../../node/example_entities/configs/net1/client.config}"
+EXPECT_PERMANENT_DIST_KEY="${EXPECT_PERMANENT_DIST_KEY:-false}"
+
 usage() {
 	echo "Usage: $0 [options]"
 	echo
@@ -24,6 +27,9 @@ usage() {
 	echo "  --stop-existing             Stop existing Auth/Python processes on the test ports."
 	echo "  --tmux                      Show Auth, Python server, and Python client in tmux panes."
 	echo "  -h, --help                  Show this help message."
+	echo
+	echo "Environment:"
+	echo "  PYTHON_CLIENT_CONFIG        Client config path relative to entity/python/examples."
 }
 
 prepare_test() {
@@ -42,10 +48,24 @@ parse_args "$@"
 check_and_prepare_ports
 prepare_test
 
+CLIENT_CONFIG_PATH="$SST_ROOT/entity/python/examples/$PYTHON_CLIENT_CONFIG"
+if [[ ! -f "$CLIENT_CONFIG_PATH" ]]; then
+	echo "[test] Python client config does not exist: $CLIENT_CONFIG_PATH" >&2
+	exit 1
+fi
+if [[ "$EXPECT_PERMANENT_DIST_KEY" == true ]]; then
+	if ! grep -Eq '"usePermanentDistKey"[[:space:]]*:[[:space:]]*true' "$CLIENT_CONFIG_PATH"; then
+		echo "[test] Expected a permanent distribution-key client config: $CLIENT_CONFIG_PATH" >&2
+		exit 1
+	fi
+	echo "[test] Verified permanent distribution-key client config."
+fi
+
 if [[ "$USE_TMUX" == true ]]; then
 	SESSION_NAME="sst_python_client_python_server_test_$$"
 	WAIT_SCRIPT="/tmp/${SESSION_NAME}_wait_and_stop.sh"
 	PASSWORD_ARG="$(quote_for_shell "$AUTH_PASSWORD")"
+	CLIENT_CONFIG_ARG="$(quote_for_shell "$PYTHON_CLIENT_CONFIG")"
 	setup_tmux_session "$SESSION_NAME" "Python server" "Python client"
 
 	cat >"$WAIT_SCRIPT" <<EOF
@@ -54,7 +74,7 @@ set +e
 sleep 6
 cd $(quote_for_shell "$SST_ROOT/entity/python/examples") || exit 1
 source ../.venv/bin/activate
-python3 pyClient.py configs/pyClient.config
+python3 pyClient.py $CLIENT_CONFIG_ARG
 status=\$?
 tmux send-keys -t $AUTH_PANE_ARG C-c
 tmux send-keys -t $SERVER_PANE_ARG C-c
@@ -88,7 +108,7 @@ echo "[test] Running Python client."
 (
 	cd "$SST_ROOT/entity/python/examples"
 	source ../.venv/bin/activate
-	exec python3 pyClient.py ../../node/example_entities/configs/net1/client.config
+	exec python3 pyClient.py "$PYTHON_CLIENT_CONFIG"
 ) >"$CLIENT_LOG" 2>&1 &
 CLIENT_PID=$!
 (
@@ -112,6 +132,10 @@ wait "$CLIENT_PID" 2>/dev/null || true
 CLIENT_PID=""
 
 if [[ "$VERIFY_OUTPUT" == true ]]; then
+	if [[ "$EXPECT_PERMANENT_DIST_KEY" == true ]]; then
+		echo "[test] Checking Auth used the permanent distribution key."
+		assert_log_contains "$AUTH_LOG" "Received request message encrypted with distribution key!"
+	fi
 	echo "[test] Checking Python server output."
 	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server"
 	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server - second message"

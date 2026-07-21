@@ -5,6 +5,7 @@ from iotauth import (
     AuthInfo,
     AuthProtocolError,
     ConfigError,
+    CredentialError,
     DistributionKey,
     EntityConfig,
     EntityInfo,
@@ -31,7 +32,7 @@ class FakeKey:
     key_size = 2048
 
 
-def config(purposes=None):
+def config(purposes=None, permanent_distribution_key=False):
     return EntityConfig(
         entity=EntityInfo(name="net1.client", private_key_path=None),
         auth=AuthInfo(id=101, host="127.0.0.1", port=21900, public_key_path=None),
@@ -39,6 +40,7 @@ def config(purposes=None):
             protocol="TCP",
             encryption_mode="AES_128_CBC",
             distribution_encryption_mode="AES_128_CBC",
+            permanent_distribution_key=permanent_distribution_key,
         ),
         purposes=[{"group": "Servers"}] if purposes is None else purposes,
         num_keys=1,
@@ -46,9 +48,9 @@ def config(purposes=None):
     )
 
 
-def context(distribution_key=None, purposes=None):
+def context(distribution_key=None, purposes=None, permanent_distribution_key=False):
     return IoTAuthContext(
-        config=config(purposes=purposes),
+        config=config(purposes=purposes, permanent_distribution_key=permanent_distribution_key),
         auth_public_key=FakeKey(),
         entity_private_key=FakeKey(),
         distribution_key=distribution_key,
@@ -276,6 +278,49 @@ class AuthServiceTests(unittest.TestCase):
             self.assertEqual(ctx.request_session_keys(timeout=1.0), [])
 
         req.assert_called_once_with(ctx, purpose=None, count=None, timeout=1.0)
+
+    def test_permanent_distribution_key_missing_or_expired_raises(self):
+        from iotauth.auth_service import _protect_session_key_request
+
+        ctx = context(permanent_distribution_key=True)
+        with self.assertRaisesRegex(
+            CredentialError, "Permanent distribution key is expired or missing"
+        ):
+            _protect_session_key_request(ctx, b"payload")
+
+        ctx_expired = context(
+            permanent_distribution_key=True,
+            distribution_key=DistributionKey(
+                cipher_key=b"c" * 16,
+                mac_key=b"m" * 32,
+                abs_validity=10,
+                encryption_mode="AES_128_CBC",
+            ),
+        )
+        with self.assertRaisesRegex(
+            CredentialError, "Permanent distribution key is expired or missing"
+        ):
+            _protect_session_key_request(ctx_expired, b"payload")
+
+    def test_permanent_distribution_key_protect_request(self):
+        from iotauth.auth_service import _protect_session_key_request
+
+        ctx = context(
+            permanent_distribution_key=True,
+            distribution_key=DistributionKey(
+                cipher_key=b"c" * 16,
+                mac_key=b"m" * 32,
+                abs_validity=0xFFFFFFFFFFFF,
+                encryption_mode="AES_128_CBC",
+            ),
+        )
+        with patch(
+            "iotauth.auth_service.encrypt_request_with_distribution_key",
+            return_value=b"protected",
+        ):
+            payload, msg_type = _protect_session_key_request(ctx, b"raw")
+            self.assertEqual(msg_type, MessageType.SESSION_KEY_REQ)
+            self.assertEqual(payload, b"protected")
 
 
 if __name__ == "__main__":

@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any
 
+from .config import EntityConfig
 from .exceptions import CredentialError
+from .keys import DistributionKey
 
 
 def load_auth_public_key(path: str | Path) -> Any:
@@ -53,6 +56,37 @@ def load_entity_private_key(path: str | Path) -> Any:
     if not isinstance(private_key, crypto["rsa"].RSAPrivateKey):
         raise CredentialError("Entity private key must be RSA")
     return private_key
+
+
+def load_permanent_distribution_key(config: EntityConfig) -> DistributionKey:
+    """Load a pre-distributed symmetric distribution key from disk."""
+    if config.distribution_cipher_key_path is None:
+        raise CredentialError(
+            "Permanent distribution key mode enabled but distribution cipher key path is missing"
+        )
+
+    cipher_key = _read_pem(config.distribution_cipher_key_path, "Distribution cipher key")
+    mac_key: bytes | None = None
+    if config.session.hmac_enabled:
+        if config.distribution_mac_key_path is None:
+            raise CredentialError(
+                "Permanent distribution key mode with HMAC enabled requires "
+                "distribution MAC key path"
+            )
+        mac_key = _read_pem(config.distribution_mac_key_path, "Distribution MAC key")
+    elif config.distribution_mac_key_path is not None:
+        mac_key = _read_pem(config.distribution_mac_key_path, "Distribution MAC key")
+
+    abs_validity: int | None = None
+    if config.distribution_key_validity_ms is not None:
+        abs_validity = int(time.time() * 1000) + config.distribution_key_validity_ms
+
+    return DistributionKey(
+        cipher_key=cipher_key,
+        mac_key=mac_key,
+        abs_validity=abs_validity,
+        encryption_mode=config.session.distribution_encryption_mode,
+    )
 
 
 def _read_pem(path: str | Path, label: str) -> bytes:

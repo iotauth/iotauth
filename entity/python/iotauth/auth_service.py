@@ -14,7 +14,13 @@ from .crypto import (
     symmetric_decrypt_authenticate,
     verify_and_decrypt_from_auth,
 )
-from .exceptions import AuthConnectionError, AuthProtocolError, ConfigError, SerializationError
+from .exceptions import (
+    AuthConnectionError,
+    AuthProtocolError,
+    ConfigError,
+    CredentialError,
+    SerializationError,
+)
 from .keys import DistributionKey, SessionKey
 from .protocol import (
     NONCE_SIZE,
@@ -133,6 +139,11 @@ def _parse_expected_auth_hello(ctx: IoTAuthContext, frame: IoTSPFrame) -> Any:
 
 def _protect_session_key_request(ctx: IoTAuthContext, payload: bytes) -> tuple[bytes, MessageType]:
     if ctx.distribution_key is None or distribution_key_is_expired(ctx.distribution_key):
+        if ctx.config.session.permanent_distribution_key:
+            raise CredentialError(
+                "Permanent distribution key is expired or missing; cannot request "
+                "session keys without RSA credentials"
+            )
         return encrypt_and_sign_for_auth(payload, ctx), MessageType.SESSION_KEY_REQ_IN_PUB_ENC
 
     return (

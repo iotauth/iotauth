@@ -89,6 +89,80 @@ class LoadConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(ConfigError, "existing file"):
                 load_config(config_path)
 
+    def test_non_permanent_mode_requires_rsa_paths(self):
+        with self.assertRaisesRegex(ConfigError, "authInfo.pubkey.path, entityInfo.privkey.path"):
+            self._load_minimal_config(skip={"authInfo.pubkey.path", "entityInfo.privkey.path"})
+
+    def test_loads_properties_permanent_distribution_key(self):
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "dist.cipher").write_bytes(b"cipher")
+            (root / "dist.mac").write_bytes(b"mac")
+            config_path = root / "client.config"
+            config_path.write_text(
+                self._minimal_config_text(
+                    root,
+                    override={
+                        "PermanentDistKeyMode": "on",
+                        "distKey.cipherkey.path": "dist.cipher",
+                        "distkey.mackey.path": "dist.mac",
+                        "distKey.validity": "365*day",
+                    },
+                    skip={"authInfo.pubkey.path", "entityInfo.privkey.path"},
+                    create_keys=False,
+                ),
+                encoding="utf-8",
+            )
+            config = load_config(config_path)
+            self.assertTrue(config.session.permanent_distribution_key)
+            self.assertEqual(config.distribution_cipher_key_path, (root / "dist.cipher").resolve())
+            self.assertEqual(config.distribution_mac_key_path, (root / "dist.mac").resolve())
+            self.assertEqual(config.distribution_key_validity_ms, 365 * 24 * 60 * 60 * 1000)
+            self.assertIsNone(config.auth.public_key_path)
+            self.assertIsNone(config.entity.private_key_path)
+
+    def test_loads_json_permanent_distribution_key(self):
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "dist.cipher").write_bytes(b"cipher")
+            (root / "dist.mac").write_bytes(b"mac")
+            json_path = root / "client.json"
+            import json
+
+            data = {
+                "entityInfo": {
+                    "name": "net1.client",
+                    "group": "Clients",
+                    "distProtocol": "TCP",
+                    "usePermanentDistKey": True,
+                    "permanentDistKey": {
+                        "cipherKeyFile": str(root / "dist.cipher"),
+                        "macKeyFile": str(root / "dist.mac"),
+                        "validity": "365*day",
+                    },
+                },
+                "authInfo": {
+                    "id": 101,
+                    "host": "127.0.0.1",
+                    "port": 21900,
+                    "publicKey": str(root / "missing-auth.pem"),
+                },
+                "cryptoInfo": {
+                    "sessionCryptoSpec": {"cipher": "AES-128-CBC"},
+                    "distributionCryptoSpec": {"cipher": "AES-128-CBC"},
+                },
+                "targetServerInfoList": [
+                    {"name": "net1.server", "host": "127.0.0.1", "port": 21100}
+                ],
+            }
+            json_path.write_text(json.dumps(data), encoding="utf-8")
+            config = load_config(json_path)
+            self.assertTrue(config.session.permanent_distribution_key)
+            self.assertEqual(config.distribution_cipher_key_path, (root / "dist.cipher").resolve())
+            self.assertEqual(config.distribution_mac_key_path, (root / "dist.mac").resolve())
+            self.assertEqual(config.distribution_key_validity_ms, 365 * 24 * 60 * 60 * 1000)
+            self.assertIsNone(config.entity.private_key_path)
+
     def _load_minimal_config(self, purpose_line=None, override=None, skip=None):
         with TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
