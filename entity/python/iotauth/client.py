@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from .context import IoTAuthContext
+from .exceptions import SecureClientStateError
 from .keys import SessionKey
 from .secure_channel import SecureChannel
 
@@ -23,7 +24,8 @@ class SecureClient:
 
     The client is a context manager. Leaving its ``with`` block closes the
     channel returned by ``connect()``. Send and receive application data through
-    that channel rather than through ``SecureClient``.
+    that channel rather than through ``SecureClient``. A client owns at most one
+    active channel at a time.
     """
 
     def __init__(
@@ -42,7 +44,7 @@ class SecureClient:
         self.host = host
         self.port = port
         self.timeout = timeout
-        self.channel: SecureChannel | None = None
+        self._channel: SecureChannel | None = None
 
     def connect(self) -> SecureChannel:
         """Request a key when needed and establish a secure channel.
@@ -55,8 +57,14 @@ class SecureClient:
             AuthConnectionError: If Auth or the peer cannot be reached.
             AuthProtocolError: If Auth returns an unexpected response.
             ExpiredKeyError: If the selected key has expired.
+            SecureClientStateError: If this client already owns an open channel.
             SecureHandshakeError: If the peer handshake fails validation.
         """
+
+        if self._channel is not None:
+            if not self._channel.closed:
+                raise SecureClientStateError("SecureClient already owns an open channel")
+            self._channel = None
 
         key = self.key
         if key is None:
@@ -67,17 +75,20 @@ class SecureClient:
             key = keys[0]
             self.key = key
 
-        self.channel = self.ctx.connect_secure(
+        channel = self.ctx.connect_secure(
             key=key,
             host=self.host,
             port=self.port,
             timeout=self.timeout,
         )
-        return self.channel
+        self._channel = channel
+        return channel
 
     def __enter__(self) -> SecureClient:
         return self
 
     def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
-        if self.channel is not None:
-            self.channel.close()
+        channel = self._channel
+        self._channel = None
+        if channel is not None:
+            channel.close()

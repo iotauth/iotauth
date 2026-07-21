@@ -9,6 +9,7 @@ from iotauth import (
     EntityInfo,
     IoTAuthContext,
     SecureClient,
+    SecureClientStateError,
     SecureServer,
     SessionConfig,
     SessionKeyCache,
@@ -107,12 +108,38 @@ class SecureClientTests(unittest.TestCase):
         self.assertEqual(ctx.connect_calls[0]["key"], ctx.requested_key)
         self.assertIs(client.key, ctx.requested_key)
 
+    def test_connect_rejects_second_active_channel(self):
+        ctx = FakeContext()
+        client = SecureClient(ctx, key=make_session_key())
+        channel = client.connect()
+
+        with self.assertRaisesRegex(SecureClientStateError, "already owns an open channel"):
+            client.connect()
+
+        self.assertIs(client._channel, channel)
+        self.assertEqual(len(ctx.connect_calls), 1)
+
+    def test_connect_allows_reconnection_after_channel_closes(self):
+        ctx = FakeContext()
+        client = SecureClient(ctx, key=make_session_key())
+        first_channel = client.connect()
+        first_channel.close()
+        ctx.channel = FakeChannel()
+
+        second_channel = client.connect()
+
+        self.assertIsNot(second_channel, first_channel)
+        self.assertIs(client._channel, second_channel)
+        self.assertEqual(len(ctx.connect_calls), 2)
+
     def test_context_manager_closes_on_exit(self):
         ctx = FakeContext()
         with SecureClient(ctx, key=make_session_key()) as client:
-            client.connect()
+            channel = client.connect()
 
-        self.assertTrue(ctx.channel.closed)
+        self.assertTrue(channel.closed)
+        self.assertIsNone(client._channel)
+        self.assertFalse(hasattr(client, "channel"))
 
 
 class SecureServerTests(unittest.TestCase):

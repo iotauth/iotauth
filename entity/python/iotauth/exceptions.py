@@ -49,5 +49,9 @@ class SecureChannelClosed(IoTAuthError):
     """Raised when a secure channel operation is attempted on a closed channel."""
 
 
+class SecureClientStateError(IoTAuthError):
+    """Raised when a secure client operation conflicts with its active channel."""
+
+
 class InvalidSequenceNumberError(IoTAuthError):
     """Raised when secure channel sequence-number validation fails."""
