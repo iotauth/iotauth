@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .config import EntityConfig, load_config
 from .credentials import (
@@ -14,6 +14,9 @@ from .credentials import (
 )
 from .exceptions import CredentialError
 from .keys import DistributionKey, SessionKey, SessionKeyCache
+
+if TYPE_CHECKING:
+    from .secure_channel import SecureChannel
 
 
 @dataclass
@@ -139,7 +142,7 @@ class IoTAuthContext:
         host: str | None = None,
         port: int | None = None,
         timeout: float | None = 5.0,
-    ) -> Any:
+    ) -> SecureChannel:
         """Connect to a peer and complete the client-side secure handshake.
 
         Args:
@@ -175,7 +178,7 @@ class IoTAuthContext:
         sock: Any,
         *,
         timeout: float | None = 5.0,
-    ) -> Any:
+    ) -> SecureChannel:
         """Complete the server-side secure handshake on an accepted socket.
 
         Args:

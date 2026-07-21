@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .config import EntityConfig
 from .exceptions import CredentialError
 from .keys import DistributionKey
 
+if TYPE_CHECKING:
+    from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
-def load_auth_public_key(path: str | Path) -> Any:
+
+def load_auth_public_key(path: str | Path) -> RSAPublicKey:
     """Load Auth's RSA public key from an X.509 PEM certificate.
 
     The C API expects Auth's public credential path to point at an X.509
@@ -47,7 +50,7 @@ def load_auth_public_key(path: str | Path) -> Any:
     return public_key
 
 
-def load_entity_private_key(path: str | Path) -> Any:
+def load_entity_private_key(path: str | Path) -> RSAPrivateKey:
     """Load the entity's RSA private key from a PEM file.
 
     Args:
