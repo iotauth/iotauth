@@ -5,7 +5,6 @@ from __future__ import annotations
 import secrets
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any
 
 from .config import TargetServer
@@ -39,23 +38,37 @@ SEQ_NUM_SIZE = 8
 MAX_SEQUENCE_NUMBER = (1 << (SEQ_NUM_SIZE * 8)) - 1
 
 
-@dataclass
 class SecureChannel:
     """Established encrypted connection between two IoTAuth entities.
 
     Attributes:
-        socket: Connected stream socket used by the channel.
-        session_key: Session key protecting application messages.
-        send_sequence: Sequence number assigned to the next outgoing message.
-        receive_sequence: Sequence number expected on the next incoming message.
-        closed: Whether the underlying connection has been closed.
+        closed: Whether the channel has been closed. This property is
+            read-only; the socket, session key, and sequence counters are
+            managed internally.
     """
 
-    socket: Any
-    session_key: SessionKey
-    send_sequence: int = 0
-    receive_sequence: int = 0
-    closed: bool = False
+    def __init__(self, socket: Any, session_key: SessionKey) -> None:
+        """Create a channel around an established secure connection.
+
+        Applications normally receive channels from ``SecureClient.connect``
+        or ``SecureServer.serve_once`` instead of constructing them directly.
+
+        Args:
+            socket: Connected stream socket used by the channel.
+            session_key: Session key protecting application messages.
+        """
+
+        self._socket = socket
+        self._session_key = session_key
+        self._send_sequence = 0
+        self._receive_sequence = 0
+        self._closed = False
+
+    @property
+    def closed(self) -> bool:
+        """Whether the channel has been closed."""
+
+        return self._closed
 
     def send(self, data: bytes) -> None:
         """Encrypt, authenticate, and send one application message.
@@ -71,22 +84,28 @@ class SecureChannel:
         """
 
         _ensure_channel_open(self)
-        _check_session_key_validity(self.session_key)
+        _check_session_key_validity(self._session_key)
         payload = _coerce_payload(data)
         encrypted = _encrypt_secure_message(self, payload)
-        send_frame(self.socket, IoTSPFrame(MessageType.SECURE_COMM_MSG, encrypted))
-        self.send_sequence += 1
+        send_frame(self._socket, IoTSPFrame(MessageType.SECURE_COMM_MSG, encrypted))
+        self._send_sequence += 1
 
-    def recv(self) -> bytes:
+    def recv(self, *, timeout: float | None = None) -> bytes:
         """Receive, authenticate, and decrypt one application message.
+
+        Args:
+            timeout: Maximum number of seconds to wait for a complete message.
+                Use ``None`` to wait indefinitely. The socket's prior timeout is
+                restored after the operation.
 
         Returns:
             The plaintext bytes received from the peer.
 
         Raises:
+            ValueError: If ``timeout`` is negative.
             SecureChannelClosed: If the channel is closed before or during the
                 receive operation.
-            AuthConnectionError: If reading from the peer fails.
+            AuthConnectionError: If reading from the peer fails or times out.
             SerializationError: If the peer sends an unexpected frame.
             MessageIntegrityError: If message authentication fails.
             InvalidSequenceNumberError: If the message sequence is unexpected.
@@ -94,8 +113,11 @@ class SecureChannel:
         """
 
         _ensure_channel_open(self)
+        if timeout is not None and timeout < 0:
+            raise ValueError("timeout must be non-negative or None")
+
         try:
-            frame = recv_frame(self.socket)
+            frame = _recv_frame_with_timeout(self._socket, timeout)
         except AuthConnectionError as exc:
             if "closed" in str(exc).lower():
                 self.close()
@@ -107,8 +129,8 @@ class SecureChannel:
             )
 
         payload = _decrypt_secure_message(self, frame.payload)
-        _check_session_key_validity(self.session_key)
-        self.receive_sequence += 1
+        _check_session_key_validity(self._session_key)
+        self._receive_sequence += 1
         return payload
 
     def close(self) -> None:
@@ -117,15 +139,15 @@ class SecureChannel:
         Calling this method on an already closed channel has no effect.
         """
 
-        if self.closed:
+        if self._closed:
             return
-        close = getattr(self.socket, "close", None)
+        close = getattr(self._socket, "close", None)
         if close is not None:
             try:
                 close()
             except OSError:
                 pass
-        self.closed = True
+        self._closed = True
 
 
 def connect_secure(
@@ -328,31 +350,52 @@ def _parse_secure_message(plaintext: bytes) -> tuple[int, bytes]:
 
 
 def _encrypt_secure_message(channel: SecureChannel, data: bytes) -> bytes:
-    plaintext = _serialize_secure_message(channel.send_sequence, data)
+    plaintext = _serialize_secure_message(channel._send_sequence, data)
     return symmetric_encrypt_authenticate(
         plaintext,
-        channel.session_key.cipher_key,
-        channel.session_key.mac_key,
-        channel.session_key.encryption_mode,
-        channel.session_key.hmac_enabled,
+        channel._session_key.cipher_key,
+        channel._session_key.mac_key,
+        channel._session_key.encryption_mode,
+        channel._session_key.hmac_enabled,
     )
 
 
 def _decrypt_secure_message(channel: SecureChannel, encrypted: bytes) -> bytes:
     plaintext = symmetric_decrypt_authenticate(
         encrypted,
-        channel.session_key.cipher_key,
-        channel.session_key.mac_key,
-        channel.session_key.encryption_mode,
-        channel.session_key.hmac_enabled,
+        channel._session_key.cipher_key,
+        channel._session_key.mac_key,
+        channel._session_key.encryption_mode,
+        channel._session_key.hmac_enabled,
     )
     sequence, payload = _parse_secure_message(plaintext)
-    if sequence != channel.receive_sequence:
+    if sequence != channel._receive_sequence:
         raise InvalidSequenceNumberError(
             "Secure message sequence number mismatch: "
-            f"expected {channel.receive_sequence}, got {sequence}"
+            f"expected {channel._receive_sequence}, got {sequence}"
         )
     return payload
+
+
+def _recv_frame_with_timeout(sock: Any, timeout: float | None) -> IoTSPFrame:
+    gettimeout = getattr(sock, "gettimeout", None)
+    settimeout = getattr(sock, "settimeout", None)
+    if gettimeout is None or settimeout is None:
+        return recv_frame(sock)
+
+    try:
+        original_timeout = gettimeout()
+        settimeout(timeout)
+    except OSError as exc:
+        raise AuthConnectionError(f"Could not configure receive timeout: {exc}") from exc
+
+    try:
+        return recv_frame(sock)
+    finally:
+        try:
+            settimeout(original_timeout)
+        except OSError:
+            pass
 
 
 def _resolve_target(

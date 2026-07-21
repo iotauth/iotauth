@@ -17,7 +17,6 @@ def main():
         with SecureClient(ctx) as client:
             print("Connecting to server...")
             channel = client.connect()
-            channel.socket.settimeout(1.0)
 
             messages = [
                 b"Hello server",
@@ -31,7 +30,7 @@ def main():
 
                 # Receive and decrypt the reply
                 try:
-                    reply = channel.recv()
+                    reply = channel.recv(timeout=1.0)
                     print(f"LOG: Received: {reply.decode('utf-8')}")
                 except AuthConnectionError as exc:
                     if "timed out" in str(exc).lower():

@@ -50,9 +50,31 @@ CRYPTOGRAPHY_AVAILABLE = has_cryptography()
 CLIENT_NONCE = b"c" * 8
 
 
-class FailingSendSocket(FakeSocket):
+class FailingOnceSendSocket(FakeSocket):
+    def __init__(self):
+        super().__init__()
+        self.fail_next_send = True
+
     def sendall(self, data):
-        raise OSError("write failed")
+        if self.fail_next_send:
+            self.fail_next_send = False
+            raise OSError("write failed")
+        super().sendall(data)
+
+
+class RecordingTimeoutSocket(FakeSocket):
+    def __init__(self, incoming=b"", eof_on_empty=False):
+        super().__init__(incoming, eof_on_empty)
+        self.receive_timeouts = []
+
+    def recv(self, size):
+        self.receive_timeouts.append(self.timeout)
+        return super().recv(size)
+
+
+class TimingOutSocket(FakeSocket):
+    def recv(self, size):
+        raise TimeoutError("timed out")
 
 
 def socket_factory_for(fake_socket):
@@ -129,6 +151,17 @@ class SecureChannelTests(unittest.TestCase):
         # 3 seconds after first use
         self.assertTrue(session_key_is_expired(key, now_ms=4000))
 
+    def test_channel_state_is_encapsulated(self):
+        channel = SecureChannel(FakeSocket(), make_session_key())
+
+        self.assertFalse(channel.closed)
+        self.assertFalse(hasattr(channel, "socket"))
+        self.assertFalse(hasattr(channel, "session_key"))
+        self.assertFalse(hasattr(channel, "send_sequence"))
+        self.assertFalse(hasattr(channel, "receive_sequence"))
+        with self.assertRaises(AttributeError):
+            channel.closed = True
+
     def test_connect_secure_completes_client_handshake(self):
         fake = FakeSocket(frame(MessageType.SKEY_HANDSHAKE_2, b"handshake2"))
         key = make_session_key()
@@ -151,10 +184,6 @@ class SecureChannelTests(unittest.TestCase):
             )
 
         self.assertIsInstance(channel, SecureChannel)
-        self.assertIs(channel.socket, fake)
-        self.assertIs(channel.session_key, key)
-        self.assertEqual(channel.send_sequence, 0)
-        self.assertEqual(channel.receive_sequence, 0)
         self.assertFalse(channel.closed)
         self.assertEqual(fake.opened_with, ("127.0.0.1", 21100, 5.0))
         build_h1.assert_called_once_with(key, CLIENT_NONCE)
@@ -301,8 +330,7 @@ class SecureChannelTests(unittest.TestCase):
             )
 
         self.assertIsInstance(channel, SecureChannel)
-        self.assertIs(channel.socket, fake)
-        self.assertIs(channel.session_key, key)
+        self.assertFalse(channel.closed)
         verify_h1.assert_called_once_with(key, b"12345678handshake1", b"s" * 8)
         verify_h3.assert_called_once_with(key, b"handshake3", b"s" * 8)
 
@@ -332,13 +360,12 @@ class SecureChannelTests(unittest.TestCase):
                 return_value=[key],
             ) as req_keys,
         ):
-            channel = accept_secure(
+            accept_secure(
                 ctx,
                 fake,
                 _nonce_factory=lambda size: b"s" * 8,
             )
 
-        self.assertIs(channel.session_key, key)
         req_keys.assert_called_once_with(
             purpose={"keyId": int.from_bytes(b"87654321", "big")},
             count=1,
@@ -448,8 +475,10 @@ class SecureChannelTests(unittest.TestCase):
         channel = SecureChannel(fake, key)
 
         channel.send(b"hello")
+        channel.send(b"again")
 
         sent = parse_frame(fake.sent[0])
+        sent_again = parse_frame(fake.sent[1])
         self.assertEqual(sent.message_type, MessageType.SECURE_COMM_MSG)
         decrypted = symmetric_decrypt_authenticate(
             sent.payload,
@@ -459,16 +488,34 @@ class SecureChannelTests(unittest.TestCase):
             key.hmac_enabled,
         )
         self.assertEqual(_parse_secure_message(decrypted), (0, b"hello"))
-        self.assertEqual(channel.send_sequence, 1)
+        decrypted_again = symmetric_decrypt_authenticate(
+            sent_again.payload,
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
+        self.assertEqual(_parse_secure_message(decrypted_again), (1, b"again"))
 
     @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_failed_send_does_not_increment_sequence(self):
-        channel = SecureChannel(FailingSendSocket(), make_session_key())
+        key = make_session_key()
+        fake = FailingOnceSendSocket()
+        channel = SecureChannel(fake, key)
 
         with self.assertRaises(AuthConnectionError):
             channel.send(b"hello")
 
-        self.assertEqual(channel.send_sequence, 0)
+        channel.send(b"retry")
+        sent = parse_frame(fake.sent[0])
+        decrypted = symmetric_decrypt_authenticate(
+            sent.payload,
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
+        self.assertEqual(_parse_secure_message(decrypted), (0, b"retry"))
 
     def test_send_after_close_raises_channel_closed(self):
         channel = SecureChannel(FakeSocket(), make_session_key())
@@ -495,13 +542,52 @@ class SecureChannelTests(unittest.TestCase):
             key.encryption_mode,
             key.hmac_enabled,
         )
+        encrypted_again = symmetric_encrypt_authenticate(
+            _serialize_secure_message(1, b"again"),
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
         channel = SecureChannel(
-            FakeSocket(frame(MessageType.SECURE_COMM_MSG, encrypted)),
+            FakeSocket(
+                frame(MessageType.SECURE_COMM_MSG, encrypted)
+                + frame(MessageType.SECURE_COMM_MSG, encrypted_again)
+            ),
             key,
         )
 
         self.assertEqual(channel.recv(), b"hello")
-        self.assertEqual(channel.receive_sequence, 1)
+        self.assertEqual(channel.recv(), b"again")
+
+    def test_recv_applies_and_restores_timeout(self):
+        key = make_session_key()
+        fake = RecordingTimeoutSocket(frame(MessageType.SECURE_COMM_MSG, b"encrypted"))
+        fake.settimeout(9.0)
+        channel = SecureChannel(fake, key)
+
+        with patch("iotauth.secure_channel._decrypt_secure_message", return_value=b"hello"):
+            self.assertEqual(channel.recv(timeout=0.25), b"hello")
+
+        self.assertTrue(fake.receive_timeouts)
+        self.assertTrue(all(timeout == 0.25 for timeout in fake.receive_timeouts))
+        self.assertEqual(fake.gettimeout(), 9.0)
+
+    def test_recv_translates_timeout_and_restores_socket_state(self):
+        fake = TimingOutSocket()
+        fake.settimeout(9.0)
+        channel = SecureChannel(fake, make_session_key())
+
+        with self.assertRaisesRegex(AuthConnectionError, "timed out"):
+            channel.recv(timeout=0.25)
+
+        self.assertEqual(fake.gettimeout(), 9.0)
+
+    def test_recv_rejects_negative_timeout(self):
+        channel = SecureChannel(FakeSocket(), make_session_key())
+
+        with self.assertRaisesRegex(ValueError, "non-negative"):
+            channel.recv(timeout=-0.1)
 
     def test_recv_rejects_wrong_message_type(self):
         channel = SecureChannel(
@@ -521,14 +607,21 @@ class SecureChannelTests(unittest.TestCase):
             key.encryption_mode,
             key.hmac_enabled,
         )
-        channel = SecureChannel(
-            FakeSocket(frame(MessageType.SECURE_COMM_MSG, encrypted)),
-            key,
-        )
+        fake = FakeSocket(frame(MessageType.SECURE_COMM_MSG, encrypted))
+        channel = SecureChannel(fake, key)
 
         with self.assertRaises(InvalidSequenceNumberError):
             channel.recv()
-        self.assertEqual(channel.receive_sequence, 0)
+
+        valid = symmetric_encrypt_authenticate(
+            _serialize_secure_message(0, b"retry"),
+            key.cipher_key,
+            key.mac_key,
+            key.encryption_mode,
+            key.hmac_enabled,
+        )
+        fake.incoming.extend(frame(MessageType.SECURE_COMM_MSG, valid))
+        self.assertEqual(channel.recv(), b"retry")
 
     @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
     def test_recv_rejects_tampered_payload(self):
@@ -597,10 +690,13 @@ class SecureChannelTests(unittest.TestCase):
         client_socket.incoming.extend(server_socket.sent.pop(0))
         self.assertEqual(client.recv(), b"ack")
 
-        self.assertEqual(client.send_sequence, 1)
-        self.assertEqual(client.receive_sequence, 1)
-        self.assertEqual(server.send_sequence, 1)
-        self.assertEqual(server.receive_sequence, 1)
+        client.send(b"again")
+        server_socket.incoming.extend(client_socket.sent.pop(0))
+        self.assertEqual(server.recv(), b"again")
+
+        server.send(b"ack again")
+        client_socket.incoming.extend(server_socket.sent.pop(0))
+        self.assertEqual(client.recv(), b"ack again")
 
 
 if __name__ == "__main__":
