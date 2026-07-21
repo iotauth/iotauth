@@ -10,7 +10,21 @@ from .secure_channel import SecureChannel
 
 
 class SecureClient:
-    """Convenience wrapper for the client-side secure connection workflow."""
+    """Establish client-side secure channels with an IoTAuth peer.
+
+    Args:
+        ctx: Runtime context for the client entity.
+        key: Session key to use. When omitted, ``connect()`` requests one from
+            Auth.
+        purpose: Purpose override used when requesting a session key.
+        host: Peer hostname or IP address. Must be supplied with ``port``.
+        port: Peer TCP port. Must be supplied with ``host``.
+        timeout: Timeout in seconds for Auth, connection, and handshake work.
+
+    The client is a context manager. Leaving its ``with`` block closes the
+    channel returned by ``connect()``. Send and receive application data through
+    that channel rather than through ``SecureClient``.
+    """
 
     def __init__(
         self,
@@ -31,6 +45,19 @@ class SecureClient:
         self.channel: SecureChannel | None = None
 
     def connect(self) -> SecureChannel:
+        """Request a key when needed and establish a secure channel.
+
+        Returns:
+            The channel to use for sending, receiving, and explicit closure.
+
+        Raises:
+            ConfigError: If no key purpose or complete peer address is available.
+            AuthConnectionError: If Auth or the peer cannot be reached.
+            AuthProtocolError: If Auth returns an unexpected response.
+            ExpiredKeyError: If the selected key has expired.
+            SecureHandshakeError: If the peer handshake fails validation.
+        """
+
         key = self.key
         if key is None:
             keys = self.ctx.request_session_keys(

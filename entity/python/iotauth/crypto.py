@@ -19,6 +19,20 @@ HMAC_SHA256_SIZE = 32
 
 
 def public_encrypt(payload: bytes, public_key: Any) -> bytes:
+    """Encrypt bytes with an RSA public key using OAEP.
+
+    Args:
+        payload: Plaintext bytes to encrypt.
+        public_key: RSA public key from the cryptography backend.
+
+    Returns:
+        RSA-encrypted bytes.
+
+    Raises:
+        UnsupportedCryptoError: If the key type is unsupported or the payload
+            is too large for direct RSA encryption.
+    """
+
     crypto = _load_crypto_backend()
     _require_rsa_public_key(public_key, crypto)
     try:
@@ -28,6 +42,20 @@ def public_encrypt(payload: bytes, public_key: Any) -> bytes:
 
 
 def private_decrypt(ciphertext: bytes, private_key: Any) -> bytes:
+    """Decrypt RSA/OAEP ciphertext with a private key.
+
+    Args:
+        ciphertext: RSA-encrypted bytes.
+        private_key: RSA private key from the cryptography backend.
+
+    Returns:
+        Decrypted plaintext bytes.
+
+    Raises:
+        UnsupportedCryptoError: If the key type is unsupported.
+        MessageIntegrityError: If RSA/OAEP decryption fails.
+    """
+
     crypto = _load_crypto_backend()
     _require_rsa_private_key(private_key, crypto)
     try:
@@ -37,6 +65,19 @@ def private_decrypt(ciphertext: bytes, private_key: Any) -> bytes:
 
 
 def sign_sha256(data: bytes, private_key: Any) -> bytes:
+    """Create an RSA PKCS#1 v1.5 signature using SHA-256.
+
+    Args:
+        data: Bytes to sign.
+        private_key: RSA private key from the cryptography backend.
+
+    Returns:
+        Signature bytes.
+
+    Raises:
+        UnsupportedCryptoError: If the key type or backend is unsupported.
+    """
+
     crypto = _load_crypto_backend()
     _require_rsa_private_key(private_key, crypto)
     return private_key.sign(
@@ -47,6 +88,18 @@ def sign_sha256(data: bytes, private_key: Any) -> bytes:
 
 
 def verify_sha256(data: bytes, signature: bytes, public_key: Any) -> None:
+    """Verify an RSA PKCS#1 v1.5 SHA-256 signature.
+
+    Args:
+        data: Bytes whose signature is being verified.
+        signature: Signature received with ``data``.
+        public_key: RSA public key from the cryptography backend.
+
+    Raises:
+        UnsupportedCryptoError: If the key type or backend is unsupported.
+        MessageIntegrityError: If signature verification fails.
+    """
+
     crypto = _load_crypto_backend()
     _require_rsa_public_key(public_key, crypto)
     try:
@@ -61,6 +114,19 @@ def verify_sha256(data: bytes, signature: bytes, public_key: Any) -> None:
 
 
 def encrypt_and_sign_for_auth(payload: bytes, ctx: IoTAuthContext) -> bytes:
+    """Encrypt a payload for Auth and sign the resulting ciphertext.
+
+    Args:
+        payload: Plaintext Auth request payload.
+        ctx: Context containing Auth's public key and the entity's private key.
+
+    Returns:
+        Encrypted payload followed by its entity signature.
+
+    Raises:
+        UnsupportedCryptoError: If RSA credentials or the backend are unsupported.
+    """
+
     encrypted = public_encrypt(payload, ctx.auth_public_key)
     signature = sign_sha256(encrypted, ctx.entity_private_key)
     return encrypted + signature
@@ -69,6 +135,22 @@ def encrypt_and_sign_for_auth(payload: bytes, ctx: IoTAuthContext) -> bytes:
 def verify_and_decrypt_from_auth(
     signed_ciphertext: bytes, ctx: IoTAuthContext, encrypted_size: int
 ) -> bytes:
+    """Verify an Auth signature and decrypt its RSA ciphertext.
+
+    Args:
+        signed_ciphertext: RSA ciphertext followed by Auth's signature.
+        ctx: Context containing Auth's public key and the entity's private key.
+        encrypted_size: Length of the RSA ciphertext prefix in bytes.
+
+    Returns:
+        Verified plaintext bytes.
+
+    Raises:
+        SerializationError: If the signed payload is structurally invalid.
+        MessageIntegrityError: If signature verification or decryption fails.
+        UnsupportedCryptoError: If RSA credentials or the backend are unsupported.
+    """
+
     if encrypted_size <= 0:
         raise SerializationError("encrypted_size must be positive")
     if len(signed_ciphertext) <= encrypted_size:
@@ -87,6 +169,22 @@ def symmetric_encrypt_authenticate(
     encryption_mode: str,
     hmac_enabled: bool,
 ) -> bytes:
+    """Encrypt and optionally HMAC-authenticate a symmetric payload.
+
+    Args:
+        plaintext: Bytes to protect.
+        cipher_key: Sixteen-byte AES-128 key.
+        mac_key: Thirty-two-byte HMAC-SHA256 key when HMAC is enabled.
+        encryption_mode: ``AES_128_CBC``, ``AES_128_CTR``, or ``AES_128_GCM``.
+        hmac_enabled: Whether to append an HMAC-SHA256 tag.
+
+    Returns:
+        An envelope containing the IV, ciphertext, and optional HMAC tag.
+
+    Raises:
+        UnsupportedCryptoError: If a key length or encryption mode is invalid.
+    """
+
     crypto = _load_crypto_backend()
     _validate_cipher_key(cipher_key)
     if hmac_enabled:
@@ -107,6 +205,24 @@ def symmetric_decrypt_authenticate(
     encryption_mode: str,
     hmac_enabled: bool,
 ) -> bytes:
+    """Authenticate and decrypt a symmetric envelope.
+
+    Args:
+        envelope: IV, ciphertext, and optional HMAC tag to process.
+        cipher_key: Sixteen-byte AES-128 key.
+        mac_key: Thirty-two-byte HMAC-SHA256 key when HMAC is enabled.
+        encryption_mode: ``AES_128_CBC``, ``AES_128_CTR``, or ``AES_128_GCM``.
+        hmac_enabled: Whether the envelope includes an HMAC-SHA256 tag.
+
+    Returns:
+        Decrypted plaintext bytes.
+
+    Raises:
+        SerializationError: If the envelope is truncated.
+        MessageIntegrityError: If authentication or padding verification fails.
+        UnsupportedCryptoError: If a key length or encryption mode is invalid.
+    """
+
     crypto = _load_crypto_backend()
     _validate_cipher_key(cipher_key)
     if hmac_enabled:
@@ -138,6 +254,22 @@ def encrypt_request_with_distribution_key(
     *,
     hmac_enabled: bool = False,
 ) -> bytes:
+    """Protect an Auth request with a distribution key and sender identity.
+
+    Args:
+        payload: Plaintext Auth request payload.
+        sender_name: Entity name encoded into the protected request.
+        distribution_key: Symmetric distribution key used for encryption.
+        hmac_enabled: Whether to append an HMAC-SHA256 tag.
+
+    Returns:
+        Sender name and encrypted payload in Auth request wire format.
+
+    Raises:
+        SerializationError: If ``sender_name`` is too long.
+        UnsupportedCryptoError: If key material or encryption mode is invalid.
+    """
+
     sender = sender_name.encode("utf-8")
     if len(sender) > 255:
         raise SerializationError("sender_name must fit in one byte")
@@ -157,6 +289,22 @@ def decrypt_request_with_distribution_key(
     *,
     hmac_enabled: bool = False,
 ) -> tuple[str, bytes]:
+    """Authenticate and decrypt a distribution-key-protected request.
+
+    Args:
+        protected_payload: Sender name and encrypted payload in wire format.
+        distribution_key: Symmetric distribution key used for decryption.
+        hmac_enabled: Whether the payload includes an HMAC-SHA256 tag.
+
+    Returns:
+        A ``(sender_name, plaintext)`` tuple.
+
+    Raises:
+        SerializationError: If the protected payload is malformed.
+        MessageIntegrityError: If authentication or decryption fails.
+        UnsupportedCryptoError: If key material or encryption mode is invalid.
+    """
+
     if not protected_payload:
         raise SerializationError("Protected distribution-key request is empty")
     sender_length = protected_payload[0]

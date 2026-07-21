@@ -18,6 +18,16 @@ def load_auth_public_key(path: str | Path) -> Any:
     certificate and extracts the public key from that certificate. Python follows
     that behavior first, with a fallback for raw PEM public keys for developer
     convenience.
+
+    Args:
+        path: Path to an X.509 certificate or raw PEM public key.
+
+    Returns:
+        RSA public-key object from the cryptography backend.
+
+    Raises:
+        CredentialError: If the file cannot be read or does not contain a
+            supported RSA public key.
     """
 
     crypto = _load_crypto_backend()
@@ -38,7 +48,18 @@ def load_auth_public_key(path: str | Path) -> Any:
 
 
 def load_entity_private_key(path: str | Path) -> Any:
-    """Load the entity's RSA private key from a PEM file."""
+    """Load the entity's RSA private key from a PEM file.
+
+    Args:
+        path: Path to an unencrypted PEM private key.
+
+    Returns:
+        RSA private-key object from the cryptography backend.
+
+    Raises:
+        CredentialError: If the file cannot be read or does not contain a
+            supported RSA private key.
+    """
 
     crypto = _load_crypto_backend()
     data = _read_pem(path, "Entity private key")
@@ -59,7 +80,18 @@ def load_entity_private_key(path: str | Path) -> Any:
 
 
 def load_permanent_distribution_key(config: EntityConfig) -> DistributionKey:
-    """Load a pre-distributed symmetric distribution key from disk."""
+    """Load a pre-distributed symmetric key from entity configuration.
+
+    Args:
+        config: Entity configuration containing permanent cipher and optional
+            MAC key paths.
+
+    Returns:
+        Distribution key ready to protect Auth requests.
+
+    Raises:
+        CredentialError: If required key paths are missing or unreadable.
+    """
     if config.distribution_cipher_key_path is None:
         raise CredentialError(
             "Permanent distribution key mode enabled but distribution cipher key path is missing"

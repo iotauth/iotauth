@@ -14,7 +14,17 @@ MAX_VARINT_VALUE = 0xFFFFFFFF
 
 
 def encode_varint(value: int) -> bytes:
-    """Encode a non-negative integer using IoTAuth variable-length encoding."""
+    """Encode an integer using IoTAuth variable-length encoding.
+
+    Args:
+        value: Non-negative integer no greater than ``MAX_VARINT_VALUE``.
+
+    Returns:
+        Variable-length encoded bytes.
+
+    Raises:
+        SerializationError: If ``value`` is outside the supported range.
+    """
 
     if value < 0:
         raise SerializationError("Variable-length integer must not be negative")
@@ -32,8 +42,15 @@ def encode_varint(value: int) -> bytes:
 def decode_varint(data: Buffer, offset: int = 0) -> tuple[int, int]:
     """Decode an IoTAuth variable-length integer.
 
+    Args:
+        data: Buffer containing the encoded integer.
+        offset: Index at which decoding begins.
+
     Returns:
         A ``(value, bytes_consumed)`` tuple.
+
+    Raises:
+        SerializationError: If ``offset`` is invalid or the integer is malformed.
     """
 
     view = memoryview(data)
@@ -57,7 +74,18 @@ def decode_varint(data: Buffer, offset: int = 0) -> tuple[int, int]:
 
 
 def encode_uint_be(value: int, length: int) -> bytes:
-    """Encode an unsigned integer into a fixed-width big-endian byte string."""
+    """Encode an unsigned integer as fixed-width big-endian bytes.
+
+    Args:
+        value: Non-negative integer to encode.
+        length: Number of output bytes.
+
+    Returns:
+        Fixed-width big-endian bytes.
+
+    Raises:
+        SerializationError: If the length or value cannot be represented.
+    """
 
     if length < 1:
         raise SerializationError("Integer byte length must be at least 1")
@@ -72,7 +100,17 @@ def encode_uint_be(value: int, length: int) -> bytes:
 
 
 def decode_uint_be(data: Buffer) -> int:
-    """Decode a fixed-width unsigned big-endian integer."""
+    """Decode an unsigned big-endian integer.
+
+    Args:
+        data: Non-empty big-endian byte buffer.
+
+    Returns:
+        Decoded integer value.
+
+    Raises:
+        SerializationError: If ``data`` is empty.
+    """
 
     view = memoryview(data)
     if len(view) < 1:

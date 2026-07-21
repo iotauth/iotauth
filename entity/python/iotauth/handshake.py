@@ -21,13 +21,25 @@ HANDSHAKE_FIXED_SIZE = 1 + (NONCE_SIZE * 2)
 
 @dataclass(frozen=True)
 class HandshakePayload:
+    """Cleartext nonce fields exchanged during a secure handshake."""
+
     nonce: bytes | None = None
     reply_nonce: bytes | None = None
     diffie_hellman_param: bytes | None = None
 
 
 def serialize_handshake_payload(payload: HandshakePayload) -> bytes:
-    """Serialize a cleartext handshake payload before session-key encryption."""
+    """Serialize a cleartext handshake payload before encryption.
+
+    Args:
+        payload: Nonce and optional Diffie-Hellman fields to encode.
+
+    Returns:
+        Fixed-layout handshake payload bytes.
+
+    Raises:
+        SerializationError: If no fields are present or a nonce is invalid.
+    """
 
     if (
         payload.nonce is None
@@ -59,7 +71,17 @@ def serialize_handshake_payload(payload: HandshakePayload) -> bytes:
 
 
 def parse_handshake_payload(data: Buffer) -> HandshakePayload:
-    """Parse a cleartext decrypted handshake payload."""
+    """Parse a cleartext decrypted handshake payload.
+
+    Args:
+        data: Decrypted handshake bytes.
+
+    Returns:
+        Parsed nonce and optional Diffie-Hellman fields.
+
+    Raises:
+        SerializationError: If the payload is empty, truncated, or has no fields.
+    """
 
     view = memoryview(data)
     if len(view) < 1:
@@ -98,7 +120,18 @@ def build_handshake_1(
     key: SessionKey,
     client_nonce: bytes,
 ) -> bytes:
-    """Build encrypted SKEY_HANDSHAKE_1 payload."""
+    """Build an encrypted ``SKEY_HANDSHAKE_1`` payload.
+
+    Args:
+        key: Session key shared with the server.
+        client_nonce: Eight-byte client challenge.
+
+    Returns:
+        Session-key ID followed by the encrypted handshake payload.
+
+    Raises:
+        SerializationError: If ``client_nonce`` has an invalid length.
+    """
 
     plaintext = serialize_handshake_payload(HandshakePayload(nonce=client_nonce))
     encrypted = _encrypt_handshake_payload(key, plaintext)
@@ -110,7 +143,20 @@ def verify_handshake_2_and_build_handshake_3(
     encrypted_handshake_2: bytes,
     client_nonce: bytes,
 ) -> tuple[bytes, bytes]:
-    """Verify SKEY_HANDSHAKE_2 and return ``(server_nonce, handshake3_payload)``."""
+    """Verify handshake 2 and build the encrypted handshake 3 response.
+
+    Args:
+        key: Session key shared with the server.
+        encrypted_handshake_2: Encrypted handshake 2 payload from the server.
+        client_nonce: Client challenge sent in handshake 1.
+
+    Returns:
+        A ``(server_nonce, encrypted_handshake_3)`` tuple.
+
+    Raises:
+        SerializationError: If the payload or nonce fields are malformed.
+        SecureHandshakeError: If the server does not echo the client nonce.
+    """
 
     _require_nonce(client_nonce, "client_nonce")
     plaintext = _decrypt_handshake_payload(key, encrypted_handshake_2)
@@ -126,7 +172,17 @@ def verify_handshake_2_and_build_handshake_3(
 
 
 def parse_handshake_1_key_id(payload: Buffer) -> bytes:
-    """Extract the session key ID prefix from SKEY_HANDSHAKE_1 payload bytes."""
+    """Extract the session-key ID prefix from a handshake 1 payload.
+
+    Args:
+        payload: Complete ``SKEY_HANDSHAKE_1`` payload.
+
+    Returns:
+        Eight-byte session-key identifier.
+
+    Raises:
+        SerializationError: If the payload is too short to contain a key ID.
+    """
 
     view = memoryview(payload)
     if len(view) < SESSION_KEY_ID_SIZE:
@@ -139,7 +195,20 @@ def verify_handshake_1_and_build_handshake_2(
     handshake_1_payload: bytes,
     server_nonce: bytes,
 ) -> tuple[bytes, bytes]:
-    """Verify SKEY_HANDSHAKE_1 and return ``(client_nonce, handshake2_payload)``."""
+    """Verify handshake 1 and build the encrypted handshake 2 response.
+
+    Args:
+        key: Session key identified by the handshake 1 prefix.
+        handshake_1_payload: Key ID and encrypted client challenge.
+        server_nonce: Eight-byte server challenge.
+
+    Returns:
+        A ``(client_nonce, encrypted_handshake_2)`` tuple.
+
+    Raises:
+        SerializationError: If the payload or nonce fields are malformed.
+        SecureHandshakeError: If the payload identifies a different key.
+    """
 
     _require_nonce(server_nonce, "server_nonce")
     key_id = parse_handshake_1_key_id(handshake_1_payload)
@@ -165,7 +234,20 @@ def verify_handshake_3(
     encrypted_handshake_3: bytes,
     server_nonce: bytes,
 ) -> HandshakePayload:
-    """Verify SKEY_HANDSHAKE_3 and return the decrypted handshake payload."""
+    """Verify handshake 3 and return its decrypted fields.
+
+    Args:
+        key: Session key shared with the client.
+        encrypted_handshake_3: Encrypted response from the client.
+        server_nonce: Server challenge sent in handshake 2.
+
+    Returns:
+        Verified handshake 3 fields.
+
+    Raises:
+        SerializationError: If the payload or nonce fields are malformed.
+        SecureHandshakeError: If the client does not echo the server nonce.
+    """
 
     _require_nonce(server_nonce, "server_nonce")
     plaintext = _decrypt_handshake_payload(key, encrypted_handshake_3)

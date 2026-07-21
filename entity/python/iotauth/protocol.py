@@ -40,6 +40,8 @@ AES_128_KEY_SIZE = 16
 
 
 class MessageType(IntEnum):
+    """IoTAuth protocol message identifiers used on the wire."""
+
     AUTH_HELLO = 0
     ENTITY_HELLO = 1
     AUTH_SESSION_KEY_REQ = 10
@@ -82,6 +84,16 @@ class MessageType(IntEnum):
 
 @dataclass(frozen=True)
 class IoTSPFrame:
+    """One framed IoTAuth protocol message.
+
+    Attributes:
+        message_type: Protocol identifier for the payload.
+        payload: Unframed message payload bytes.
+
+    Raises:
+        SerializationError: If the message type is unknown or payload is not bytes.
+    """
+
     message_type: MessageType
     payload: bytes
 
@@ -93,6 +105,18 @@ class IoTSPFrame:
 
 
 def message_type_from_byte(value: int) -> MessageType:
+    """Convert an integer wire value into a ``MessageType``.
+
+    Args:
+        value: Integer message identifier.
+
+    Returns:
+        Matching protocol message type.
+
+    Raises:
+        SerializationError: If ``value`` is not a known message identifier.
+    """
+
     try:
         return MessageType(value)
     except ValueError as exc:
@@ -100,13 +124,32 @@ def message_type_from_byte(value: int) -> MessageType:
 
 
 def serialize_frame(frame: IoTSPFrame) -> bytes:
-    """Serialize an IoTSP frame as message type, payload length, and payload."""
+    """Serialize an IoTSP frame as type, payload length, and payload.
+
+    Args:
+        frame: Protocol frame to serialize.
+
+    Returns:
+        Complete wire-format frame bytes.
+    """
 
     return bytes([int(frame.message_type)]) + encode_varint(len(frame.payload)) + frame.payload
 
 
 def parse_frame(data: Buffer, *, allow_trailing: bool = False) -> IoTSPFrame:
-    """Parse an IoTSP frame from bytes."""
+    """Parse one IoTSP frame from bytes.
+
+    Args:
+        data: Bytes containing a complete frame.
+        allow_trailing: Whether bytes after the frame may be ignored.
+
+    Returns:
+        Parsed protocol frame.
+
+    Raises:
+        SerializationError: If the frame is empty, truncated, unknown, or has
+            disallowed trailing bytes.
+    """
 
     view = memoryview(data)
     if len(view) < 1:
@@ -135,17 +178,23 @@ def parse_frame(data: Buffer, *, allow_trailing: bool = False) -> IoTSPFrame:
 
 @dataclass(frozen=True)
 class AuthHelloPayload:
+    """Auth identity and nonce received at the start of an Auth exchange."""
+
     auth_id: int
     nonce: bytes
 
 
 @dataclass(frozen=True)
 class AuthAlertPayload:
+    """Numeric error code returned by Auth."""
+
     code: int
 
 
 @dataclass(frozen=True)
 class SessionKeyRequestPayload:
+    """Cleartext fields included in a session-key request to Auth."""
+
     entity_nonce: bytes
     auth_nonce: bytes
     num_keys: int
@@ -156,6 +205,8 @@ class SessionKeyRequestPayload:
 
 @dataclass(frozen=True)
 class SessionKeyResponsePayload:
+    """Verified session keys and metadata returned by Auth."""
+
     entity_nonce: bytes
     crypto_spec: dict[str, Any] | str
     session_keys: list[SessionKey]
@@ -167,6 +218,18 @@ class SessionKeyResponsePayload:
 
 
 def parse_auth_hello_payload(payload: Buffer) -> AuthHelloPayload:
+    """Parse an ``AUTH_HELLO`` payload.
+
+    Args:
+        payload: Auth ID followed by the Auth nonce.
+
+    Returns:
+        Parsed Auth ID and nonce.
+
+    Raises:
+        SerializationError: If the payload length is invalid.
+    """
+
     view = memoryview(payload)
     expected_length = AUTH_ID_SIZE + NONCE_SIZE
     if len(view) != expected_length:
@@ -180,6 +243,18 @@ def parse_auth_hello_payload(payload: Buffer) -> AuthHelloPayload:
 
 
 def parse_auth_alert_payload(payload: Buffer) -> AuthAlertPayload:
+    """Parse a one-byte ``AUTH_ALERT`` payload.
+
+    Args:
+        payload: Buffer containing the Auth alert code.
+
+    Returns:
+        Parsed Auth alert payload.
+
+    Raises:
+        SerializationError: If the payload is not exactly one byte.
+    """
+
     view = memoryview(payload)
     if len(view) != 1:
         raise SerializationError(f"AUTH_ALERT payload must be 1 byte, got {len(view)}")
@@ -187,11 +262,33 @@ def parse_auth_alert_payload(payload: Buffer) -> AuthAlertPayload:
 
 
 def serialize_buffered_string(value: str) -> bytes:
+    """Encode a UTF-8 string with a variable-length size prefix.
+
+    Args:
+        value: Text to encode.
+
+    Returns:
+        Size-prefixed UTF-8 bytes.
+    """
+
     encoded = value.encode("utf-8")
     return encode_varint(len(encoded)) + encoded
 
 
 def parse_buffered_string(data: Buffer, offset: int = 0) -> tuple[str, int]:
+    """Decode a size-prefixed UTF-8 string.
+
+    Args:
+        data: Buffer containing the encoded string.
+        offset: Index at which the size prefix begins.
+
+    Returns:
+        A ``(value, bytes_consumed)`` tuple.
+
+    Raises:
+        SerializationError: If the prefix, bytes, or UTF-8 text are invalid.
+    """
+
     view = memoryview(data)
     length, length_size = decode_varint(view, offset)
     start = offset + length_size
@@ -208,6 +305,18 @@ def parse_buffered_string(data: Buffer, offset: int = 0) -> tuple[str, int]:
 def serialize_session_key_request_payload(
     request: SessionKeyRequestPayload,
 ) -> bytes:
+    """Serialize the cleartext portion of a session-key request.
+
+    Args:
+        request: Validated request fields to encode.
+
+    Returns:
+        Session-key request payload bytes.
+
+    Raises:
+        SerializationError: If a nonce, key count, or entity name is invalid.
+    """
+
     _require_nonce(request.entity_nonce, "entity_nonce")
     _require_nonce(request.auth_nonce, "auth_nonce")
     if request.num_keys < 1:
@@ -234,6 +343,20 @@ def parse_session_key_response_payload(
     *,
     allow_trailing: bool = False,
 ) -> SessionKeyResponsePayload:
+    """Parse decrypted session-key response bytes.
+
+    Args:
+        payload: Decrypted response payload from Auth.
+        session_config: Settings applied to parsed session keys.
+        allow_trailing: Whether unparsed bytes may remain after the key records.
+
+    Returns:
+        Parsed nonce, crypto specification, and session keys.
+
+    Raises:
+        SerializationError: If the payload or a contained key record is invalid.
+    """
+
     view = memoryview(payload)
     offset = 0
     if len(view) < NONCE_SIZE:
@@ -280,6 +403,21 @@ def parse_distribution_key_record(
     encryption_mode: str = "AES_128_CBC",
     allow_trailing: bool = False,
 ) -> DistributionKey:
+    """Parse one distribution-key record.
+
+    Args:
+        data: Buffer containing a distribution-key record.
+        offset: Index at which the record begins.
+        encryption_mode: Encryption mode assigned to the parsed key.
+        allow_trailing: Whether bytes after the record may be ignored.
+
+    Returns:
+        Parsed distribution key.
+
+    Raises:
+        SerializationError: If the record is truncated or key material is invalid.
+    """
+
     view = memoryview(data)
     cursor = offset
     if cursor + DIST_KEY_EXPIRATION_TIME_SIZE > len(view):
@@ -308,6 +446,20 @@ def parse_distribution_key_record(
 def parse_session_key_record(
     data: Buffer, offset: int, session_config: SessionConfig
 ) -> tuple[SessionKey, int]:
+    """Parse one session-key record.
+
+    Args:
+        data: Buffer containing a session-key record.
+        offset: Index at which the record begins.
+        session_config: Settings assigned to the parsed key.
+
+    Returns:
+        A ``(session_key, bytes_consumed)`` tuple.
+
+    Raises:
+        SerializationError: If the record is truncated or key material is invalid.
+    """
+
     view = memoryview(data)
     cursor = offset
     fixed_size = SESSION_KEY_ID_SIZE + KEY_EXPIRATION_TIME_SIZE + REL_VALIDITY_SIZE

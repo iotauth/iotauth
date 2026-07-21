@@ -15,7 +15,19 @@ ListenSocketFactory = Callable[[], Any]
 
 
 class SecureServer:
-    """Convenience wrapper for accepting secure IoTAuth TCP connections."""
+    """Listen for peer connections and establish server-side secure channels.
+
+    Args:
+        ctx: Runtime context for the server entity.
+        host: Local hostname or IP address. Must be supplied with ``port``.
+        port: Local TCP port. Must be supplied with ``host``.
+        backlog: Maximum number of pending TCP connections.
+        timeout: Timeout in seconds for accepting and handshaking with a peer.
+
+    Leaving a ``with SecureServer(...)`` block closes the listening socket.
+    Call ``close()`` on each channel returned by ``serve_once()`` when the
+    application finishes using that peer connection.
+    """
 
     def __init__(
         self,
@@ -36,6 +48,16 @@ class SecureServer:
         self._socket: Any | None = None
 
     def listen(self) -> None:
+        """Bind the configured address and start listening for peer connections.
+
+        Calling this method more than once while the server is listening has no
+        effect.
+
+        Raises:
+            ConfigError: If no complete listening address is available.
+            AuthConnectionError: If the socket cannot bind or listen.
+        """
+
         if self._socket is not None:
             return
         host, port = self._resolve_bind_address()
@@ -53,6 +75,17 @@ class SecureServer:
         self._socket = sock
 
     def serve_once(self) -> SecureChannel:
+        """Accept one peer and complete its secure handshake.
+
+        Returns:
+            An established channel owned by the caller.
+
+        Raises:
+            ConfigError: If the server cannot resolve a listening address.
+            AuthConnectionError: If accepting or reading from the peer fails.
+            SecureHandshakeError: If the peer handshake fails validation.
+        """
+
         self.listen()
         assert self._socket is not None
         try:
@@ -62,6 +95,8 @@ class SecureServer:
         return self.ctx.accept_secure(client_socket, timeout=self.timeout)
 
     def close(self) -> None:
+        """Close the listening socket without closing established channels."""
+
         if self._socket is None:
             return
         close_socket(self._socket)

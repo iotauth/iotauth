@@ -59,6 +59,8 @@ OPTIONAL_KEYS = {
 
 @dataclass(frozen=True)
 class AuthInfo:
+    """Auth server identity, network address, and optional RSA credential."""
+
     id: int
     host: str
     port: int
@@ -67,12 +69,16 @@ class AuthInfo:
 
 @dataclass(frozen=True)
 class EntityInfo:
+    """Entity identity and optional RSA private-key path."""
+
     name: str
     private_key_path: Path | None
 
 
 @dataclass(frozen=True)
 class TargetServer:
+    """Peer or listening-server network address from entity configuration."""
+
     host: str
     port: int
     name: str | None = None
@@ -80,6 +86,8 @@ class TargetServer:
 
 @dataclass(frozen=True)
 class SessionConfig:
+    """Transport and cryptographic settings used for secure sessions."""
+
     protocol: str
     encryption_mode: str
     distribution_encryption_mode: str
@@ -89,6 +97,8 @@ class SessionConfig:
 
 @dataclass(frozen=True)
 class EntityConfig:
+    """Validated configuration required by an ``IoTAuthContext``."""
+
     entity: EntityInfo
     auth: AuthInfo
     session: SessionConfig
@@ -112,6 +122,9 @@ def load_config(path: str | Path, *, validate_paths: bool = True) -> EntityConfi
     Args:
         path: Path to the config file (either JSON or properties format).
         validate_paths: When true, referenced key files must exist.
+
+    Returns:
+        Parsed and validated entity configuration.
 
     Raises:
         ConfigError: If the file is missing, malformed, or contains invalid

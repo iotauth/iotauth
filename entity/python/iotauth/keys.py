@@ -11,6 +11,24 @@ SESSION_KEY_ID_SIZE = 8
 
 @dataclass
 class SessionKey:
+    """Session key material and validity metadata shared by peer entities.
+
+    Attributes:
+        id: Eight-byte session-key identifier.
+        cipher_key: Symmetric encryption key.
+        mac_key: Message-authentication key, or ``None`` when HMAC is disabled.
+        abs_validity: Absolute expiration time in milliseconds since the epoch.
+        rel_validity: Validity duration in milliseconds after first use.
+        encryption_mode: Configured symmetric encryption mode.
+        hmac_enabled: Whether messages require HMAC authentication.
+        permanent_distribution_key: Whether Auth issued the key through
+            permanent distribution-key mode.
+        first_use_ms: First-use time used to evaluate relative validity.
+
+    Raises:
+        KeyCacheError: If the identifier or key material is invalid.
+    """
+
     id: bytes
     cipher_key: bytes
     mac_key: bytes | None
@@ -34,6 +52,18 @@ class SessionKey:
 
 @dataclass(frozen=True)
 class DistributionKey:
+    """Symmetric key material used to protect requests sent to Auth.
+
+    Attributes:
+        cipher_key: Symmetric encryption key.
+        mac_key: Optional message-authentication key.
+        abs_validity: Absolute expiration time in milliseconds since the epoch.
+        encryption_mode: Configured symmetric encryption mode.
+
+    Raises:
+        KeyCacheError: If the cipher key is empty.
+    """
+
     cipher_key: bytes
     mac_key: bytes | None
     abs_validity: int | None
@@ -45,7 +75,7 @@ class DistributionKey:
 
 
 class SessionKeyCache:
-    """Small in-memory session-key cache keyed by 8-byte session key ID."""
+    """In-memory session-key cache keyed by eight-byte key identifiers."""
 
     def __init__(self) -> None:
         self._keys: dict[bytes, SessionKey] = {}
@@ -58,21 +88,54 @@ class SessionKeyCache:
         return key_id in self._keys
 
     def add(self, key: SessionKey, *, replace: bool = False) -> None:
+        """Store a session key.
+
+        Args:
+            key: Session key to cache.
+            replace: Whether to replace an existing key with the same ID.
+
+        Raises:
+            KeyCacheError: If the key ID already exists and ``replace`` is false.
+        """
+
         if key.id in self._keys and not replace:
             raise KeyCacheError(f"Session key already exists: {key.id.hex()}")
         self._keys[key.id] = key
 
     def get(self, key_id: bytes) -> SessionKey | None:
+        """Return a cached key, or ``None`` when its ID is absent.
+
+        Args:
+            key_id: Eight-byte session-key identifier.
+
+        Raises:
+            KeyCacheError: If ``key_id`` is not eight bytes long.
+        """
+
         self._validate_key_id(key_id)
         return self._keys.get(key_id)
 
     def require(self, key_id: bytes) -> SessionKey:
+        """Return a cached key and fail when its ID is absent.
+
+        Args:
+            key_id: Eight-byte session-key identifier.
+
+        Returns:
+            The cached session key.
+
+        Raises:
+            KeyCacheError: If ``key_id`` is invalid or is not cached.
+        """
+
         key = self.get(key_id)
         if key is None:
             raise KeyCacheError(f"Session key not found: {key_id.hex()}")
         return key
 
     def values(self) -> tuple[SessionKey, ...]:
+        """Return an immutable snapshot of all cached session keys."""
+
         return tuple(self._keys.values())
 
     @staticmethod

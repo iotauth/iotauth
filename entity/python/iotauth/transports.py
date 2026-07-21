@@ -13,7 +13,19 @@ DEFAULT_MAX_PAYLOAD_SIZE = 65536
 
 
 def connect(host: str, port: int, *, timeout: float | None = 5.0) -> socket.socket:
-    """Open a TCP connection to an IoTAuth peer."""
+    """Open a TCP connection to an IoTAuth peer.
+
+    Args:
+        host: Peer hostname or IP address.
+        port: Peer TCP port.
+        timeout: Connection timeout in seconds. Use ``None`` to disable it.
+
+    Returns:
+        Connected TCP socket.
+
+    Raises:
+        AuthConnectionError: If the peer cannot be reached.
+    """
 
     try:
         return socket.create_connection((host, port), timeout=timeout)
@@ -22,7 +34,15 @@ def connect(host: str, port: int, *, timeout: float | None = 5.0) -> socket.sock
 
 
 def send_frame(sock: Any, frame: IoTSPFrame) -> None:
-    """Send one complete IoTSP frame to a stream socket."""
+    """Send one complete IoTSP frame to a stream socket.
+
+    Args:
+        sock: Connected stream socket.
+        frame: Protocol frame to serialize and send.
+
+    Raises:
+        AuthConnectionError: If the frame cannot be sent.
+    """
 
     from .protocol import serialize_frame
 
@@ -33,7 +53,19 @@ def send_frame(sock: Any, frame: IoTSPFrame) -> None:
 
 
 def recv_frame(sock: Any, *, max_payload_size: int = DEFAULT_MAX_PAYLOAD_SIZE) -> IoTSPFrame:
-    """Read one complete IoTSP frame from a stream socket."""
+    """Read one complete IoTSP frame from a stream socket.
+
+    Args:
+        sock: Connected stream socket.
+        max_payload_size: Maximum accepted payload size in bytes.
+
+    Returns:
+        Parsed protocol frame.
+
+    Raises:
+        AuthConnectionError: If the socket closes or reading fails.
+        SerializationError: If the frame is malformed or exceeds the size limit.
+    """
 
     if max_payload_size < 0:
         raise SerializationError("max_payload_size must not be negative")
@@ -60,7 +92,11 @@ def recv_frame(sock: Any, *, max_payload_size: int = DEFAULT_MAX_PAYLOAD_SIZE) -
 
 
 def close_socket(sock: Any) -> None:
-    """Safely close a socket, ignoring errors."""
+    """Close a socket-like object while ignoring close errors.
+
+    Args:
+        sock: Object that may expose a ``close()`` method.
+    """
 
     close = getattr(sock, "close", None)
     if close is None:

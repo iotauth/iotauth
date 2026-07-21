@@ -41,6 +41,16 @@ MAX_SEQUENCE_NUMBER = (1 << (SEQ_NUM_SIZE * 8)) - 1
 
 @dataclass
 class SecureChannel:
+    """Established encrypted connection between two IoTAuth entities.
+
+    Attributes:
+        socket: Connected stream socket used by the channel.
+        session_key: Session key protecting application messages.
+        send_sequence: Sequence number assigned to the next outgoing message.
+        receive_sequence: Sequence number expected on the next incoming message.
+        closed: Whether the underlying connection has been closed.
+    """
+
     socket: Any
     session_key: SessionKey
     send_sequence: int = 0
@@ -48,6 +58,18 @@ class SecureChannel:
     closed: bool = False
 
     def send(self, data: bytes) -> None:
+        """Encrypt, authenticate, and send one application message.
+
+        Args:
+            data: Plaintext bytes to send.
+
+        Raises:
+            SecureChannelClosed: If the channel is already closed.
+            ExpiredKeyError: If the channel's session key has expired.
+            AuthConnectionError: If the encrypted frame cannot be sent.
+            UnsupportedCryptoError: If the configured keys or cipher are invalid.
+        """
+
         _ensure_channel_open(self)
         _check_session_key_validity(self.session_key)
         payload = _coerce_payload(data)
@@ -56,6 +78,21 @@ class SecureChannel:
         self.send_sequence += 1
 
     def recv(self) -> bytes:
+        """Receive, authenticate, and decrypt one application message.
+
+        Returns:
+            The plaintext bytes received from the peer.
+
+        Raises:
+            SecureChannelClosed: If the channel is closed before or during the
+                receive operation.
+            AuthConnectionError: If reading from the peer fails.
+            SerializationError: If the peer sends an unexpected frame.
+            MessageIntegrityError: If message authentication fails.
+            InvalidSequenceNumberError: If the message sequence is unexpected.
+            ExpiredKeyError: If the channel's session key has expired.
+        """
+
         _ensure_channel_open(self)
         try:
             frame = recv_frame(self.socket)
@@ -75,6 +112,11 @@ class SecureChannel:
         return payload
 
     def close(self) -> None:
+        """Close the underlying connection.
+
+        Calling this method on an already closed channel has no effect.
+        """
+
         if self.closed:
             return
         close = getattr(self.socket, "close", None)
@@ -97,7 +139,29 @@ def connect_secure(
     _socket_factory: SocketFactory | None = None,
     _nonce_factory: NonceFactory = secrets.token_bytes,
 ) -> SecureChannel:
-    """Open a TCP connection and complete the client-side secure handshake."""
+    """Open a peer connection and complete the client-side secure handshake.
+
+    Args:
+        ctx: Runtime context containing target configuration.
+        key: Session key shared with the peer server.
+        host: Peer hostname or IP address. Must be supplied with ``port``.
+        port: Peer TCP port. Must be supplied with ``host``.
+        target: Explicit target object. Cannot be combined with ``host`` or
+            ``port``.
+        timeout: Connection and handshake timeout in seconds.
+
+    Returns:
+        Established secure channel.
+
+    Raises:
+        ConfigError: If no unambiguous target address is available.
+        ExpiredKeyError: If ``key`` has expired.
+        AuthConnectionError: If the peer cannot be reached.
+        SecureHandshakeError: If the peer response fails validation.
+
+    Note:
+        ``_socket_factory`` and ``_nonce_factory`` are internal test seams.
+    """
 
     _check_session_key_validity(key)
     resolved_host, resolved_port = _resolve_target(ctx, host=host, port=port, target=target)
@@ -143,7 +207,24 @@ def accept_secure(
     timeout: float | None = 5.0,
     _nonce_factory: NonceFactory = secrets.token_bytes,
 ) -> SecureChannel:
-    """Complete the server-side secure handshake on an accepted TCP socket."""
+    """Complete the server-side secure handshake on an accepted socket.
+
+    Args:
+        ctx: Runtime context containing cached session keys and Auth access.
+        sock: Connected peer socket accepted by a listening server.
+        timeout: Handshake timeout in seconds.
+
+    Returns:
+        Established secure channel.
+
+    Raises:
+        AuthConnectionError: If the peer disconnects or communication fails.
+        SecureHandshakeError: If the handshake or key lookup fails.
+        ExpiredKeyError: If the selected session key has expired.
+
+    Note:
+        ``_nonce_factory`` is an internal test seam.
+    """
 
     original_timeout = None
     if hasattr(sock, "gettimeout"):
@@ -206,6 +287,18 @@ def accept_secure(
 
 
 def session_key_is_expired(key: SessionKey, *, now_ms: int | None = None) -> bool:
+    """Check whether a session key has exceeded its validity period.
+
+    Args:
+        key: Session key to inspect.
+        now_ms: Current time in milliseconds since the epoch. Defaults to the
+            system clock.
+
+    Returns:
+        ``True`` when absolute validity has passed or relative validity has
+        elapsed since first use; otherwise ``False``.
+    """
+
     if key.abs_validity is None and key.rel_validity is None:
         return False
     if now_ms is None:

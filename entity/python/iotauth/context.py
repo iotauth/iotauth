@@ -18,6 +18,18 @@ from .keys import DistributionKey, SessionKey, SessionKeyCache
 
 @dataclass
 class IoTAuthContext:
+    """Runtime configuration, credentials, and session-key state for an entity.
+
+    Attributes:
+        config: Parsed entity configuration.
+        auth_public_key: Auth's RSA public key, or ``None`` in permanent
+            distribution-key mode.
+        entity_private_key: The entity's RSA private key, or ``None`` in
+            permanent distribution-key mode.
+        distribution_key: Distribution key used to protect Auth requests.
+        session_keys: In-memory cache populated by session-key requests.
+    """
+
     config: EntityConfig
     auth_public_key: Any
     entity_private_key: Any
@@ -26,11 +38,41 @@ class IoTAuthContext:
 
     @classmethod
     def from_config(cls, path: str | Path, *, validate_paths: bool = True) -> IoTAuthContext:
+        """Create a runtime context from an entity configuration file.
+
+        Args:
+            path: Path to a JSON or dotted-properties entity configuration.
+            validate_paths: Whether configured credential and key files must
+                exist during parsing.
+
+        Returns:
+            An initialized context with an empty session-key cache.
+
+        Raises:
+            ConfigError: If the configuration is missing, malformed, or invalid.
+            CredentialError: If configured credentials or permanent key
+                material cannot be loaded.
+        """
+
         config = load_config(path, validate_paths=validate_paths)
         return cls.from_entity_config(config)
 
     @classmethod
     def from_entity_config(cls, config: EntityConfig) -> IoTAuthContext:
+        """Create a runtime context from parsed entity configuration.
+
+        Args:
+            config: Validated entity configuration.
+
+        Returns:
+            A context containing RSA credentials for normal mode or a loaded
+            symmetric distribution key for permanent distribution-key mode.
+
+        Raises:
+            CredentialError: If required credential paths or permanent key
+                material are missing or unreadable.
+        """
+
         if config.session.permanent_distribution_key:
             distribution_key = load_permanent_distribution_key(config)
             auth_public_key = None
@@ -59,6 +101,24 @@ class IoTAuthContext:
         count: int | None = None,
         timeout: float | None = 5.0,
     ) -> list[SessionKey]:
+        """Request session keys from Auth and store them in the cache.
+
+        Args:
+            purpose: Override the entity's configured session-key purpose.
+            count: Number of keys to request. Defaults to ``config.num_keys``.
+            timeout: Socket timeout in seconds. Use ``None`` to disable it.
+
+        Returns:
+            Session keys returned by Auth.
+
+        Raises:
+            ConfigError: If no purpose is available or ``count`` is invalid.
+            AuthConnectionError: If Auth cannot be reached.
+            AuthProtocolError: If Auth returns an unexpected response.
+            CredentialError: If permanent distribution-key credentials are
+                unavailable or expired.
+        """
+
         from .auth_service import request_session_keys
 
         return request_session_keys(
@@ -76,6 +136,26 @@ class IoTAuthContext:
         port: int | None = None,
         timeout: float | None = 5.0,
     ) -> Any:
+        """Connect to a peer and complete the client-side secure handshake.
+
+        Args:
+            key: Session key shared with the peer.
+            host: Peer hostname or IP address. Defaults to the first configured
+                target when omitted with ``port``.
+            port: Peer TCP port. Defaults to the first configured target when
+                omitted with ``host``.
+            timeout: Connection and handshake timeout in seconds.
+
+        Returns:
+            An established ``SecureChannel``.
+
+        Raises:
+            ConfigError: If no complete peer address is available.
+            AuthConnectionError: If the peer cannot be reached.
+            ExpiredKeyError: If ``key`` has expired.
+            SecureHandshakeError: If the peer handshake fails validation.
+        """
+
         from .secure_channel import connect_secure
 
         return connect_secure(
@@ -92,6 +172,21 @@ class IoTAuthContext:
         *,
         timeout: float | None = 5.0,
     ) -> Any:
+        """Complete the server-side secure handshake on an accepted socket.
+
+        Args:
+            sock: Connected peer socket returned by a listening server.
+            timeout: Handshake timeout in seconds.
+
+        Returns:
+            An established ``SecureChannel``.
+
+        Raises:
+            AuthConnectionError: If the socket closes or communication fails.
+            ExpiredKeyError: If the selected session key has expired.
+            SecureHandshakeError: If the peer handshake fails validation.
+        """
+
         from .secure_channel import accept_secure
 
         return accept_secure(self, sock, timeout=timeout)

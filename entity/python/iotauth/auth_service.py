@@ -54,7 +54,28 @@ def request_session_keys(
     _socket_factory: SocketFactory | None = None,
     _nonce_factory: NonceFactory = secrets.token_bytes,
 ) -> list[SessionKey]:
-    """Request session keys from Auth over TCP and store them in ``ctx``."""
+    """Request session keys from Auth over TCP and store them in ``ctx``.
+
+    Args:
+        ctx: Runtime context containing Auth configuration and credentials.
+        purpose: Override the entity's configured session-key purpose.
+        count: Number of keys to request. Defaults to ``ctx.config.num_keys``.
+        timeout: Socket timeout in seconds. Use ``None`` to disable it.
+
+    Returns:
+        Session keys returned by Auth.
+
+    Raises:
+        ConfigError: If no purpose is available or ``count`` is invalid.
+        AuthConnectionError: If Auth cannot be reached.
+        AuthProtocolError: If Auth returns an unexpected response.
+        CredentialError: If permanent distribution-key credentials are
+            unavailable or expired.
+
+    Note:
+        ``_socket_factory`` and ``_nonce_factory`` are internal test seams and
+        are not part of the supported application API.
+    """
 
     request_purpose = _select_purpose(ctx, purpose)
     request_count = ctx.config.num_keys if count is None else count
@@ -88,7 +109,17 @@ def request_session_keys(
 
 
 def distribution_key_is_expired(key: DistributionKey, *, now_ms: int | None = None) -> bool:
-    """Return true when a distribution key's absolute validity has passed."""
+    """Check whether a distribution key's absolute validity has passed.
+
+    Args:
+        key: Distribution key to inspect.
+        now_ms: Current time in milliseconds since the epoch. Defaults to the
+            system clock.
+
+    Returns:
+        ``True`` when the key is expired; otherwise ``False``. A key without an
+        absolute validity value does not expire.
+    """
 
     if key.abs_validity is None:
         return False
