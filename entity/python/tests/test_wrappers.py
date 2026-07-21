@@ -8,7 +8,6 @@ from iotauth import (
     EntityConfig,
     EntityInfo,
     IoTAuthContext,
-    SecureChannelClosed,
     SecureClient,
     SecureServer,
     SessionConfig,
@@ -107,32 +106,6 @@ class SecureClientTests(unittest.TestCase):
         )
         self.assertEqual(ctx.connect_calls[0]["key"], ctx.requested_key)
         self.assertIs(client.key, ctx.requested_key)
-
-    def test_send_and_recv_delegate_to_active_channel(self):
-        ctx = FakeContext()
-        client = SecureClient(ctx, key=make_session_key())
-        client.connect()
-
-        client.send(b"hello")
-        reply = client.recv()
-
-        self.assertEqual(ctx.channel.sent, [b"hello"])
-        self.assertEqual(reply, b"reply")
-
-    def test_send_before_connect_raises_channel_closed(self):
-        client = SecureClient(FakeContext(), key=make_session_key())
-
-        with self.assertRaises(SecureChannelClosed):
-            client.send(b"hello")
-
-    def test_close_closes_active_channel(self):
-        ctx = FakeContext()
-        client = SecureClient(ctx, key=make_session_key())
-        client.connect()
-
-        client.close()
-
-        self.assertTrue(ctx.channel.closed)
 
     def test_context_manager_closes_on_exit(self):
         ctx = FakeContext()

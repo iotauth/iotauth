@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 from .context import IoTAuthContext
-from .exceptions import SecureChannelClosed
 from .keys import SessionKey
 from .secure_channel import SecureChannel
 
@@ -49,23 +48,9 @@ class SecureClient:
         )
         return self.channel
 
-    def send(self, data: bytes) -> None:
-        self._require_channel().send(data)
-
-    def recv(self) -> bytes:
-        return self._require_channel().recv()
-
-    def close(self) -> None:
-        if self.channel is not None:
-            self.channel.close()
-
     def __enter__(self) -> SecureClient:
         return self
 
     def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
-        self.close()
-
-    def _require_channel(self) -> SecureChannel:
-        if self.channel is None or self.channel.closed:
-            raise SecureChannelClosed("SecureClient is not connected")
-        return self.channel
+        if self.channel is not None:
+            self.channel.close()
