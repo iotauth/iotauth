@@ -1,9 +1,9 @@
-# This workflow runs the nine entity integration tests (all combinations of
-# C, Node.js, and Python clients and servers) in sequence.  The first script handles
-# the full build and credential setup.  If it succeeds, the remaining eight
-# scripts reuse those artifacts (--no-build --no-setup).  If the first script
+# This workflow runs the nine entity integration combinations plus the Python
+# permanent distribution-key scenario in sequence. The first script handles
+# the full build and credential setup. If it succeeds, the remaining nine
+# scripts reuse those artifacts (--no-build --no-setup). If the first script
 # fails, each subsequent script runs its own full build and setup so it is
-# independent.  All nine tests always run; the job fails if any of them fails.
+# independent. All ten tests always run; the job fails if any of them fails.
 
 # Author: Hokeun Kim
 
@@ -22,6 +22,50 @@ on:
         type: string
 
 jobs:
+  ruff:
+    name: Ruff
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Ruff lint checks
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: check
+          src: entity/python
+
+      - name: Run Ruff formatting checks
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: format --check
+          src: entity/python
+
+  python-unit-tests:
+    name: Python 3.12 unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./entity/python
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: entity/python/pyproject.toml
+
+      - name: Install Python package
+        run: python -m pip install -e .
+
+      - name: Run Python unit tests
+        run: python -m unittest discover -s tests -v
+
   integration-test:
     runs-on: ubuntu-latest
 
@@ -166,6 +210,18 @@ jobs:
             ./python_client_python_server_test.sh --stop-existing
           fi
 
+      - name: Run Python permanent distribution key test
+        id: test10
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./python_permanent_dist_key_test.sh --no-build --no-setup --stop-existing
+          else
+            ./python_permanent_dist_key_test.sh --stop-existing
+          fi
+
       - name: Fail if any test failed
         if: always()
         run: |
@@ -179,7 +235,8 @@ jobs:
             "${{ steps.test6.outcome }}" \
             "${{ steps.test7.outcome }}" \
             "${{ steps.test8.outcome }}" \
-            "${{ steps.test9.outcome }}"; do
+            "${{ steps.test9.outcome }}" \
+            "${{ steps.test10.outcome }}"; do
             if [ "$outcome" != "success" ]; then
               echo "A test step did not succeed (outcome: $outcome)."
               result=1
