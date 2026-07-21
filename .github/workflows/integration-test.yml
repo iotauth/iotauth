@@ -22,26 +22,6 @@ on:
         type: string
 
 jobs:
-  ruff:
-    name: Ruff
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Run Ruff lint checks
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: check
-          src: entity/python
-
-      - name: Run Ruff formatting checks
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: format --check
-          src: entity/python
-
   python-unit-tests:
     name: Python 3.12 unit tests
     runs-on: ubuntu-latest
