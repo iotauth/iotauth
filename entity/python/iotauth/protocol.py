@@ -7,6 +7,7 @@ Auth-facing payload serializers and parsers into a single protocol module.
 from __future__ import annotations
 
 import json
+
 try:
     from collections.abc import Buffer
 except ImportError:
