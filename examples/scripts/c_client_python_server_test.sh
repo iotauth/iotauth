@@ -58,8 +58,8 @@ sleep 6
 cd $(quote_for_shell "$SST_ROOT/entity/c/examples/server_client_example/build") || exit 1
 ./entity_client ../c_client.config
 status=\$?
-tmux send-keys -t $AUTH_PANE_ARG C-c
-tmux send-keys -t $SERVER_PANE_ARG C-c
+tmux send-keys -t "$AUTH_PANE_ARG" C-c
+tmux send-keys -t "$SERVER_PANE_ARG" C-c
 sleep 2
 for port in 21900 21901 21100; do
 	pids=\$(lsof -tiTCP:\$port -sTCP:LISTEN 2>/dev/null || true)
