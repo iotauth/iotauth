@@ -110,7 +110,7 @@ class EntityConfig:
     distribution_key_validity_ms: int | None = None
 
 
-def load_config(path: str | Path, *, validate_paths: bool = True) -> EntityConfig:
+def _load_config(path: str | Path, *, validate_paths: bool = True) -> EntityConfig:
     """Load and validate an IoTAuth entity config file.
 
     Auto-detects the file format:

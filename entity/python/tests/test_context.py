@@ -3,7 +3,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from iotauth import CredentialError, IoTAuthContext, load_config
+from iotauth import CredentialError, IoTAuthContext
+from iotauth.config import _load_config
 from iotauth.credentials import load_entity_private_key
 
 
@@ -31,7 +32,7 @@ class CredentialLoadingTests(unittest.TestCase):
 class IoTAuthContextTests(unittest.TestCase):
     """Tests for parsing configurations and initializing the runtime context."""
 
-    def test_from_entity_config_loads_credentials_and_empty_cache(self):
+    def test_internal_context_initialization_loads_credentials_and_empty_cache(self):
         with TemporaryDirectory() as temp_dir:
             config = self._load_config(Path(temp_dir))
 
@@ -42,7 +43,7 @@ class IoTAuthContextTests(unittest.TestCase):
                     return_value="entity-key",
                 ) as load_entity,
             ):
-                ctx = IoTAuthContext.from_entity_config(config)
+                ctx = IoTAuthContext._from_entity_config(config)
 
             self.assertIs(ctx.config, config)
             self.assertEqual(ctx.auth_public_key, "auth-key")
@@ -87,7 +88,7 @@ class IoTAuthContextTests(unittest.TestCase):
                 omit_rsa_credentials=True,
             )
 
-            ctx = IoTAuthContext.from_entity_config(config)
+            ctx = IoTAuthContext._from_entity_config(config)
             self.assertIsNotNone(ctx.distribution_key)
             self.assertEqual(ctx.distribution_key.cipher_key, b"0123456789abcdef")
             self.assertEqual(ctx.distribution_key.mac_key, b"mac-secret-key-0123456789abcdef")
@@ -99,7 +100,7 @@ class IoTAuthContextTests(unittest.TestCase):
             self.assertNotIn("mac-secret-key-0123456789abcdef", representation)
 
     def _load_config(self, root, extra_lines=None, omit_rsa_credentials=False):
-        return load_config(self._write_config(root, extra_lines, omit_rsa_credentials))
+        return _load_config(self._write_config(root, extra_lines, omit_rsa_credentials))
 
     def _write_config(self, root, extra_lines=None, omit_rsa_credentials=False):
         (root / "auth.pem").write_text("auth", encoding="utf-8")

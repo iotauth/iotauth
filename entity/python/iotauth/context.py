@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .config import EntityConfig, load_config
+from .config import EntityConfig, _load_config
 from .credentials import (
     load_auth_public_key,
     load_entity_private_key,
@@ -61,12 +61,12 @@ class IoTAuthContext:
                 material cannot be loaded.
         """
 
-        config = load_config(path, validate_paths=validate_paths)
-        return cls.from_entity_config(config)
+        config = _load_config(path, validate_paths=validate_paths)
+        return cls._from_entity_config(config)
 
     @classmethod
-    def from_entity_config(cls, config: EntityConfig) -> IoTAuthContext:
-        """Create a runtime context from parsed entity configuration.
+    def _from_entity_config(cls, config: EntityConfig) -> IoTAuthContext:
+        """Create a runtime context from internally parsed entity configuration.
 
         Args:
             config: Validated entity configuration.

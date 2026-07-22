@@ -11,7 +11,6 @@ from .config import (
     EntityInfo,
     SessionConfig,
     TargetServer,
-    load_config,
 )
 from .context import IoTAuthContext
 from .exceptions import (
@@ -48,7 +47,6 @@ __all__ = [
     "IoTAuthContext",
     "IoTAuthError",
     "KeyCacheError",
-    "load_config",
     "MessageIntegrityError",
     "SecureChannel",
     "SecureChannelClosed",

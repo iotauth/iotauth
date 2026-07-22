@@ -18,7 +18,6 @@ EXPECTED_PUBLIC_API = {
     "IoTAuthContext",
     "IoTAuthError",
     "KeyCacheError",
-    "load_config",
     "MessageIntegrityError",
     "SecureChannel",
     "SecureChannelClosed",
@@ -47,6 +46,7 @@ class PublicApiTests(unittest.TestCase):
             "build_handshake_1",
             "connect_secure",
             "encode_varint",
+            "load_config",
             "parse_frame",
             "public_encrypt",
             "recv_frame",
@@ -59,6 +59,10 @@ class PublicApiTests(unittest.TestCase):
         for name in low_level_names:
             with self.subTest(name=name):
                 self.assertFalse(hasattr(iotauth, name))
+
+    def test_context_only_exposes_file_based_public_constructor(self):
+        self.assertTrue(hasattr(iotauth.IoTAuthContext, "from_config"))
+        self.assertFalse(hasattr(iotauth.IoTAuthContext, "from_entity_config"))
 
 
 if __name__ == "__main__":

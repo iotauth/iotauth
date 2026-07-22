@@ -2,7 +2,8 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from iotauth import ConfigError, load_config
+from iotauth import ConfigError
+from iotauth.config import _load_config
 
 
 class LoadConfigTests(unittest.TestCase):
@@ -37,7 +38,7 @@ class LoadConfigTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            config = load_config(config_path)
+            config = _load_config(config_path)
 
             self.assertEqual(config.entity.name, "net1.client")
             self.assertEqual(config.auth.id, 101)
@@ -87,7 +88,7 @@ class LoadConfigTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ConfigError, "existing file"):
-                load_config(config_path)
+                _load_config(config_path)
 
     def test_non_permanent_mode_requires_rsa_paths(self):
         with self.assertRaisesRegex(ConfigError, "authInfo.pubkey.path, entityInfo.privkey.path"):
@@ -113,7 +114,7 @@ class LoadConfigTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            config = load_config(config_path)
+            config = _load_config(config_path)
             self.assertTrue(config.session.permanent_distribution_key)
             self.assertEqual(config.distribution_cipher_key_path, (root / "dist.cipher").resolve())
             self.assertEqual(config.distribution_mac_key_path, (root / "dist.mac").resolve())
@@ -156,7 +157,7 @@ class LoadConfigTests(unittest.TestCase):
                 ],
             }
             json_path.write_text(json.dumps(data), encoding="utf-8")
-            config = load_config(json_path)
+            config = _load_config(json_path)
             self.assertTrue(config.session.permanent_distribution_key)
             self.assertEqual(config.distribution_cipher_key_path, (root / "dist.cipher").resolve())
             self.assertEqual(config.distribution_mac_key_path, (root / "dist.mac").resolve())
@@ -171,7 +172,7 @@ class LoadConfigTests(unittest.TestCase):
                 self._minimal_config_text(root, purpose_line, override, skip),
                 encoding="utf-8",
             )
-            return load_config(config_path)
+            return _load_config(config_path)
 
     def _minimal_config_text(
         self,
