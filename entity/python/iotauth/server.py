@@ -22,7 +22,10 @@ class SecureServer:
         host: Local hostname or IP address. Must be supplied with ``port``.
         port: Local TCP port. Must be supplied with ``host``.
         backlog: Maximum number of pending TCP connections.
-        timeout: Timeout in seconds for accepting and handshaking with a peer.
+        accept_timeout: Maximum number of seconds to wait for an incoming TCP
+            connection. Use ``None`` to wait indefinitely.
+        handshake_timeout: Maximum number of seconds to complete the secure
+            handshake after accepting a peer. Use ``None`` to wait indefinitely.
 
     Leaving a ``with SecureServer(...)`` block closes the listening socket.
     Call ``close()`` on each channel returned by ``serve_once()`` when the
@@ -36,14 +39,16 @@ class SecureServer:
         host: str | None = None,
         port: int | None = None,
         backlog: int = 5,
-        timeout: float | None = 60.0,  # Make default timeout 1 min
+        accept_timeout: float | None = None,
+        handshake_timeout: float | None = 5.0,
         _socket_factory: ListenSocketFactory | None = None,
     ):
         self.ctx = ctx
         self.host = host
         self.port = port
         self.backlog = backlog
-        self.timeout = timeout
+        self.accept_timeout = accept_timeout
+        self.handshake_timeout = handshake_timeout
         self._socket_factory = _socket_factory
         self._socket: Any | None = None
 
@@ -63,8 +68,8 @@ class SecureServer:
         host, port = self._resolve_bind_address()
         sock = self._create_socket()
         try:
-            if self.timeout is not None and hasattr(sock, "settimeout"):
-                sock.settimeout(self.timeout)
+            if hasattr(sock, "settimeout"):
+                sock.settimeout(self.accept_timeout)
             if hasattr(sock, "setsockopt"):
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind((host, port))
@@ -92,7 +97,7 @@ class SecureServer:
             client_socket, _address = self._socket.accept()
         except OSError as exc:
             raise AuthConnectionError(f"Could not accept secure connection: {exc}") from exc
-        return self.ctx.accept_secure(client_socket, timeout=self.timeout)
+        return self.ctx.accept_secure(client_socket, timeout=self.handshake_timeout)
 
     def close(self) -> None:
         """Close the listening socket without closing established channels."""

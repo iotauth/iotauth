@@ -7,13 +7,16 @@ from iotauth import IoTAuthContext, IoTAuthError, SecureChannelClosed, SecureSer
 def main():
     parser = argparse.ArgumentParser(description="IoTAuth Python Server Example")
     parser.add_argument(
-        "-to", "--timeout", type=float, default=60.0, help="Timeout value for server (default 60)"
+        "--accept-timeout",
+        type=float,
+        default=None,
+        help="Seconds to wait for a client connection (default: wait indefinitely)",
     )
     parser.add_argument(
-        "-m", "--minutes", action="store_true", help="Treat timeout value as minutes"
-    )
-    parser.add_argument(
-        "-s", "--seconds", action="store_true", help="Treat timeout value as seconds (default)"
+        "--handshake-timeout",
+        type=float,
+        default=5.0,
+        help="Seconds to complete an accepted client's handshake (default: 5)",
     )
     parser.add_argument(
         "-n",
@@ -25,16 +28,16 @@ def main():
     parser.add_argument("config_path", help="Path to the server config file")
     args = parser.parse_args()
 
-    timeout_val = args.timeout
-    if args.minutes:  # calcualte time out value in seconds
-        timeout_val *= 60.0
-
     print("Loading server context...")
     ctx = IoTAuthContext.from_config(args.config_path)
 
     try:
         # SecureServer automatically binds to the host/port in the config
-        with SecureServer(ctx, timeout=timeout_val) as server:
+        with SecureServer(
+            ctx,
+            accept_timeout=args.accept_timeout,
+            handshake_timeout=args.handshake_timeout,
+        ) as server:
             target = ctx.config.targets[0]
             print(f"Listening securely on {target.host}:{target.port}...")
 

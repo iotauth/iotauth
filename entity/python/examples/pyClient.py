@@ -6,6 +6,12 @@ from iotauth import AuthConnectionError, IoTAuthContext, IoTAuthError, SecureCli
 
 def main():
     parser = argparse.ArgumentParser(description="IoTAuth Python Client Example")
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=5.0,
+        help="Seconds allowed for Auth, connection, and handshake operations (default: 5)",
+    )
     parser.add_argument("config_path", help="Path to the client config file")
     args = parser.parse_args()
 
@@ -14,7 +20,7 @@ def main():
 
     try:
         # SecureClient handles Auth session key requests and the peer handshake
-        with SecureClient(ctx) as client:
+        with SecureClient(ctx, timeout=args.timeout) as client:
             print("Connecting to server...")
             channel = client.connect()
 

@@ -148,7 +148,9 @@ class SecureServerTests(unittest.TestCase):
     def test_listen_binds_and_listens_once(self):
         fake = FakeListenSocket()
         server = SecureServer(
-            FakeContext(as_server=True), _socket_factory=lambda: fake, timeout=1.5
+            FakeContext(as_server=True),
+            _socket_factory=lambda: fake,
+            accept_timeout=1.5,
         )
 
         server.listen()
@@ -176,7 +178,12 @@ class SecureServerTests(unittest.TestCase):
     def test_serve_once_accepts_and_delegates_to_context(self):
         ctx = FakeContext(as_server=True)
         fake = FakeListenSocket()
-        server = SecureServer(ctx, _socket_factory=lambda: fake, timeout=2.0)
+        server = SecureServer(
+            ctx,
+            _socket_factory=lambda: fake,
+            accept_timeout=1.5,
+            handshake_timeout=2.0,
+        )
 
         channel = server.serve_once()
 
@@ -184,6 +191,21 @@ class SecureServerTests(unittest.TestCase):
         self.assertEqual(
             ctx.accept_calls,
             [{"sock": fake.accepted_socket, "timeout": 2.0}],
+        )
+        self.assertEqual(fake.timeout, 1.5)
+
+    def test_timeout_defaults_wait_for_connection_and_bound_handshake(self):
+        ctx = FakeContext(as_server=True)
+        fake = FakeListenSocket()
+        fake.timeout = 9.0
+        server = SecureServer(ctx, _socket_factory=lambda: fake)
+
+        server.serve_once()
+
+        self.assertIsNone(fake.timeout)
+        self.assertEqual(
+            ctx.accept_calls,
+            [{"sock": fake.accepted_socket, "timeout": 5.0}],
         )
 
     def test_close_closes_listening_socket(self):
