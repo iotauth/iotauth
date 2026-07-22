@@ -76,8 +76,8 @@ cd $(quote_for_shell "$SST_ROOT/entity/python/examples") || exit 1
 source ../.venv/bin/activate
 python3 pyClient.py $CLIENT_CONFIG_ARG
 status=\$?
-tmux send-keys -t $AUTH_PANE_ARG C-c
-tmux send-keys -t $SERVER_PANE_ARG C-c
+tmux send-keys -t "$AUTH_PANE_ARG" C-c
+tmux send-keys -t "$SERVER_PANE_ARG" C-c
 sleep 2
 for port in 21900 21901 21100; do
 	pids=\$(lsof -tiTCP:\$port -sTCP:LISTEN 2>/dev/null || true)
