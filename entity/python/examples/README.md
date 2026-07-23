@@ -19,6 +19,29 @@ examples/
 | [`py_server.py`](py_server.py) | A high-level server script that listens for peer connections, verifies the secure handshake, receives encrypted payloads from the client, and sends back numbered response messages (`"Hello client"`, `"Hello client 2"`, etc.). |
 | [`configs/`](configs) | Directory containing the `.config` files that specify paths to entity credentials/certificates and define networking settings for the entities. |
 
+## Configuration File Formats
+
+The Python API accepts both the C-style dotted properties format (`key=value`) and Node-style JSON configuration files.
+
+`generateAll.sh` does not generate dedicated Python config files.
+It generates the credentials used by the examples and the Node-style JSON configs under `entity/node/example_entities/configs/`.
+The `configs/py_client.config` and `configs/py_server.config` files in this directory are checked-in C-style example fixtures.
+
+Choose whichever format best fits your application:
+
+- Use the checked-in Python fixtures or copy another C-style properties config and adapt its entity settings.
+- Use or copy a generated Node-style JSON config.
+- In either case, update the configured credential and key paths according to the format-specific path anchor described below.
+
+Relative credential and key paths use different anchors:
+
+| Format | Relative path anchor |
+| --- | --- |
+| C-style properties | The directory containing the config file. |
+| Node-style JSON | The current working directory from which the Python process is started. |
+
+Absolute paths work in both formats.
+
 ## Usage
 
 Both the client and the server require a configuration file path to be passed as a **positional argument**.
