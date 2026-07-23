@@ -35,40 +35,6 @@ class FakeSocket:
         self.closed = True
 
 
-class FakeListenSocket:
-    def __init__(self, *, fail_bind=False, fail_accept=False):
-        self.bound = None
-        self.listened = None
-        self.timeout = None
-        self.sockopt = None
-        self.closed = False
-        self.fail_bind = fail_bind
-        self.fail_accept = fail_accept
-        self.accepted_socket = object()
-
-    def settimeout(self, timeout):
-        self.timeout = timeout
-
-    def setsockopt(self, *args):
-        self.sockopt = args
-
-    def bind(self, address):
-        if self.fail_bind:
-            raise OSError("bind failed")
-        self.bound = address
-
-    def listen(self, backlog):
-        self.listened = backlog
-
-    def accept(self):
-        if self.fail_accept:
-            raise OSError("accept failed")
-        return self.accepted_socket, ("127.0.0.1", 12345)
-
-    def close(self):
-        self.closed = True
-
-
 def make_session_key(
     key_id=b"12345678",
     cipher_key=b"c" * 16,

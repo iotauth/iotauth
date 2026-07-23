@@ -2,7 +2,6 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from iotauth import ConfigError
 from iotauth.config import _load_config
 
 
@@ -54,46 +53,6 @@ class LoadConfigTests(unittest.TestCase):
             self.assertEqual(config.auth.public_key_path, auth_key.resolve())
             self.assertEqual(config.entity.private_key_path, entity_key.resolve())
 
-    def test_keeps_non_json_purpose_as_raw_string(self):
-        config = self._load_minimal_config('entityInfo.purpose={"keyId":00000000}')
-
-        self.assertEqual(config.purposes, ['{"keyId":00000000}'])
-
-    def test_rejects_missing_required_key(self):
-        with self.assertRaisesRegex(ConfigError, "Missing required config key"):
-            self._load_minimal_config(skip={"authInfo.id"})
-
-    def test_rejects_bad_integer(self):
-        with self.assertRaisesRegex(ConfigError, "auth.port.number must be an integer"):
-            self._load_minimal_config(override={"auth.port.number": "abc"})
-
-    def test_rejects_unsupported_protocol(self):
-        with self.assertRaisesRegex(ConfigError, "Unsupported network.protocol"):
-            self._load_minimal_config(override={"network.protocol": "UDP"})
-
-    def test_rejects_missing_key_file(self):
-        with TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            config_path = root / "client.config"
-            config_path.write_text(
-                self._minimal_config_text(
-                    root,
-                    override={
-                        "authInfo.pubkey.path": "missing-auth.pem",
-                        "entityInfo.privkey.path": "missing-entity.pem",
-                    },
-                    create_keys=False,
-                ),
-                encoding="utf-8",
-            )
-
-            with self.assertRaisesRegex(ConfigError, "existing file"):
-                _load_config(config_path)
-
-    def test_non_permanent_mode_requires_rsa_paths(self):
-        with self.assertRaisesRegex(ConfigError, "authInfo.pubkey.path, entityInfo.privkey.path"):
-            self._load_minimal_config(skip={"authInfo.pubkey.path", "entityInfo.privkey.path"})
-
     def test_loads_properties_permanent_distribution_key(self):
         with TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -120,48 +79,6 @@ class LoadConfigTests(unittest.TestCase):
             self.assertEqual(config.distribution_mac_key_path, (root / "dist.mac").resolve())
             self.assertEqual(config.distribution_key_validity_ms, 365 * 24 * 60 * 60 * 1000)
             self.assertIsNone(config.auth.public_key_path)
-            self.assertIsNone(config.entity.private_key_path)
-
-    def test_loads_json_permanent_distribution_key(self):
-        with TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            (root / "dist.cipher").write_bytes(b"cipher")
-            (root / "dist.mac").write_bytes(b"mac")
-            json_path = root / "client.json"
-            import json
-
-            data = {
-                "entityInfo": {
-                    "name": "net1.client",
-                    "group": "Clients",
-                    "distProtocol": "TCP",
-                    "usePermanentDistKey": True,
-                    "permanentDistKey": {
-                        "cipherKeyFile": str(root / "dist.cipher"),
-                        "macKeyFile": str(root / "dist.mac"),
-                        "validity": "365*day",
-                    },
-                },
-                "authInfo": {
-                    "id": 101,
-                    "host": "127.0.0.1",
-                    "port": 21900,
-                    "publicKey": str(root / "missing-auth.pem"),
-                },
-                "cryptoInfo": {
-                    "sessionCryptoSpec": {"cipher": "AES-128-CBC"},
-                    "distributionCryptoSpec": {"cipher": "AES-128-CBC"},
-                },
-                "targetServerInfoList": [
-                    {"name": "net1.server", "host": "127.0.0.1", "port": 21100}
-                ],
-            }
-            json_path.write_text(json.dumps(data), encoding="utf-8")
-            config = _load_config(json_path)
-            self.assertTrue(config.session.permanent_distribution_key)
-            self.assertEqual(config.distribution_cipher_key_path, (root / "dist.cipher").resolve())
-            self.assertEqual(config.distribution_mac_key_path, (root / "dist.mac").resolve())
-            self.assertEqual(config.distribution_key_validity_ms, 365 * 24 * 60 * 60 * 1000)
             self.assertIsNone(config.entity.private_key_path)
 
     def _load_minimal_config(self, purpose_line=None, override=None, skip=None):

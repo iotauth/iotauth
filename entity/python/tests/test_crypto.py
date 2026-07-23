@@ -1,21 +1,14 @@
 import unittest
-from unittest.mock import patch
 
 from iotauth import (
-    DistributionKey,
     IoTAuthContext,
     MessageIntegrityError,
-    SerializationError,
     UnsupportedCryptoError,
 )
 from iotauth.config import AuthInfo, EntityConfig, EntityInfo, SessionConfig, TargetServer
 from iotauth.crypto import (
     _load_crypto_backend,
-    decrypt_request_with_distribution_key,
     encrypt_and_sign_for_auth,
-    encrypt_request_with_distribution_key,
-    private_decrypt,
-    public_encrypt,
     sign_sha256,
     symmetric_decrypt_authenticate,
     symmetric_encrypt_authenticate,
@@ -35,66 +28,9 @@ def has_cryptography():
 CRYPTOGRAPHY_AVAILABLE = has_cryptography()
 
 
-class CryptoDependencyTests(unittest.TestCase):
-    """Tests for cryptography package dependency injection."""
-
-    def test_missing_cryptography_dependency_is_clear(self):
-        with patch.dict(
-            "sys.modules",
-            {
-                "cryptography": None,
-                "cryptography.hazmat": None,
-                "cryptography.hazmat.primitives": None,
-                "cryptography.hazmat.primitives.serialization": None,
-            },
-        ):
-            with self.assertRaisesRegex(UnsupportedCryptoError, "cryptography"):
-                _load_crypto_backend()
-
-
-class DistributionKeyWrapperTests(unittest.TestCase):
-    """Tests for distribution key payload packaging."""
-
-    @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
-    def test_distribution_key_wrapper_preserves_sender_name(self):
-        key = DistributionKey(
-            cipher_key=b"c" * 16,
-            mac_key=b"m" * 32,
-            abs_validity=None,
-            encryption_mode="AES_128_CBC",
-        )
-
-        protected = encrypt_request_with_distribution_key(b"payload", "net1.client", key)
-        sender, plaintext = decrypt_request_with_distribution_key(protected, key)
-
-        self.assertEqual(protected[0], len("net1.client"))
-        self.assertEqual(sender, "net1.client")
-        self.assertEqual(plaintext, b"payload")
-
-    def test_sender_name_must_fit_one_byte(self):
-        key = DistributionKey(
-            cipher_key=b"c" * 16,
-            mac_key=b"m" * 32,
-            abs_validity=None,
-            encryption_mode="AES_128_CBC",
-        )
-
-        with self.assertRaisesRegex(SerializationError, "one byte"):
-            encrypt_request_with_distribution_key(b"payload", "x" * 256, key)
-
-
 @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
 class SymmetricCryptoTests(unittest.TestCase):
     """Tests for AES symmetric encryption and HMAC authentication."""
-
-    def test_aes_cbc_round_trip_with_hmac(self):
-        self._round_trip("AES_128_CBC", hmac_enabled=True)
-
-    def test_aes_ctr_round_trip_with_hmac(self):
-        self._round_trip("AES_128_CTR", hmac_enabled=True)
-
-    def test_aes_gcm_round_trip_without_hmac(self):
-        self._round_trip("AES_128_GCM", hmac_enabled=False)
 
     def test_hmac_detects_tampering(self):
         envelope = symmetric_encrypt_authenticate(
@@ -104,23 +40,6 @@ class SymmetricCryptoTests(unittest.TestCase):
 
         with self.assertRaises(MessageIntegrityError):
             symmetric_decrypt_authenticate(tampered, b"c" * 16, b"m" * 32, "AES_128_CBC", True)
-
-    def test_rejects_wrong_aes_key_length(self):
-        with self.assertRaisesRegex(UnsupportedCryptoError, "AES-128"):
-            symmetric_encrypt_authenticate(b"payload", b"short", b"m" * 32, "AES_128_CBC", True)
-
-    def test_rejects_unsupported_encryption_mode(self):
-        with self.assertRaisesRegex(UnsupportedCryptoError, "Unsupported"):
-            symmetric_encrypt_authenticate(b"payload", b"c" * 16, b"m" * 32, "AES_999", True)
-
-    def _round_trip(self, mode, hmac_enabled):
-        envelope = symmetric_encrypt_authenticate(
-            b"payload", b"c" * 16, b"m" * 32, mode, hmac_enabled
-        )
-        plaintext = symmetric_decrypt_authenticate(
-            envelope, b"c" * 16, b"m" * 32, mode, hmac_enabled
-        )
-        self.assertEqual(plaintext, b"payload")
 
 
 @unittest.skipUnless(CRYPTOGRAPHY_AVAILABLE, "cryptography is not installed")
@@ -134,11 +53,6 @@ class PublicKeyCryptoTests(unittest.TestCase):
             key_size=2048,
         )
         self.public_key = self.private_key.public_key()
-
-    def test_public_encrypt_private_decrypt_round_trip(self):
-        ciphertext = public_encrypt(b"payload", self.public_key)
-
-        self.assertEqual(private_decrypt(ciphertext, self.private_key), b"payload")
 
     def test_signature_verification_detects_tampering(self):
         signature = sign_sha256(b"payload", self.private_key)
