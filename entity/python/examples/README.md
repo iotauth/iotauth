@@ -7,16 +7,16 @@ This directory contains the example scripts for running an IoTAuth Python Client
 ```text
 examples/
   README.md
-  pyClient.py
-  pyServer.py
+  py_client.py
+  py_server.py
   configs/
 ```
 
 | File / Folder | Description |
 | --- | --- |
 | [`README.md`](README.md) | This file. Contains usage instructions for the example scripts. |
-| [`pyClient.py`](pyClient.py) | A high-level client script that connects to the Auth server to request session keys, performs a secure handshake with the peer server, and sequentially sends encrypted payloads while waiting for replies. |
-| [`pyServer.py`](pyServer.py) | A high-level server script that listens for peer connections, verifies the secure handshake, receives encrypted payloads from the client, and sends back numbered response messages (`"Hello client"`, `"Hello client 2"`, etc.). |
+| [`py_client.py`](py_client.py) | A high-level client script that connects to the Auth server to request session keys, performs a secure handshake with the peer server, and sequentially sends encrypted payloads while waiting for replies. |
+| [`py_server.py`](py_server.py) | A high-level server script that listens for peer connections, verifies the secure handshake, receives encrypted payloads from the client, and sends back numbered response messages (`"Hello client"`, `"Hello client 2"`, etc.). |
 | [`configs/`](configs) | Directory containing the `.config` files that specify paths to entity credentials/certificates and define networking settings for the entities. |
 
 ## Usage
@@ -25,15 +25,15 @@ Both the client and the server require a configuration file path to be passed as
 
 ```bash
 # Run the server
-python3 pyServer.py configs/pyServer.config
+python3 py_server.py configs/py_server.config
 
 # Run the client
-python3 pyClient.py configs/pyClient.config
+python3 py_client.py configs/py_client.config
 ```
 
-## Server Options (`pyServer.py`)
+## Server Options (`py_server.py`)
 
-The `pyServer.py` script supports optional command-line flags to control timeouts and message limits:
+The `py_server.py` script supports optional command-line flags to control timeouts and message limits:
 
 ### Accept timeout (`--accept-timeout`)
 By default, the server waits indefinitely for a client connection. Set `--accept-timeout` to limit that wait in seconds.
@@ -49,24 +49,24 @@ Python's `argparse` is flexible, so you can place the configuration file path an
 
 ```bash
 # Wait up to 30 seconds for a client connection
-python3 pyServer.py configs/pyServer.config --accept-timeout 30
+python3 py_server.py configs/py_server.config --accept-timeout 30
 
 # Allow up to 10 seconds for the secure handshake
-python3 pyServer.py --handshake-timeout 10 configs/pyServer.config
+python3 py_server.py --handshake-timeout 10 configs/py_server.config
 
 # Limit server to processing 3 messages per connection
-python3 pyServer.py configs/pyServer.config -n/--max-messages 3
+python3 py_server.py configs/py_server.config -n/--max-messages 3
 
 # Combine timeout and max-messages flags
-python3 pyServer.py --accept-timeout 30 --handshake-timeout 10 --max-messages 5 configs/pyServer.config
+python3 py_server.py --accept-timeout 30 --handshake-timeout 10 --max-messages 5 configs/py_server.config
 ```
 
-## Client options (`pyClient.py`)
+## Client options (`py_client.py`)
 
 The client allows five seconds for Auth communication, the outbound TCP
 connection, and the secure handshake by default. Override that shared limit in
 seconds with `--timeout`:
 
 ```bash
-python3 pyClient.py configs/pyClient.config --timeout 10
+python3 py_client.py configs/py_client.config --timeout 10
 ```

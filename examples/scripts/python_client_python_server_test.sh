@@ -74,7 +74,7 @@ set +e
 sleep 6
 cd $(quote_for_shell "$SST_ROOT/entity/python/examples") || exit 1
 source ../.venv/bin/activate
-python3 pyClient.py $CLIENT_CONFIG_ARG
+python3 py_client.py $CLIENT_CONFIG_ARG
 status=\$?
 tmux send-keys -t "$AUTH_PANE_ARG" C-c
 tmux send-keys -t "$SERVER_PANE_ARG" C-c
@@ -90,7 +90,7 @@ EOF
 	chmod +x "$WAIT_SCRIPT"
 
 	tmux send-keys -t "$AUTH_PANE" "cd $(quote_for_shell "$SST_ROOT/auth/auth-server") && java -jar target/auth-server-jar-with-dependencies.jar -p ../properties/exampleAuth101.properties --password $PASSWORD_ARG" C-m
-	tmux send-keys -t "$SERVER_PANE" "sleep 3 && cd $(quote_for_shell "$SST_ROOT/entity/python/examples") && source ../.venv/bin/activate && python3 pyServer.py configs/pyServer.config" C-m
+	tmux send-keys -t "$SERVER_PANE" "sleep 3 && cd $(quote_for_shell "$SST_ROOT/entity/python/examples") && source ../.venv/bin/activate && python3 py_server.py configs/py_server.config" C-m
 	tmux send-keys -t "$CLIENT_PANE" "$WAIT_SCRIPT" C-m
 	attach_tmux_session "$SESSION_NAME"
 	exit 0
@@ -101,14 +101,14 @@ start_auth
 
 echo "[test] Starting Python server."
 start_service server bash -c \
-	"cd $(quote_for_shell "$SST_ROOT/entity/python/examples") && source ../.venv/bin/activate && exec python3 pyServer.py ../../node/example_entities/configs/net1/server.config"
+	"cd $(quote_for_shell "$SST_ROOT/entity/python/examples") && source ../.venv/bin/activate && exec python3 py_server.py ../../node/example_entities/configs/net1/server.config"
 wait_for_port 21100 "Python server"
 
 echo "[test] Running Python client."
 (
 	cd "$SST_ROOT/entity/python/examples"
 	source ../.venv/bin/activate
-	exec python3 pyClient.py "$PYTHON_CLIENT_CONFIG"
+	exec python3 py_client.py "$PYTHON_CLIENT_CONFIG"
 ) >"$CLIENT_LOG" 2>&1 &
 CLIENT_PID=$!
 (

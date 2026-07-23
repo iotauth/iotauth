@@ -58,10 +58,10 @@ sleep 6
 cd $(quote_for_shell "$SST_ROOT/entity/python/examples") || exit 1
 source ../.venv/bin/activate
 echo "[test] Running Python client (Connection 1)..."
-python3 pyClient.py configs/pyClient.config
+python3 py_client.py configs/py_client.config
 sleep 2
 echo "[test] Running Python client (Connection 2)..."
-python3 pyClient.py configs/pyClient.config
+python3 py_client.py configs/py_client.config
 status=\$?
 tmux send-keys -t "$AUTH_PANE_ARG" C-c
 tmux send-keys -t "$SERVER_PANE_ARG" C-c
@@ -95,9 +95,9 @@ echo "[test] Starting Python client (running twice to satisfy C server)."
 (
 	cd "$SST_ROOT/entity/python/examples"
 	source ../.venv/bin/activate
-	python3 pyClient.py ../../node/example_entities/configs/net1/client.config
+	python3 py_client.py ../../node/example_entities/configs/net1/client.config
 	sleep 2
-	exec python3 pyClient.py ../../node/example_entities/configs/net1/client.config
+	exec python3 py_client.py ../../node/example_entities/configs/net1/client.config
 ) >"$CLIENT_LOG" 2>&1 &
 CLIENT_PID=$!
 (
