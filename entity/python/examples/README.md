@@ -14,7 +14,7 @@ examples/
 
 | File / Folder | Description |
 | --- | --- |
-| [`README.md`](README.md) | This file. Contains usage instructions for the example scripts. |
+| [`README.md`](README.md) | Usage instructions for the example scripts. |
 | [`py_client.py`](py_client.py) | A high-level client script that connects to the Auth server to request session keys, performs a secure handshake with the peer server, and sequentially sends encrypted payloads while waiting for replies. |
 | [`py_server.py`](py_server.py) | A high-level server script that listens for peer connections, verifies the secure handshake, receives encrypted payloads from the client, and sends back numbered response messages (`"Hello client"`, `"Hello client 2"`, etc.). |
 | [`configs/`](configs) | Directory containing the `.config` files that specify paths to entity credentials/certificates and define networking settings for the entities. |
@@ -85,15 +85,22 @@ python3 py_client.py configs/py_client.config
 The `py_server.py` script supports optional command-line flags to control timeouts and message limits:
 
 ### Accept timeout (`--accept-timeout`)
-By default, the server waits indefinitely for a client connection. Set `--accept-timeout` to limit that wait in seconds.
+
+By default, the server waits indefinitely for a client connection.
+Set `--accept-timeout` to limit that wait in seconds.
 
 ### Handshake timeout (`--handshake-timeout`)
-After accepting a connection, the server allows five seconds for the secure handshake by default. Set `--handshake-timeout` to override that limit in seconds.
+
+After accepting a connection, the server allows five seconds for the secure handshake by default.
+Set `--handshake-timeout` to override that limit in seconds.
 
 ### Maximum Messages (`-n` / `--max-messages`)
-By default, the server continues processing messages indefinitely for a connected client (`0` = unlimited). You can limit the maximum number of messages processed per connection before closing the channel using the `-n` or `--max-messages` flag.
+
+By default, the server continues processing messages indefinitely for a connected client (`0` = unlimited).
+You can limit the maximum number of messages processed per connection before closing the channel using the `-n` or `--max-messages` flag.
 
 ### Argument Flexibility
+
 Python's `argparse` is flexible, so you can place the configuration file path anywhere in the command (before or after the flags), as long as it is not immediately after a flag that requires a value:
 
 ```bash
@@ -112,9 +119,8 @@ python3 py_server.py --accept-timeout 30 --handshake-timeout 10 --max-messages 5
 
 ## Client options (`py_client.py`)
 
-The client allows five seconds for Auth communication, the outbound TCP
-connection, and the secure handshake by default. Override that shared limit in
-seconds with `--timeout`:
+The client allows five seconds for Auth communication, the outbound TCP connection, and the secure handshake by default.
+Override that shared limit in seconds with `--timeout`:
 
 ```bash
 python3 py_client.py configs/py_client.config --timeout 10

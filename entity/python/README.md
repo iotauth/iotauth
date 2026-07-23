@@ -1,13 +1,9 @@
 # IoTAuth Python API
 
-This directory contains the Python entity-side API for IoTAuth. The code here is
-intended to give Python programs a small, readable interface for requesting
-session keys from Auth, completing the IoTSP secure handshake, and sending or
-receiving protected messages.
+This directory contains the Python entity-side API for IoTAuth.
+The code here is intended to give Python programs a small, readable interface for requesting session keys from Auth, completing the IoTSP secure handshake, and sending or receiving protected messages.
 
-
-For developer-facing class, function, and usage details, see 
-[Python API Reference](https://iotauth.github.io/docs/python-api-reference) or [Python Guide](https://iotauth.github.io/docs/python-guide) on the IoTAuth documentation site.
+For developer-facing class, function, and usage details, see [Python API Reference](https://iotauth.github.io/docs/python-api-reference) or [Python Guide](https://iotauth.github.io/docs/python-guide) on the IoTAuth documentation site.
 
 ## Current scope
 
@@ -30,8 +26,10 @@ The Python API currently includes:
 
 These are the high-level directories and files and their purposes:
 
-- **[`iotauth/`](iotauth)**: The core Python API package. This is what developers install and import into their own applications to request keys and create secure channels.
-- **[`examples/`](examples)**: Working examples of Python servers and clients using the `iotauth` API. See [`examples/README.md`](examples/README.md) for details on running them.
+- **[`iotauth/`](iotauth)**: The core Python API package.
+  This is what developers install and import into their own applications to request keys and create secure channels.
+- **[`examples/`](examples)**: Working examples of Python servers and clients using the `iotauth` API.
+  See [`examples/README.md`](examples/README.md) for details on running them.
 - **[`tests/`](tests)**: The automated test suite for the Python API.
 - **[`pyproject.toml`](pyproject.toml)**: Build system requirements, package metadata, and tool configurations (including Ruff).
 - **[`run_all_tests.py`](run_all_tests.py)**: Test runner script providing natural-language output for the test suite.
@@ -41,7 +39,9 @@ For API documentation and guides, consult the [IoTAuth Documentation Website](ht
 
 ## Configuration (`pyproject.toml`)
 
-This project uses a `pyproject.toml` file at its root. This is the modern standard for configuring Python projects (replacing older formats like `setup.py` or `requirements.txt`). It contains build system requirements, package metadata, and tool configurations (like Ruff).
+This project uses a `pyproject.toml` file at its root.
+This is the modern standard for configuring Python projects, replacing older formats like `setup.py` or `requirements.txt`.
+It contains build system requirements, package metadata, and tool configurations like Ruff.
 If you are new to TOML, you can read the official quick-start guide and specification at [toml.io](https://toml.io/en/).
 
 ## Installation and Running
@@ -56,7 +56,8 @@ pip install --upgrade pip
 pip install -e .
 ```
 
-This installs the `iotauth` package in editable mode. You **do not** need to mess with `PYTHONPATH` as long as your virtual environment is activated.
+This installs the `iotauth` package in editable mode.
+You **do not** need to modify `PYTHONPATH` as long as your virtual environment is activated.
 
 ### Running tests
 
@@ -72,12 +73,9 @@ To run an individual test file, pass its path:
 python run_all_tests.py tests/test_secure_channel.py
 ```
 
-
-
 ### Running examples
 
 For detailed instructions on how to run the example server and client, including how to specify configuration file paths and use timeout arguments, please see the [Examples README](examples/README.md).
-
 
 ## Contributing
 
@@ -86,6 +84,7 @@ For detailed instructions on how to run the example server and client, including
 This directory uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
 
 Install:
+
 ```bash
 brew install ruff
 # or
@@ -93,14 +92,17 @@ pip install ruff
 ```
 
 Check for issues:
+
 ```bash
 ruff check .
 ```
 
 Auto-fix and format:
+
 ```bash
 ruff check --fix .
 ruff format .
 ```
 
-Ruff is configured in `pyproject.toml`. All contributions should pass `ruff check .` with no errors before submitting a pull request.
+Ruff is configured in `pyproject.toml`.
+All contributions should pass `ruff check .` with no errors before submitting a pull request.
