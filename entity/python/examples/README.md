@@ -19,6 +19,32 @@ examples/
 | [`py_server.py`](py_server.py) | A high-level server script that listens for peer connections, verifies the secure handshake, receives encrypted payloads from the client, and sends back numbered response messages (`"Hello client"`, `"Hello client 2"`, etc.). |
 | [`configs/`](configs) | Directory containing the `.config` files that specify paths to entity credentials/certificates and define networking settings for the entities. |
 
+## Set Up the Python Environment
+
+Create a virtual environment and install the `iotauth` package in editable mode before running the examples.
+Run these commands from the repository root:
+
+```bash
+cd entity/python
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+cd examples
+```
+
+The final `cd examples` leaves the terminal in the directory expected by the commands in this README.
+
+For later sessions, reactivate the existing environment instead of creating it again:
+
+```bash
+cd entity/python
+source .venv/bin/activate
+cd examples
+```
+
+Run `deactivate` when you are finished.
+
 ## Configuration File Formats
 
 The Python API accepts both the C-style dotted properties format (`key=value`) and Node-style JSON configuration files.
