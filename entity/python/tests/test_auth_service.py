@@ -100,7 +100,7 @@ def socket_factory_for(fake_socket):
 class AuthServiceTests(unittest.TestCase):
     """Tests for the auth service protocol and session key negotiation."""
 
-    def test_public_key_request_mode_sends_public_encrypted_message(self):
+    def test_public_key_request_mode_sends_public_key_encrypted_message(self):
         fake = FakeSocket(auth_hello() + frame(MessageType.AUTH_ALERT, b"\x01"))
 
         with patch(
