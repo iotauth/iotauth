@@ -23,14 +23,14 @@ class KeyRepresentationTests(unittest.TestCase):
 
     def test_session_key_repr_redacts_key_material(self):
         key = make_session_key(
-            cipher_key=b"session-cipher-secret",
-            mac_key=b"session-mac-secret",
+            cipher_key=b"session-key-1234",
+            mac_key=b"session-mac-secret-1234567890123",
         )
 
         representation = repr(key)
 
-        self.assertNotIn("session-cipher-secret", representation)
-        self.assertNotIn("session-mac-secret", representation)
+        self.assertNotIn("session-key-1234", representation)
+        self.assertNotIn("session-mac-secret-1234567890123", representation)
         self.assertNotIn("cipher_key", representation)
         self.assertNotIn("mac_key", representation)
         self.assertIn("id=b'12345678'", representation)
@@ -38,16 +38,16 @@ class KeyRepresentationTests(unittest.TestCase):
 
     def test_distribution_key_repr_redacts_key_material(self):
         key = DistributionKey(
-            cipher_key=b"distribution-cipher-secret",
-            mac_key=b"distribution-mac-secret",
+            cipher_key=b"dist-cipher-key!",
+            mac_key=b"distribution-mac-secret-12345678",
             abs_validity=123456,
             encryption_mode="AES_128_CBC",
         )
 
         representation = repr(key)
 
-        self.assertNotIn("distribution-cipher-secret", representation)
-        self.assertNotIn("distribution-mac-secret", representation)
+        self.assertNotIn("dist-cipher-key!", representation)
+        self.assertNotIn("distribution-mac-secret-12345678", representation)
         self.assertNotIn("cipher_key", representation)
         self.assertNotIn("mac_key", representation)
         self.assertIn("abs_validity=123456", representation)
