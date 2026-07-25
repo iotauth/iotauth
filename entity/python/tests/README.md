@@ -13,7 +13,7 @@ python -m unittest discover -s tests -v
 - `test_public_key_request_mode_sends_public_key_encrypted_message` verifies that an entity without a distribution key sends the public-key-protected session-key request type.
 - `test_session_key_response_adds_keys_to_cache` verifies that session keys returned by Auth are stored in the context cache.
 - `test_response_with_distribution_key_updates_context` verifies that a distribution key returned by Auth is saved for future requests.
-- `test_permanent_distribution_key_missing_or_expired_raises` verifies that permanent-key mode rejects missing or expired distribution keys with `CredentialError`.
+- `test_missing_or_expired_permanent_distribution_key_raises_credential_error` verifies that permanent-key mode rejects missing or expired distribution keys with `CredentialError`.
 
 ## `test_config.py`
 
