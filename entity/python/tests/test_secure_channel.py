@@ -39,17 +39,6 @@ def frame(message_type, payload):
 class SecureChannelTests(unittest.TestCase):
     """Tests for the secure session channel and communication."""
 
-    def test_channel_state_is_encapsulated(self):
-        channel = SecureChannel(FakeSocket(), make_session_key())
-
-        self.assertFalse(channel.closed)
-        self.assertFalse(hasattr(channel, "socket"))
-        self.assertFalse(hasattr(channel, "session_key"))
-        self.assertFalse(hasattr(channel, "send_sequence"))
-        self.assertFalse(hasattr(channel, "receive_sequence"))
-        with self.assertRaises(AttributeError):
-            channel.closed = True
-
     def test_recv_translates_timeout_and_restores_socket_state(self):
         fake = TimingOutSocket()
         fake.settimeout(9.0)

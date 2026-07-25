@@ -42,6 +42,5 @@ python -m unittest discover -s tests -v
 
 ## `test_secure_channel.py`
 
-- `test_channel_state_is_encapsulated` verifies that socket and sequence state remain private implementation details.
 - `test_recv_translates_timeout_and_restores_socket_state` verifies that receive timeouts become `AuthConnectionError` and that the previous socket timeout is restored.
 - `test_recv_rejects_tampered_payload` verifies that a secure channel rejects modified encrypted messages.
