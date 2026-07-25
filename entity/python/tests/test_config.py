@@ -53,7 +53,7 @@ class LoadConfigTests(unittest.TestCase):
             self.assertEqual(config.auth.public_key_path, auth_key.resolve())
             self.assertEqual(config.entity.private_key_path, entity_key.resolve())
 
-    def test_loads_properties_permanent_distribution_key(self):
+    def test_loads_permanent_distribution_key_from_properties_config(self):
         with TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             (root / "dist.cipher").write_bytes(b"cipher")
