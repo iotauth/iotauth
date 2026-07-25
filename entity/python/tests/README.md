@@ -18,7 +18,7 @@ python -m unittest discover -s tests -v
 ## `test_config.py`
 
 - `test_loads_c_style_config` verifies that the Python API continues to parse the supported C-style properties configuration format.
-- `test_loads_properties_permanent_distribution_key` verifies that permanent distribution-key paths and validity are parsed from a properties configuration.
+- `test_loads_permanent_distribution_key_from_properties_config` verifies that permanent distribution-key paths and validity are parsed from a properties configuration.
 
 ## `test_context.py`
 
