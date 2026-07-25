@@ -180,7 +180,7 @@ class AuthServiceTests(unittest.TestCase):
         self.assertEqual(ctx.distribution_key.cipher_key, b"d" * 16)
         self.assertEqual(ctx.session_keys.require(b"12345678").id, b"12345678")
 
-    def test_permanent_distribution_key_missing_or_expired_raises(self):
+    def test_missing_or_expired_permanent_distribution_key_raises_credential_error(self):
         from iotauth.auth_service import _protect_session_key_request
 
         ctx = context(permanent_distribution_key=True)
