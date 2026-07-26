@@ -1,168 +1,63 @@
-# SST Integration Test Scripts
+# Integration Test Runner
 
-Each script in this directory builds, configures, and runs one combination of client and server entity implementations, then verifies the expected output.  All scripts require Auth101 to be running (started automatically) and use ports **21900/21901** (Auth server) and **21100** (entity server).
+This directory contains the shared helpers and unified runner for IoTAuth client-server integration tests with the C, Node, and Python implementations.
+Each test starts Auth101, runs the selected client and server, verifies the expected message exchange, and cleans up its processes.
 
----
+## Usage
 
-## Quick reference
+`run_integration_test.sh` provides one interface for selecting the client and server implementations:
 
-| Script | Client | Server | Build deps |
-|--------|--------|--------|------------|
-| `c_client_c_server_test.sh` | C `entity_client` | C `entity_server` | mvn, cmake, make |
-| `c_client_node_server_test.sh` | C `entity_client` | Node `server.js` | mvn, cmake, make, node, npm |
-| `node_client_c_server_test.sh` | Node `autoClient.js` | C `entity_server` | mvn, cmake, make, node, npm |
-| `node_client_node_server_test.sh` | Node `autoClient.js` | Node `server.js` | mvn, node, npm |
-
----
-
-## Common options
-
-All four scripts accept the same flags:
-
-```
---password <pw>          Auth password (default: 1234)
---client-timeout <sec>   Max wait for client to complete (default: 45)
---service-timeout <sec>  Max wait for services to become ready (default: 45)
---no-build               Skip Maven / CMake build
---no-setup               Skip cleanAll.sh / generateAll.sh
---no-verify              Run without checking output
---keep-logs              Keep log files after the test finishes
---stop-existing          Kill any process already listening on 21900/21901/21100
---tmux                   Open Auth, server, and client in a 3-pane tmux session
--h, --help               Show usage
+```bash
+./run_integration_test.sh --client python --server node
 ```
 
----
+Both `--client` and `--server` accept `c`, `node`, or `python`.
 
-## Script details
+The runner accepts the following options:
 
-### `c_client_c_server_test.sh` — C client → C server
-
-**Entities**
-- Client: `entity/c/examples/server_client_example/build/entity_client` (config: `c_client.config`)
-- Server: `entity/c/examples/server_client_example/build/entity_server` (config: `c_server.config`)
-
-**Message flow**
-
-Both sides send messages on each connection.  The C client spawns a background receive thread per connection to read server replies.
-
-| Connection | Client sends | Server replies |
-|------------|-------------|----------------|
-| 1st | `"Hello server"`, then `"Hello server - second message"` | `"Hello client"`, then `"Hello client - second message"` |
-| 2nd | `"Hello server 2"`, then `"Hello server 2 - second message"` | `"Hello client 2"`, then `"Hello client 2 - second message"` |
-
-**Termination**  
-The C client exits after its second connection.  The script waits for the client process to exit naturally, then kills the C server and Auth.
-
-**Readiness detection**  
-The C server produces no structured startup log, so readiness is detected by polling port 21100 until it is open (port-based).
-
-**Verified output**
-```
-# C server log
-LOG: Received: Hello server
-LOG: Received: Hello server - second message
-LOG: Received: Hello server 2
-LOG: Received: Hello server 2 - second message
-
-# C client log
-LOG: Received: Hello client
-LOG: Received: Hello client 2
+```text
+--client <language>             Client implementation: c, node, or python
+--server <language>             Server implementation: c, node, or python
+--permanent-distribution-key    Use permanent distribution-key mode
+--password <password>           Auth password used for setup and Auth101
+--client-timeout <seconds>      Maximum time allowed for the client scenario
+--service-timeout <seconds>     Maximum time to wait for services
+--no-build                      Reuse existing build artifacts
+--no-setup                      Reuse existing credentials and configuration
+--no-verify                     Skip expected-output checks
+--keep-logs                     Keep temporary logs after the test
+--stop-existing                 Stop processes using the integration-test ports
+--tmux                          Show Auth, server, and client in tmux panes
+-h, --help                      Show command usage
 ```
 
----
+`--permanent-distribution-key` currently works only with a Python client.
 
-### `c_client_node_server_test.sh` — C client → Node server
+For example:
 
-**Entities**
-- Client: `entity/c/examples/server_client_example/build/entity_client` (config: `c_client.config`)
-- Server: `entity/node/example_entities/server.js` (config: `configs/net1/server.config`)
-
-**Message flow**
-
-The C client makes two sequential connections to the Node server.  Only the client sends application data; the server receives and logs it.
-
-| Connection | Client sends |
-|------------|-------------|
-| 1st | `"Hello server"`, then `"Hello server - second message"` |
-| 2nd | `"Hello server 2"`, then `"Hello server 2 - second message"` |
-
-**Termination**  
-The C client exits after its second connection completes.  The script waits for the client process to exit naturally (up to `--client-timeout`), then stops Auth and the Node server.
-
-**Readiness detection**  
-The Node server is considered ready when its log contains `Handler: listening on port` (log-based).
-
-**Verified output (Node server log)**
-```
-data: Hello server
-data: Hello server - second message
-data: Hello server 2
-data: Hello server 2 - second message
+```bash
+./run_integration_test.sh \
+  --client python \
+  --server python \
+  --permanent-distribution-key
 ```
 
----
+## Build and setup reuse
 
-### `node_client_c_server_test.sh` — Node client → C server
+By default, the runner builds the required components and regenerates the integration-test configuration.
 
-**Entities**
-- Client: `entity/node/example_entities/autoClient.js` (config: `configs/net1/client.config`)
-- Server: `entity/c/examples/server_client_example/build/entity_server` (config: `c_server.config`)
+Use the following options to reuse artifacts from an earlier test in the same environment:
 
-**Message flow**
-
-`autoClient.js` uses an automatic reconnect loop (`autoConnect()`): it opens a connection, sends `"data2"`, waits ~5 seconds, sends `"data1"`, then reconnects again every ~10 seconds.  The C server is coded to `accept()` exactly two connections and then exit, so the two connections provided by the first two loops of `autoClient` satisfy it naturally — no forced kill of the server is needed.
-
-The C server replies with `"Hello client"` on each connection, which `autoClient` receives and logs.
-
-| Connection | Client sends | Server replies |
-|------------|-------------|----------------|
-| 1st | `"data2"`, then `"data1"` | `"Hello client"` |
-| 2nd | `"data2"`, then `"data1"` | `"Hello client"` |
-
-**Termination**  
-The script waits for the C server process to exit on its own (after both connections).  `autoClient` is then killed.
-
-**Readiness detection**  
-Port-based: waits until port 21100 is open (the C server emits no structured log line on startup).
-
-**Verified output**
-```
-# C server log
-LOG: Received: data2
-Finished first communication
-
-# Node client log
-Hello client
+```bash
+./run_integration_test.sh \
+  --client python \
+  --server node \
+  --no-build \
+  --no-setup
 ```
 
----
+`--no-build` and `--no-setup` are intended for environments where an earlier test has already created the required artifacts.
+Python environment preparation still runs when either the client or server is Python.
 
-### `node_client_node_server_test.sh` — Node client → Node server
-
-**Entities**
-- Client: `entity/node/example_entities/autoClient.js` (config: `configs/net1/client.config`)
-- Server: `entity/node/example_entities/server.js` (config: `configs/net1/server.config`)
-
-**Message flow**
-
-Same `autoClient` loop as above.  The Node server stays alive indefinitely; it does not exit after a fixed number of connections.  The script stops as soon as the server log shows that `"data1"` was received (the second message of the first connection), confirming a full round-trip.
-
-| Connection | Client sends |
-|------------|-------------|
-| 1st (and onward) | `"data2"`, then `"data1"` |
-
-The Node server does not send application data back to the client; only the client sends messages.
-
-**Termination**  
-The script kills `autoClient` once `data: data1` appears in the server log, then stops the server and Auth.
-
-**Readiness detection**  
-Log-based: waits for `Handler: listening on port` in the server log.
-
-**Verified output (Node server log)**
-```
-Handler: socketID:
-data: data2
-data: data1
-```
+The integration tests use ports `21900`, `21901`, and `21100`.
+Use `--stop-existing` when old test processes are still listening on those ports.

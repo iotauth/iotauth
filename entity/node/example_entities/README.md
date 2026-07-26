@@ -11,7 +11,8 @@ For automated end-to-end tests that start Auth, a server, and a client in a sing
 
 ## Available entities
 ### 1. server.js
-A general-purpose secure server that listens for incoming client connections on the port specified in its config file.  Prints received data to stdout.  Used as the server in [`c_client_node_server_test.sh`](../../../examples/scripts/c_client_node_server_test.sh) and [`node_client_node_server_test.sh`](../../../examples/scripts/node_client_node_server_test.sh).
+A general-purpose secure server that listens for incoming client connections on the port specified in its config file.
+It prints received data to stdout and can be selected with `--server node` in the [integration-test runner](../../../examples/scripts/README.md).
 ```
 node server.js configs/net1/server.config
 ```
@@ -20,7 +21,8 @@ node server.js configs/net1/server.config
 A general-purpose interactive secure client.
 
 ### 3. autoClient.js
-A non-interactive client that automatically connects to the server specified in its config, sends `"data2"` and then `"data1"` (5 seconds apart), and reconnects every ~10 seconds.  Used as the client in [`node_client_c_server_test.sh`](../../../examples/scripts/node_client_c_server_test.sh) and [`node_client_node_server_test.sh`](../../../examples/scripts/node_client_node_server_test.sh).
+A non-interactive client that automatically connects to the server specified in its config, sends `"data2"` and then `"data1"` five seconds apart, and reconnects approximately every ten seconds.
+It can be selected with `--client node` in the [integration-test runner](../../../examples/scripts/README.md).
 ```
 node autoClient.js configs/net1/client.config
 ```

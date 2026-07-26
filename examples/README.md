@@ -73,18 +73,13 @@ This scripts deletes all credentials of example Auths and entities, and deletes 
 
 ### scripts/
 
-The [`scripts/`](scripts/) subdirectory contains automated end-to-end integration test scripts that build, configure, start Auth, and run a client/server pair in a single command. Four scripts cover every combination of C and Node.js entities:
+The [`scripts/`](scripts/) subdirectory contains a unified end-to-end integration-test runner that builds, configures, and starts Auth with a selected C, Node, or Python client-server pair.
 
-| Script | Client | Server |
-|--------|--------|--------|
-| `c_client_node_server_test.sh` | C `entity_client` | Node `server.js` |
-| `c_client_c_server_test.sh` | C `entity_client` | C `entity_server` |
-| `node_client_c_server_test.sh` | Node `autoClient.js` | C `entity_server` |
-| `node_client_node_server_test.sh` | Node `autoClient.js` | Node `server.js` |
+```bash
+./scripts/run_integration_test.sh --client python --server node
+```
 
-The `node_client_*` scripts use `autoClient.js`, which automatically reconnects every ~10 seconds and sends two messages (`"data2"` then `"data1"`) per connection.
-
-See [`scripts/README.md`](scripts/README.md) for detailed descriptions of each script, including expected messages, termination behavior, and verified output.
+See [`scripts/README.md`](scripts/README.md) for the supported options and usage.
 
 # How to run examples
 ---
