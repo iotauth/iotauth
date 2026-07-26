@@ -393,7 +393,7 @@ setup_tmux_session() {
 	tmux set-option -t "$session_name" mouse on
 	tmux set-window-option -t "$session_name" remain-on-exit on
 
-	tmux select-pane -t "$AUTH_PANE" -T "Auth101 — Ctrl+C to stop | Ctrl+B d to detach and kill"
+	tmux select-pane -t "$AUTH_PANE" -T "Auth101 - Ctrl+C to stop | Ctrl+B d to detach and kill"
 	tmux select-pane -t "$SERVER_PANE" -T "$server_pane_label"
 	tmux select-pane -t "$CLIENT_PANE" -T "$client_pane_label"
 }

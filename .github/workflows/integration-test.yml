@@ -1,7 +1,7 @@
 # This workflow runs the nine entity integration combinations plus the Python
-# permanent distribution-key scenario in sequence. The first script handles
+# permanent distribution-key scenario through the unified runner. The first test handles
 # the full build and credential setup. If it succeeds, the remaining nine
-# scripts reuse those artifacts (--no-build --no-setup). If the first script
+# tests reuse those artifacts (--no-build --no-setup). If the first test
 # fails, each subsequent script runs its own full build and setup so it is
 # independent. All ten tests always run; the job fails if any of them fails.
 
@@ -88,106 +88,106 @@ jobs:
       - name: Make scripts executable
         run: chmod +x examples/scripts/*.sh examples/generateAll.sh examples/cleanAll.sh
 
-      - name: Run c_client_c_server_test (build + setup)
+      - name: Run C client to C server (build + setup)
         id: test1
         continue-on-error: true
         working-directory: ./examples/scripts
-        run: ./c_client_c_server_test.sh
+        run: ./run_integration_test.sh --client c --server c
 
-      - name: Run c_client_node_server_test
+      - name: Run C client to Node server
         id: test2
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./c_client_node_server_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client c --server node --no-build --no-setup --stop-existing
           else
-            ./c_client_node_server_test.sh --stop-existing
+            ./run_integration_test.sh --client c --server node --stop-existing
           fi
 
-      - name: Run node_client_c_server_test
+      - name: Run Node client to C server
         id: test3
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./node_client_c_server_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client node --server c --no-build --no-setup --stop-existing
           else
-            ./node_client_c_server_test.sh --stop-existing
+            ./run_integration_test.sh --client node --server c --stop-existing
           fi
 
-      - name: Run node_client_node_server_test
+      - name: Run Node client to Node server
         id: test4
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./node_client_node_server_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client node --server node --no-build --no-setup --stop-existing
           else
-            ./node_client_node_server_test.sh --stop-existing
+            ./run_integration_test.sh --client node --server node --stop-existing
           fi
 
-      - name: Run c_client_python_server_test
+      - name: Run C client to Python server
         id: test5
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./c_client_python_server_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client c --server python --no-build --no-setup --stop-existing
           else
-            ./c_client_python_server_test.sh --stop-existing
+            ./run_integration_test.sh --client c --server python --stop-existing
           fi
 
-      - name: Run node_client_python_server_test
+      - name: Run Node client to Python server
         id: test6
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./node_client_python_server_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client node --server python --no-build --no-setup --stop-existing
           else
-            ./node_client_python_server_test.sh --stop-existing
+            ./run_integration_test.sh --client node --server python --stop-existing
           fi
 
-      - name: Run python_client_c_server_test
+      - name: Run Python client to C server
         id: test7
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./python_client_c_server_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client python --server c --no-build --no-setup --stop-existing
           else
-            ./python_client_c_server_test.sh --stop-existing
+            ./run_integration_test.sh --client python --server c --stop-existing
           fi
 
-      - name: Run python_client_node_server_test
+      - name: Run Python client to Node server
         id: test8
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./python_client_node_server_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client python --server node --no-build --no-setup --stop-existing
           else
-            ./python_client_node_server_test.sh --stop-existing
+            ./run_integration_test.sh --client python --server node --stop-existing
           fi
 
-      - name: Run python_client_python_server_test
+      - name: Run Python client to Python server
         id: test9
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./python_client_python_server_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client python --server python --no-build --no-setup --stop-existing
           else
-            ./python_client_python_server_test.sh --stop-existing
+            ./run_integration_test.sh --client python --server python --stop-existing
           fi
 
       - name: Run Python permanent distribution key test
@@ -197,9 +197,9 @@ jobs:
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./python_permanent_dist_key_test.sh --no-build --no-setup --stop-existing
+            ./run_integration_test.sh --client python --server python --permanent-distribution-key --no-build --no-setup --stop-existing
           else
-            ./python_permanent_dist_key_test.sh --stop-existing
+            ./run_integration_test.sh --client python --server python --permanent-distribution-key --stop-existing
           fi
 
       - name: Fail if any test failed
