@@ -1,9 +1,9 @@
-# This workflow runs the four entity integration tests (all combinations of
-# C and Node.js clients and servers) in sequence.  The first script handles
-# the full build and credential setup.  If it succeeds, the remaining three
-# scripts reuse those artifacts (--no-build --no-setup).  If the first script
+# This workflow runs the nine entity integration combinations plus the Python
+# permanent distribution-key scenario through the unified runner. The first test handles
+# the full build and credential setup. If it succeeds, the remaining nine
+# tests reuse those artifacts (--no-build --no-setup). If the first test
 # fails, each subsequent script runs its own full build and setup so it is
-# independent.  All four tests always run; the job fails if any of them fails.
+# independent. All ten tests always run; the job fails if any of them fails.
 
 # Author: Hokeun Kim
 
@@ -11,9 +11,9 @@ name: Entity Integration Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_call:
     inputs:
       sst-c-api-ref:
@@ -22,6 +22,30 @@ on:
         type: string
 
 jobs:
+  python-unit-tests:
+    name: Python 3.12 unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./entity/python
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: entity/python/pyproject.toml
+
+      - name: Install Python package
+        run: python -m pip install -e .
+
+      - name: Run Python unit tests
+        run: python -m unittest discover -s tests -v
+
   integration-test:
     runs-on: ubuntu-latest
 
@@ -44,14 +68,19 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
           cache: maven
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: "lts/*"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Install C build tools
         run: sudo apt-get install -y cmake make gcc libssl-dev
@@ -59,46 +88,118 @@ jobs:
       - name: Make scripts executable
         run: chmod +x examples/scripts/*.sh examples/generateAll.sh examples/cleanAll.sh
 
-      - name: Run c_client_c_server_test (build + setup)
+      - name: Run C client to C server (build + setup)
         id: test1
         continue-on-error: true
         working-directory: ./examples/scripts
-        run: ./c_client_c_server_test.sh
+        run: ./run_integration_test.sh --client c --server c
 
-      - name: Run c_client_node_server_test
+      - name: Run C client to Node server
         id: test2
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./c_client_node_server_test.sh --no-build --no-setup
+            ./run_integration_test.sh --client c --server node --no-build --no-setup --stop-existing
           else
-            ./c_client_node_server_test.sh
+            ./run_integration_test.sh --client c --server node --stop-existing
           fi
 
-      - name: Run node_client_c_server_test
+      - name: Run Node client to C server
         id: test3
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./node_client_c_server_test.sh --no-build --no-setup
+            ./run_integration_test.sh --client node --server c --no-build --no-setup --stop-existing
           else
-            ./node_client_c_server_test.sh
+            ./run_integration_test.sh --client node --server c --stop-existing
           fi
 
-      - name: Run node_client_node_server_test
+      - name: Run Node client to Node server
         id: test4
         if: always()
         continue-on-error: true
         working-directory: ./examples/scripts
         run: |
           if [ "${{ steps.test1.outcome }}" = "success" ]; then
-            ./node_client_node_server_test.sh --no-build --no-setup
+            ./run_integration_test.sh --client node --server node --no-build --no-setup --stop-existing
           else
-            ./node_client_node_server_test.sh
+            ./run_integration_test.sh --client node --server node --stop-existing
+          fi
+
+      - name: Run C client to Python server
+        id: test5
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./run_integration_test.sh --client c --server python --no-build --no-setup --stop-existing
+          else
+            ./run_integration_test.sh --client c --server python --stop-existing
+          fi
+
+      - name: Run Node client to Python server
+        id: test6
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./run_integration_test.sh --client node --server python --no-build --no-setup --stop-existing
+          else
+            ./run_integration_test.sh --client node --server python --stop-existing
+          fi
+
+      - name: Run Python client to C server
+        id: test7
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./run_integration_test.sh --client python --server c --no-build --no-setup --stop-existing
+          else
+            ./run_integration_test.sh --client python --server c --stop-existing
+          fi
+
+      - name: Run Python client to Node server
+        id: test8
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./run_integration_test.sh --client python --server node --no-build --no-setup --stop-existing
+          else
+            ./run_integration_test.sh --client python --server node --stop-existing
+          fi
+
+      - name: Run Python client to Python server
+        id: test9
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./run_integration_test.sh --client python --server python --no-build --no-setup --stop-existing
+          else
+            ./run_integration_test.sh --client python --server python --stop-existing
+          fi
+
+      - name: Run Python permanent distribution key test
+        id: test10
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.test1.outcome }}" = "success" ]; then
+            ./run_integration_test.sh --client python --server python --permanent-distribution-key --no-build --no-setup --stop-existing
+          else
+            ./run_integration_test.sh --client python --server python --permanent-distribution-key --stop-existing
           fi
 
       - name: Fail if any test failed
@@ -109,7 +210,13 @@ jobs:
             "${{ steps.test1.outcome }}" \
             "${{ steps.test2.outcome }}" \
             "${{ steps.test3.outcome }}" \
-            "${{ steps.test4.outcome }}"; do
+            "${{ steps.test4.outcome }}" \
+            "${{ steps.test5.outcome }}" \
+            "${{ steps.test6.outcome }}" \
+            "${{ steps.test7.outcome }}" \
+            "${{ steps.test8.outcome }}" \
+            "${{ steps.test9.outcome }}" \
+            "${{ steps.test10.outcome }}"; do
             if [ "$outcome" != "success" ]; then
               echo "A test step did not succeed (outcome: $outcome)."
               result=1

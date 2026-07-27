@@ -1,25 +1,108 @@
-# Python API
----
-This directory includes Python API for SST's entity server and File System Manager, which was introduced in our paper [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
+# IoTAuth Python API
 
-**load_config()**
-- `load_config()` is a function to load the config file.
+This directory contains the Python entity-side API for IoTAuth.
+The code here is intended to give Python programs a small, readable interface for requesting session keys from Auth, completing the IoTSP secure handshake, and sending or receiving protected messages.
 
-**get_session_key()**
-- `get_session_key()` is a function to get a secure session key from Auth.
+For developer-facing class, function, and usage details, see [Python API Reference](https://iotauth.github.io/docs/python-api-reference) or [Python Guide](https://iotauth.github.io/docs/python-guide) on the IoTAuth documentation site.
 
-# Example
+## Current scope
 
-- We use entity client in '$iotauth/entity/c/examples' and entity server in `$iotauth/examples/filesharing`.
-- According to indication for C example, we turn on two different terminal at `$iotauth/entity/c/examples/build`, `$iotauth/examples/filesharing`, and Auth on the third terminal.
+The Python API currently includes:
 
-- To execute C entity client:
-`$./entity_client ../c_client.config`
+- configuration parsing for entity settings
+- credential loading for private keys, certificates, and trusted CAs
+- IoTSP frame serialization and parsing
+- Auth message serialization and parsing
+- TCP helpers for frame-based transport
+- cryptographic helpers for RSA, AES-CBC, AES-GCM, and HMAC
+- session key and distribution key models
+- session key cache management
+- Auth session-key request workflow
+- secure handshake helpers
+- encrypted secure channel send and receive logic
+- high-level `SecureClient` and `SecureServer` wrappers
 
-- To execute Python entity server:
-`$python3 filesystem_server.py server.config` (Here, we have to change the path for the private key and public key in the config file.)
+## Directory structure
 
-# TODOs
+These are the high-level directories and files and their purposes:
 
-- Add Python API code for File System Manager to communicate with the uploader and downloader using the secure session key.
-- Add Python API and example code for entity client in Python.
+- **[`iotauth/`](iotauth)**: The core Python API package.
+  This is what developers install and import into their own applications to request keys and create secure channels.
+- **[`examples/`](examples)**: Working examples of Python servers and clients using the `iotauth` API.
+  See [`examples/README.md`](examples/README.md) for details on running them.
+- **[`tests/`](tests)**: The automated test suite for the Python API.
+- **[`pyproject.toml`](pyproject.toml)**: Build system requirements, package metadata, and tool configurations (including Ruff).
+- **[`run_all_tests.py`](run_all_tests.py)**: Test runner script providing natural-language output for the test suite.
+- **[`initPythonEntities.sh`](initPythonEntities.sh)**: Shell script helper for initializing Python entity directories.
+
+For API documentation and guides, consult the [IoTAuth Documentation Website](https://iotauth.github.io/docs/intro) (specifically the [Python API Reference](https://iotauth.github.io/docs/python-api-reference)).
+
+## Configuration (`pyproject.toml`)
+
+This project uses a `pyproject.toml` file at its root.
+This is the modern standard for configuring Python projects, replacing older formats like `setup.py` or `requirements.txt`.
+It contains build system requirements, package metadata, and tool configurations like Ruff.
+If you are new to TOML, you can read the official quick-start guide and specification at [toml.io](https://toml.io/en/).
+
+## Installation and Running
+
+Before running tests or examples, create a virtual environment and install the package locally:
+
+```bash
+cd entity/python
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -e .
+```
+
+This installs the `iotauth` package in editable mode.
+You **do not** need to modify `PYTHONPATH` as long as your virtual environment is activated.
+
+### Running tests
+
+To run the full test suite with natural-language output (e.g. `Testing [capability] ... passed`):
+
+```bash
+python run_all_tests.py
+```
+
+To run an individual test file, pass its path:
+
+```bash
+python run_all_tests.py tests/test_secure_channel.py
+```
+
+### Running examples
+
+For detailed instructions on how to run the example server and client, including how to specify configuration file paths and use timeout arguments, please see the [Examples README](examples/README.md).
+
+## Contributing
+
+### Code style
+
+This directory uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
+
+Install:
+
+```bash
+brew install ruff
+# or
+pip install ruff
+```
+
+Check for issues:
+
+```bash
+ruff check .
+```
+
+Auto-fix and format:
+
+```bash
+ruff check --fix .
+ruff format .
+```
+
+Ruff is configured in `pyproject.toml`.
+All contributions should pass `ruff check .` with no errors before submitting a pull request.
