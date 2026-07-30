@@ -51,6 +51,8 @@ public class RegisteredEntity {
     private DistributionKey distributionKey = null;
     private PublicKey publicKey;
     private MigrationToken migrationToken = null;
+    // JSON string describing physical resources (sensors and actuators) registered for this entity
+    private String resources = null;
 
     private static int[] convertStringBackupToAuthIDsToArray(String strBackupToAuthIDs) {
         if (strBackupToAuthIDs == null || strBackupToAuthIDs.length() == 0) {
@@ -97,6 +99,7 @@ public class RegisteredEntity {
             this.migrationToken = new MigrationToken(this.distCryptoSpec.makeMacOnly(),
                     new Buffer(tableElement.getMigrationTokenVal()));
         }
+        this.resources = tableElement.getResources();
     }
 
     public RegisteredEntityTable toRegisteredEntityTable(Buffer serializedDistributionKeyValue,
@@ -146,6 +149,7 @@ public class RegisteredEntity {
         if (migrationToken != null) {
             tableElement.setMigrationTokenVal(migrationToken.serialize().getRawBytes());
         }
+        tableElement.setResources(resources);
         return tableElement;
     }
 
@@ -197,6 +201,21 @@ public class RegisteredEntity {
     }
     public int getBackupFromAuthID() {
         return backupFromAuthID;
+    }
+
+    /**
+     * Gets the JSON string describing physical resources (sensors and actuators) of this entity.
+     * @return Resources JSON string, or null if not defined.
+     */
+    public String getResources() {
+        return resources;
+    }
+    /**
+     * Sets the JSON string describing physical resources (sensors and actuators) of this entity.
+     * @param resources Resources JSON string.
+     */
+    public void setResources(String resources) {
+        this.resources = resources;
     }
 
     public String toString() {

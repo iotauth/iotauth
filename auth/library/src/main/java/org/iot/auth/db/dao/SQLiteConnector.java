@@ -252,7 +252,8 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.Active.name() + " BOOLEAN NOT NULL,";
         sql += RegisteredEntityTable.c.BackupToAuthIDs.name() + " TEXT,";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT,";
-        sql += RegisteredEntityTable.c.MigrationToken.name() + " BLOB)";
+        sql += RegisteredEntityTable.c.MigrationToken.name() + " BLOB,";
+        sql += RegisteredEntityTable.c.Resources.name() + " TEXT)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", RegisteredEntityTable.T_REGISTERED_ENTITY);
@@ -448,8 +449,9 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.Active.name() + ",";
         sql += RegisteredEntityTable.c.BackupToAuthIDs.name() + ",";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ",";
-        sql += RegisteredEntityTable.c.MigrationToken.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        sql += RegisteredEntityTable.c.MigrationToken.name() + ",";
+        sql += RegisteredEntityTable.c.Resources.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         regEntity = encryptRecords(regEntity);
         int index = 1;
@@ -487,6 +489,15 @@ public class SQLiteConnector {
         }
         else {
             preparedStatement.setNull(index++, Types.BLOB);
+        }
+
+        // Store physical resources as a JSON string (nullable)
+        String resources = regEntity.getResources();
+        if (resources != null) {
+            preparedStatement.setString(index++, resources);
+        }
+        else {
+            preparedStatement.setNull(index++, Types.VARCHAR);
         }
 
         preparedStatement.toString();

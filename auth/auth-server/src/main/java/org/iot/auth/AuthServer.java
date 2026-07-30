@@ -667,6 +667,22 @@ public class AuthServer {
     }
 
     /**
+     * Returns all registered entities whose group matches the given group name.
+     * Used for resource-matching in physical presence challenge determination.
+     * @param groupName The group name to filter by (e.g. "Boxes").
+     * @return List of registered entities in that group; empty list if none found.
+     */
+    public List<RegisteredEntity> getRegisteredEntitiesByGroup(String groupName) {
+        List<RegisteredEntity> result = new ArrayList<>();
+        for (RegisteredEntity entity : db.getAllRegisteredEntitiies()) {
+            if (groupName.equals(entity.getGroup())) {
+                result.add(entity);
+            }
+        }
+        return result;
+    }
+
+    /**
      *  Method for exposing an AuthDB operation, getTrustedAuthInfo
      * @param authID ID of the trusted Auth to be found.
      * @return TrustedAuth object specified by ID, or

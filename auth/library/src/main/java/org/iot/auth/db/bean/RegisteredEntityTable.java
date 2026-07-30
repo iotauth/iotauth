@@ -45,7 +45,8 @@ public class RegisteredEntityTable {
         Active,
         BackupToAuthIDs,
         BackupFromAuthID,
-        MigrationToken
+        MigrationToken,
+        Resources
     }
     private String name;
     private String group;
@@ -62,6 +63,9 @@ public class RegisteredEntityTable {
     private String backupToAuthIDs = "";
     private int backupFromAuthID = -1;
     private byte[] migrationTokenVal = null;
+    // JSON string describing the entity's physical resources, e.g.
+    // {"sensors":["LiFi","IR","UltraSound","BLE"],"actuators":["LiFi","IR","UltraSound","BLE"]}
+    private String resources = null;
 
     public String getName() {
         return name;
@@ -189,6 +193,23 @@ public class RegisteredEntityTable {
         return this;
     }
 
+    /**
+     * Gets the JSON string describing physical resources (sensors and actuators) of this entity.
+     * @return Resources JSON string, or null if not defined.
+     */
+    public String getResources() {
+        return resources;
+    }
+
+    /**
+     * Sets the JSON string describing physical resources (sensors and actuators) of this entity.
+     * @param resources Resources JSON string.
+     */
+    public RegisteredEntityTable setResources(String resources) {
+        this.resources = resources;
+        return this;
+    }
+
     public String toString() {
         return toJSONObject().toJSONString();
     }
@@ -207,6 +228,9 @@ public class RegisteredEntityTable {
         object.put(c.Active.name(), isActive());
         object.put(c.BackupToAuthIDs.name(), getBackupToAuthIDs());
         object.put(c.BackupFromAuthID.name(), getBackupFromAuthID());
+        if (resources != null) {
+            object.put(c.Resources.name(), getResources());
+        }
         return object;
     }
 
@@ -232,6 +256,7 @@ public class RegisteredEntityTable {
         entity.setBackupToAuthIDs(resultSet.getString(c.BackupToAuthIDs.name()));
         entity.setBackupFromAuthID(resultSet.getInt(c.BackupFromAuthID.name()));
         entity.setMigrationTokenVal(resultSet.getBytes(c.MigrationToken.name()));
+        entity.setResources(resultSet.getString(c.Resources.name()));
         return entity;
     }
 }
