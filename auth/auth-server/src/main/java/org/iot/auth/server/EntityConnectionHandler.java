@@ -812,108 +812,225 @@ public abstract class EntityConnectionHandler {
         }
 
         if (requestResources != null && !requestResources.isEmpty() && cryptoSpec != null) {
-            String finalChallenge = determineChallengeFromResources(requestResources, activePolicy);
+            // Target group name comes from the purpose (e.g. "Boxes"), used to look up target entity specs.
+            String targetGroup = (reqPurpose.getTargetType() == CommunicationTargetType.TARGET_GROUP
+                    || reqPurpose.getTargetType() == CommunicationTargetType.FILE_SHARING_TEAM
+                    || reqPurpose.getTargetType() == CommunicationTargetType.PUBLISH_TOPIC)
+                    ? (String) reqPurpose.getTarget() : null;
+            String finalChallenge = determineChallengeFromResources(
+                    requestingEntity, requestResources, targetGroup, activePolicy);
             if (!finalChallenge.isEmpty()) {
-                cryptoSpec = new SymmetricKeyCryptoSpec(cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(), cryptoSpec.getMacAlgorithm(), finalChallenge);
+                cryptoSpec = new SymmetricKeyCryptoSpec(
+                        cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
+                        cryptoSpec.getMacAlgorithm(), finalChallenge);
             }
         }
         return new SessionKeysAndSpec(sessionKeyList, cryptoSpec);
     }
 
     /**
-     * Compute resource (sensors & actuators) intersection between entity request and policy,
-     * and sort candidate items by security priority specified in the active policy.
-     * 
-     * @param requestResources JSONObject from request containing requested "sensors" and "actuators".
-     * @param communicationPolicy Active communication policy for this request.
-     * @return Challenge JSON string (e.g. "{\"sensors\":\"LiFi,IR,BLE\",\"actuators\":\"IR,BLE\"}").
+     * Perform 4-step physical resource matching to determine the challenge channels for session key.
+     *
+     * <p>Step 1 - Requester spec check: Verify that the resources claimed by the requesting entity
+     *   are a subset of what Auth has registered for it. This guards against broken or compromised
+     *   sensors/actuators that the entity might falsely report as functional.
+     *
+     * <p>Step 2 - Target spec lookup: Retrieve the registered resources for all entities in the
+     *   target group from Auth DB.
+     *
+     * <p>Step 3 - Physical channel intersection: Compute the set of channels that can actually
+     *   carry a physical signal: (requester actuators) ∩ (target sensors). This represents
+     *   channels where the requester can transmit and the target can receive.
+     *
+     * <p>Step 4 - Policy filter and priority sort: Intersect with the "Allowed" list from the
+     *   active communication policy, then sort by the policy's "priority" array (index 0 = most
+     *   secure). The sorted channel list becomes the challenge sent back to the entity.
+     *
+     * @param requestingEntity  The entity sending the session key request (client / robot).
+     * @param requestResources  JSONObject from request: {"sensors":"...", "actuators":"..."}.
+     * @param targetGroup       Group name of the target entity (e.g. "Boxes"), or null if unknown.
+     * @param communicationPolicy Active communication policy for this request (may be null).
+     * @return Challenge JSON string, e.g. {"channels":"IR,BLE"}, or empty string if none found.
      */
     @SuppressWarnings("unchecked")
-    private String determineChallengeFromResources(JSONObject requestResources, CommunicationPolicy communicationPolicy) {
+    private String determineChallengeFromResources(
+            RegisteredEntity requestingEntity,
+            JSONObject requestResources,
+            String targetGroup,
+            CommunicationPolicy communicationPolicy) {
+
         if (requestResources == null || requestResources.isEmpty()) {
             return "";
         }
 
-        // Parse policy resources configuration if present in communication policy context
-        JSONObject policyResources = null;
+        // ---- STEP 1: Verify requester's claimed resources ⊆ Auth's registered spec ----
+        // Auth's registered resources for the requesting entity
+        String registeredResourcesJson = requestingEntity.getResources();
+        if (registeredResourcesJson != null) {
+            try {
+                JSONObject registeredResources = (JSONObject) new JSONParser().parse(registeredResourcesJson);
+                // Parse registered spec into sets
+                Set<String> regSensors = parseResourceSet(registeredResources, "sensors");
+                Set<String> regActuators = parseResourceSet(registeredResources, "actuators");
+                // Parse requested items into sets
+                Set<String> reqSensors = parseResourceSet(requestResources, "sensors");
+                Set<String> reqActuators = parseResourceSet(requestResources, "actuators");
+                // Check: requested ⊆ registered (Auth must have at least as much as the entity claims)
+                if (!regSensors.containsAll(reqSensors)) {
+                    getLogger().warn(
+                        "STEP 1 FAIL: Entity {} claims sensors {} but Auth registered only {}. "
+                        + "Possible sensor malfunction. Restricting to registered spec.",
+                        requestingEntity.getName(), reqSensors, regSensors);
+                    // Restrict to the registered spec (do not fail the request outright - just limit)
+                    reqSensors.retainAll(regSensors);
+                    requestResources.put("sensors", String.join(",", reqSensors));
+                }
+                if (!regActuators.containsAll(reqActuators)) {
+                    getLogger().warn(
+                        "STEP 1 FAIL: Entity {} claims actuators {} but Auth registered only {}. "
+                        + "Possible actuator malfunction. Restricting to registered spec.",
+                        requestingEntity.getName(), reqActuators, regActuators);
+                    reqActuators.retainAll(regActuators);
+                    requestResources.put("actuators", String.join(",", reqActuators));
+                }
+            } catch (ParseException e) {
+                getLogger().error("Failed to parse registered resources JSON for entity {}: {}",
+                        requestingEntity.getName(), e.getMessage());
+            }
+        } else {
+            getLogger().warn("No registered resources found for entity {}; skipping STEP 1 check.",
+                    requestingEntity.getName());
+        }
+
+        // ---- STEP 2: Look up registered resources of all target entities in the target group ----
+        // Union of all target sensors and target actuators across the group
+        Set<String> targetSensorsUnion = new LinkedHashSet<>();
+        Set<String> targetActuatorsUnion = new LinkedHashSet<>();
+        if (targetGroup != null) {
+            List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
+            for (RegisteredEntity target : targetEntities) {
+                String targetResourcesJson = target.getResources();
+                if (targetResourcesJson != null) {
+                    try {
+                        JSONObject targetResources = (JSONObject) new JSONParser().parse(targetResourcesJson);
+                        targetSensorsUnion.addAll(parseResourceSet(targetResources, "sensors"));
+                        targetActuatorsUnion.addAll(parseResourceSet(targetResources, "actuators"));
+                    } catch (ParseException e) {
+                        getLogger().error("Failed to parse registered resources JSON for target entity {}: {}",
+                                target.getName(), e.getMessage());
+                    }
+                }
+            }
+            getLogger().info("STEP 2: Target group '{}' has sensor union={}, actuator union={}",
+                    targetGroup, targetSensorsUnion, targetActuatorsUnion);
+        }
+
+        // ---- STEP 3: Compute physical channel intersection ----
+        // Physical channel = requester can SEND (actuator) AND target can RECEIVE (sensor)
+        Set<String> requesterActuators = parseResourceSet(requestResources, "actuators");
+        Set<String> candidateChannels = new LinkedHashSet<>(requesterActuators);
+        if (!targetSensorsUnion.isEmpty()) {
+            candidateChannels.retainAll(targetSensorsUnion);
+        }
+        getLogger().info("STEP 3: requester actuators={} ∩ target sensors={} = channels={}",
+                requesterActuators, targetSensorsUnion, candidateChannels);
+
+        if (candidateChannels.isEmpty()) {
+            getLogger().warn("STEP 3: No compatible physical channel found between requester actuators "
+                    + "and target sensors. Falling back to requester actuators.");
+            candidateChannels = new LinkedHashSet<>(requesterActuators);
+        }
+
+        // ---- STEP 4: Apply policy allowlist and sort by security priority ----
+        // Extract allowlist and priority from communication policy
+        Set<String> policyAllowed = null;
+        List<String> priorityList = new ArrayList<>();
         if (communicationPolicy != null && communicationPolicy.getContext() != null) {
             try {
                 JSONObject policyContext = (JSONObject) new JSONParser().parse(communicationPolicy.getContext());
-                if (policyContext.containsKey("resources") && policyContext.get("resources") instanceof JSONObject) {
-                    policyResources = (JSONObject) policyContext.get("resources");
+                if (policyContext.containsKey("resources")
+                        && policyContext.get("resources") instanceof JSONObject) {
+                    JSONObject policyResources = (JSONObject) policyContext.get("resources");
+                    // Use "actuators" policy since we are evaluating the actuator/channel side
+                    if (policyResources.containsKey("actuators")
+                            && policyResources.get("actuators") instanceof JSONObject) {
+                        JSONObject actuatorPolicy = (JSONObject) policyResources.get("actuators");
+                        if (actuatorPolicy.containsKey("Allowed")
+                                && actuatorPolicy.get("Allowed") instanceof JSONArray) {
+                            policyAllowed = new HashSet<>();
+                            for (Object a : (JSONArray) actuatorPolicy.get("Allowed")) {
+                                policyAllowed.add((String) a);
+                            }
+                        }
+                        if (actuatorPolicy.containsKey("priority")
+                                && actuatorPolicy.get("priority") instanceof JSONArray) {
+                            for (Object p : (JSONArray) actuatorPolicy.get("priority")) {
+                                priorityList.add((String) p);
+                            }
+                        }
+                    }
                 }
             } catch (ParseException e) {
-                getLogger().error("Failed to parse communication policy context JSON for resource challenge determination.");
+                getLogger().error("Failed to parse communication policy context JSON for challenge determination.");
             }
         }
 
+        // Filter candidate channels by policy allowlist
+        if (policyAllowed != null) {
+            candidateChannels.retainAll(policyAllowed);
+            getLogger().info("STEP 4: After policy allowlist filter: channels={}", candidateChannels);
+        }
+
+        if (candidateChannels.isEmpty()) {
+            getLogger().warn("STEP 4: No candidate channels remain after policy filtering.");
+            return "";
+        }
+
+        // Sort by security priority (lower index = higher security)
+        List<String> sortedChannels = new ArrayList<>(candidateChannels);
+        if (!priorityList.isEmpty()) {
+            final List<String> finalPriorityList = priorityList;
+            sortedChannels.sort((a, b) -> {
+                int ia = finalPriorityList.indexOf(a);
+                int ib = finalPriorityList.indexOf(b);
+                if (ia == -1) ia = Integer.MAX_VALUE;
+                if (ib == -1) ib = Integer.MAX_VALUE;
+                return Integer.compare(ia, ib);
+            });
+        }
+        getLogger().info("STEP 4: Final sorted challenge channels={}", sortedChannels);
+
+        // Build challenge JSON: {"channels":"IR,BLE"} (highest-security first)
         JSONObject challengeObj = new JSONObject();
+        challengeObj.put("channels", String.join(",", sortedChannels));
+        return challengeObj.toJSONString();
+    }
 
-        // Process both "sensors" and "actuators" resource categories
-        for (String resourceType : new String[]{"sensors", "actuators"}) {
-            if (!requestResources.containsKey(resourceType)) {
-                continue;
+    /**
+     * Parse a comma-separated resource string from a JSON object into a mutable LinkedHashSet.
+     * Handles both String values ("LiFi,IR,BLE") and JSONArray values (["LiFi","IR","BLE"]).
+     * @param resources JSONObject containing the resource field.
+     * @param key       The key to parse ("sensors" or "actuators").
+     * @return Mutable set of resource names; empty set if key is absent or blank.
+     */
+    private Set<String> parseResourceSet(JSONObject resources, String key) {
+        Set<String> result = new LinkedHashSet<>();
+        if (resources == null || !resources.containsKey(key)) {
+            return result;
+        }
+        Object val = resources.get(key);
+        if (val instanceof JSONArray) {
+            for (Object item : (JSONArray) val) {
+                String s = item.toString().trim();
+                if (!s.isEmpty()) result.add(s);
             }
-            String requestedItemsStr = requestResources.get(resourceType).toString();
-            if (requestedItemsStr.trim().isEmpty()) {
-                continue;
-            }
-
-            // Extract requested items into a set to prevent duplicate entries
-            Set<String> reqSet = new LinkedHashSet<>();
-            for (String s : requestedItemsStr.split(",")) {
-                if (!s.trim().isEmpty()) {
-                    reqSet.add(s.trim());
-                }
-            }
-
-            List<String> priorityList = new ArrayList<>();
-            Set<String> allowedSet = null;
-
-            // Extract policy allowed items and priority order for current resource type
-            if (policyResources != null && policyResources.containsKey(resourceType)
-                    && policyResources.get(resourceType) instanceof JSONObject) {
-                JSONObject typePolicy = (JSONObject) policyResources.get(resourceType);
-                if (typePolicy.containsKey("Allowed") && typePolicy.get("Allowed") instanceof JSONArray) {
-                    JSONArray allowedArray = (JSONArray) typePolicy.get("Allowed");
-                    allowedSet = new HashSet<>();
-                    for (Object a : allowedArray) {
-                        allowedSet.add((String) a);
-                    }
-                }
-                if (typePolicy.containsKey("priority") && typePolicy.get("priority") instanceof JSONArray) {
-                    JSONArray prioArray = (JSONArray) typePolicy.get("priority");
-                    for (Object p : prioArray) {
-                        priorityList.add((String) p);
-                    }
-                }
-            }
-
-            // Retain only items allowed by policy (set intersection)
-            if (allowedSet != null) {
-                reqSet.retainAll(allowedSet);
-            }
-
-            // Sort candidate items according to priority order defined in policy
-            List<String> sortedList = new ArrayList<>(reqSet);
-            if (!priorityList.isEmpty()) {
-                final List<String> finalPriorityList = priorityList;
-                sortedList.sort((s1, s2) -> {
-                    int idx1 = finalPriorityList.indexOf(s1);
-                    int idx2 = finalPriorityList.indexOf(s2);
-                    if (idx1 == -1) idx1 = Integer.MAX_VALUE;
-                    if (idx2 == -1) idx2 = Integer.MAX_VALUE;
-                    return Integer.compare(idx1, idx2);
-                });
-            }
-
-            // Attach sorted items if non-empty
-            if (!sortedList.isEmpty()) {
-                challengeObj.put(resourceType, String.join(",", sortedList));
+        } else if (val instanceof String) {
+            for (String s : ((String) val).split(",")) {
+                String t = s.trim();
+                if (!t.isEmpty()) result.add(t);
             }
         }
-
-        return challengeObj.isEmpty() ? "" : challengeObj.toJSONString();
+        return result;
     }
 
     /**
