@@ -1,0 +1,23 @@
+[
+  {
+    "RequestingGroup": "Robots",
+    "TargetType": "Group",
+    "Target": "Boxes",
+    "MaxNumSessionKeyOwners": 2,
+    "SessionCryptoSpec": "AES-128-CBC:SHA256",
+    "AbsoluteValidity": "1*day",
+    "RelativeValidity": "2*hour",
+    "Expiration": "Infinity",
+    "IsDelegated": 0,
+    "Resources": {
+      "sensors": {
+        "Allowed": ["LiFi", "IR", "UltraSound", "BLE"],
+        "priority": ["LiFi", "IR", "UltraSound", "BLE"]
+      },
+      "actuators": {
+        "Allowed": ["LiFi", "IR", "UltraSound", "BLE"],
+        "priority": ["LiFi", "IR", "UltraSound", "BLE"]
+      }
+    }
+  }
+]

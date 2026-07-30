@@ -1,0 +1,115 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901,
+			"callbackPort": 21903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": false
+		}
+	],
+	"authTrusts": [],
+	"assignments": {
+		"net1.robot1": 101,
+		"net1.robot2": 101,
+		"net1.box1": 101,
+		"net1.box2": 101
+	},
+	"entityList": [
+		{
+			"group": "Robots",
+			"name": "net1.robot1",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Robot1",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.box1", "host": "localhost", "port": 21100, "group": "Boxes"},
+				{"name": "net1.box2", "host": "localhost", "port": 21200, "group": "Boxes"}
+			]
+		},
+		{
+			"group": "Robots",
+			"name": "net1.robot2",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Robot2",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.box1", "host": "localhost", "port": 21100, "group": "Boxes"},
+				{"name": "net1.box2", "host": "localhost", "port": 21200, "group": "Boxes"}
+			]
+		},
+		{
+			"group": "Boxes",
+			"name": "net1.box1",
+			"port": 21100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Box1",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": []
+		},
+		{
+			"group": "Boxes",
+			"name": "net1.box2",
+			"port": 21200,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Box2",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": []
+		}
+	],
+	"filesharingLists": [],
+	"privilegeList": []
+}
