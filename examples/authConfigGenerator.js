@@ -92,6 +92,10 @@ function getRegisteredEntity(entity) {
         }
         registeredEntity.PublicKeyFile = 'entity_certs/' + entity.credentialPrefix + 'Cert.pem';
     }
+    // Store physical resources (sensors and actuators) as a JSON string if defined in graph
+    if (entity.resources != null) {
+        registeredEntity.Resources = JSON.stringify(entity.resources);
+    }
     return registeredEntity;
 }
 function generateRegisteredEntityTables() {
