@@ -32,6 +32,7 @@ import org.iot.auth.io.VariableLengthInt;
 import org.iot.auth.message.*;
 import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 
@@ -626,10 +627,13 @@ public abstract class EntityConnectionHandler {
         JSONObject purpose = sessionKeyReq.getPurpose();
         JSONObject requestContext = (purpose.containsKey("context") && purpose.get("context") instanceof JSONObject)
                 ? (JSONObject) purpose.get("context") : null;
+        JSONObject requestResources = (purpose.containsKey("resources") && purpose.get("resources") instanceof JSONObject)
+                ? (JSONObject) purpose.get("resources") : null;
         SessionKeyReqPurpose reqPurpose = new SessionKeyReqPurpose(purpose);
 
         SymmetricKeyCryptoSpec cryptoSpec = null;
         List<SessionKey> sessionKeyList = null;
+        CommunicationPolicy activePolicy = null;
         switch (reqPurpose.getTargetType()) {
             // If a target or publish-topic is specified, generate new keys
             case TARGET_GROUP:
@@ -637,6 +641,7 @@ public abstract class EntityConnectionHandler {
             case PUBLISH_TOPIC: {
                 CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
                         reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                activePolicy = communicationPolicy;
                 if (communicationPolicy == null) {
                     throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
                 }
@@ -647,10 +652,15 @@ public abstract class EntityConnectionHandler {
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
-                if (communicationPolicy.getContext() != null
-                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
-                    throw new InvalidSessionKeyTargetException(
-                            "Context verification failed for policy: " + purpose);
+                if (communicationPolicy.getContext() != null) {
+                    if (requestContext != null && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
+                        throw new InvalidSessionKeyTargetException(
+                                "Context verification failed for policy: " + purpose);
+                    }
+                    if (!ResourceVerifier.verifyResources(communicationPolicy.getContext(), requestResources)) {
+                        throw new InvalidSessionKeyTargetException(
+                                "Resource verification failed for policy: " + purpose);
+                    }
                 }
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
@@ -801,7 +811,109 @@ public abstract class EntityConnectionHandler {
             }
         }
 
+        if (requestResources != null && !requestResources.isEmpty() && cryptoSpec != null) {
+            String finalChallenge = determineChallengeFromResources(requestResources, activePolicy);
+            if (!finalChallenge.isEmpty()) {
+                cryptoSpec = new SymmetricKeyCryptoSpec(cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(), cryptoSpec.getMacAlgorithm(), finalChallenge);
+            }
+        }
         return new SessionKeysAndSpec(sessionKeyList, cryptoSpec);
+    }
+
+    /**
+     * Compute resource (sensors & actuators) intersection between entity request and policy,
+     * and sort candidate items by security priority specified in the active policy.
+     * 
+     * @param requestResources JSONObject from request containing requested "sensors" and "actuators".
+     * @param communicationPolicy Active communication policy for this request.
+     * @return Challenge JSON string (e.g. "{\"sensors\":\"LiFi,IR,BLE\",\"actuators\":\"IR,BLE\"}").
+     */
+    @SuppressWarnings("unchecked")
+    private String determineChallengeFromResources(JSONObject requestResources, CommunicationPolicy communicationPolicy) {
+        if (requestResources == null || requestResources.isEmpty()) {
+            return "";
+        }
+
+        // Parse policy resources configuration if present in communication policy context
+        JSONObject policyResources = null;
+        if (communicationPolicy != null && communicationPolicy.getContext() != null) {
+            try {
+                JSONObject policyContext = (JSONObject) new JSONParser().parse(communicationPolicy.getContext());
+                if (policyContext.containsKey("resources") && policyContext.get("resources") instanceof JSONObject) {
+                    policyResources = (JSONObject) policyContext.get("resources");
+                }
+            } catch (ParseException e) {
+                getLogger().error("Failed to parse communication policy context JSON for resource challenge determination.");
+            }
+        }
+
+        JSONObject challengeObj = new JSONObject();
+
+        // Process both "sensors" and "actuators" resource categories
+        for (String resourceType : new String[]{"sensors", "actuators"}) {
+            if (!requestResources.containsKey(resourceType)) {
+                continue;
+            }
+            String requestedItemsStr = requestResources.get(resourceType).toString();
+            if (requestedItemsStr.trim().isEmpty()) {
+                continue;
+            }
+
+            // Extract requested items into a set to prevent duplicate entries
+            Set<String> reqSet = new LinkedHashSet<>();
+            for (String s : requestedItemsStr.split(",")) {
+                if (!s.trim().isEmpty()) {
+                    reqSet.add(s.trim());
+                }
+            }
+
+            List<String> priorityList = new ArrayList<>();
+            Set<String> allowedSet = null;
+
+            // Extract policy allowed items and priority order for current resource type
+            if (policyResources != null && policyResources.containsKey(resourceType)
+                    && policyResources.get(resourceType) instanceof JSONObject) {
+                JSONObject typePolicy = (JSONObject) policyResources.get(resourceType);
+                if (typePolicy.containsKey("Allowed") && typePolicy.get("Allowed") instanceof JSONArray) {
+                    JSONArray allowedArray = (JSONArray) typePolicy.get("Allowed");
+                    allowedSet = new HashSet<>();
+                    for (Object a : allowedArray) {
+                        allowedSet.add((String) a);
+                    }
+                }
+                if (typePolicy.containsKey("priority") && typePolicy.get("priority") instanceof JSONArray) {
+                    JSONArray prioArray = (JSONArray) typePolicy.get("priority");
+                    for (Object p : prioArray) {
+                        priorityList.add((String) p);
+                    }
+                }
+            }
+
+            // Retain only items allowed by policy (set intersection)
+            if (allowedSet != null) {
+                reqSet.retainAll(allowedSet);
+            }
+
+            // Sort candidate items according to priority order defined in policy
+            List<String> sortedList = new ArrayList<>(reqSet);
+            if (!priorityList.isEmpty()) {
+                final List<String> finalPriorityList = priorityList;
+                sortedList.sort((s1, s2) -> {
+                    int idx1 = finalPriorityList.indexOf(s1);
+                    int idx2 = finalPriorityList.indexOf(s2);
+                    if (idx1 == -1) idx1 = Integer.MAX_VALUE;
+                    if (idx2 == -1) idx2 = Integer.MAX_VALUE;
+                    return Integer.compare(idx1, idx2);
+                });
+            }
+
+            // Attach sorted items if non-empty
+            if (!sortedList.isEmpty()) {
+                challengeObj.put(resourceType, String.join(",", sortedList));
+            }
+        }
+
+        return challengeObj.isEmpty() ? "" : challengeObj.toJSONString();
     }
 
     /**
