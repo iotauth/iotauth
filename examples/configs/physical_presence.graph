@@ -39,6 +39,10 @@
 				"mac": "SHA256"
 			},
 			"backupToAuthIds": [],
+			"resources": {
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE"],
+				"actuators": ["LiFi", "IR", "UltraSound", "BLE"]
+			},
 			"targetServerInfoList": [
 				{"name": "net1.box1", "host": "localhost", "port": 21100, "group": "Boxes"},
 				{"name": "net1.box2", "host": "localhost", "port": 21200, "group": "Boxes"}
@@ -62,6 +66,10 @@
 				"mac": "SHA256"
 			},
 			"backupToAuthIds": [],
+			"resources": {
+				"sensors": ["LiFi", "IR", "BLE"],
+				"actuators": ["IR", "BLE"]
+			},
 			"targetServerInfoList": [
 				{"name": "net1.box1", "host": "localhost", "port": 21100, "group": "Boxes"},
 				{"name": "net1.box2", "host": "localhost", "port": 21200, "group": "Boxes"}
@@ -86,7 +94,11 @@
 				"mac": "SHA256"
 			},
 			"host": "localhost",
-			"backupToAuthIds": []
+			"backupToAuthIds": [],
+			"resources": {
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE"],
+				"actuators": ["LiFi", "IR", "UltraSound", "BLE"]
+			}
 		},
 		{
 			"group": "Boxes",
@@ -107,7 +119,11 @@
 				"mac": "SHA256"
 			},
 			"host": "localhost",
-			"backupToAuthIds": []
+			"backupToAuthIds": [],
+			"resources": {
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE"],
+				"actuators": ["LiFi", "IR", "UltraSound", "BLE"]
+			}
 		}
 	],
 	"filesharingLists": [],
