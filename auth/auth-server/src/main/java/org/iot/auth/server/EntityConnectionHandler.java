@@ -633,35 +633,13 @@ public abstract class EntityConnectionHandler {
 
         SymmetricKeyCryptoSpec cryptoSpec = null;
         List<SessionKey> sessionKeyList = null;
-        CommunicationPolicy activePolicy = null;
         switch (reqPurpose.getTargetType()) {
             // If a target or publish-topic is specified, generate new keys
             case TARGET_GROUP:
             case FILE_SHARING_TEAM:
             case PUBLISH_TOPIC: {
-                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
-                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
-                activePolicy = communicationPolicy;
-                if (communicationPolicy == null) {
-                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
-                }
-                if (communicationPolicy.getExpiration() < currentTime){
-                    getLogger().info("Communication Policy has been expired!");
-                    String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
-                    getLogger().info("Expired policy has been removed!");
-                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
-                }
-                if (communicationPolicy.getContext() != null) {
-                    if (requestContext != null && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
-                        throw new InvalidSessionKeyTargetException(
-                                "Context verification failed for policy: " + purpose);
-                    }
-                    if (!ResourceVerifier.verifyResources(communicationPolicy.getContext(), requestResources)) {
-                        throw new InvalidSessionKeyTargetException(
-                                "Resource verification failed for policy: " + purpose);
-                    }
-                }
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
@@ -671,25 +649,33 @@ public abstract class EntityConnectionHandler {
                         sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
                 break;
             }
+            case TARGET_GROUP_WITH_RESOURCE: {
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
+                verifyPolicyResources(communicationPolicy, requestResources, purpose);
+
+                cryptoSpec = communicationPolicy.getSessionCryptoSpec();
+                // generate session keys
+                SessionKeyPurpose sessionKeyPurpose =
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
+                sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
+
+                // Generate Robot Challenge
+                String targetGroup = (String) reqPurpose.getTarget();
+                String challengeJson = determineRobotChallenge(requestingEntity, requestResources, targetGroup, communicationPolicy);
+                if (!challengeJson.isEmpty()) {
+                    cryptoSpec = new SymmetricKeyCryptoSpec(
+                            cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
+                            cryptoSpec.getMacAlgorithm(), challengeJson);
+                }
+                break;
+            }
             // If a subscribe-topic is specified, derive the keys from DB
             case SUBSCRIBE_TOPIC: {
-                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
-                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
-                if (communicationPolicy == null) {
-                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
-                }
-                if (communicationPolicy.getExpiration() < currentTime){
-                    getLogger().info("Communication Policy has been expired!");
-                    String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
-                    getLogger().info("Expired policy has been removed!");
-                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
-                }
-                if (communicationPolicy.getContext() != null
-                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
-                    throw new InvalidSessionKeyTargetException(
-                            "Context verification failed for policy: " + purpose);
-                }
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 SessionKeyPurpose sessionKeyPurpose =
                         new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
@@ -701,44 +687,30 @@ public abstract class EntityConnectionHandler {
             }
             // If a session key id is specified, derive the keys from DB
             case SESSION_KEY_ID: {
-                Object objTarget = reqPurpose.getTarget();
-                getLogger().debug("objTarget class: {}", objTarget.getClass());
-                long sessionKeyID = -1;
-                if (objTarget.getClass() == Integer.class) {
-                    sessionKeyID = (long)(Integer)objTarget;
+                SessionKeysAndSpec keysAndSpec = handleSessionKeyIdRequest(requestingEntity, reqPurpose);
+                if (keysAndSpec == null) {
+                    return null;
                 }
-                else if (objTarget.getClass() == Long.class) {
-                    sessionKeyID = (Long)objTarget;
+                sessionKeyList = keysAndSpec.getSessionKeys();
+                cryptoSpec = keysAndSpec.getSpec();
+                break;
+            }
+            case SESSION_KEY_ID_WITH_RESOURCE: {
+                SessionKeysAndSpec keysAndSpec = handleSessionKeyIdRequest(requestingEntity, reqPurpose);
+                if (keysAndSpec == null) {
+                    return null;
                 }
-                else {
-                    throw new RuntimeException("Wrong class for session key ID!");
-                }
-                int authID = AuthDB.decodeAuthIDFromSessionKeyID(sessionKeyID);
-                getLogger().info("ID of Auth that generated this key: {}", authID);
-
-                if (authID == server.getAuthID()) {
-                    getLogger().info("This session key was generated by me.");
-                    SessionKey sessionKey = server.getSessionKeyByID(sessionKeyID);
-
-                    // Checks if session key ID meets the communication policy.
-                    if (!CommunicationPolicyChecker.checkSessionKeyCommunicationPolicy(
-                            server, requestingEntity.getGroup(), requestingEntity.getName(), sessionKey)) {
-                        throw new RuntimeException("Session key communication policy check failed.");
+                sessionKeyList = keysAndSpec.getSessionKeys();
+                cryptoSpec = keysAndSpec.getSpec();
+                if (sessionKeyList != null && !sessionKeyList.isEmpty()) {
+                    SessionKey sessionKey = sessionKeyList.get(0);
+                    String challengeJson = determineBoxChallenge(requestingEntity, sessionKey);
+                    if (!challengeJson.isEmpty()) {
+                        cryptoSpec = new SymmetricKeyCryptoSpec(
+                                cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
+                                cryptoSpec.getMacAlgorithm(), challengeJson);
                     }
-
-                    sessionKeyList = new LinkedList<>();
-                    sessionKeyList.add(sessionKey);
-                    cryptoSpec = sessionKey.getCryptoSpec();
-                    server.addSessionKeyOwner(sessionKeyID, requestingEntity.getName());
                 }
-                else {
-                    // TODO: if authID is not my ID, then send request via HTTPS
-                    getLogger().info("This session key was generated by someone else");
-                    AuthSessionKeyReqMessage authSessionKeyReqMessage = new AuthSessionKeyReqMessage(sessionKeyID,
-                            requestingEntity.getName(), requestingEntity.getGroup(), -1);
-                    return sendAuthSessionKeyReq(authID, authSessionKeyReqMessage);
-                }
-
                 break;
             }
             // If ID of the Auth who caches the keys is specified, talk to that Auth.
@@ -778,23 +750,8 @@ public abstract class EntityConnectionHandler {
                 break;
             }
             case DELEGATION: {
-                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
-                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
-                if (communicationPolicy == null) {
-                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
-                }
-                if (communicationPolicy.getExpiration() < currentTime){
-                    getLogger().info("Communication Policy has been expired!");
-                    String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
-                    getLogger().info("Expired policy has been removed!");
-                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
-                }
-                if (communicationPolicy.getContext() != null
-                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
-                    throw new InvalidSessionKeyTargetException(
-                            "Context verification failed for policy: " + purpose);
-                }
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
@@ -811,227 +768,50 @@ public abstract class EntityConnectionHandler {
             }
         }
 
-        if (requestResources != null && !requestResources.isEmpty() && cryptoSpec != null) {
-            // Target group name comes from the purpose (e.g. "Boxes"), used to look up target entity specs.
-            String targetGroup = (reqPurpose.getTargetType() == CommunicationTargetType.TARGET_GROUP
-                    || reqPurpose.getTargetType() == CommunicationTargetType.FILE_SHARING_TEAM
-                    || reqPurpose.getTargetType() == CommunicationTargetType.PUBLISH_TOPIC)
-                    ? (String) reqPurpose.getTarget() : null;
-            String finalChallenge = determineChallengeFromResources(
-                    requestingEntity, requestResources, targetGroup, activePolicy);
-            if (!finalChallenge.isEmpty()) {
-                cryptoSpec = new SymmetricKeyCryptoSpec(
-                        cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
-                        cryptoSpec.getMacAlgorithm(), finalChallenge);
-            }
-        }
         return new SessionKeysAndSpec(sessionKeyList, cryptoSpec);
     }
 
     /**
-     * Perform 4-step physical resource matching to determine the challenge channels for session key.
-     *
-     * <p>Step 1 - Requester spec check: Verify that the resources claimed by the requesting entity
-     *   are a subset of what Auth has registered for it. This guards against broken or compromised
-     *   sensors/actuators that the entity might falsely report as functional.
-     *
-     * <p>Step 2 - Target spec lookup: Retrieve the registered resources for all entities in the
-     *   target group from Auth DB.
-     *
-     * <p>Step 3 - Physical channel intersection: Compute the set of channels that can actually
-     *   carry a physical signal: (requester actuators) ∩ (target sensors). This represents
-     *   channels where the requester can transmit and the target can receive.
-     *
-     * <p>Step 4 - Policy filter and priority sort: Intersect with the "Allowed" list from the
-     *   active communication policy, then sort by the policy's "priority" array (index 0 = most
-     *   secure). The sorted channel list becomes the challenge sent back to the entity.
-     *
-     * @param requestingEntity  The entity sending the session key request (client / robot).
-     * @param requestResources  JSONObject from request: {"sensors":"...", "actuators":"..."}.
-     * @param targetGroup       Group name of the target entity (e.g. "Boxes"), or null if unknown.
-     * @param communicationPolicy Active communication policy for this request (may be null).
-     * @return Challenge JSON string, e.g. {"channels":"IR,BLE"}, or empty string if none found.
+     * Common helper to look up and validate expiration and context of CommunicationPolicy for a session key request.
      */
-    @SuppressWarnings("unchecked")
-    private String determineChallengeFromResources(
-            RegisteredEntity requestingEntity,
-            JSONObject requestResources,
-            String targetGroup,
-            CommunicationPolicy communicationPolicy) {
-
-        if (requestResources == null || requestResources.isEmpty()) {
-            return "";
+    private CommunicationPolicy validateAndGetCommunicationPolicy(
+            RegisteredEntity requestingEntity, SessionKeyReqPurpose reqPurpose, JSONObject purpose,
+            JSONObject requestContext, long currentTime)
+            throws InvalidSessionKeyTargetException, SQLException {
+        CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
+                reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+        if (communicationPolicy == null) {
+            throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
         }
-
-        // ---- STEP 1: Verify requester's claimed resources ⊆ Auth's registered spec ----
-        // Auth's registered resources for the requesting entity
-        String registeredResourcesJson = requestingEntity.getResources();
-        if (registeredResourcesJson != null) {
-            try {
-                JSONObject registeredResources = (JSONObject) new JSONParser().parse(registeredResourcesJson);
-                // Parse registered spec into sets
-                Set<String> regSensors = parseResourceSet(registeredResources, "sensors");
-                Set<String> regActuators = parseResourceSet(registeredResources, "actuators");
-                // Parse requested items into sets
-                Set<String> reqSensors = parseResourceSet(requestResources, "sensors");
-                Set<String> reqActuators = parseResourceSet(requestResources, "actuators");
-                // Check: requested ⊆ registered (Auth must have at least as much as the entity claims)
-                if (!regSensors.containsAll(reqSensors)) {
-                    getLogger().warn(
-                        "STEP 1 FAIL: Entity {} claims sensors {} but Auth registered only {}. "
-                        + "Possible sensor malfunction. Restricting to registered spec.",
-                        requestingEntity.getName(), reqSensors, regSensors);
-                    // Restrict to the registered spec (do not fail the request outright - just limit)
-                    reqSensors.retainAll(regSensors);
-                    requestResources.put("sensors", String.join(",", reqSensors));
-                }
-                if (!regActuators.containsAll(reqActuators)) {
-                    getLogger().warn(
-                        "STEP 1 FAIL: Entity {} claims actuators {} but Auth registered only {}. "
-                        + "Possible actuator malfunction. Restricting to registered spec.",
-                        requestingEntity.getName(), reqActuators, regActuators);
-                    reqActuators.retainAll(regActuators);
-                    requestResources.put("actuators", String.join(",", reqActuators));
-                }
-            } catch (ParseException e) {
-                getLogger().error("Failed to parse registered resources JSON for entity {}: {}",
-                        requestingEntity.getName(), e.getMessage());
-            }
-        } else {
-            getLogger().warn("No registered resources found for entity {}; skipping STEP 1 check.",
-                    requestingEntity.getName());
+        if (communicationPolicy.getExpiration() < currentTime){
+            getLogger().info("Communication Policy has been expired!");
+            String policyId = String.valueOf(communicationPolicy.getId());
+            server.removeCommunicationPolicies(Collections.singletonList(policyId));
+            getLogger().info("Expired policy has been removed!");
+            throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
         }
-
-        // ---- STEP 2: Look up registered resources of all target entities in the target group ----
-        // Union of all target sensors and target actuators across the group
-        Set<String> targetSensorsUnion = new LinkedHashSet<>();
-        Set<String> targetActuatorsUnion = new LinkedHashSet<>();
-        if (targetGroup != null) {
-            List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
-            for (RegisteredEntity target : targetEntities) {
-                String targetResourcesJson = target.getResources();
-                if (targetResourcesJson != null) {
-                    try {
-                        JSONObject targetResources = (JSONObject) new JSONParser().parse(targetResourcesJson);
-                        targetSensorsUnion.addAll(parseResourceSet(targetResources, "sensors"));
-                        targetActuatorsUnion.addAll(parseResourceSet(targetResources, "actuators"));
-                    } catch (ParseException e) {
-                        getLogger().error("Failed to parse registered resources JSON for target entity {}: {}",
-                                target.getName(), e.getMessage());
-                    }
-                }
-            }
-            getLogger().info("STEP 2: Target group '{}' has sensor union={}, actuator union={}",
-                    targetGroup, targetSensorsUnion, targetActuatorsUnion);
+        if (communicationPolicy.getContext() != null
+                && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
+            throw new InvalidSessionKeyTargetException(
+                    "Context verification failed for policy: " + purpose);
         }
-
-        // ---- STEP 3: Compute physical channel intersection ----
-        // Physical channel = requester can SEND (actuator) AND target can RECEIVE (sensor)
-        Set<String> requesterActuators = parseResourceSet(requestResources, "actuators");
-        Set<String> candidateChannels = new LinkedHashSet<>(requesterActuators);
-        if (!targetSensorsUnion.isEmpty()) {
-            candidateChannels.retainAll(targetSensorsUnion);
-        }
-        getLogger().info("STEP 3: requester actuators={} ∩ target sensors={} = channels={}",
-                requesterActuators, targetSensorsUnion, candidateChannels);
-
-        if (candidateChannels.isEmpty()) {
-            getLogger().warn("STEP 3: No compatible physical channel found between requester actuators "
-                    + "and target sensors. Falling back to requester actuators.");
-            candidateChannels = new LinkedHashSet<>(requesterActuators);
-        }
-
-        // ---- STEP 4: Apply policy allowlist and sort by security priority ----
-        // Extract allowlist and priority from communication policy
-        Set<String> policyAllowed = null;
-        List<String> priorityList = new ArrayList<>();
-        if (communicationPolicy != null && communicationPolicy.getContext() != null) {
-            try {
-                JSONObject policyContext = (JSONObject) new JSONParser().parse(communicationPolicy.getContext());
-                if (policyContext.containsKey("resources")
-                        && policyContext.get("resources") instanceof JSONObject) {
-                    JSONObject policyResources = (JSONObject) policyContext.get("resources");
-                    // Use "actuators" policy since we are evaluating the actuator/channel side
-                    if (policyResources.containsKey("actuators")
-                            && policyResources.get("actuators") instanceof JSONObject) {
-                        JSONObject actuatorPolicy = (JSONObject) policyResources.get("actuators");
-                        if (actuatorPolicy.containsKey("Allowed")
-                                && actuatorPolicy.get("Allowed") instanceof JSONArray) {
-                            policyAllowed = new HashSet<>();
-                            for (Object a : (JSONArray) actuatorPolicy.get("Allowed")) {
-                                policyAllowed.add((String) a);
-                            }
-                        }
-                        if (actuatorPolicy.containsKey("priority")
-                                && actuatorPolicy.get("priority") instanceof JSONArray) {
-                            for (Object p : (JSONArray) actuatorPolicy.get("priority")) {
-                                priorityList.add((String) p);
-                            }
-                        }
-                    }
-                }
-            } catch (ParseException e) {
-                getLogger().error("Failed to parse communication policy context JSON for challenge determination.");
-            }
-        }
-
-        // Filter candidate channels by policy allowlist
-        if (policyAllowed != null) {
-            candidateChannels.retainAll(policyAllowed);
-            getLogger().info("STEP 4: After policy allowlist filter: channels={}", candidateChannels);
-        }
-
-        if (candidateChannels.isEmpty()) {
-            getLogger().warn("STEP 4: No candidate channels remain after policy filtering.");
-            return "";
-        }
-
-        // Sort by security priority (lower index = higher security)
-        List<String> sortedChannels = new ArrayList<>(candidateChannels);
-        if (!priorityList.isEmpty()) {
-            final List<String> finalPriorityList = priorityList;
-            sortedChannels.sort((a, b) -> {
-                int ia = finalPriorityList.indexOf(a);
-                int ib = finalPriorityList.indexOf(b);
-                if (ia == -1) ia = Integer.MAX_VALUE;
-                if (ib == -1) ib = Integer.MAX_VALUE;
-                return Integer.compare(ia, ib);
-            });
-        }
-        getLogger().info("STEP 4: Final sorted challenge channels={}", sortedChannels);
-
-        // Build challenge JSON: {"channels":"IR,BLE"} (highest-security first)
-        JSONObject challengeObj = new JSONObject();
-        challengeObj.put("channels", String.join(",", sortedChannels));
-        return challengeObj.toJSONString();
+        return communicationPolicy;
     }
 
     /**
-     * Parse a comma-separated resource string from a JSON object into a mutable LinkedHashSet.
-     * Handles both String values ("LiFi,IR,BLE") and JSONArray values (["LiFi","IR","BLE"]).
-     * @param resources JSONObject containing the resource field.
-     * @param key       The key to parse ("sensors" or "actuators").
-     * @return Mutable set of resource names; empty set if key is absent or blank.
+     * Common helper to verify requested physical resources against communication policy requirements.
      */
-    private Set<String> parseResourceSet(JSONObject resources, String key) {
-        Set<String> result = new LinkedHashSet<>();
-        if (resources == null || !resources.containsKey(key)) {
-            return result;
-        }
-        Object val = resources.get(key);
-        if (val instanceof JSONArray) {
-            for (Object item : (JSONArray) val) {
-                String s = item.toString().trim();
-                if (!s.isEmpty()) result.add(s);
-            }
-        } else if (val instanceof String) {
-            for (String s : ((String) val).split(",")) {
-                String t = s.trim();
-                if (!t.isEmpty()) result.add(t);
+    private void verifyPolicyResources(CommunicationPolicy policy, JSONObject requestResources, JSONObject purpose)
+            throws InvalidSessionKeyTargetException {
+        if (policy != null && policy.getContext() != null) {
+            if (!ResourceVerifier.verifyResources(policy.getContext(), requestResources)) {
+                throw new InvalidSessionKeyTargetException(
+                        "Resource verification failed for policy: " + purpose);
             }
         }
-        return result;
     }
+
+
 
     /**
      * Send an Auth session key request to a trusted Auth, on behalf of the requesting entity.
