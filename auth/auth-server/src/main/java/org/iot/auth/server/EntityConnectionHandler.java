@@ -662,9 +662,9 @@ public abstract class EntityConnectionHandler {
                 sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
                         sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
 
-                // Generate Robot Challenge
+                // Generate Challenge for Group Target Request
                 String targetGroup = (String) reqPurpose.getTarget();
-                String challengeJson = determineRobotChallenge(requestingEntity, requestResources, targetGroup, communicationPolicy);
+                String challengeJson = determineGroupTargetChallenge(requestingEntity, requestResources, targetGroup, communicationPolicy);
                 if (!challengeJson.isEmpty()) {
                     cryptoSpec = new SymmetricKeyCryptoSpec(
                             cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
@@ -704,7 +704,7 @@ public abstract class EntityConnectionHandler {
                 cryptoSpec = keysAndSpec.getSpec();
                 if (sessionKeyList != null && !sessionKeyList.isEmpty()) {
                     SessionKey sessionKey = sessionKeyList.get(0);
-                    String challengeJson = determineBoxChallenge(requestingEntity, sessionKey);
+                    String challengeJson = determineSessionKeyIdChallenge(requestingEntity, sessionKey);
                     if (!challengeJson.isEmpty()) {
                         cryptoSpec = new SymmetricKeyCryptoSpec(
                                 cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
@@ -856,16 +856,15 @@ public abstract class EntityConnectionHandler {
     }
 
     /**
-     * Determine structured Challenge JSON for Robot (Group Target Requests).
-     *
-     * @param requestingEntity   Robot entity requesting session key.
-     * @param requestResources   JSONObject containing sensors and actuators.
-     * @param targetGroup        Target group name (e.g. "Boxes").
-     * @param communicationPolicy Active policy.
-     * @return Formatted Challenge JSON for Robot.
+     * Determine structured physical presence challenge JSON for group target session key requests.
+     * @param requestingEntity Entity requesting session key for target group.
+     * @param requestResources Resources requested by entity (actuators, sensors).
+     * @param targetGroup Target group name.
+     * @param communicationPolicy Active communication policy.
+     * @return Formatted Challenge JSON string.
      */
     @SuppressWarnings("unchecked")
-    private String determineRobotChallenge(
+    private String determineGroupTargetChallenge(
             RegisteredEntity requestingEntity,
             JSONObject requestResources,
             String targetGroup,
@@ -873,12 +872,15 @@ public abstract class EntityConnectionHandler {
 
         String primaryChannel = "IR";
         Set<String> candidateChannels = new LinkedHashSet<>();
+
+        // Extract physical actuators/sensors from request resources
         if (requestResources != null && requestResources.containsKey("actuators")) {
             candidateChannels.addAll(parseResourceSet(requestResources, "actuators"));
         } else if (requestResources != null && requestResources.containsKey("sensors")) {
             candidateChannels.addAll(parseResourceSet(requestResources, "sensors"));
         }
 
+        // Query target group sensors from DB and intersect with actuators
         if (targetGroup != null) {
             Set<String> targetSensorsUnion = new LinkedHashSet<>();
             List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
@@ -912,50 +914,51 @@ public abstract class EntityConnectionHandler {
         tempParams.put("max_temperature_celsius", 40);
         challengeObj.put("temp", tempParams);
 
-        getLogger().info("Generated ROBOT Challenge JSON for {}: {}",
+        getLogger().info("Generated GROUP_TARGET Challenge JSON for {}: {}",
                 requestingEntity.getName(), challengeObj.toJSONString());
 
         return challengeObj.toJSONString();
     }
 
     /**
-     * Determine structured Challenge JSON for Box (SESSION_KEY_ID Requests).
-     *
-     * @param requestingEntity Box entity requesting key by SESSION_KEY_ID.
-     * @param sessionKey       Retrieved SessionKey object from DB.
-     * @return Formatted Challenge JSON for Box.
+     * Determine structured physical presence challenge JSON for session key ID retrieval requests.
+     * @param requestingEntity Entity requesting session key by ID.
+     * @param sessionKey Retrieved session key object from DB.
+     * @return Formatted Challenge JSON string.
      */
     @SuppressWarnings("unchecked")
-    private String determineBoxChallenge(
+    private String determineSessionKeyIdChallenge(
             RegisteredEntity requestingEntity,
             SessionKey sessionKey) {
 
         String primaryChannel = "IR";
         Set<String> candidateChannels = new LinkedHashSet<>();
 
+        // Deduce key creator and match physical resources directionally
         if (sessionKey != null) {
             String[] owners = sessionKey.getOwners();
             if (owners != null && owners.length > 0) {
-                String creatorName = owners[0]; // e.g. Robot
-                RegisteredEntity creatorEntity = server.getRegisteredEntity(creatorName);
-                if (creatorEntity != null) {
-                    getLogger().info("Deducted that key ID {} was created by {} for Box {}",
-                            sessionKey.getID(), creatorName, requestingEntity.getName());
+                String keyCreatorName = owners[0]; // Original key requester
+                RegisteredEntity keyCreatorEntity = server.getRegisteredEntity(keyCreatorName);
+                if (keyCreatorEntity != null) {
+                    getLogger().info("Deducted that key ID {} was created by {} for requesting entity {}",
+                            sessionKey.getID(), keyCreatorName, requestingEntity.getName());
 
-                    String creatorResourcesJson = creatorEntity.getResources();
-                    String boxResourcesJson = requestingEntity.getResources();
-                    if (creatorResourcesJson != null && boxResourcesJson != null) {
+                    String keyCreatorResourcesJson = keyCreatorEntity.getResources();
+                    String requestingEntityResourcesJson = requestingEntity.getResources();
+                    if (keyCreatorResourcesJson != null && requestingEntityResourcesJson != null) {
                         try {
-                            JSONObject creatorRes = (JSONObject) new JSONParser().parse(creatorResourcesJson);
-                            JSONObject boxRes = (JSONObject) new JSONParser().parse(boxResourcesJson);
-                            Set<String> boxActuators = parseResourceSet(boxRes, "actuators");
-                            Set<String> creatorSensors = parseResourceSet(creatorRes, "sensors");
-                            boxActuators.retainAll(creatorSensors);
-                            if (!boxActuators.isEmpty()) {
-                                candidateChannels.addAll(boxActuators);
+                            JSONObject keyCreatorRes = (JSONObject) new JSONParser().parse(keyCreatorResourcesJson);
+                            JSONObject requestingEntityRes = (JSONObject) new JSONParser().parse(requestingEntityResourcesJson);
+
+                            Set<String> requestingActuators = parseResourceSet(requestingEntityRes, "actuators");
+                            Set<String> creatorSensors = parseResourceSet(keyCreatorRes, "sensors");
+                            requestingActuators.retainAll(creatorSensors);
+                            if (!requestingActuators.isEmpty()) {
+                                candidateChannels.addAll(requestingActuators);
                             }
                         } catch (ParseException e) {
-                            getLogger().error("Failed to parse resources for creator/box: {}", e.getMessage());
+                            getLogger().error("Failed to parse resources for key creator/requester: {}", e.getMessage());
                         }
                     }
                 }
@@ -976,7 +979,7 @@ public abstract class EntityConnectionHandler {
         cameraParams.put("max_human", 0);
         challengeObj.put("camera", cameraParams);
 
-        getLogger().info("Generated BOX Challenge JSON for {}: {}",
+        getLogger().info("Generated SESSION_KEY_ID Challenge JSON for {}: {}",
                 requestingEntity.getName(), challengeObj.toJSONString());
 
         return challengeObj.toJSONString();
