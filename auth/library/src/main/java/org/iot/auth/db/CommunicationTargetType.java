@@ -24,9 +24,11 @@ import java.util.Map;
 public enum CommunicationTargetType {
     UNKNOWN(0),
     TARGET_GROUP(1),
+    TARGET_GROUP_WITH_RESOURCE(2),
     PUBLISH_TOPIC(20),
     SUBSCRIBE_TOPIC(21),
     SESSION_KEY_ID(30),
+    SESSION_KEY_ID_WITH_RESOURCE(31),
     CACHED_SESSION_KEYS(40),
     FILE_SHARING_TEAM(50),
     ADD_READER(60),
@@ -59,8 +61,7 @@ public enum CommunicationTargetType {
         }
     }
 
-    private static final Map<Integer, CommunicationTargetType> typesByValue =
-            new HashMap<>();
+    private static final Map<Integer, CommunicationTargetType> typesByValue = new HashMap<>();
 
     static {
         for (CommunicationTargetType type : CommunicationTargetType.values()) {

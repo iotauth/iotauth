@@ -22,7 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class for describing the purpose of session key requests, solely used by EntityConnectionHandler.
+ * A class for describing the purpose of session key requests, solely used by
+ * EntityConnectionHandler.
+ * 
  * @author Hokeun Kim
  */
 public class SessionKeyReqPurpose {
@@ -36,14 +38,19 @@ public class SessionKeyReqPurpose {
         final String fileSharing = "FileSharing";
         final String delegation = "delegation";
 
-        // TODO: match JSON string (group, pubTopic, subTopic) and CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
+        // TODO: match JSON string (group, pubTopic, subTopic) and
+        // CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
         Object objTarget = null;
         this.targetType = CommunicationTargetType.UNKNOWN;
 
         if (purpose.containsKey(group)) {
             objTarget = purpose.get(group);
             if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.TARGET_GROUP;
+                if (purpose.containsKey("resources")) {
+                    this.targetType = CommunicationTargetType.TARGET_GROUP_WITH_RESOURCE;
+                } else {
+                    this.targetType = CommunicationTargetType.TARGET_GROUP;
+                }
             }
         } else if (purpose.containsKey(pubTopic)) {
             objTarget = purpose.get(pubTopic);
@@ -59,7 +66,11 @@ public class SessionKeyReqPurpose {
             objTarget = purpose.get(keyId);
             logger.info("{}", objTarget.getClass());
             if (objTarget.getClass() == Integer.class || objTarget.getClass() == Long.class) {
-                this.targetType = CommunicationTargetType.SESSION_KEY_ID;
+                if (purpose.containsKey("resources")) {
+                    this.targetType = CommunicationTargetType.SESSION_KEY_ID_WITH_RESOURCE;
+                } else {
+                    this.targetType = CommunicationTargetType.SESSION_KEY_ID;
+                }
             }
         } else if (purpose.containsKey(cachedKeys)) {
             objTarget = purpose.get(cachedKeys);
