@@ -987,7 +987,7 @@ public abstract class EntityConnectionHandler {
 
     /**
      * Parse a comma-separated resource string from a JSON object into a mutable LinkedHashSet.
-     * Handles both String values ("LiFi,IR,BLE") and JSONArray values (["LiFi","IR","BLE"]).
+     * Handles both String values ("LiFi,IR,BLE") and JSONArray values (["LiFi","IR","BLE"]). to change...
      * @param resources JSONObject containing the resource field.
      * @param key       The key to parse ("sensors" or "actuators").
      * @return Mutable set of resource names; empty set if key is absent or blank.
