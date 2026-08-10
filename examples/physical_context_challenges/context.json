@@ -1,0 +1,54 @@
+{
+  "checks": [
+    {
+      "id": "HUMAN_PRESENCE",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": ["CAMERA"]
+            }
+          }
+        },
+        {
+          "id": "THERMAL_CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": ["THERMAL_CAMERA"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "CO_LOCATION",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "IR",
+          "requirements": {
+            "requester": {
+              "actuators": ["IR"]
+            },
+            "target": {
+              "sensors": ["IR"]
+            }
+          }
+        },
+        {
+          "id": "ULTRASOUND",
+          "requirements": {
+            "requester": {
+              "actuators": ["UltraSound"]
+            },
+            "target": {
+              "sensors": ["UltraSound"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
