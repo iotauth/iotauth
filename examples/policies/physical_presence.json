@@ -9,15 +9,21 @@
     "RelativeValidity": "2*hour",
     "Expiration": "Infinity",
     "IsDelegated": 0,
-    "Resources": {
-      "sensors": {
-        "Allowed": ["LiFi", "IR", "UltraSound", "BLE"],
-        "priority": ["LiFi", "IR", "UltraSound", "BLE"]
+    "Challenges": {
+      "Resources": {
+        "sensors": {
+          "Allowed": ["LiFi", "IR", "UltraSound", "BLE"],
+          "priority": ["LiFi", "IR", "UltraSound", "BLE"]
+        },
+        "actuators": {
+          "Allowed": ["LiFi", "IR", "UltraSound", "BLE"],
+          "priority": ["LiFi", "IR", "UltraSound", "BLE"]
+        }
       },
-      "actuators": {
-        "Allowed": ["LiFi", "IR", "UltraSound", "BLE"],
-        "priority": ["LiFi", "IR", "UltraSound", "BLE"]
-      }
+      "PhysicalPresenceRequirements": [
+        "HUMAN_PRESENCE",
+        "CO_LOCATION"
+      ]
     }
   }
 ]
