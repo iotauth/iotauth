@@ -48,6 +48,15 @@ if (policyIdx !== -1) {
     console.log("Loaded policies from:", policyFile);
 }
 
+// Optionally read physical challenges file
+let challengesOverride = null;
+const challengeIdx = process.argv.indexOf("--challenges");
+if (challengeIdx !== -1) {
+    const challengesFile = process.argv[challengeIdx + 1];
+    challengesOverride = JSON.parse(fs.readFileSync(challengesFile, "utf8"));
+    console.log("Loaded physical challenges from:", challengesFile);
+}
+
 // basic directories
 const EXAMPLES_DIR = process.cwd() + '/';
 process.chdir('..');
@@ -360,11 +369,28 @@ function generateCommunicationPolicyTables() {
         addServerClientPolicy(policyList, 'Node0', 'ResourceC', '1*day', '2*hour');
         addServerClientPolicy(policyList, 'Node0', 'ResourceD', '1*day', '2*hour');
     }
+    for (var i = 0; i < policyList.length; i++) {
+        var p = policyList[i];
+        if (p.Challenges && !p.Context) {
+            p.Context = JSON.stringify(p.Challenges);
+        }
+    }
     for (var i = 0; i < authList.length; i++) {
         var auth = authList[i];
         var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'CommunicationPolicyTable.config';
         console.log('Writing Auth config to ' + configFilePath + ' ...');
         fs.writeFileSync(configFilePath, JSON2.stringify(policyList, null, '\t'), 'utf8');
+    }
+}
+
+function generatePhysicalChallengeTables() {
+    if (!challengesOverride) return;
+    let challengeList = challengesOverride.checks || challengesOverride;
+    for (var i = 0; i < authList.length; i++) {
+        var auth = authList[i];
+        var configFilePath = getAuthConfigDir(auth.id) + 'Auth' + auth.id + 'PhysicalChallengeTable.config';
+        console.log('Writing Auth config to ' + configFilePath + ' ...');
+        fs.writeFileSync(configFilePath, JSON2.stringify(challengeList, null, '\t'), 'utf8');
     }
 }
 
@@ -452,3 +478,4 @@ generateTrustedAuthTables();
 generatePropertiesFiles();
 generateFileSharingInfoTables();
 generateDelegationPrivilegeTables();
+generatePhysicalChallengeTables();
