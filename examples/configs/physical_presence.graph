@@ -40,8 +40,8 @@
 			},
 			"backupToAuthIds": [],
 			"resources": {
-				"sensors": ["LiFi", "IR", "UltraSound", "BLE"],
-				"actuators": ["LiFi", "IR", "UltraSound", "BLE"]
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"],
+				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
 			},
 			"targetServerInfoList": [
 				{"name": "net1.box1", "host": "localhost", "port": 21100, "group": "Boxes"},
@@ -67,8 +67,8 @@
 			},
 			"backupToAuthIds": [],
 			"resources": {
-				"sensors": ["LiFi", "IR", "BLE"],
-				"actuators": ["IR", "BLE"]
+				"sensors": ["LiFi", "IR", "BLE", "CAMERA", "THERMOMETER"],
+				"actuators": ["IR", "BLE", "CAMERA", "THERMOMETER"]
 			},
 			"targetServerInfoList": [
 				{"name": "net1.box1", "host": "localhost", "port": 21100, "group": "Boxes"},
@@ -96,8 +96,8 @@
 			"host": "localhost",
 			"backupToAuthIds": [],
 			"resources": {
-				"sensors": ["LiFi", "IR", "UltraSound", "BLE"],
-				"actuators": ["LiFi", "IR", "UltraSound", "BLE"]
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"],
+				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
 			}
 		},
 		{
@@ -121,8 +121,8 @@
 			"host": "localhost",
 			"backupToAuthIds": [],
 			"resources": {
-				"sensors": ["LiFi", "IR", "UltraSound", "BLE"],
-				"actuators": ["LiFi", "IR", "UltraSound", "BLE"]
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"],
+				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
 			}
 		}
 	],
