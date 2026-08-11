@@ -12,17 +12,18 @@
     "Challenges": {
       "Resources": {
         "sensors": {
-          "Allowed": ["LiFi", "IR", "UltraSound", "BLE"],
-          "priority": ["LiFi", "IR", "UltraSound", "BLE"]
+          "Allowed": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"],
+          "priority": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
         },
         "actuators": {
-          "Allowed": ["LiFi", "IR", "UltraSound", "BLE"],
-          "priority": ["LiFi", "IR", "UltraSound", "BLE"]
+          "Allowed": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"],
+          "priority": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
         }
       },
       "PhysicalPresenceRequirements": [
         "HUMAN_PRESENCE",
-        "CO_LOCATION"
+        "CO_LOCATION",
+        "TEMPERATURE_CHECK"
       ]
     }
   }
