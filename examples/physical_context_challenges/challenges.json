@@ -10,6 +10,9 @@
             "requester": {
               "sensors": ["CAMERA"]
             }
+          },
+          "parameters": {
+            "max_human": 1
           }
         },
         {
@@ -18,6 +21,9 @@
             "requester": {
               "sensors": ["THERMAL_CAMERA"]
             }
+          },
+          "parameters": {
+            "max_human": 1
           }
         }
       ]
@@ -35,6 +41,10 @@
             "target": {
               "sensors": ["IR"]
             }
+          },
+          "parameters": {
+            "rounds": 128,
+            "max_delay_us": 1000
           }
         },
         {
@@ -46,6 +56,27 @@
             "target": {
               "sensors": ["UltraSound"]
             }
+          },
+          "parameters": {
+            "rounds": 64,
+            "max_delay_us": 2000
+          }
+        }
+      ]
+    },
+    {
+      "id": "TEMPERATURE_CHECK",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "THERMOMETER",
+          "requirements": {
+            "requester": {
+              "sensors": ["THERMOMETER"]
+            }
+          },
+          "parameters": {
+            "min_temperature_celsius": 18
           }
         }
       ]
