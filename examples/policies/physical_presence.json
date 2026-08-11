@@ -10,14 +10,6 @@
     "Expiration": "Infinity",
     "IsDelegated": 0,
     "Challenges": {
-      "Resources": {
-        "sensors": {
-          "Allowed": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
-        },
-        "actuators": {
-          "Allowed": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
-        }
-      },
       "PhysicalPresenceRequirements": [
         "HUMAN_PRESENCE",
         "CO_LOCATION",
