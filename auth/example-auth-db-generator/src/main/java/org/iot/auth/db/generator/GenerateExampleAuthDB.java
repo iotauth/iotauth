@@ -241,7 +241,7 @@ public class GenerateExampleAuthDB {
                     registeredEntity.setResources(resObj != null ? resObj.toString() : null);
                 }
 
-                sqLiteConnector.insertRecords(registeredEntity);
+                sqLiteConnector.insertRecordsOrUpdateIfExists(registeredEntity);
             }
         }
         catch (ParseException e) {

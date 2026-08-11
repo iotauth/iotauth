@@ -387,7 +387,7 @@ public class SQLiteConnector {
      * @see CommunicationPolicyTable
      */
     public boolean insertRecords(CommunicationPolicyTable policy) throws SQLException {
-        String sql = "INSERT INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
+        String sql = "INSERT OR REPLACE INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
         sql += CommunicationPolicyTable.c.ID.name() + ",";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
@@ -658,7 +658,7 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(MetaDataTable metaData) throws SQLException {
 
-        String sql = "INSERT INTO " + MetaDataTable.T_META_DATA + "(";
+        String sql = "INSERT OR REPLACE INTO " + MetaDataTable.T_META_DATA + "(";
         sql += MetaDataTable.c.Key.name() + ",";
         sql += MetaDataTable.c.Value.name() + ")";
         sql += " VALUES(?,?)";
@@ -783,7 +783,7 @@ public class SQLiteConnector {
      * @throws SQLException if database error occurs.
      */
     public boolean insertRecords(PhysicalChallengeTable table) throws SQLException {
-        String sql = "INSERT INTO " + PhysicalChallengeTable.T_PHYSICAL_CHALLENGE + "(";
+        String sql = "INSERT OR REPLACE INTO " + PhysicalChallengeTable.T_PHYSICAL_CHALLENGE + "(";
         sql += PhysicalChallengeTable.c.CheckID.name() + ",";
         sql += PhysicalChallengeTable.c.Topology.name() + ",";
         sql += PhysicalChallengeTable.c.Methods.name() + ")";
