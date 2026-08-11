@@ -292,10 +292,15 @@ def select_challenge(payload: Dict[str, Any]):
     if engine is None:
         raise HTTPException(status_code=500, detail="Inference engine not initialized")
 
-    logger.info(f"Received request payload for requester: {payload.get('requester', 'unknown')}")
+    print("\n" + "=" * 70)
+    logger.info(f"📥 Received HTTP POST Request from Auth Server for Requester: {payload.get('requester', 'unknown')}")
+    print("-" * 70)
     adapted_input = adapt_auth_server_payload(payload)
+    logger.info(f"Adapted LLM Prompt Input:\n{json.dumps(adapted_input, indent=2)}")
+    print("-" * 70)
     result = engine.generate(adapted_input)
-    logger.info(f"Selection Result: {json.dumps(result, indent=2)}")
+    logger.info(f"📤 Final Selected Decision JSON:\n{json.dumps(result, indent=2)}")
+    print("=" * 70 + "\n")
     return result
 
 

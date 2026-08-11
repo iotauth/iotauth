@@ -888,6 +888,14 @@ public abstract class EntityConnectionHandler {
         getLogger().info("[Feasible Challenge Matcher Output] Feasible Challenge Set JSON for {}: {}",
                 requestingEntity.getName(), feasibleSet.toJSONString());
 
+        // Step 2: Send Feasible Challenge Set to external AI Challenge Selector Service via HTTP
+        JSONObject aiSelectionResult = org.iot.auth.challenge.AIChallengeSelectorClient.requestChallengeSelection(feasibleSet, null);
+        if (aiSelectionResult != null) {
+            getLogger().info("[AI Selector Response] Decision from AI Server for {}: {}",
+                    requestingEntity.getName(), aiSelectionResult.toJSONString());
+            return aiSelectionResult.toJSONString();
+        }
+
         return feasibleSet.toJSONString();
     }
 
