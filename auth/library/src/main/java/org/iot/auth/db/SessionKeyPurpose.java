@@ -21,7 +21,8 @@ package org.iot.auth.db;
  */
 public class SessionKeyPurpose {
     public SessionKeyPurpose(CommunicationTargetType targetType, String target) {
-        if (targetType == CommunicationTargetType.TARGET_GROUP) {
+        if (targetType == CommunicationTargetType.TARGET_GROUP ||
+                targetType == CommunicationTargetType.TARGET_GROUP_WITH_RESOURCE) {
             this.targetType = "Group";
         }
         else if (targetType == CommunicationTargetType.PUBLISH_TOPIC ||
