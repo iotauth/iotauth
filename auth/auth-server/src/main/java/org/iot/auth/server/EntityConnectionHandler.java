@@ -35,6 +35,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
+import org.iot.auth.challenge.FeasibleChallengeMatcher;
+import org.iot.auth.db.bean.PhysicalChallengeTable;
 
 import java.io.IOException;
 import java.security.*;
@@ -870,54 +872,23 @@ public abstract class EntityConnectionHandler {
             String targetGroup,
             CommunicationPolicy communicationPolicy) {
 
-        String primaryChannel = "IR";
-        Set<String> candidateChannels = new LinkedHashSet<>();
-
-        // Extract physical actuators/sensors from request resources
-        if (requestResources != null && requestResources.containsKey("actuators")) {
-            candidateChannels.addAll(parseResourceSet(requestResources, "actuators"));
-        } else if (requestResources != null && requestResources.containsKey("sensors")) {
-            candidateChannels.addAll(parseResourceSet(requestResources, "sensors"));
+        List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
+        List<PhysicalChallengeTable> physicalChallenges = null;
+        try {
+            physicalChallenges = server.getPhysicalChallenges();
+        } catch (SQLException e) {
+            getLogger().error("Failed to query physical challenges from DB: {}", e.getMessage());
         }
 
-        // Query target group sensors from DB and intersect with actuators
-        if (targetGroup != null) {
-            Set<String> targetSensorsUnion = new LinkedHashSet<>();
-            List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
-            for (RegisteredEntity target : targetEntities) {
-                String targetResourcesJson = target.getResources();
-                if (targetResourcesJson != null) {
-                    try {
-                        JSONObject targetResources = (JSONObject) new JSONParser().parse(targetResourcesJson);
-                        targetSensorsUnion.addAll(parseResourceSet(targetResources, "sensors"));
-                    } catch (ParseException e) {
-                        getLogger().error("Failed to parse target resources: {}", e.getMessage());
-                    }
-                }
-            }
-            if (!targetSensorsUnion.isEmpty()) {
-                candidateChannels.retainAll(targetSensorsUnion);
-            }
-        }
+        JSONObject feasibleSet = FeasibleChallengeMatcher.computeFeasibleChallenges(
+                requestingEntity, requestResources, targetEntities,
+                communicationPolicy,
+                physicalChallenges);
 
-        if (!candidateChannels.isEmpty()) {
-            primaryChannel = candidateChannels.iterator().next();
-        }
+        getLogger().info("[Feasible Challenge Matcher Output] Feasible Challenge Set JSON for {}: {}",
+                requestingEntity.getName(), feasibleSet.toJSONString());
 
-        JSONObject challengeObj = new JSONObject();
-        JSONObject channelParams = new JSONObject();
-        channelParams.put("rounds", 128);
-        channelParams.put("max_delay_us", 1000);
-        challengeObj.put(primaryChannel, channelParams);
-
-        JSONObject tempParams = new JSONObject();
-        tempParams.put("max_temperature_celsius", 40);
-        challengeObj.put("temp", tempParams);
-
-        getLogger().info("Generated GROUP_TARGET Challenge JSON for {}: {}",
-                requestingEntity.getName(), challengeObj.toJSONString());
-
-        return challengeObj.toJSONString();
+        return feasibleSet.toJSONString();
     }
 
     /**
