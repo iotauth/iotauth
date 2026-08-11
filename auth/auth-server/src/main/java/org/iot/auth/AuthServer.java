@@ -682,6 +682,10 @@ public class AuthServer {
         return result;
     }
 
+    public List<org.iot.auth.db.bean.PhysicalChallengeTable> getPhysicalChallenges() throws SQLException {
+        return db.selectAllPhysicalChallenges();
+    }
+
     /**
      *  Method for exposing an AuthDB operation, getTrustedAuthInfo
      * @param authID ID of the trusted Auth to be found.
