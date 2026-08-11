@@ -360,6 +360,18 @@ public class SQLiteConnector {
             logger.info("Table {} already exists", DelegationInfoTable.T_DELEGATION_INFO);
         closeStatement();
 
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + PhysicalChallengeTable.T_PHYSICAL_CHALLENGE + "(";
+        sql += PhysicalChallengeTable.c.CheckID.name() + " TEXT PRIMARY KEY,";
+        sql += PhysicalChallengeTable.c.Topology.name() + " TEXT,";
+        sql += PhysicalChallengeTable.c.Methods.name() + " TEXT)";
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", PhysicalChallengeTable.T_PHYSICAL_CHALLENGE);
+        else
+            logger.info("Table {} already exists", PhysicalChallengeTable.T_PHYSICAL_CHALLENGE);
+        closeStatement();
+
         closeConnection();
     }
 
@@ -762,6 +774,49 @@ public class SQLiteConnector {
         preparedStatement.close();
         closeConnection();
         return result == 1;
+    }
+
+    /**
+     * Insert records into PhysicalChallengeTable.
+     * @param table the records needed to set physical challenge definition.
+     * @return true if insertion has been successful.
+     * @throws SQLException if database error occurs.
+     */
+    public boolean insertRecords(PhysicalChallengeTable table) throws SQLException {
+        String sql = "INSERT INTO " + PhysicalChallengeTable.T_PHYSICAL_CHALLENGE + "(";
+        sql += PhysicalChallengeTable.c.CheckID.name() + ",";
+        sql += PhysicalChallengeTable.c.Topology.name() + ",";
+        sql += PhysicalChallengeTable.c.Methods.name() + ")";
+        sql += " VALUES (?,?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setString(index++, table.getCheckID());
+        preparedStatement.setString(index++, table.getTopology());
+        preparedStatement.setString(index++, table.getMethods());
+        if (DEBUG) logger.info("{}", preparedStatement);
+        int result = preparedStatement.executeUpdate();
+        preparedStatement.close();
+        closeConnection();
+        return result == 1;
+    }
+
+    /**
+     * Select all physical challenge records from physical_challenge table.
+     * @return List of physical challenge records.
+     * @throws SQLException if database error occurs.
+     */
+    public List<PhysicalChallengeTable> selectAllPhysicalChallenges() throws SQLException {
+        List<PhysicalChallengeTable> list = new ArrayList<>();
+        String sql = "SELECT * FROM " + PhysicalChallengeTable.T_PHYSICAL_CHALLENGE;
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        if (DEBUG) logger.info("{}", preparedStatement);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            list.add(PhysicalChallengeTable.createRecord(resultSet));
+        }
+        preparedStatement.close();
+        closeConnection();
+        return list;
     }
 
     /**
