@@ -13,20 +13,28 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * Matcher for computing feasible physical challenges based on dynamic runtime resources,
- * registered entity capabilities in Auth DB, communication policies, and physical challenge definitions.
+ * FeasibleChallengeMatcher computes the Feasible Challenge Set for session key requests.
+ * 
+ * It performs intersection analysis across four data dimensions:
+ * 1. Requesting entity's registered capabilities in Auth DB vs. dynamic runtime resources (purpose.resources).
+ * 2. Target entities' registered capabilities in Auth DB.
+ * 3. Required physical presence checks defined in the communication policy (PhysicalPresenceRequirements).
+ * 4. Challenge method definitions and requirement constraints stored in the physical_challenge table.
+ * 
+ * @author Dongha Kim
  */
 public class FeasibleChallengeMatcher {
     private static final Logger logger = LoggerFactory.getLogger(FeasibleChallengeMatcher.class);
 
     /**
-     * Compute feasible challenges for a session key request.
-     * @param requestingEntity Registered entity object for requester from Auth DB.
-     * @param requestResources Runtime resources JSON object passed in purpose.resources.
-     * @param targetEntities List of target registered entities (e.g. entities in target group).
-     * @param communicationPolicy Communication policy for the requesting entity and target.
-     * @param challengeDefinitions List of physical challenge definitions from DB.
-     * @return JSONObject containing effective capabilities, required checks, and feasible challenge methods.
+     * Computes the Feasible Challenge Set JSON object for a session key request.
+     * 
+     * @param requestingEntity    Registered entity object for requester retrieved from Auth DB.
+     * @param requestResources   Runtime resources JSON object passed in purpose.resources.
+     * @param targetEntities     List of target registered entities (e.g., entities belonging to the target group).
+     * @param communicationPolicy Communication policy for the requesting entity and target group.
+     * @param challengeDefinitions List of physical challenge definitions retrieved from Auth DB.
+     * @return JSONObject containing requester name, effective capabilities, required policy checks, and feasible challenge methods with parameters.
      */
     @SuppressWarnings("unchecked")
     public static JSONObject computeFeasibleChallenges(
@@ -39,18 +47,20 @@ public class FeasibleChallengeMatcher {
         JSONObject result = new JSONObject();
         result.put("requester", requestingEntity.getName());
 
-        // 1. Calculate Requester Effective Capabilities (Registered INTERSECT Runtime)
+        // Step 1: Calculate Requester Effective Capabilities (Registered Capabilities INTERSECT Dynamic Runtime Resources)
         Set<String> registeredReqSensors = parseResourcesFromEntity(requestingEntity, "sensors");
         Set<String> registeredReqActuators = parseResourcesFromEntity(requestingEntity, "actuators");
 
         Set<String> runtimeReqSensors = parseResourceSet(requestResources, "sensors");
         Set<String> runtimeReqActuators = parseResourceSet(requestResources, "actuators");
 
+        // Retain only sensors that are both registered in DB and currently active in runtime
         Set<String> effectiveReqSensors = new LinkedHashSet<>(registeredReqSensors);
         if (!runtimeReqSensors.isEmpty()) {
             effectiveReqSensors.retainAll(runtimeReqSensors);
         }
 
+        // Retain only actuators that are both registered in DB and currently active in runtime
         Set<String> effectiveReqActuators = new LinkedHashSet<>(registeredReqActuators);
         if (!runtimeReqActuators.isEmpty()) {
             effectiveReqActuators.retainAll(runtimeReqActuators);
@@ -60,7 +70,7 @@ public class FeasibleChallengeMatcher {
         reqCapObj.put("sensors", new JSONArray() {{ addAll(effectiveReqSensors); }});
         reqCapObj.put("actuators", new JSONArray() {{ addAll(effectiveReqActuators); }});
 
-        // 2. Calculate Union of Target Capabilities
+        // Step 2: Calculate Union of Target Capabilities (Sensors & Actuators across all entities in target group)
         Set<String> targetSensorsUnion = new LinkedHashSet<>();
         Set<String> targetActuatorsUnion = new LinkedHashSet<>();
         for (RegisteredEntity target : targetEntities) {
@@ -77,7 +87,7 @@ public class FeasibleChallengeMatcher {
         effCapObj.put("target", targetCapObj);
         result.put("effectiveCapabilities", effCapObj);
 
-        // 3. Extract Required Checks from Policy Context
+        // Step 3: Extract Required Physical Presence Checks from Communication Policy Context
         List<String> requiredChecks = new ArrayList<>();
         if (communicationPolicy != null && communicationPolicy.getContext() != null) {
             try {
@@ -94,33 +104,39 @@ public class FeasibleChallengeMatcher {
         }
         result.put("requiredChecks", new JSONArray() {{ addAll(requiredChecks); }});
 
-        // 4. Perform Capability Matching per Required Check
+        // Step 4: Perform Capability Matching for Each Required Check against DB Challenge Definitions
         JSONObject feasibleChallengesObj = new JSONObject();
         for (String checkID : requiredChecks) {
+            JSONObject checkObj = new JSONObject();
             JSONArray feasibleMethods = new JSONArray();
             PhysicalChallengeTable checkDef = findChallengeDefinition(challengeDefinitions, checkID);
-            if (checkDef != null && checkDef.getMethods() != null) {
-                try {
-                    JSONArray methodsArray = (JSONArray) new JSONParser().parse(checkDef.getMethods());
-                    for (Object mObj : methodsArray) {
-                        JSONObject method = (JSONObject) mObj;
-                        String methodID = (String) method.get("id");
-                        JSONObject reqs = (JSONObject) method.get("requirements");
+            if (checkDef != null) {
+                checkObj.put("topology", checkDef.getTopology());
+                if (checkDef.getMethods() != null) {
+                    try {
+                        JSONArray methodsArray = (JSONArray) new JSONParser().parse(checkDef.getMethods());
+                        for (Object mObj : methodsArray) {
+                            JSONObject method = (JSONObject) mObj;
+                            String methodID = (String) method.get("id");
+                            JSONObject reqs = (JSONObject) method.get("requirements");
 
-                        if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
-                            JSONObject methodInfo = new JSONObject();
-                            methodInfo.put("method", methodID);
-                            if (method.containsKey("parameters")) {
-                                methodInfo.put("parameters", method.get("parameters"));
+                            // Check if requester and target possess all required sensors/actuators for this method
+                            if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
+                                JSONObject methodInfo = new JSONObject();
+                                methodInfo.put("method", methodID);
+                                if (method.containsKey("parameters")) {
+                                    methodInfo.put("parameters", method.get("parameters"));
+                                }
+                                feasibleMethods.add(methodInfo);
                             }
-                            feasibleMethods.add(methodInfo);
                         }
+                    } catch (ParseException e) {
+                        logger.error("Failed to parse methods for check {}: {}", checkID, e.getMessage());
                     }
-                } catch (ParseException e) {
-                    logger.error("Failed to parse methods for check {}: {}", checkID, e.getMessage());
                 }
             }
-            feasibleChallengesObj.put(checkID, feasibleMethods);
+            checkObj.put("methods", feasibleMethods);
+            feasibleChallengesObj.put(checkID, checkObj);
         }
         result.put("feasibleChallenges", feasibleChallengesObj);
 
@@ -130,6 +146,16 @@ public class FeasibleChallengeMatcher {
         return result;
     }
 
+    /**
+     * Checks if a challenge method is feasible given the effective requester capabilities and target group capabilities.
+     * 
+     * @param requirements    Requirements JSON object for the method specifying needed requester/target sensors/actuators.
+     * @param reqSensors      Effective requester sensors set.
+     * @param reqActuators    Effective requester actuators set.
+     * @param targetSensors   Target group sensors union set.
+     * @param targetActuators Target group actuators union set.
+     * @return true if all required sensors and actuators are available; false otherwise.
+     */
     private static boolean isMethodFeasible(
             JSONObject requirements,
             Set<String> reqSensors,
@@ -139,6 +165,7 @@ public class FeasibleChallengeMatcher {
 
         if (requirements == null) return true;
 
+        // Verify requester requirements
         if (requirements.containsKey("requester")) {
             JSONObject reqObj = (JSONObject) requirements.get("requester");
             Set<String> neededSensors = parseResourceSet(reqObj, "sensors");
@@ -148,6 +175,7 @@ public class FeasibleChallengeMatcher {
             if (!reqActuators.containsAll(neededActuators)) return false;
         }
 
+        // Verify target requirements
         if (requirements.containsKey("target")) {
             JSONObject tgtObj = (JSONObject) requirements.get("target");
             Set<String> neededSensors = parseResourceSet(tgtObj, "sensors");
@@ -160,6 +188,9 @@ public class FeasibleChallengeMatcher {
         return true;
     }
 
+    /**
+     * Helper method to lookup a physical challenge definition by check ID (case-insensitive).
+     */
     private static PhysicalChallengeTable findChallengeDefinition(List<PhysicalChallengeTable> defs, String checkID) {
         if (defs == null) return null;
         for (PhysicalChallengeTable def : defs) {
@@ -170,6 +201,9 @@ public class FeasibleChallengeMatcher {
         return null;
     }
 
+    /**
+     * Helper method to parse registered resources from a RegisteredEntity database object.
+     */
     private static Set<String> parseResourcesFromEntity(RegisteredEntity entity, String key) {
         if (entity == null || entity.getResources() == null) return new LinkedHashSet<>();
         try {
@@ -181,6 +215,9 @@ public class FeasibleChallengeMatcher {
         }
     }
 
+    /**
+     * Helper method to parse a comma-separated string or JSONArray of resources into a LinkedHashSet.
+     */
     private static Set<String> parseResourceSet(JSONObject resources, String key) {
         Set<String> result = new LinkedHashSet<>();
         if (resources == null || !resources.containsKey(key)) {
