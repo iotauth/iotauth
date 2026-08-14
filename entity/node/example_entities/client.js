@@ -56,7 +56,7 @@ secureCommClient.setOutputHandler('connected', connectedHandler);
 secureCommClient.setOutputHandler('error', errorHandler);
 secureCommClient.setOutputHandler('received', receivedHandler);
 
-const contextList = secureCommClient.getContextList();
+let contextList = secureCommClient.getContextList();
 let contextIdx = 0;
 
 // For publish-subscribe experiments based individual secure connection using proposed approach
@@ -98,6 +98,10 @@ function commandInterpreter() {
                 console.log('                              contextList [' + contextIdx + '/' + contextList.length + ' used]');
             }
             console.log('  finComm  (or f)             Close the current secure communication');
+            console.log('  setContext [contextList]    Set contextList from a array of context objects');
+            console.log('                              e.g. [{"Number of People":2,"Location":"Classroom","Time of Day":"10:30"}]');
+            console.log('  deleteContext               Delete the current contextList');
+            console.log('  showContext                 Show the curret contextList and usage progress');
             console.log('  send <message>              Send a plaintext message to the connected server');
             console.log('  sendFile [filepath]         Send a binary file (default: ../data_examples/data.bin)');
             console.log('  skReq [numKeys]             Request session keys for caching (default: 3)');
@@ -134,7 +138,8 @@ function commandInterpreter() {
             }
             if (contextList !== null) {
                 if (contextIdx >= contextList.length) {
-                    console.log('Context list exhausted: all ' + contextList.length + ' contexts have been used. Restarting from the first context.');
+                    console.log('Context list exhausted: all ' + contextList.length + ' contexts have been used.' +
+                                'Restarting from the first context.');
                     contextIdx = 0;
                 }
                 const nextContext = contextList[contextIdx];
@@ -151,6 +156,54 @@ function commandInterpreter() {
         else if (command == 'finComm' || command == 'f') {
             console.log('finComm command');
             secureCommClient.provideInput('serverHostPort', null);
+        }
+        else if (command == 'setContext'){
+            if (contextList !== null){
+                console.log('contextList already exists (' + contextList.length + ' context(s)).');
+                console.log('Use deleteContext first to make a new contextList.');
+                continue;
+            }
+            if (message === undefined) {
+                console.log('Usage: setContext <json>');
+                console.log('  ex) setContext [{"Number of People": 2, "Location": "Classroom", "Time of Day": "10:30"}]');
+                continue;
+            }
+            let payload;
+            try {
+                payload = JSON.parse(message);
+            } catch (e) {
+                console.log('Invalid contextList payload: could not parse JSON.');
+                console.log('  ex) setContext [{"Number of People": 2, "Location": "Classroom", "Time of Day": "10:30"}]');
+                continue;
+            }
+            if (!Array.isArray(payload)) {
+                console.log('Invalid contextList payload: expected an array.');
+                console.log('ex) [{"Number of People": 2, "Location": "Classroom", "Time of Day": "10:30"}]');
+                continue;
+            }
+            contextList = payload;
+            contextIdx = 0;
+            console.log('Context list set via command: ' + contextList.length + ' context(s) loaded.');
+        }
+        else if (command == 'deleteContext'){
+            if (contextList == null){
+                console.log('There is no contextList to remove.');
+                continue;
+            }
+            contextList = null;
+            contextIdx = 0;
+            console.log('contextList removed via command.')
+        }
+        else if (command == 'showContext'){
+            if (contextList === null) {
+                console.log('There is no contextList to show.');
+                continue;
+            }
+            console.log('contextList [' + contextIdx + '/' + contextList.length + ' used]:');
+            contextList.forEach((ctx, i) => {
+                const marker = i === contextIdx ? ' <- next' : (i < contextIdx ? ' (used)' : '');
+                console.log('  [' + i + '] ' + JSON.stringify(ctx) + marker);
+            });
         }
         else if (command == 'showKeys') {
             console.log('showKeys command. distribution key and session keys: ');
