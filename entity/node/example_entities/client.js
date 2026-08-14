@@ -134,8 +134,8 @@ function commandInterpreter() {
             }
             if (contextList !== null) {
                 if (contextIdx >= contextList.length) {
-                    console.error('Context list exhausted: all ' + contextList.length + ' contexts have been used. No more contexts available.');
-                    return;
+                    console.log('Context list exhausted: all ' + contextList.length + ' contexts have been used. Restarting from the first context.');
+                    contextIdx = 0;
                 }
                 const nextContext = contextList[contextIdx];
                 contextIdx++;
