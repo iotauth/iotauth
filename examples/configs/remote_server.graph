@@ -2,7 +2,7 @@
 	"authList": [
 		{
 			"id": 101,
-			"entityHost": "localhost",
+			"entityHost": "10.218.100.78",
 			"authHost": "10.218.100.78",
 			"tcpPort": 21900,
 			"udpPort": 21902,
