@@ -11,12 +11,30 @@
 			"dbProtectionMethod": 1,
 			"backupEnabled": false,
 			"contextualCallbackEnabled": true
-		}
+		},
+        {
+            "id": 102,
+            "entityHost": "localhost",
+            "authHost": "localhost",
+            "tcpPort": 22900,
+            "udpPort": 22902,
+            "authPort": 22901,
+            "callbackPort": 22903,
+            "dbProtectionMethod": 1,
+            "backupEnabled": false,
+            "contextualCallbackEnabled": true
+        }
 	],
-	"authTrusts": [],
+	"authTrusts": [
+        {
+            "id1": 101,
+            "id2": 102
+        }
+    ],
 	"assignments": {
 		"net1.client": 101,
 		"net1.server": 101,
+		"net2.server": 102,
 		"net1.adminClient": 101,
 		"net1.adminServer": 101
 	},
@@ -45,15 +63,36 @@
 			"contextList": []
 		},
 		{
+            "group": "Servers",
+            "name": "net1.server",
+            "port": 21100,
+            "distProtocol": "TCP",
+            "usePermanentDistKey": false,
+            "distKeyValidityPeriod": "1*hour",
+            "maxSessionKeysPerRequest": 1,
+            "netName": "net1",
+            "credentialPrefix": "Net1.Server",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "host": "10.218.100.78",
+            "backupToAuthIds": []
+        },
+		{
 			"group": "Servers",
-			"name": "net1.server",
-			"port": 21100,
+			"name": "net2.server",
+			"port": 22100,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 1,
-			"netName": "net1",
-			"credentialPrefix": "Net1.Server",
+			"netName": "net2",
+			"credentialPrefix": "Net2.Server",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -62,7 +101,7 @@
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
 			},
-			"host": "10.218.100.78",
+			"host": "localhost",
 			"backupToAuthIds": []
 		},
 		{
