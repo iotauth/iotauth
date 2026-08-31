@@ -2,8 +2,8 @@
 	"authList": [
 		{
 			"id": 101,
-			"entityHost": "localhost",
-			"authHost": "localhost",
+			"entityHost": "10.218.101.248",
+			"authHost": "10.218.101.248",
 			"tcpPort": 21900,
 			"udpPort": 21902,
 			"authPort": 21901,
@@ -58,7 +58,7 @@
 			},
 			"backupToAuthIds": [],
 			"targetServerInfoList": [
-				{"name": "net2.server", "host": "localhost", "port": 22100, "group": "Servers"}
+				{"name": "net1.server", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
 			],
 			"contextList": []
 		},
@@ -80,7 +80,7 @@
                 "cipher": "AES-128-CBC",
                 "mac": "SHA256"
             },
-            "host": "localhost",
+            "host": "10.218.101.248",
             "backupToAuthIds": []
         },
 		{
