@@ -11,9 +11,7 @@
     "IsDelegated": 0,
     "Challenges": {
       "PhysicalPresenceRequirements": [
-        "HUMAN_PRESENCE",
-        "CO_LOCATION",
-        "TEMPERATURE_CHECK"
+        "HUMAN_PRESENCE"
       ]
     }
   }
