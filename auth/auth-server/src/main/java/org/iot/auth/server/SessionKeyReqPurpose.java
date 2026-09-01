@@ -31,6 +31,7 @@ public class SessionKeyReqPurpose {
     public SessionKeyReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
         // purpose keys
         final String group = "group";
+        final String action = "action";
         final String pubTopic = "pubTopic";
         final String subTopic = "subTopic";
         final String keyId = "keyId";
@@ -51,6 +52,11 @@ public class SessionKeyReqPurpose {
                 } else {
                     this.targetType = CommunicationTargetType.TARGET_GROUP;
                 }
+            }
+        } else if (purpose.containsKey(action)) {
+            objTarget = purpose.get(action);
+            if (objTarget.getClass() == String.class) {
+                this.targetType = CommunicationTargetType.SOLO_ACTION;
             }
         } else if (purpose.containsKey(pubTopic)) {
             objTarget = purpose.get(pubTopic);
