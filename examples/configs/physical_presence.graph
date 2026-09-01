@@ -17,8 +17,8 @@
 	"assignments": {
 		"net1.robot1": 101,
 		"net1.robot2": 101,
-		"net1.box1": 101,
-		"net1.box2": 101
+		"net1.locker1": 101,
+		"net1.locker2": 101
 	},
 	"entityList": [
 		{
@@ -44,8 +44,8 @@
 				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
 			},
 			"targetServerInfoList": [
-				{"name": "net1.box1", "host": "localhost", "port": 21100, "group": "Boxes"},
-				{"name": "net1.box2", "host": "localhost", "port": 21200, "group": "Boxes"}
+				{"name": "net1.locker1", "host": "localhost", "port": 21100, "group": "Lockers"},
+				{"name": "net1.locker2", "host": "localhost", "port": 21200, "group": "Lockers"}
 			]
 		},
 		{
@@ -71,20 +71,20 @@
 				"actuators": ["IR", "BLE", "CAMERA", "THERMOMETER"]
 			},
 			"targetServerInfoList": [
-				{"name": "net1.box1", "host": "localhost", "port": 21100, "group": "Boxes"},
-				{"name": "net1.box2", "host": "localhost", "port": 21200, "group": "Boxes"}
+				{"name": "net1.locker1", "host": "localhost", "port": 21100, "group": "Lockers"},
+				{"name": "net1.locker2", "host": "localhost", "port": 21200, "group": "Lockers"}
 			]
 		},
 		{
-			"group": "Boxes",
-			"name": "net1.box1",
+			"group": "Lockers",
+			"name": "net1.locker1",
 			"port": 21100,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 1,
 			"netName": "net1",
-			"credentialPrefix": "Net1.Box1",
+			"credentialPrefix": "Net1.Locker1",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -101,15 +101,15 @@
 			}
 		},
 		{
-			"group": "Boxes",
-			"name": "net1.box2",
+			"group": "Lockers",
+			"name": "net1.locker2",
 			"port": 21200,
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 1,
 			"netName": "net1",
-			"credentialPrefix": "Net1.Box2",
+			"credentialPrefix": "Net1.Locker2",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"

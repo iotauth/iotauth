@@ -2,7 +2,23 @@
   {
     "RequestingGroup": "Robots",
     "TargetType": "Group",
-    "Target": "Boxes",
+    "Target": "Lockers",
+    "MaxNumSessionKeyOwners": 2,
+    "SessionCryptoSpec": "AES-128-CBC:SHA256",
+    "AbsoluteValidity": "1*day",
+    "RelativeValidity": "2*hour",
+    "Expiration": "Infinity",
+    "IsDelegated": 0,
+    "Challenges": {
+      "PhysicalPresenceRequirements": [
+        "HUMAN_PRESENCE"
+      ]
+    }
+  },
+  {
+    "RequestingGroup": "Robots",
+    "TargetType": "Action",
+    "Target": "GRIP_ITEM",
     "MaxNumSessionKeyOwners": 2,
     "SessionCryptoSpec": "AES-128-CBC:SHA256",
     "AbsoluteValidity": "1*day",
