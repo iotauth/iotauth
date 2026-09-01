@@ -1,7 +1,0 @@
-torch>=2.0.0
-transformers>=4.40.0
-accelerate>=0.28.0
-fastapi>=0.100.0
-uvicorn>=0.20.0
-pydantic>=2.0.0
-requests>=2.28.0
