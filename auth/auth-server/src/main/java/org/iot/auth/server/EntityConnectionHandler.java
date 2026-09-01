@@ -667,7 +667,9 @@ public abstract class EntityConnectionHandler {
                 // Construct the verification plan first (throws if a required check has no feasible
                 // mechanism), so that no session key is issued when the plan cannot be constructed.
                 String targetGroup = (String) reqPurpose.getTarget();
-                String challengeJson = determineGroupTargetChallenge(requestingEntity, requestResources, targetGroup, communicationPolicy);
+                List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
+                String challengeJson = determinePhysicalVerificationChallenge(
+                        requestingEntity, requestResources, targetEntities, communicationPolicy);
 
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 if (!challengeJson.isEmpty()) {
@@ -684,16 +686,24 @@ public abstract class EntityConnectionHandler {
                         sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
                 break;
             }
-            // Solo action: no target entity/group, just physical presence verification for an
-            // action the requesting entity performs by itself (e.g., gripping an item).
-            case SOLO_ACTION: {
+            // Action: physical presence verification for an action the requesting entity performs,
+            // either alone (e.g., gripping an item; no target entity) or on a specific target entity
+            // named at request time (e.g., a locker identified by a scanned QR code) rather than by
+            // the communication policy itself.
+            case ACTION: {
                 CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
                         requestingEntity, reqPurpose, purpose, requestContext, currentTime);
                 verifyPolicyResources(communicationPolicy, requestResources, purpose);
 
                 // Construct the verification plan first (throws if a required check has no feasible
                 // mechanism), so that no session key is issued when the plan cannot be constructed.
-                String challengeJson = determineGroupTargetChallenge(requestingEntity, requestResources, null, communicationPolicy);
+                String targetEntityName = reqPurpose.getTargetEntityName();
+                RegisteredEntity targetEntity = (targetEntityName != null)
+                        ? server.getRegisteredEntity(targetEntityName) : null;
+                List<RegisteredEntity> targetEntities = (targetEntity != null)
+                        ? Collections.singletonList(targetEntity) : Collections.emptyList();
+                String challengeJson = determinePhysicalVerificationChallenge(
+                        requestingEntity, requestResources, targetEntities, communicationPolicy);
 
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 if (!challengeJson.isEmpty()) {
@@ -704,7 +714,8 @@ public abstract class EntityConnectionHandler {
 
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
-                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget(),
+                                targetEntityName);
                 getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
                 sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
                         sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
@@ -894,24 +905,24 @@ public abstract class EntityConnectionHandler {
     }
 
     /**
-     * Determine structured physical presence challenge JSON for group target and solo action session
-     * key requests.
+     * Determine structured physical presence challenge JSON for a session key request, given the
+     * resolved set of target entities (a whole group, a single named entity, or none for a solo
+     * action).
      * @param requestingEntity Entity requesting the session key.
      * @param requestResources Resources requested by entity (actuators, sensors).
-     * @param targetGroup Target group name, or null for a solo action with no target entity.
+     * @param targetEntities Resolved target entities: a group's members, a single named entity, or
+     * empty for a solo action with no target entity.
      * @param communicationPolicy Active communication policy.
      * @return Formatted Challenge JSON string.
      * @throws PhysicalVerificationPlanException If a required physical presence check has no feasible
      * verification mechanism, so the verification plan cannot be constructed.
      */
-    private String determineGroupTargetChallenge(
+    private String determinePhysicalVerificationChallenge(
             RegisteredEntity requestingEntity,
             JSONObject requestResources,
-            String targetGroup,
+            List<RegisteredEntity> targetEntities,
             CommunicationPolicy communicationPolicy) throws PhysicalVerificationPlanException {
 
-        List<RegisteredEntity> targetEntities = (targetGroup != null)
-                ? server.getRegisteredEntitiesByGroup(targetGroup) : Collections.emptyList();
         List<PhysicalChallengeTable> physicalChallenges = null;
         try {
             physicalChallenges = server.getPhysicalChallenges();
