@@ -13,28 +13,30 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * FeasibleChallengeMatcher computes the Feasible Challenge Set for session key requests.
- * 
- * It performs intersection analysis across four data dimensions:
+ * FeasibleChallengeMatcher computes the verification plan for a session key request.
+ *
+ * For each required physical presence check, it selects the highest-priority feasible
+ * verification method (catalog order = priority) by intersecting four data dimensions:
  * 1. Requesting entity's registered capabilities in Auth DB vs. dynamic runtime resources (purpose.resources).
  * 2. Target entities' registered capabilities in Auth DB.
  * 3. Required physical presence checks defined in the communication policy (PhysicalPresenceRequirements).
  * 4. Challenge method definitions and requirement constraints stored in the physical_challenge table.
- * 
+ *
  * @author Dongha Kim
  */
 public class FeasibleChallengeMatcher {
     private static final Logger logger = LoggerFactory.getLogger(FeasibleChallengeMatcher.class);
 
     /**
-     * Computes the Feasible Challenge Set JSON object for a session key request.
-     * 
+     * Computes the verification plan JSON object for a session key request.
+     *
      * @param requestingEntity    Registered entity object for requester retrieved from Auth DB.
      * @param requestResources   Runtime resources JSON object passed in purpose.resources.
      * @param targetEntities     List of target registered entities (e.g., entities belonging to the target group).
      * @param communicationPolicy Communication policy for the requesting entity and target group.
      * @param challengeDefinitions List of physical challenge definitions retrieved from Auth DB.
-     * @return JSONObject containing requester name, effective capabilities, required policy checks, and feasible challenge methods with parameters.
+     * @return JSONObject containing requester name, effective capabilities, required checks, and the
+     *         selected verification method (with parameters) per check, or null per check if none is feasible.
      */
     @SuppressWarnings("unchecked")
     public static JSONObject computeFeasibleChallenges(
@@ -104,12 +106,14 @@ public class FeasibleChallengeMatcher {
         }
         result.put("requiredChecks", new JSONArray() {{ addAll(requiredChecks); }});
 
-        // Step 4: Perform Capability Matching for Each Required Check against DB Challenge Definitions
-        JSONObject feasibleChallengesObj = new JSONObject();
+        // Step 4: For each required check, select the highest-priority feasible method (m_i*) from the
+        // catalog. Priority is given by the method's position in the catalog's "methods" array
+        // (earlier entries are higher priority).
+        JSONObject verificationPlan = new JSONObject();
         for (String checkID : requiredChecks) {
             JSONObject checkObj = new JSONObject();
-            JSONArray feasibleMethods = new JSONArray();
             PhysicalChallengeTable checkDef = findChallengeDefinition(challengeDefinitions, checkID);
+            JSONObject selectedMethod = null;
             if (checkDef != null) {
                 checkObj.put("topology", checkDef.getTopology());
                 if (checkDef.getMethods() != null) {
@@ -122,12 +126,12 @@ public class FeasibleChallengeMatcher {
 
                             // Check if requester and target possess all required sensors/actuators for this method
                             if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
-                                JSONObject methodInfo = new JSONObject();
-                                methodInfo.put("method", methodID);
+                                selectedMethod = new JSONObject();
+                                selectedMethod.put("method", methodID);
                                 if (method.containsKey("parameters")) {
-                                    methodInfo.put("parameters", method.get("parameters"));
+                                    selectedMethod.put("parameters", method.get("parameters"));
                                 }
-                                feasibleMethods.add(methodInfo);
+                                break;
                             }
                         }
                     } catch (ParseException e) {
@@ -135,12 +139,16 @@ public class FeasibleChallengeMatcher {
                     }
                 }
             }
-            checkObj.put("methods", feasibleMethods);
-            feasibleChallengesObj.put(checkID, checkObj);
+            if (selectedMethod == null) {
+                logger.warn("[FeasibleChallengeMatcher] No feasible mechanism found for check {} requested by {}",
+                        checkID, requestingEntity.getName());
+            }
+            checkObj.put("selectedMethod", selectedMethod);
+            verificationPlan.put(checkID, checkObj);
         }
-        result.put("feasibleChallenges", feasibleChallengesObj);
+        result.put("verificationPlan", verificationPlan);
 
-        logger.info("[FeasibleChallengeMatcher] Computed Feasible Challenge Set for {}: {}",
+        logger.info("[FeasibleChallengeMatcher] Computed Verification Plan for {}: {}",
                 requestingEntity.getName(), result.toJSONString());
 
         return result;
