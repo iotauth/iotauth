@@ -5,6 +5,11 @@
       "topology": "LOCAL",
       "methods": [
         {
+          "id": "DUMMY",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
           "id": "CAMERA",
           "requirements": {
             "requester": {
