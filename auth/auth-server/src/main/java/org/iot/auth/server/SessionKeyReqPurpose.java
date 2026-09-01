@@ -56,7 +56,13 @@ public class SessionKeyReqPurpose {
         } else if (purpose.containsKey(action)) {
             objTarget = purpose.get(action);
             if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.SOLO_ACTION;
+                this.targetType = CommunicationTargetType.ACTION;
+                // An action may optionally name a specific target entity (e.g., a
+                // particular locker identified by a scanned QR code), unlike
+                // "group", which always refers to a whole group.
+                if (purpose.containsKey("target") && purpose.get("target").getClass() == String.class) {
+                    this.targetEntityName = (String) purpose.get("target");
+                }
             }
         } else if (purpose.containsKey(pubTopic)) {
             objTarget = purpose.get(pubTopic);
@@ -110,8 +116,18 @@ public class SessionKeyReqPurpose {
         return target;
     }
 
+    /**
+     * Gets the specific target entity name for an ACTION purpose that names one
+     * (e.g., a scanned locker ID), or null if the action has no specific target
+     * (a solo action) or the purpose is not an ACTION.
+     */
+    public String getTargetEntityName() {
+        return targetEntityName;
+    }
+
     private CommunicationTargetType targetType;
     private Object target;
+    private String targetEntityName;
 
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqPurpose.class);
 
