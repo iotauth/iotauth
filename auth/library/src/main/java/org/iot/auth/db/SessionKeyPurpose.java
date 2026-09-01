@@ -35,6 +35,9 @@ public class SessionKeyPurpose {
         else if (targetType == CommunicationTargetType.DELEGATION) {
             this.targetType = "Delegation";
         }
+        else if (targetType == CommunicationTargetType.SOLO_ACTION) {
+            this.targetType = "Action";
+        }
         else {
             throw new RuntimeException("Unrecognized communication target type for SessionKeyPurpose");
         }
