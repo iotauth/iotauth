@@ -33,7 +33,7 @@ public enum CommunicationTargetType {
     FILE_SHARING_TEAM(50),
     ADD_READER(60),
     DELEGATION(70),
-    SOLO_ACTION(80);
+    ACTION(80);
 
     public int getValue() {
         return value;
@@ -58,7 +58,7 @@ public enum CommunicationTargetType {
             case "Delegation":
                 return DELEGATION;
             case "Action":
-                return SOLO_ACTION;
+                return ACTION;
             default:
                 return UNKNOWN;
         }
