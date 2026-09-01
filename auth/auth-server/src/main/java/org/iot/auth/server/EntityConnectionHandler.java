@@ -684,6 +684,32 @@ public abstract class EntityConnectionHandler {
                         sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
                 break;
             }
+            // Solo action: no target entity/group, just physical presence verification for an
+            // action the requesting entity performs by itself (e.g., gripping an item).
+            case SOLO_ACTION: {
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
+                verifyPolicyResources(communicationPolicy, requestResources, purpose);
+
+                // Construct the verification plan first (throws if a required check has no feasible
+                // mechanism), so that no session key is issued when the plan cannot be constructed.
+                String challengeJson = determineGroupTargetChallenge(requestingEntity, requestResources, null, communicationPolicy);
+
+                cryptoSpec = communicationPolicy.getSessionCryptoSpec();
+                if (!challengeJson.isEmpty()) {
+                    cryptoSpec = new SymmetricKeyCryptoSpec(
+                            cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
+                            cryptoSpec.getMacAlgorithm(), challengeJson);
+                }
+
+                // generate session keys
+                SessionKeyPurpose sessionKeyPurpose =
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
+                sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
+                break;
+            }
             // If a subscribe-topic is specified, derive the keys from DB
             case SUBSCRIBE_TOPIC: {
                 CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
@@ -868,10 +894,11 @@ public abstract class EntityConnectionHandler {
     }
 
     /**
-     * Determine structured physical presence challenge JSON for group target session key requests.
-     * @param requestingEntity Entity requesting session key for target group.
+     * Determine structured physical presence challenge JSON for group target and solo action session
+     * key requests.
+     * @param requestingEntity Entity requesting the session key.
      * @param requestResources Resources requested by entity (actuators, sensors).
-     * @param targetGroup Target group name.
+     * @param targetGroup Target group name, or null for a solo action with no target entity.
      * @param communicationPolicy Active communication policy.
      * @return Formatted Challenge JSON string.
      * @throws PhysicalVerificationPlanException If a required physical presence check has no feasible
@@ -883,7 +910,8 @@ public abstract class EntityConnectionHandler {
             String targetGroup,
             CommunicationPolicy communicationPolicy) throws PhysicalVerificationPlanException {
 
-        List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
+        List<RegisteredEntity> targetEntities = (targetGroup != null)
+                ? server.getRegisteredEntitiesByGroup(targetGroup) : Collections.emptyList();
         List<PhysicalChallengeTable> physicalChallenges = null;
         try {
             physicalChallenges = server.getPhysicalChallenges();
