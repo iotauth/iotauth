@@ -37,6 +37,7 @@ import org.json.simple.parser.ParseException;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.challenge.FeasibleChallengeMatcher;
 import org.iot.auth.db.bean.PhysicalChallengeTable;
+import org.iot.auth.exception.PhysicalVerificationPlanException;
 
 import java.io.IOException;
 import java.security.*;
@@ -143,7 +144,7 @@ public abstract class EntityConnectionHandler {
             NoAvailableDistributionKeyException, TooManySessionKeysRequestedException, IOException,
             UseOfExpiredKeyException, SQLException, ClassNotFoundException, ParseException, UnrecognizedEntityException,
             CertificateEncodingException, InvalidSignatureException, InvalidNonceException,
-            InvalidSymmetricKeyOperationException
+            InvalidSymmetricKeyOperationException, PhysicalVerificationPlanException
     {
         Buffer buf = new Buffer(bytes);
         MessageType type = MessageType.fromByte(buf.getByte(0));
@@ -449,6 +450,11 @@ public abstract class EntityConnectionHandler {
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
             close();
         }
+        catch (PhysicalVerificationPlanException e) {
+            getLogger().info("PhysicalVerificationPlanException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
+            close();
+        }
         catch (RuntimeException e) {
             getLogger().info("RuntimeException: " + e.getMessage());
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
@@ -607,11 +613,13 @@ public abstract class EntityConnectionHandler {
      * @throws ClassNotFoundException When class is not found.
      * @throws InvalidSessionKeyTargetException If the target of session key request is not valid.
      * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
+     * @throws PhysicalVerificationPlanException If a required physical presence check has no feasible
+     * verification mechanism.
      */
     private SessionKeysAndSpec processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqInternal sessionKeyReq, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
-            TooManySessionKeysRequestedException, InvalidNonceException {
+            TooManySessionKeysRequestedException, InvalidNonceException, PhysicalVerificationPlanException {
         getLogger().debug("Sender entity: {}", sessionKeyReq.getEntityName());
 
         getLogger().debug("Received auth nonce: {}", sessionKeyReq.getAuthNonce().toHexString());
@@ -656,22 +664,24 @@ public abstract class EntityConnectionHandler {
                         requestingEntity, reqPurpose, purpose, requestContext, currentTime);
                 verifyPolicyResources(communicationPolicy, requestResources, purpose);
 
+                // Construct the verification plan first (throws if a required check has no feasible
+                // mechanism), so that no session key is issued when the plan cannot be constructed.
+                String targetGroup = (String) reqPurpose.getTarget();
+                String challengeJson = determineGroupTargetChallenge(requestingEntity, requestResources, targetGroup, communicationPolicy);
+
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
+                if (!challengeJson.isEmpty()) {
+                    cryptoSpec = new SymmetricKeyCryptoSpec(
+                            cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
+                            cryptoSpec.getMacAlgorithm(), challengeJson);
+                }
+
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
                         new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
                 sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
                         sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
-
-                // Generate Challenge for Group Target Request
-                String targetGroup = (String) reqPurpose.getTarget();
-                String challengeJson = determineGroupTargetChallenge(requestingEntity, requestResources, targetGroup, communicationPolicy);
-                if (!challengeJson.isEmpty()) {
-                    cryptoSpec = new SymmetricKeyCryptoSpec(
-                            cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
-                            cryptoSpec.getMacAlgorithm(), challengeJson);
-                }
                 break;
             }
             // If a subscribe-topic is specified, derive the keys from DB
@@ -864,13 +874,14 @@ public abstract class EntityConnectionHandler {
      * @param targetGroup Target group name.
      * @param communicationPolicy Active communication policy.
      * @return Formatted Challenge JSON string.
+     * @throws PhysicalVerificationPlanException If a required physical presence check has no feasible
+     * verification mechanism, so the verification plan cannot be constructed.
      */
-    @SuppressWarnings("unchecked")
     private String determineGroupTargetChallenge(
             RegisteredEntity requestingEntity,
             JSONObject requestResources,
             String targetGroup,
-            CommunicationPolicy communicationPolicy) {
+            CommunicationPolicy communicationPolicy) throws PhysicalVerificationPlanException {
 
         List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
         List<PhysicalChallengeTable> physicalChallenges = null;
@@ -885,8 +896,21 @@ public abstract class EntityConnectionHandler {
                 communicationPolicy,
                 physicalChallenges);
 
-        getLogger().info("[Feasible Challenge Matcher Output] Feasible Challenge Set JSON for {}: {}",
+        getLogger().info("[Feasible Challenge Matcher Output] Verification Plan JSON for {}: {}",
                 requestingEntity.getName(), feasibleSet.toJSONString());
+
+        Object verificationPlanObj = feasibleSet.get("verificationPlan");
+        if (verificationPlanObj instanceof JSONObject) {
+            JSONObject verificationPlan = (JSONObject) verificationPlanObj;
+            for (Object checkID : verificationPlan.keySet()) {
+                JSONObject checkObj = (JSONObject) verificationPlan.get(checkID);
+                if (checkObj.get("selectedMethod") == null) {
+                    throw new PhysicalVerificationPlanException(
+                            "No feasible verification mechanism for physical presence check '" + checkID
+                            + "' requested by " + requestingEntity.getName());
+                }
+            }
+        }
 
         return feasibleSet.toJSONString();
     }
