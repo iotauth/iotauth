@@ -240,6 +240,11 @@ public class GenerateExampleAuthDB {
                     Object resObj = jsonObject.get(RegisteredEntityTable.c.Resources.name());
                     registeredEntity.setResources(resObj != null ? resObj.toString() : null);
                 }
+                if (jsonObject.containsKey(RegisteredEntityTable.c.Host.name())) {
+                    registeredEntity.setHost((String)jsonObject.get(RegisteredEntityTable.c.Host.name()));
+                    registeredEntity.setPort(
+                            convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.Port.name())));
+                }
 
                 sqLiteConnector.insertRecordsOrUpdateIfExists(registeredEntity);
             }

@@ -105,6 +105,12 @@ function getRegisteredEntity(entity) {
     if (entity.resources != null) {
         registeredEntity.Resources = JSON.stringify(entity.resources);
     }
+    // Store the entity's server address, if it is a connectable server (e.g. a locker), so Auth
+    // can hand it out as the target for a TCP handshake transport.
+    if (entity.host != null && entity.port != null) {
+        registeredEntity.Host = entity.host;
+        registeredEntity.Port = entity.port;
+    }
     return registeredEntity;
 }
 function generateRegisteredEntityTables() {
