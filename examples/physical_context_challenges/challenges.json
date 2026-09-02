@@ -38,6 +38,11 @@
       "topology": "MUTUAL",
       "methods": [
         {
+          "id": "DUMMY",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
           "id": "IR",
           "requirements": {
             "requester": {
@@ -66,6 +71,41 @@
             "rounds": 64,
             "max_delay_us": 2000
           }
+        }
+      ]
+    },
+    {
+      "id": "HANDSHAKE_TRANSPORT",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "TCP",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "IR",
+          "requirements": {
+            "requester": {
+              "actuators": ["IR"]
+            },
+            "target": {
+              "sensors": ["IR"]
+            }
+          },
+          "parameters": {}
+        },
+        {
+          "id": "ULTRASOUND",
+          "requirements": {
+            "requester": {
+              "actuators": ["UltraSound"]
+            },
+            "target": {
+              "sensors": ["UltraSound"]
+            }
+          },
+          "parameters": {}
         }
       ]
     },
