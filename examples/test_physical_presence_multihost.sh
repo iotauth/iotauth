@@ -113,7 +113,7 @@ start_remote_and_verify() {
 if [ "$GENERATE" = true ]; then
     echo ""
     echo "[1/5] Regenerating Auth DB on $AUTH_HOST..."
-    ssh_to 120 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence.graph -po policies/physical_presence.json -ch physical_context_challenges/challenges.json -p $PASSWORD -lc"
+    ssh_to 120 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po policies/physical_presence.json -ch physical_context_challenges/challenges.json -p $PASSWORD -lc"
 
     echo ""
     echo "Distributing Auth cert + credentials to Robot and Locker..."
