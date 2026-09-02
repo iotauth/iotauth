@@ -951,6 +951,16 @@ public abstract class EntityConnectionHandler {
             }
         }
 
+        // Independent of the physical presence checks above: if this request targets one or more
+        // entities, a handshake transport must also have been resolved, or there is no way to
+        // actually reach them.
+        Object handshakeTransportObj = feasibleSet.get("handshakeTransport");
+        if (handshakeTransportObj instanceof JSONObject
+                && ((JSONObject) handshakeTransportObj).get("selectedMethod") == null) {
+            throw new PhysicalVerificationPlanException(
+                    "No feasible handshake transport for request by " + requestingEntity.getName());
+        }
+
         return feasibleSet.toJSONString();
     }
 

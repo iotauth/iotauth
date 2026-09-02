@@ -106,52 +106,109 @@ public class FeasibleChallengeMatcher {
         }
         result.put("requiredChecks", new JSONArray() {{ addAll(requiredChecks); }});
 
-        // Step 4: For each required check, select the highest-priority feasible method (m_i*) from the
-        // catalog. Priority is given by the method's position in the catalog's "methods" array
-        // (earlier entries are higher priority).
+        // Step 4: For each required physical presence check, select the highest-priority feasible
+        // method (m_i*) from the catalog. Priority is given by the method's position in the
+        // catalog's "methods" array (earlier entries are higher priority).
         JSONObject verificationPlan = new JSONObject();
         for (String checkID : requiredChecks) {
-            JSONObject checkObj = new JSONObject();
-            PhysicalChallengeTable checkDef = findChallengeDefinition(challengeDefinitions, checkID);
-            JSONObject selectedMethod = null;
-            if (checkDef != null) {
-                checkObj.put("topology", checkDef.getTopology());
-                if (checkDef.getMethods() != null) {
-                    try {
-                        JSONArray methodsArray = (JSONArray) new JSONParser().parse(checkDef.getMethods());
-                        for (Object mObj : methodsArray) {
-                            JSONObject method = (JSONObject) mObj;
-                            String methodID = (String) method.get("id");
-                            JSONObject reqs = (JSONObject) method.get("requirements");
-
-                            // Check if requester and target possess all required sensors/actuators for this method
-                            if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
-                                selectedMethod = new JSONObject();
-                                selectedMethod.put("method", methodID);
-                                if (method.containsKey("parameters")) {
-                                    selectedMethod.put("parameters", method.get("parameters"));
-                                }
-                                break;
-                            }
-                        }
-                    } catch (ParseException e) {
-                        logger.error("Failed to parse methods for check {}: {}", checkID, e.getMessage());
-                    }
-                }
-            }
-            if (selectedMethod == null) {
+            JSONObject checkObj = computeCheckResult(checkID, challengeDefinitions,
+                    effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion,
+                    targetEntities);
+            if (checkObj.get("selectedMethod") == null) {
                 logger.warn("[FeasibleChallengeMatcher] No feasible mechanism found for check {} requested by {}",
                         checkID, requestingEntity.getName());
             }
-            checkObj.put("selectedMethod", selectedMethod);
             verificationPlan.put(checkID, checkObj);
         }
         result.put("verificationPlan", verificationPlan);
+
+        // Step 5: Independently of the physical presence checks above, if this request targets one
+        // or more entities, decide the transport that will actually carry the SST handshake
+        // (SKEY_HANDSHAKE_1/2/3) with them -- e.g. plain TCP for now, or a physical channel like IR
+        // or ultrasound once implemented. This is a separate decision from physical presence
+        // verification (e.g. CO_LOCATION): the two can select different methods, even though both
+        // draw on the same requester/target capabilities.
+        if (!targetEntities.isEmpty()) {
+            JSONObject handshakeTransport = computeCheckResult("HANDSHAKE_TRANSPORT", challengeDefinitions,
+                    effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion,
+                    targetEntities);
+            if (handshakeTransport.get("selectedMethod") == null) {
+                logger.warn("[FeasibleChallengeMatcher] No feasible handshake transport found requested by {}",
+                        requestingEntity.getName());
+            }
+            result.put("handshakeTransport", handshakeTransport);
+        }
 
         logger.info("[FeasibleChallengeMatcher] Computed Verification Plan for {}: {}",
                 requestingEntity.getName(), result.toJSONString());
 
         return result;
+    }
+
+    /**
+     * Selects the highest-priority feasible method (m_i*) for a single check from the catalog.
+     * @param checkID Check to look up, e.g. "CO_LOCATION" or "HANDSHAKE_TRANSPORT".
+     * @param challengeDefinitions List of physical challenge definitions retrieved from Auth DB.
+     * @param effectiveReqSensors Effective requester sensors (registered intersect runtime).
+     * @param effectiveReqActuators Effective requester actuators (registered intersect runtime).
+     * @param targetSensorsUnion Union of target entities' registered sensors.
+     * @param targetActuatorsUnion Union of target entities' registered actuators.
+     * @param targetEntities Resolved target entities, used to fill in a selected TCP method's
+     * connection info (host/port), which isn't a static catalog parameter.
+     * @return JSONObject with "topology" and "selectedMethod" (null if none is feasible).
+     */
+    @SuppressWarnings("unchecked")
+    private static JSONObject computeCheckResult(
+            String checkID,
+            List<PhysicalChallengeTable> challengeDefinitions,
+            Set<String> effectiveReqSensors,
+            Set<String> effectiveReqActuators,
+            Set<String> targetSensorsUnion,
+            Set<String> targetActuatorsUnion,
+            List<RegisteredEntity> targetEntities) {
+
+        JSONObject checkObj = new JSONObject();
+        PhysicalChallengeTable checkDef = findChallengeDefinition(challengeDefinitions, checkID);
+        JSONObject selectedMethod = null;
+        if (checkDef != null) {
+            checkObj.put("topology", checkDef.getTopology());
+            if (checkDef.getMethods() != null) {
+                try {
+                    JSONArray methodsArray = (JSONArray) new JSONParser().parse(checkDef.getMethods());
+                    for (Object mObj : methodsArray) {
+                        JSONObject method = (JSONObject) mObj;
+                        String methodID = (String) method.get("id");
+                        JSONObject reqs = (JSONObject) method.get("requirements");
+
+                        // Check if requester and target possess all required sensors/actuators for this method
+                        if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
+                            selectedMethod = new JSONObject();
+                            selectedMethod.put("method", methodID);
+                            JSONObject parameters = method.containsKey("parameters")
+                                    ? (JSONObject) method.get("parameters") : new JSONObject();
+                            // For a TCP transport, the target's address isn't a static catalog
+                            // parameter; look it up from the target entity Auth resolved for this
+                            // request (e.g., the specific locker named at request time).
+                            if ("TCP".equals(methodID)) {
+                                for (RegisteredEntity target : targetEntities) {
+                                    if (target.getHost() != null) {
+                                        parameters.put("host", target.getHost());
+                                        parameters.put("port", String.valueOf(target.getPort()));
+                                        break;
+                                    }
+                                }
+                            }
+                            selectedMethod.put("parameters", parameters);
+                            break;
+                        }
+                    }
+                } catch (ParseException e) {
+                    logger.error("Failed to parse methods for check {}: {}", checkID, e.getMessage());
+                }
+            }
+        }
+        checkObj.put("selectedMethod", selectedMethod);
+        return checkObj;
     }
 
     /**
