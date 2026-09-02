@@ -70,7 +70,7 @@ fi
 echo ""
 echo "[3/4] Starting Locker Server..."
 cd "$PROJ_ROOT/entity/c/examples/physical_presence/build"
-./locker ../locker.config > locker.log 2>&1 &
+./locker ../locker.config --comm_type tcp > locker.log 2>&1 &
 LOCKER_PID=$!
 echo "Locker Server PID: $LOCKER_PID. Waiting 1 second..."
 sleep 1
