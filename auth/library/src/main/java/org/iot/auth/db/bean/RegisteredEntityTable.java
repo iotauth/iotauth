@@ -46,7 +46,9 @@ public class RegisteredEntityTable {
         BackupToAuthIDs,
         BackupFromAuthID,
         MigrationToken,
-        Resources
+        Resources,
+        Host,
+        Port
     }
     private String name;
     private String group;
@@ -66,6 +68,10 @@ public class RegisteredEntityTable {
     // JSON string describing the entity's physical resources, e.g.
     // {"sensors":["LiFi","IR","UltraSound","BLE"],"actuators":["LiFi","IR","UltraSound","BLE"]}
     private String resources = null;
+    // Network address this entity's server listens on, for a TCP handshake transport chosen for a
+    // session key request targeting it. Null/-1 if this entity is not a connectable server.
+    private String host = null;
+    private int port = -1;
 
     public String getName() {
         return name;
@@ -210,6 +216,30 @@ public class RegisteredEntityTable {
         return this;
     }
 
+    /**
+     * Gets the host address this entity's server listens on, or null if not a connectable server.
+     */
+    public String getHost() {
+        return host;
+    }
+
+    public RegisteredEntityTable setHost(String host) {
+        this.host = host;
+        return this;
+    }
+
+    /**
+     * Gets the port this entity's server listens on, or -1 if not a connectable server.
+     */
+    public int getPort() {
+        return port;
+    }
+
+    public RegisteredEntityTable setPort(int port) {
+        this.port = port;
+        return this;
+    }
+
     public String toString() {
         return toJSONObject().toJSONString();
     }
@@ -230,6 +260,10 @@ public class RegisteredEntityTable {
         object.put(c.BackupFromAuthID.name(), getBackupFromAuthID());
         if (resources != null) {
             object.put(c.Resources.name(), getResources());
+        }
+        if (host != null) {
+            object.put(c.Host.name(), getHost());
+            object.put(c.Port.name(), getPort());
         }
         return object;
     }
@@ -257,6 +291,9 @@ public class RegisteredEntityTable {
         entity.setBackupFromAuthID(resultSet.getInt(c.BackupFromAuthID.name()));
         entity.setMigrationTokenVal(resultSet.getBytes(c.MigrationToken.name()));
         entity.setResources(resultSet.getString(c.Resources.name()));
+        entity.setHost(resultSet.getString(c.Host.name()));
+        int port = resultSet.getInt(c.Port.name());
+        entity.setPort(resultSet.wasNull() ? -1 : port);
         return entity;
     }
 }

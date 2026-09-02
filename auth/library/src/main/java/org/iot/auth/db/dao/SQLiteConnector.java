@@ -253,7 +253,9 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.BackupToAuthIDs.name() + " TEXT,";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT,";
         sql += RegisteredEntityTable.c.MigrationToken.name() + " BLOB,";
-        sql += RegisteredEntityTable.c.Resources.name() + " TEXT)";
+        sql += RegisteredEntityTable.c.Resources.name() + " TEXT,";
+        sql += RegisteredEntityTable.c.Host.name() + " TEXT,";
+        sql += RegisteredEntityTable.c.Port.name() + " INT)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", RegisteredEntityTable.T_REGISTERED_ENTITY);
@@ -462,8 +464,10 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.BackupToAuthIDs.name() + ",";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ",";
         sql += RegisteredEntityTable.c.MigrationToken.name() + ",";
-        sql += RegisteredEntityTable.c.Resources.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        sql += RegisteredEntityTable.c.Resources.name() + ",";
+        sql += RegisteredEntityTable.c.Host.name() + ",";
+        sql += RegisteredEntityTable.c.Port.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         regEntity = encryptRecords(regEntity);
         int index = 1;
@@ -510,6 +514,17 @@ public class SQLiteConnector {
         }
         else {
             preparedStatement.setNull(index++, Types.VARCHAR);
+        }
+
+        // Store the entity's server address (nullable, only for connectable servers)
+        String host = regEntity.getHost();
+        if (host != null) {
+            preparedStatement.setString(index++, host);
+            preparedStatement.setInt(index++, regEntity.getPort());
+        }
+        else {
+            preparedStatement.setNull(index++, Types.VARCHAR);
+            preparedStatement.setNull(index++, Types.INTEGER);
         }
 
         preparedStatement.toString();

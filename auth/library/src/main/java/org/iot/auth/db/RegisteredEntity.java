@@ -53,6 +53,10 @@ public class RegisteredEntity {
     private MigrationToken migrationToken = null;
     // JSON string describing physical resources (sensors and actuators) registered for this entity
     private String resources = null;
+    // Network address this entity's server listens on, for a TCP handshake transport chosen for a
+    // session key request targeting it. Null/-1 if this entity is not a connectable server.
+    private String host = null;
+    private int port = -1;
 
     private static int[] convertStringBackupToAuthIDsToArray(String strBackupToAuthIDs) {
         if (strBackupToAuthIDs == null || strBackupToAuthIDs.length() == 0) {
@@ -100,6 +104,8 @@ public class RegisteredEntity {
                     new Buffer(tableElement.getMigrationTokenVal()));
         }
         this.resources = tableElement.getResources();
+        this.host = tableElement.getHost();
+        this.port = tableElement.getPort();
     }
 
     public RegisteredEntityTable toRegisteredEntityTable(Buffer serializedDistributionKeyValue,
@@ -150,6 +156,8 @@ public class RegisteredEntity {
             tableElement.setMigrationTokenVal(migrationToken.serialize().getRawBytes());
         }
         tableElement.setResources(resources);
+        tableElement.setHost(host);
+        tableElement.setPort(port);
         return tableElement;
     }
 
@@ -216,6 +224,20 @@ public class RegisteredEntity {
      */
     public void setResources(String resources) {
         this.resources = resources;
+    }
+
+    /**
+     * Gets the host address this entity's server listens on, or null if not a connectable server.
+     */
+    public String getHost() {
+        return host;
+    }
+
+    /**
+     * Gets the port this entity's server listens on, or -1 if not a connectable server.
+     */
+    public int getPort() {
+        return port;
     }
 
     public String toString() {
