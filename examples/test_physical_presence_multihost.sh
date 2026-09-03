@@ -39,6 +39,7 @@ LOCKER_HOST="pi43@pi43"
 REMOTE_REPO="project/iotauth"
 PASSWORD="testpassword"
 MVN_PATH="/opt/apache-maven-3.9.8/bin"
+TAIL_PID=""
 
 COMM_TYPE="tcp"
 GENERATE=false
@@ -88,8 +89,10 @@ echo "======================================================================"
 cleanup() {
     echo ""
     echo "[Clean] Stopping Auth ($AUTH_HOST) and Locker ($LOCKER_HOST)..."
+    [ -n "$TAIL_PID" ] && kill "$TAIL_PID" 2>/dev/null || true
     ssh_to 15 "$AUTH_HOST" "pkill -f auth-server-jar-with-dependencies" 2>/dev/null || true
     ssh_to 15 "$LOCKER_HOST" "pkill -f './locker'" 2>/dev/null || true
+    ssh_to 15 "$ROBOT_HOST" "pkill -f './robot'" 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -153,9 +156,16 @@ start_remote_and_verify "$LOCKER_HOST" \
     "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ./locker ../locker_pi43.config --comm_type $COMM_TYPE > /tmp/locker_test.log 2>&1 < /dev/null &" \
     "./locker" "/tmp/locker_test.log" "Locker" || exit 1
 
+# Stream Locker's log live in this terminal, prefixed so it's distinguishable
+# from Robot's own output below. Killed in cleanup() on exit.
+ssh -o BatchMode=yes -o ConnectTimeout=8 "$LOCKER_HOST" "tail -n +1 -f /tmp/locker_test.log" 2>/dev/null | LC_ALL=C sed -u 's/^/[Locker] /' &
+TAIL_PID=$!
+
 echo ""
 echo "[5/5] Running Robot on $ROBOT_HOST (--comm_type $COMM_TYPE)..."
-ssh_to 100 "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && timeout 90 ./robot ../robot_pi42.config --comm_type $COMM_TYPE" || true
+# stdbuf forces line-buffered stdout over the ssh pipe (glibc otherwise fully
+# buffers non-tty output, so Robot's log wouldn't show up until it exits).
+ssh_to 100 "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL timeout 90 ./robot ../robot_pi42.config --comm_type $COMM_TYPE" 2>&1 | LC_ALL=C sed -u 's/^/[Robot] /' || true
 
 sleep 2
 echo ""
