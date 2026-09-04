@@ -7,17 +7,22 @@
 #   Locker -> pi43@pi43
 #
 # Usage:
-#   ./test_physical_presence_multihost.sh [--comm_type tcp|ultrasound] [--generate]
+#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound] [--generate]
 #
 #   --comm_type   Transport for the Robot<->Locker handshake (default: tcp).
-#                 Auth communication is always TCP regardless of this.
+#                 Auth communication is always TCP regardless of this. "ir"
+#                 runs Robot/Locker under sudo (pigpio needs direct GPIO
+#                 access) -- see entity/c/ir_com/run_ir_test.sh for pigpio
+#                 install steps; the build step below detects it the same
+#                 way it detects ALSA for ultrasound.
 #   --generate    Regenerate the Auth DB on ada6000 (cleanAll.sh + generateAll.sh)
 #                 and redistribute the freshly generated Auth cert + entity
 #                 credentials to Robot/Locker. Skip this on repeat runs where
 #                 the DB/credentials haven't changed -- it's the slow part.
 #
 # Assumes:
-#   - Passwordless SSH to all three hosts.
+#   - Passwordless SSH to all three hosts, and passwordless sudo on Robot and
+#     Locker (only needed for --comm_type ir).
 #   - ~/project/iotauth checked out on the physical branch on all three hosts,
 #     with matching robot.c/locker.c code already pushed/pulled there. This
 #     script (re)builds robot/locker on pi42/pi43 on every run.
@@ -51,6 +56,19 @@ while [[ $# -gt 0 ]]; do
 done
 
 PROJ_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# pigpio (needed for --comm_type ir) requires direct GPIO access, so Robot
+# and Locker must run as root in that case; tcp/ultrasound need no such
+# privilege.
+SUDO_PREFIX=""
+ROBOT_TIMEOUT=90
+if [ "$COMM_TYPE" = "ir" ]; then
+    SUDO_PREFIX="sudo "
+    # IR's 50ms-per-bit rate makes even one ~72-100 byte handshake message
+    # take on the order of 30s to transmit; three of them (hs1/hs2/hs3) plus
+    # retries need much more headroom than ultrasound/tcp do.
+    ROBOT_TIMEOUT=300
+fi
 
 # Runs a command with a hard wall-clock timeout. Portable bash implementation
 # since macOS has no `timeout`/`gtimeout` by default. Returns the wrapped
@@ -90,10 +108,16 @@ cleanup() {
     echo "[Clean] Stopping Auth ($AUTH_HOST) and Locker ($LOCKER_HOST)..."
     [ -n "$TAIL_PID" ] && kill "$TAIL_PID" 2>/dev/null || true
     ssh_to 15 "$AUTH_HOST" "pkill -f auth-server-jar-with-dependencies" 2>/dev/null || true
-    ssh_to 15 "$LOCKER_HOST" "pkill -f './locker'" 2>/dev/null || true
-    ssh_to 15 "$ROBOT_HOST" "pkill -f './robot'" 2>/dev/null || true
+    # sudo pkill so this also cleans up a --comm_type ir run (started under
+    # sudo for pigpio's direct GPIO access); harmless for tcp/ultrasound runs.
+    ssh_to 15 "$LOCKER_HOST" "sudo pkill -f '[.]/locker'" 2>/dev/null || true
+    ssh_to 15 "$ROBOT_HOST" "sudo pkill -f '[.]/robot'" 2>/dev/null || true
 }
 trap cleanup EXIT
+# Explicit INT/TERM traps (not just EXIT) so this fires even when the shell
+# would otherwise ignore SIGINT -- e.g. if this script itself is launched
+# backgrounded (`... &`), bash disables SIGINT for it by default.
+trap 'exit 130' INT TERM
 
 # Starts a background process on a remote host and verifies (via pgrep) that
 # it's still running a few seconds later, retrying a couple of times.
@@ -151,9 +175,13 @@ scp_between 15 "$PROJ_ROOT/entity/c/examples/physical_presence/locker_pi43.confi
 echo ""
 echo "[4/6] Building Robot on $ROBOT_HOST and Locker on $LOCKER_HOST..."
 # libasound2-dev is required to link the ultrasound (ggwave/ALSA) transport;
-# apt is a no-op if it's already installed. The build dir is wiped instead of
-# reused so a stale CMakeCache.txt never masks find_library() results from a
-# previous run (e.g. before libasound2-dev was installed).
+# apt is a no-op if it's already installed. pigpio (for --comm_type ir) is
+# NOT an apt package and isn't installed here -- see
+# entity/c/ir_com/run_ir_test.sh for its manual install steps; CMake just
+# detects it if already present, same as it does for ALSA. The build dir is
+# wiped instead of reused so a stale CMakeCache.txt never masks
+# find_library() results from a previous run (e.g. before libasound2-dev or
+# pigpio was installed).
 BUILD_CMD="sudo apt-get install -y libasound2-dev && cd $REMOTE_REPO/entity/c/examples/physical_presence && rm -rf build && mkdir build && cd build && cmake .. && make -j"
 ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
 ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
@@ -162,7 +190,7 @@ echo ""
 echo "[5/6] Starting Locker on $LOCKER_HOST (--comm_type $COMM_TYPE)..."
 ssh_to 15 "$LOCKER_HOST" "pkill -f './locker' 2>/dev/null" || true
 start_remote_and_verify "$LOCKER_HOST" \
-    "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ./locker ../locker_pi43.config --comm_type $COMM_TYPE > /tmp/locker_test.log 2>&1 < /dev/null &" \
+    "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ${SUDO_PREFIX}./locker ../locker_pi43.config --comm_type $COMM_TYPE > /tmp/locker_test.log 2>&1 < /dev/null &" \
     "./locker" "/tmp/locker_test.log" "Locker" || exit 1
 
 # Stream Locker's log live in this terminal, prefixed so it's distinguishable
@@ -174,7 +202,7 @@ echo ""
 echo "[6/6] Running Robot on $ROBOT_HOST (--comm_type $COMM_TYPE)..."
 # stdbuf forces line-buffered stdout over the ssh pipe (glibc otherwise fully
 # buffers non-tty output, so Robot's log wouldn't show up until it exits).
-ssh_to 100 "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL timeout 90 ./robot ../robot_pi42.config --comm_type $COMM_TYPE" 2>&1 | LC_ALL=C sed -u 's/^/[Robot] /' || true
+ssh_to $((ROBOT_TIMEOUT + 10)) "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL ${SUDO_PREFIX}timeout $ROBOT_TIMEOUT ./robot ../robot_pi42.config --comm_type $COMM_TYPE" 2>&1 | LC_ALL=C sed -u 's/^/[Robot] /' || true
 
 sleep 2
 echo ""
