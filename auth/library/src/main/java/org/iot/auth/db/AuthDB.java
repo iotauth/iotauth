@@ -288,6 +288,18 @@ public class AuthDB {
         return sqLiteConnector.deleteExpiredCommunicationPolicies();
     }
 
+    public List<String> getExpiredCommunicationPolicyIDs() {
+        long currentTime = System.currentTimeMillis();
+        List<String> expiredIDs = new ArrayList<>();
+
+        for (CommunicationPolicy policy : communicationPolicyList) {
+            if (policy.getExpiration() < currentTime) {
+                expiredIDs.add(String.valueOf(policy.getId()));
+            }
+        }
+        return expiredIDs;
+    }
+
     public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {
         sqLiteConnector.deleteAllCachedSessionKeys();
     }
@@ -423,6 +435,49 @@ public class AuthDB {
     public void reloadCommunicationPolicyDB() throws SQLException, ClassNotFoundException {
         communicationPolicyList.clear();
         loadCommPolicyDB();
+    }
+
+    public boolean removeSessionKeysForPolicies(List<CommunicationPolicy> policies) throws SQLException {
+        List<CachedSessionKeyTable> sessionKeys = sqLiteConnector.selectAllCachedSessionKeys();
+        List<Long> keyIDsToRemove = new ArrayList<>();
+
+        for (CachedSessionKeyTable sessionKey : sessionKeys) {
+            String ownersValue = sessionKey.getOwner();
+            if (ownersValue == null || ownersValue.trim().isEmpty()) {
+                continue;
+            }
+            String[] ownerNames = ownersValue.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM);
+
+            if (ownerNames.length < 2) {
+                continue;
+            }
+
+            RegisteredEntity requestingOwner = getRegisteredEntity(ownerNames[0].trim());
+            RegisteredEntity targetOwner = getRegisteredEntity(ownerNames[1].trim());
+
+            if (requestingOwner == null || targetOwner == null) {
+                continue;
+            }
+
+            String requestingOwnerGroup = requestingOwner.getGroup();
+            String targetOwnerGroup = targetOwner.getGroup();
+
+            for (CommunicationPolicy policy : policies) {
+                if (policy.getTargetType() != CommunicationTargetType.TARGET_GROUP) {
+                    continue;
+                }
+
+                boolean matchesPolicy = policy.getReqGroup().equals(requestingOwnerGroup)
+                                    && policy.getTarget().equals(targetOwnerGroup);
+
+                if (matchesPolicy) {
+                    keyIDsToRemove.add(sessionKey.getID());
+                    break;
+                }
+            }
+        }
+
+        return sqLiteConnector.deleteCachedSessionKeysByIDs(keyIDsToRemove);
     }
 
     private void loadCommPolicyDB() throws SQLException, ClassNotFoundException {

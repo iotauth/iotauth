@@ -529,6 +529,15 @@ public class AuthServer {
         }
         return true;
     }
+
+    public boolean removeSessionKeysFromPolicies(List<CommunicationPolicy> policies) {
+        try {
+            return db.removeSessionKeysForPolicies(policies);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     
     /**
      * Method for exposing an AuthDB operation, getCommunicationPolicy
@@ -688,24 +697,43 @@ public class AuthServer {
     /**
      * Method for exposing an AuthDB operation, cleanExpiredCommunicationPolicies
      * @throws SQLException If an error occurs in SQL processing.
-     * @throws ClassNotFoundException If the class is not found.
      */
-    public void cleanExpiredCommunicationPolicies() throws SQLException, ClassNotFoundException {
-        List<String> expiredIds = db.cleanExpiredCommunicationPolicies();
-        if (expiredIds.isEmpty()){
+    public void cleanExpiredCommunicationPolicies() throws SQLException {
+        List<String> expiredIDs = db.getExpiredCommunicationPolicyIDs();
+        if (expiredIDs.isEmpty()) {
             return;
         }
-        logger.debug("Expired policies {}", expiredIds);
-        // Remove child policies which their parents has been expired.
-        List<String> allCPTIDsToBeRemoved = new ArrayList<>();
-        for (String i : expiredIds){
-            allCPTIDsToBeRemoved.addAll(getAllChildrenByParentID(i));
+
+        logger.debug("Expired policies {}", expiredIDs);
+        Set<String> policyIDsToRemove = new LinkedHashSet<>(expiredIDs);
+        for (String expiredID : expiredIDs) {
+            List<String> childIDs = getAllChildrenByParentID(expiredID);
+            if (childIDs != null) {
+                policyIDsToRemove.addAll(childIDs);
+            }
         }
-        if (allCPTIDsToBeRemoved.isEmpty()){
+        List<String> allPolicyIDsToRemove = new ArrayList<>(policyIDsToRemove);
+        logger.debug("Expired and cascaded policies {}", allPolicyIDsToRemove);
+
+        List<CommunicationPolicy> policiesToRemove = new ArrayList<>();
+        for (String policyID : allPolicyIDsToRemove) {
+            CommunicationPolicy policy = getCommunicationPolicyByID(Long.parseLong(policyID));
+            if (policy != null) {
+                policiesToRemove.add(policy);
+            }
+        }
+
+        if (!db.removeSessionKeysForPolicies(policiesToRemove)) {
+            logger.error("Failed to remove session keys for expired policies {}", allPolicyIDsToRemove);
             return;
         }
-        logger.debug("Child policies of expired policies {}", allCPTIDsToBeRemoved);
-        removeCommunicationPolicies(allCPTIDsToBeRemoved);
+        if (!removeDelegationInfo(allPolicyIDsToRemove)) {
+            logger.error("Failed to remove delegation info for expired policies {}", allPolicyIDsToRemove);
+            return;
+        }
+        if (!removeCommunicationPolicies(allPolicyIDsToRemove)) {
+            logger.error("Failed to remove expired communication policies {}", allPolicyIDsToRemove);
+        }
     }
 
     /**

@@ -643,7 +643,7 @@ public abstract class EntityConnectionHandler {
                 if (communicationPolicy.getExpiration() < currentTime){
                     getLogger().info("Communication Policy has been expired!");
                     String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    server.cleanExpiredCommunicationPolicies();
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
@@ -671,7 +671,7 @@ public abstract class EntityConnectionHandler {
                 if (communicationPolicy.getExpiration() < currentTime){
                     getLogger().info("Communication Policy has been expired!");
                     String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    server.cleanExpiredCommunicationPolicies();
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
@@ -776,7 +776,7 @@ public abstract class EntityConnectionHandler {
                 if (communicationPolicy.getExpiration() < currentTime){
                     getLogger().info("Communication Policy has been expired!");
                     String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    server.cleanExpiredCommunicationPolicies();
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
@@ -1019,6 +1019,19 @@ public abstract class EntityConnectionHandler {
                         List<String> allCPTIDsToBeRemoved = new ArrayList<>();
                         allCPTIDsToBeRemoved.add(revokeTargetPolicyId);
                         allCPTIDsToBeRemoved.addAll(targetPolicies);
+
+                        List<CommunicationPolicy> policiesToRemove = new ArrayList<>();
+                        for (String policyId : allCPTIDsToBeRemoved) {
+                            CommunicationPolicy policy = server.getCommunicationPolicyByID(Long.parseLong(policyId));
+                            if (policy != null) {
+                                policiesToRemove.add(policy);
+                            }
+                        }
+                        boolean removedKeys = server.removeSessionKeysFromPolicies(policiesToRemove);
+                        if (!removedKeys) {
+                            getLogger().info("Failed to remove session keys for revoked policies!");
+                            return null;
+                        }
 
                         boolean removeCommunicationPolicies = server.removeCommunicationPolicies(allCPTIDsToBeRemoved);
                         if (!removeCommunicationPolicies){

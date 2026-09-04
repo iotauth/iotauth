@@ -1150,6 +1150,31 @@ public class SQLiteConnector {
     }
 
     /**
+     * Deletes cached session keys specified by their IDs.
+     * @param keyIds the list of IDs of cached session keys to be deleted
+     * @return <code>true</code> if the deletion is successful; otherwise, <code>false</code>
+     * @throws SQLException if a database access error occurs;
+     * this method is called on a closed <code>PreparedStatement</code>
+     * or an argument is supplied to this method
+     */
+    public boolean deleteCachedSessionKeysByIDs(List<Long> keyIds) throws SQLException {
+        if (keyIds.isEmpty()) {
+            return true;
+        }
+        String placeholders = String.join(",", Collections.nCopies(keyIds.size(), "?"));
+        String sql = "DELETE FROM " + CachedSessionKeyTable.T_CACHED_SESSION_KEY
+                        + " WHERE " + CachedSessionKeyTable.c.ID.name()
+                        + " IN (" + placeholders + ")";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (int i = 0; i < keyIds.size(); i++) {
+                ps.setLong(i + 1, keyIds.get(i));
+            }
+            ps.executeUpdate();
+            return true;
+        }
+    }
+
+    /**
      * Append an owner to a session key.
      * @param keyID the id of the session key
      * @param newOwner the owner to the session key

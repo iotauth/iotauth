@@ -128,10 +128,16 @@ function commandInterpreter() {
             else {
                 commServerInfo = targetServerInfoList[0];
             }
-            const resourceName = commServerInfo.name.split('.')[1].replace(/^./, c => c.toUpperCase());
+
+            const resourceName = commServerInfo.group ||
+                commServerInfo.name.split('.')[1].replace(/^./, c => c.toUpperCase());
             console.log('initComm command targeted to ' + commServerInfo.name + ' (group: ' + resourceName + ')');
             secureCommClient.provideInput('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, resourceName);
 
+        }
+        else if (command == 'finComm' || command == 'f') {
+            console.log('finComm command');
+            secureCommClient.provideInput('serverHostPort', null);
         }
         else if (command == 'send') {
             console.log('send command');
