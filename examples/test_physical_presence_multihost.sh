@@ -18,10 +18,9 @@
 #
 # Assumes:
 #   - Passwordless SSH to all three hosts.
-#   - ~/project/iotauth checked out on the physical branch on all three hosts.
-#   - robot/locker already built (with matching code) in
-#     entity/c/examples/physical_presence/build/ on pi42/pi43. This script
-#     does not rebuild them -- do that manually after code changes.
+#   - ~/project/iotauth checked out on the physical branch on all three hosts,
+#     with matching robot.c/locker.c code already pushed/pulled there. This
+#     script (re)builds robot/locker on pi42/pi43 on every run.
 #   - Maven installed at /opt/apache-maven-3.9.8/bin on ada6000 (adjust
 #     MVN_PATH below if that changes).
 #
@@ -115,7 +114,7 @@ start_remote_and_verify() {
 
 if [ "$GENERATE" = true ]; then
     echo ""
-    echo "[1/5] Regenerating Auth DB on $AUTH_HOST..."
+    echo "[1/6] Regenerating Auth DB on $AUTH_HOST..."
     ssh_to 120 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po policies/physical_presence.json -ch physical_context_challenges/challenges.json -p $PASSWORD -lc"
 
     echo ""
@@ -132,11 +131,11 @@ if [ "$GENERATE" = true ]; then
     scp_between 20 "$AUTH_HOST:$REMOTE_REPO/entity/credentials/keys/net1/Net1.Locker1Key.pem" "$LOCKER_HOST:$REMOTE_REPO/entity/credentials/keys/net1/Net1.Locker1Key.pem"
 else
     echo ""
-    echo "[1/5] Skipping DB regeneration (pass --generate to regenerate)."
+    echo "[1/6] Skipping DB regeneration (pass --generate to regenerate)."
 fi
 
 echo ""
-echo "[2/5] Building and starting Auth server on $AUTH_HOST..."
+echo "[2/6] Building and starting Auth server on $AUTH_HOST..."
 ssh_to 60 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/auth && mvn -q -DskipTests package"
 ssh_to 15 "$AUTH_HOST" "pkill -f auth-server-jar-with-dependencies 2>/dev/null" || true
 sleep 1
@@ -145,12 +144,22 @@ start_remote_and_verify "$AUTH_HOST" \
     "auth-server-jar-with-dependencies" "/tmp/auth_server_ada6000.log" "Auth Server" || exit 1
 
 echo ""
-echo "[3/5] Deploying per-Pi config files..."
+echo "[3/6] Deploying per-Pi config files..."
 scp_between 15 "$PROJ_ROOT/entity/c/examples/physical_presence/robot_pi42.config" "$ROBOT_HOST:$REMOTE_REPO/entity/c/examples/physical_presence/robot_pi42.config"
 scp_between 15 "$PROJ_ROOT/entity/c/examples/physical_presence/locker_pi43.config" "$LOCKER_HOST:$REMOTE_REPO/entity/c/examples/physical_presence/locker_pi43.config"
 
 echo ""
-echo "[4/5] Starting Locker on $LOCKER_HOST (--comm_type $COMM_TYPE)..."
+echo "[4/6] Building Robot on $ROBOT_HOST and Locker on $LOCKER_HOST..."
+# libasound2-dev is required to link the ultrasound (ggwave/ALSA) transport;
+# apt is a no-op if it's already installed. The build dir is wiped instead of
+# reused so a stale CMakeCache.txt never masks find_library() results from a
+# previous run (e.g. before libasound2-dev was installed).
+BUILD_CMD="sudo apt-get install -y libasound2-dev && cd $REMOTE_REPO/entity/c/examples/physical_presence && rm -rf build && mkdir build && cd build && cmake .. && make -j"
+ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
+ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
+
+echo ""
+echo "[5/6] Starting Locker on $LOCKER_HOST (--comm_type $COMM_TYPE)..."
 ssh_to 15 "$LOCKER_HOST" "pkill -f './locker' 2>/dev/null" || true
 start_remote_and_verify "$LOCKER_HOST" \
     "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ./locker ../locker_pi43.config --comm_type $COMM_TYPE > /tmp/locker_test.log 2>&1 < /dev/null &" \
@@ -162,7 +171,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=8 "$LOCKER_HOST" "tail -n +1 -f /tmp/lock
 TAIL_PID=$!
 
 echo ""
-echo "[5/5] Running Robot on $ROBOT_HOST (--comm_type $COMM_TYPE)..."
+echo "[6/6] Running Robot on $ROBOT_HOST (--comm_type $COMM_TYPE)..."
 # stdbuf forces line-buffered stdout over the ssh pipe (glibc otherwise fully
 # buffers non-tty output, so Robot's log wouldn't show up until it exits).
 ssh_to 100 "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL timeout 90 ./robot ../robot_pi42.config --comm_type $COMM_TYPE" 2>&1 | LC_ALL=C sed -u 's/^/[Robot] /' || true
