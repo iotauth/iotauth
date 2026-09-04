@@ -141,9 +141,15 @@ public class AuthDB {
 
 
     public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
+        CommunicationTargetType baseTargetType = targetType;
+        if (targetType == CommunicationTargetType.TARGET_GROUP_WITH_RESOURCE) {
+            baseTargetType = CommunicationTargetType.TARGET_GROUP;
+        } else if (targetType == CommunicationTargetType.SESSION_KEY_ID_WITH_RESOURCE) {
+            baseTargetType = CommunicationTargetType.SESSION_KEY_ID;
+        }
         for (CommunicationPolicy communicationPolicy : communicationPolicyList) {
             if (communicationPolicy.getReqGroup().equals(reqGroup) &&
-                    communicationPolicy.getTargetType() == targetType &&
+                    (communicationPolicy.getTargetType() == targetType || communicationPolicy.getTargetType() == baseTargetType) &&
                     communicationPolicy.getTarget().equals(target)) {
                 return communicationPolicy;
             }
@@ -533,5 +539,9 @@ public class AuthDB {
     public boolean removePrivilege(String privilegeType, String privilegedGroup, String subject, String object)
             throws SQLException, ClassNotFoundException {
         return sqLiteConnector.deletePrivilegeByKey(privilegeType, privilegedGroup, subject, object);
+    }
+
+    public List<org.iot.auth.db.bean.PhysicalChallengeTable> selectAllPhysicalChallenges() throws SQLException {
+        return sqLiteConnector.selectAllPhysicalChallenges();
     }
 }

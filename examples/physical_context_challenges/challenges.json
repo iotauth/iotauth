@@ -1,0 +1,130 @@
+{
+  "checks": [
+    {
+      "id": "HUMAN_PRESENCE",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "DUMMY",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": ["CAMERA"]
+            }
+          },
+          "parameters": {
+            "max_human": 1
+          }
+        },
+        {
+          "id": "THERMAL_CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": ["THERMAL_CAMERA"]
+            }
+          },
+          "parameters": {
+            "max_human": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "CO_LOCATION",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "DUMMY",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "IR",
+          "requirements": {
+            "requester": {
+              "actuators": ["IR"]
+            },
+            "target": {
+              "sensors": ["IR"]
+            }
+          },
+          "parameters": {
+            "rounds": 128,
+            "max_delay_us": 1000
+          }
+        },
+        {
+          "id": "ULTRASOUND",
+          "requirements": {
+            "requester": {
+              "actuators": ["UltraSound"]
+            },
+            "target": {
+              "sensors": ["UltraSound"]
+            }
+          },
+          "parameters": {
+            "rounds": 64,
+            "max_delay_us": 2000
+          }
+        }
+      ]
+    },
+    {
+      "id": "HANDSHAKE_TRANSPORT",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "TCP",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "IR",
+          "requirements": {
+            "requester": {
+              "actuators": ["IR"]
+            },
+            "target": {
+              "sensors": ["IR"]
+            }
+          },
+          "parameters": {}
+        },
+        {
+          "id": "ULTRASOUND",
+          "requirements": {
+            "requester": {
+              "actuators": ["UltraSound"]
+            },
+            "target": {
+              "sensors": ["UltraSound"]
+            }
+          },
+          "parameters": {}
+        }
+      ]
+    },
+    {
+      "id": "TEMPERATURE_CHECK",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "THERMOMETER",
+          "requirements": {
+            "requester": {
+              "sensors": ["THERMOMETER"]
+            }
+          },
+          "parameters": {
+            "min_temperature_celsius": 18
+          }
+        }
+      ]
+    }
+  ]
+}
