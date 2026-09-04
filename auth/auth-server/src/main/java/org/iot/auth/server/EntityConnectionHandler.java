@@ -913,18 +913,18 @@ public abstract class EntityConnectionHandler {
             case ("DelegationGrant"): {
                 // Get privilege information from privilegeReqMessage
                 // E.g., {"privilegeType":"DelegationGrant","subject":"a","object": "b","validity":"1*day","info":"AES-128-CBC:SHA256,1*day,1*hour"}
-                String subject = (String) payload.get("subject");
-                String object = (String) payload.get("object");
+                String subjectGroup = (String) payload.get("subject");
+                String objectGroup = (String) payload.get("object");
                 String validity = (String) payload.get("validity");
 
                 for (DelegationPrivilege p : privileges){
                     if (!p.getPrivilegeType().equals(privilegeType))
                         continue;
-                    if (p.getSubject().equals(subject)
-                            && p.getObject().equals(object)
+                    if (p.getSubjectGroup().equals(subjectGroup)
+                            && p.getObjectGroup().equals(objectGroup)
                             && p.getPrivilegedGroup().equals(requestingGroup)){
                         CommunicationPolicy parentPolicy = server.getCommunicationPolicy(
-                                requestingGroup, CommunicationTargetType.fromStringValue("Group"), object);
+                                requestingGroup, CommunicationTargetType.fromStringValue("Group"), objectGroup);
 
                         if (parentPolicy == null){
                             getLogger().info("There's no parent policy!");
@@ -952,10 +952,10 @@ public abstract class EntityConnectionHandler {
 
                         CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
                                 .setID(nextCommPolicyID)
-                                .setReqGroup(subject)
+                                .setReqGroup(subjectGroup)
                                 .setTargetTypeVal("Group")
                                 .setTargetType(CommunicationTargetType.fromStringValue("Group"))
-                                .setTarget(object)
+                                .setTarget(objectGroup)
                                 .setMaxNumSessionKeyOwners(2)
                                 .setSessionCryptoSpec((String) info.get("cryptoSpec"))
                                 .setAbsValidityStr((String) info.get("absValidity"))
@@ -994,15 +994,15 @@ public abstract class EntityConnectionHandler {
                 return null;
             }
             case ("DelegationRevoke"): {
-                String subject = (String) payload.get("subject");
-                String object = (String) payload.get("object");
+                String subjectGroup = (String) payload.get("subject");
+                String objectGroup = (String) payload.get("object");
                 for (DelegationPrivilege p : privileges) {
                     if (!p.getPrivilegeType().equals(privilegeType))
                         continue;
-                    if (p.getSubject().equals(subject) && p.getObject().equals(object)
+                    if (p.getSubjectGroup().equals(subjectGroup) && p.getObjectGroup().equals(objectGroup)
                             && p.getPrivilegedGroup().equals(requestingGroup)) {
                         CommunicationPolicy revokeTargetPolicy = server.getCommunicationPolicy(
-                                subject, CommunicationTargetType.fromStringValue("Group"), object);
+                                subjectGroup, CommunicationTargetType.fromStringValue("Group"), objectGroup);
                         if (revokeTargetPolicy == null){
                             getLogger().info("There's no corresponding policy to revoke!");
                             return null;

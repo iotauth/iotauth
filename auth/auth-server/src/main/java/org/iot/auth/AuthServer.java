@@ -468,9 +468,9 @@ public class AuthServer {
         }
     }
 
-    public boolean removePrivilege(String privilegeType, String privilegedGroup, String subject, String object) {
+    public boolean removePrivilege(String privilegeType, String privilegedGroup, String subjectGroup, String objectGroup) {
         try {
-            return db.removePrivilege(privilegeType, privilegedGroup, subject, object);
+            return db.removePrivilege(privilegeType, privilegedGroup, subjectGroup, objectGroup);
         } catch (Exception e) {
             e.printStackTrace();
             return false;

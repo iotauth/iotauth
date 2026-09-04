@@ -324,14 +324,14 @@ public class SQLiteConnector {
         sql = "CREATE TABLE IF NOT EXISTS " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE + "(";
         sql += DelegationPrivilegeTable.c.PrivilegeType.name() + " TEXT NOT NULL,";
         sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + " TEXT NOT NULL,";
-        sql += DelegationPrivilegeTable.c.Subject.name() + " TEXT NOT NULL,";
-        sql += DelegationPrivilegeTable.c.Object.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.SubjectGroup.name() + " TEXT NOT NULL,";
+        sql += DelegationPrivilegeTable.c.ObjectGroup.name() + " TEXT NOT NULL,";
         sql += DelegationPrivilegeTable.c.Validity.name() + " TEXT,";
         sql += DelegationPrivilegeTable.c.Info.name() + " TEXT,";
         sql += "PRIMARY KEY (" + DelegationPrivilegeTable.c.PrivilegeType.name() + ",";
         sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
-        sql += DelegationPrivilegeTable.c.Subject.name() + ",";
-        sql += DelegationPrivilegeTable.c.Object.name() + "))";
+        sql += DelegationPrivilegeTable.c.SubjectGroup.name() + ",";
+        sql += DelegationPrivilegeTable.c.ObjectGroup.name() + "))";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE);
@@ -695,8 +695,8 @@ public class SQLiteConnector {
         String sql = "INSERT INTO " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE + "(";
         sql += DelegationPrivilegeTable.c.PrivilegeType.name() + ",";
         sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
-        sql += DelegationPrivilegeTable.c.Subject.name() + ",";
-        sql += DelegationPrivilegeTable.c.Object.name() + ",";
+        sql += DelegationPrivilegeTable.c.SubjectGroup.name() + ",";
+        sql += DelegationPrivilegeTable.c.ObjectGroup.name() + ",";
         sql += DelegationPrivilegeTable.c.Validity.name() + ",";
         sql += DelegationPrivilegeTable.c.Info.name() + ")";
         sql += " VALUES (?,?,?,?,?,?)";
@@ -704,13 +704,13 @@ public class SQLiteConnector {
         int index = 1;
         preparedStatement.setString(index++,delegationPrivilegeTable.getPrivilegeType());
         preparedStatement.setString(index++,delegationPrivilegeTable.getPrivilegedGroup());
-        preparedStatement.setString(index++,delegationPrivilegeTable.getSubject());
-        preparedStatement.setString(index++,delegationPrivilegeTable.getObject());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getSubjectGroup());
+        preparedStatement.setString(index++,delegationPrivilegeTable.getObjectGroup());
         preparedStatement.setString(index++,delegationPrivilegeTable.getValidity());
         preparedStatement.setString(index++,String.valueOf(delegationPrivilegeTable.getInfo()));
         logger.info("{} {} {} {} {} {}",
                 delegationPrivilegeTable.getPrivilegeType(), delegationPrivilegeTable.getPrivilegedGroup(),
-                delegationPrivilegeTable.getSubject(), delegationPrivilegeTable.getObject(),
+                delegationPrivilegeTable.getSubjectGroup(), delegationPrivilegeTable.getObjectGroup(),
                 delegationPrivilegeTable.getValidity(), delegationPrivilegeTable.getInfo() );
         if (DEBUG) logger.info("{}",preparedStatement);
         int result = preparedStatement.executeUpdate();
@@ -1061,19 +1061,19 @@ public class SQLiteConnector {
         return delegationInfoTableList;
     }
 
-    public boolean deletePrivilegeByKey(String privilegeType, String privilegedGroup, String subject, String object)
+    public boolean deletePrivilegeByKey(String privilegeType, String privilegedGroup, String subjectGroup, String objectGroup)
             throws SQLException {
         String sql = "DELETE FROM " + DelegationPrivilegeTable.T_DELEGATION_PRIVILEGE
                 + " WHERE " + DelegationPrivilegeTable.c.PrivilegeType.name() + " = ?"
                 + " AND " + DelegationPrivilegeTable.c.PrivilegedGroup.name() + " = ?"
-                + " AND " + DelegationPrivilegeTable.c.Subject.name() + " = ?"
-                + " AND " + DelegationPrivilegeTable.c.Object.name() + " = ?";
+                + " AND " + DelegationPrivilegeTable.c.SubjectGroup.name() + " = ?"
+                + " AND " + DelegationPrivilegeTable.c.ObjectGroup.name() + " = ?";
         if (DEBUG) logger.info(sql);
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, privilegeType);
             ps.setString(2, privilegedGroup);
-            ps.setString(3, subject);
-            ps.setString(4, object);
+            ps.setString(3, subjectGroup);
+            ps.setString(4, objectGroup);
             return ps.executeUpdate() > 0;
         }
     }

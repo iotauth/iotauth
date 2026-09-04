@@ -530,8 +530,8 @@ public class AuthDB {
         return sqLiteConnector.insertRecords(privilegeTable);
     }
 
-    public boolean removePrivilege(String privilegeType, String privilegedGroup, String subject, String object)
+    public boolean removePrivilege(String privilegeType, String privilegedGroup, String subjectGroup, String objectGroup)
             throws SQLException, ClassNotFoundException {
-        return sqLiteConnector.deletePrivilegeByKey(privilegeType, privilegedGroup, subject, object);
+        return sqLiteConnector.deletePrivilegeByKey(privilegeType, privilegedGroup, subjectGroup, objectGroup);
     }
 }

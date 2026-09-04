@@ -480,8 +480,8 @@ public class AuthCommandLine extends Thread  {
         DelegationPrivilegeTable table = new DelegationPrivilegeTable();
         table.setPrivilegeType(privilegeType);
         table.setprivilegedGroup(privilegedGroup);
-        table.setSubject(subject);
-        table.setObject(object);
+        table.setSubjectGroup(subject);
+        table.setObjectGroup(object);
         table.setValidity(validity);
         table.setInfo(infoStr);
         return table;

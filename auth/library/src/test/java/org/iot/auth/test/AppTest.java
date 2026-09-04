@@ -721,8 +721,8 @@ public class AppTest {
         DelegationPrivilegeTable priv1 = new DelegationPrivilegeTable();
         priv1.setPrivilegeType("DELEGATE");
         priv1.setprivilegedGroup("HighTrustAgents");
-        priv1.setSubject("net1.highTrustAgent");
-        priv1.setObject("LowTrustAgents");
+        priv1.setSubjectGroup("net1.highTrustAgent");
+        priv1.setObjectGroup("LowTrustAgents");
         priv1.setValidity("1*day");
         priv1.setInfo("{\"note\":\"test delegation\"}");
         Assert.assertTrue(sqLiteConnector.insertRecords(priv1));
@@ -730,8 +730,8 @@ public class AppTest {
         DelegationPrivilegeTable priv2 = new DelegationPrivilegeTable();
         priv2.setPrivilegeType("READ");
         priv2.setprivilegedGroup("Users");
-        priv2.setSubject("net1.rcUser");
-        priv2.setObject("Website");
+        priv2.setSubjectGroup("net1.rcUser");
+        priv2.setObjectGroup("Website");
         priv2.setValidity("2*hour");
         priv2.setInfo("{\"note\":\"read privilege\"}");
         Assert.assertTrue(sqLiteConnector.insertRecords(priv2));
