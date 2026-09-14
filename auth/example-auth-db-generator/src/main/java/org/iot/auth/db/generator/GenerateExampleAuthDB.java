@@ -24,7 +24,7 @@ import org.iot.auth.db.bean.RegisteredEntityTable;
 import org.iot.auth.db.bean.TrustedAuthTable;
 import org.iot.auth.db.bean.FileSharingTable;
 import org.iot.auth.db.bean.DelegationPrivilegeTable;
-import org.iot.auth.db.bean.DelegationInfoTable;
+import org.iot.auth.db.bean.PhysicalChallengeTable;
 import org.iot.auth.db.dao.SQLiteConnector;
 import org.iot.auth.exception.InvalidDBDataTypeException;
 import org.iot.auth.exception.UseOfExpiredKeyException;
@@ -119,6 +119,8 @@ public class GenerateExampleAuthDB {
                 authDatabaseDir + "configs/Auth" + authID + "FileSharingInfoTable.config");
         initDelegationPrivilegeTable(sqLiteConnector,
                 authDatabaseDir + "configs/Auth" + authID + "DelegationPrivilegeTable.config");
+        initPhysicalChallengeTable(sqLiteConnector,
+                authDatabaseDir + "configs/Auth" + authID + "PhysicalChallengeTable.config");
         sqLiteConnector.close();
     }
 
@@ -234,8 +236,17 @@ public class GenerateExampleAuthDB {
                     registeredEntity.setBackupFromAuthID(
                             convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.BackupFromAuthID.name())));
                 }
+                if (jsonObject.containsKey(RegisteredEntityTable.c.Resources.name())) {
+                    Object resObj = jsonObject.get(RegisteredEntityTable.c.Resources.name());
+                    registeredEntity.setResources(resObj != null ? resObj.toString() : null);
+                }
+                if (jsonObject.containsKey(RegisteredEntityTable.c.Host.name())) {
+                    registeredEntity.setHost((String)jsonObject.get(RegisteredEntityTable.c.Host.name()));
+                    registeredEntity.setPort(
+                            convertObjectToInteger(jsonObject.get(RegisteredEntityTable.c.Port.name())));
+                }
 
-                sqLiteConnector.insertRecords(registeredEntity);
+                sqLiteConnector.insertRecordsOrUpdateIfExists(registeredEntity);
             }
         }
         catch (ParseException e) {
@@ -276,6 +287,9 @@ public class GenerateExampleAuthDB {
                 if (jsonObject.containsKey(CommunicationPolicyTable.c.Context.name())) {
                     Object contextObj = jsonObject.get(CommunicationPolicyTable.c.Context.name());
                     communicationPolicyTable.setContext(contextObj != null ? contextObj.toString() : null);
+                } else if (jsonObject.containsKey("Challenges")) {
+                    Object challengesObj = jsonObject.get("Challenges");
+                    communicationPolicyTable.setContext(challengesObj != null ? challengesObj.toString() : null);
                 }
                 sqLiteConnector.insertRecords(communicationPolicyTable);
                 nextCommPolicyID++;
@@ -387,6 +401,58 @@ public class GenerateExampleAuthDB {
         Buffer rawMackeyVal = readSymmetricKey(macKeyPath);
         Buffer serializedKeyVal = SymmetricKey.getSerializedKeyVal(rawCipherKeyVal, rawMackeyVal);
         return serializedKeyVal.getRawBytes();
+    }
+
+    private static void initPhysicalChallengeTable(SQLiteConnector sqLiteConnector, String tableConfigFilePath)
+            throws ClassNotFoundException, SQLException, IOException
+    {
+        java.io.File file = new java.io.File(tableConfigFilePath);
+        if (!file.exists()) {
+            return;
+        }
+        JSONParser parser = new JSONParser();
+        try {
+            Object parsedObj = parser.parse(new FileReader(file));
+            JSONArray jsonArray;
+            if (parsedObj instanceof JSONObject && ((JSONObject) parsedObj).containsKey("checks")) {
+                jsonArray = (JSONArray) ((JSONObject) parsedObj).get("checks");
+            } else if (parsedObj instanceof JSONArray) {
+                jsonArray = (JSONArray) parsedObj;
+            } else {
+                return;
+            }
+
+            for (Object objElement : jsonArray) {
+                JSONObject jsonObject = (JSONObject) objElement;
+                PhysicalChallengeTable table = new PhysicalChallengeTable();
+                String checkID = (String) jsonObject.get(PhysicalChallengeTable.c.CheckID.name());
+                if (checkID == null && jsonObject.containsKey("id")) {
+                    checkID = (String) jsonObject.get("id");
+                }
+                table.setCheckID(checkID);
+
+                String topology = (String) jsonObject.get(PhysicalChallengeTable.c.Topology.name());
+                if (topology == null && jsonObject.containsKey("topology")) {
+                    topology = (String) jsonObject.get("topology");
+                }
+                table.setTopology(topology);
+
+                if (jsonObject.containsKey(PhysicalChallengeTable.c.Methods.name())) {
+                    table.setMethods(jsonObject.get(PhysicalChallengeTable.c.Methods.name()).toString());
+                } else if (jsonObject.containsKey("methods")) {
+                    table.setMethods(jsonObject.get("methods").toString());
+                }
+                sqLiteConnector.insertRecords(table);
+            }
+
+            MetaDataTable metaData = new MetaDataTable();
+            metaData.setKey(MetaDataTable.key.PhysicalChallengeDefinitions.name());
+            metaData.setValue(parsedObj.toString());
+            sqLiteConnector.insertRecords(metaData);
+        }
+        catch (ParseException e) {
+            logger.error("ParseException {}", ExceptionToString.convertExceptionToStackTrace(e));
+        }
     }
 
     private static final Logger logger = LoggerFactory.getLogger(GenerateExampleAuthDB.class);

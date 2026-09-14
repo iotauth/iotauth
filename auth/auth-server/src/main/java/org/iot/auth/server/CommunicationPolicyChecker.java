@@ -46,12 +46,17 @@ public class CommunicationPolicyChecker {
             String requestingEntityGroup,
             String requestingEntityName,
             SessionKey sessionKey) {
+        // Format is "TargetType:Target", except for "Action" targeting a specific entity named at
+        // request time, which appends that entity's name: "Action:ActionName:TargetEntityName".
         String[] purposeTokens = sessionKey.getPurpose().split(":");
-        if (purposeTokens.length != 2) {
-            throw new RuntimeException("Wrong session key purpose format. Format must be \"TargetType:Target\"");
+        if (purposeTokens.length != 2 && purposeTokens.length != 3) {
+            throw new RuntimeException(
+                    "Wrong session key purpose format. Format must be \"TargetType:Target\" or "
+                    + "\"TargetType:Target:TargetEntityName\"");
         }
         String targetType = purposeTokens[0];
         String target = purposeTokens[1];
+        String targetEntityName = (purposeTokens.length == 3) ? purposeTokens[2] : null;
         if (Arrays.asList(sessionKey.getOwners()).contains(requestingEntityName)) {
             logger.error("Requesting entity ({}) is already an owner of this session key.",
                     requestingEntityName);
@@ -97,6 +102,19 @@ public class CommunicationPolicyChecker {
                     logger.error("Requesting entity ({})'s target group does not match session key communication policy.",
                         requestingEntityName); 
                     return false;  
+                }
+                if (sessionKey.getOwners().length >= sessionKey.getMaxNumOwners()) {
+                    logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",
+                            requestingEntityName, target);
+                    return false;
+                }
+                return true;
+            case "Action":
+                // A solo action (no target entity recorded) has no legitimate co-owner.
+                if (targetEntityName == null || !targetEntityName.equals(requestingEntityName)) {
+                    logger.error("Requesting entity ({}) is not the target entity of this action session key.",
+                            requestingEntityName);
+                    return false;
                 }
                 if (sessionKey.getOwners().length >= sessionKey.getMaxNumOwners()) {
                     logger.error("The maximum of session key owners has already reached for entity: {}, target: {}.",

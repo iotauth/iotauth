@@ -60,10 +60,6 @@ public class ContextVerifier {
         if (policyContextJson == null || policyContextJson.isEmpty()) {
             return true;
         }
-        if (requestContext == null) {
-            logger.error("Policy requires context but no context was provided in the request.");
-            return false;
-        }
 
         JSONObject policyContext;
         try {
@@ -73,8 +69,30 @@ public class ContextVerifier {
             return false;
         }
 
+        // Check if there are actual context conditions (ignoring physical challenge keys)
+        boolean hasContextConditions = false;
         for (Object keyObj : policyContext.keySet()) {
             String conditionName = (String) keyObj;
+            if (!"Resources".equals(conditionName) && !"PhysicalPresenceRequirements".equals(conditionName)) {
+                hasContextConditions = true;
+                break;
+            }
+        }
+
+        if (!hasContextConditions) {
+            return true;
+        }
+
+        if (requestContext == null) {
+            logger.error("Policy requires context but no context was provided in the request.");
+            return false;
+        }
+
+        for (Object keyObj : policyContext.keySet()) {
+            String conditionName = (String) keyObj;
+            if ("Resources".equals(conditionName) || "PhysicalPresenceRequirements".equals(conditionName)) {
+                continue;
+            }
             JSONObject requirement = (JSONObject) policyContext.get(conditionName);
             Object providedValue = requestContext.get(conditionName);
 

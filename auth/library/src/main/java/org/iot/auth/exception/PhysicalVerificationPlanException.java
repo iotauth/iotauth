@@ -13,58 +13,19 @@
  * IOTAUTH_COPYRIGHT_VERSION_1
  */
 
-package org.iot.auth.db.bean;
-
-import org.json.simple.JSONObject;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
+package org.iot.auth.exception;
 
 /**
- * A class for meta data table in auth database, storing meta values for database
- * @author Hokeun Kim
+ * Exception for when Auth cannot construct a verification plan for a session key request,
+ * because no feasible verification mechanism exists for one or more required physical presence checks.
+ * @author Dongha Kim
  */
-public class MetaDataTable {
-    public static final String T_META_DATA = "meta_data";
-    public enum c {
-        Key,
-        Value
-    }
-    public enum key {
-        SessionKeyCount,
-        EncryptedDatabaseKey,
-        CommPolicyCount,
-        PhysicalChallengeDefinitions
-    }
-    private String key;
-    private String value;
-
-    public String getKey() {
-        return key;
-    }
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    @SuppressWarnings("unchecked")
-    public JSONObject toJSONObject() {
-        JSONObject object = new JSONObject();
-        object.put(c.Key.name(), getKey());
-        object.put(c.Value.name(), getValue());
-        return object;
-    }
-    public static MetaDataTable createRecord(ResultSet resultSet) throws SQLException {
-        MetaDataTable metaData = new MetaDataTable();
-        metaData.setKey(resultSet.getString(c.Key.name()));
-        metaData.setValue(resultSet.getString(c.Value.name()));
-        return metaData;
+public class PhysicalVerificationPlanException extends Exception {
+    /**
+     * Create a new PhysicalVerificationPlanException with the given message.
+     * @param message The given message.
+     */
+    public PhysicalVerificationPlanException(String message) {
+        super(message);
     }
 }

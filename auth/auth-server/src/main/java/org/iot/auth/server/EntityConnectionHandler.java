@@ -32,8 +32,12 @@ import org.iot.auth.io.VariableLengthInt;
 import org.iot.auth.message.*;
 import org.iot.auth.util.ExceptionToString;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
+import org.iot.auth.challenge.FeasibleChallengeMatcher;
+import org.iot.auth.db.bean.PhysicalChallengeTable;
+import org.iot.auth.exception.PhysicalVerificationPlanException;
 
 import java.io.IOException;
 import java.security.*;
@@ -140,7 +144,7 @@ public abstract class EntityConnectionHandler {
             NoAvailableDistributionKeyException, TooManySessionKeysRequestedException, IOException,
             UseOfExpiredKeyException, SQLException, ClassNotFoundException, ParseException, UnrecognizedEntityException,
             CertificateEncodingException, InvalidSignatureException, InvalidNonceException,
-            InvalidSymmetricKeyOperationException
+            InvalidSymmetricKeyOperationException, PhysicalVerificationPlanException
     {
         Buffer buf = new Buffer(bytes);
         MessageType type = MessageType.fromByte(buf.getByte(0));
@@ -446,6 +450,11 @@ public abstract class EntityConnectionHandler {
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
             close();
         }
+        catch (PhysicalVerificationPlanException e) {
+            getLogger().info("PhysicalVerificationPlanException: " + e.getMessage());
+            sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
+            close();
+        }
         catch (RuntimeException e) {
             getLogger().info("RuntimeException: " + e.getMessage());
             sendAuthAlert(AuthAlertCode.INVALID_SESSION_KEY_REQ);
@@ -604,11 +613,13 @@ public abstract class EntityConnectionHandler {
      * @throws ClassNotFoundException When class is not found.
      * @throws InvalidSessionKeyTargetException If the target of session key request is not valid.
      * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
+     * @throws PhysicalVerificationPlanException If a required physical presence check has no feasible
+     * verification mechanism.
      */
     private SessionKeysAndSpec processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqInternal sessionKeyReq, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
-            TooManySessionKeysRequestedException, InvalidNonceException {
+            TooManySessionKeysRequestedException, InvalidNonceException, PhysicalVerificationPlanException {
         getLogger().debug("Sender entity: {}", sessionKeyReq.getEntityName());
 
         getLogger().debug("Received auth nonce: {}", sessionKeyReq.getAuthNonce().toHexString());
@@ -626,6 +637,8 @@ public abstract class EntityConnectionHandler {
         JSONObject purpose = sessionKeyReq.getPurpose();
         JSONObject requestContext = (purpose.containsKey("context") && purpose.get("context") instanceof JSONObject)
                 ? (JSONObject) purpose.get("context") : null;
+        JSONObject requestResources = (purpose.containsKey("resources") && purpose.get("resources") instanceof JSONObject)
+                ? (JSONObject) purpose.get("resources") : null;
         SessionKeyReqPurpose reqPurpose = new SessionKeyReqPurpose(purpose);
 
         SymmetricKeyCryptoSpec cryptoSpec = null;
@@ -635,23 +648,8 @@ public abstract class EntityConnectionHandler {
             case TARGET_GROUP:
             case FILE_SHARING_TEAM:
             case PUBLISH_TOPIC: {
-                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
-                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
-                if (communicationPolicy == null) {
-                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
-                }
-                if (communicationPolicy.getExpiration() < currentTime){
-                    getLogger().info("Communication Policy has been expired!");
-                    String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
-                    getLogger().info("Expired policy has been removed!");
-                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
-                }
-                if (communicationPolicy.getContext() != null
-                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
-                    throw new InvalidSessionKeyTargetException(
-                            "Context verification failed for policy: " + purpose);
-                }
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
@@ -661,25 +659,72 @@ public abstract class EntityConnectionHandler {
                         sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
                 break;
             }
+            case TARGET_GROUP_WITH_RESOURCE: {
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
+                verifyPolicyResources(communicationPolicy, requestResources, purpose);
+
+                // Construct the verification plan first (throws if a required check has no feasible
+                // mechanism), so that no session key is issued when the plan cannot be constructed.
+                String targetGroup = (String) reqPurpose.getTarget();
+                List<RegisteredEntity> targetEntities = server.getRegisteredEntitiesByGroup(targetGroup);
+                String challengeJson = determinePhysicalVerificationChallenge(
+                        requestingEntity, requestResources, targetEntities, communicationPolicy);
+
+                cryptoSpec = communicationPolicy.getSessionCryptoSpec();
+                if (!challengeJson.isEmpty()) {
+                    cryptoSpec = new SymmetricKeyCryptoSpec(
+                            cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
+                            cryptoSpec.getMacAlgorithm(), challengeJson);
+                }
+
+                // generate session keys
+                SessionKeyPurpose sessionKeyPurpose =
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+                getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
+                sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose, cryptoSpec);
+                break;
+            }
+            // Action: physical presence verification for an action the requesting entity performs,
+            // either alone (e.g., gripping an item; no target entity) or on a specific target entity
+            // named at request time (e.g., a locker identified by a scanned QR code) rather than by
+            // the communication policy itself.
+            case ACTION: {
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
+                verifyPolicyResources(communicationPolicy, requestResources, purpose);
+
+                // Construct the verification plan first (throws if a required check has no feasible
+                // mechanism), so that no session key is issued when the plan cannot be constructed.
+                String targetEntityName = reqPurpose.getTargetEntityName();
+                RegisteredEntity targetEntity = (targetEntityName != null)
+                        ? server.getRegisteredEntity(targetEntityName) : null;
+                List<RegisteredEntity> targetEntities = (targetEntity != null)
+                        ? Collections.singletonList(targetEntity) : Collections.emptyList();
+                String challengeJson = determinePhysicalVerificationChallenge(
+                        requestingEntity, requestResources, targetEntities, communicationPolicy);
+
+                cryptoSpec = communicationPolicy.getSessionCryptoSpec();
+                if (!challengeJson.isEmpty()) {
+                    cryptoSpec = new SymmetricKeyCryptoSpec(
+                            cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
+                            cryptoSpec.getMacAlgorithm(), challengeJson);
+                }
+
+                // generate session keys
+                SessionKeyPurpose sessionKeyPurpose =
+                        new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget(),
+                                targetEntityName);
+                getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
+                sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose, cryptoSpec);
+                break;
+            }
             // If a subscribe-topic is specified, derive the keys from DB
             case SUBSCRIBE_TOPIC: {
-                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
-                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
-                if (communicationPolicy == null) {
-                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
-                }
-                if (communicationPolicy.getExpiration() < currentTime){
-                    getLogger().info("Communication Policy has been expired!");
-                    String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
-                    getLogger().info("Expired policy has been removed!");
-                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
-                }
-                if (communicationPolicy.getContext() != null
-                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
-                    throw new InvalidSessionKeyTargetException(
-                            "Context verification failed for policy: " + purpose);
-                }
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 SessionKeyPurpose sessionKeyPurpose =
                         new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
@@ -691,44 +736,22 @@ public abstract class EntityConnectionHandler {
             }
             // If a session key id is specified, derive the keys from DB
             case SESSION_KEY_ID: {
-                Object objTarget = reqPurpose.getTarget();
-                getLogger().debug("objTarget class: {}", objTarget.getClass());
-                long sessionKeyID = -1;
-                if (objTarget.getClass() == Integer.class) {
-                    sessionKeyID = (long)(Integer)objTarget;
+                SessionKeysAndSpec keysAndSpec = handleSessionKeyIdRequest(requestingEntity, reqPurpose);
+                if (keysAndSpec == null) {
+                    return null;
                 }
-                else if (objTarget.getClass() == Long.class) {
-                    sessionKeyID = (Long)objTarget;
+                sessionKeyList = keysAndSpec.getSessionKeys();
+                cryptoSpec = keysAndSpec.getSpec();
+                break;
+            }
+            case SESSION_KEY_ID_WITH_RESOURCE: {
+                SessionKeysAndSpec keysAndSpec = handleSessionKeyIdRequest(requestingEntity, reqPurpose);
+                if (keysAndSpec == null) {
+                    return null;
                 }
-                else {
-                    throw new RuntimeException("Wrong class for session key ID!");
-                }
-                int authID = AuthDB.decodeAuthIDFromSessionKeyID(sessionKeyID);
-                getLogger().info("ID of Auth that generated this key: {}", authID);
-
-                if (authID == server.getAuthID()) {
-                    getLogger().info("This session key was generated by me.");
-                    SessionKey sessionKey = server.getSessionKeyByID(sessionKeyID);
-
-                    // Checks if session key ID meets the communication policy.
-                    if (!CommunicationPolicyChecker.checkSessionKeyCommunicationPolicy(
-                            server, requestingEntity.getGroup(), requestingEntity.getName(), sessionKey)) {
-                        throw new RuntimeException("Session key communication policy check failed.");
-                    }
-
-                    sessionKeyList = new LinkedList<>();
-                    sessionKeyList.add(sessionKey);
-                    cryptoSpec = sessionKey.getCryptoSpec();
-                    server.addSessionKeyOwner(sessionKeyID, requestingEntity.getName());
-                }
-                else {
-                    // TODO: if authID is not my ID, then send request via HTTPS
-                    getLogger().info("This session key was generated by someone else");
-                    AuthSessionKeyReqMessage authSessionKeyReqMessage = new AuthSessionKeyReqMessage(sessionKeyID,
-                            requestingEntity.getName(), requestingEntity.getGroup(), -1);
-                    return sendAuthSessionKeyReq(authID, authSessionKeyReqMessage);
-                }
-
+                sessionKeyList = keysAndSpec.getSessionKeys();
+                cryptoSpec = keysAndSpec.getSpec();
+                // Return the original Auth-selected plan bound to this key.
                 break;
             }
             // If ID of the Auth who caches the keys is specified, talk to that Auth.
@@ -768,23 +791,8 @@ public abstract class EntityConnectionHandler {
                 break;
             }
             case DELEGATION: {
-                CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
-                        reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
-                if (communicationPolicy == null) {
-                    throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
-                }
-                if (communicationPolicy.getExpiration() < currentTime){
-                    getLogger().info("Communication Policy has been expired!");
-                    String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
-                    getLogger().info("Expired policy has been removed!");
-                    throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
-                }
-                if (communicationPolicy.getContext() != null
-                        && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
-                    throw new InvalidSessionKeyTargetException(
-                            "Context verification failed for policy: " + purpose);
-                }
+                CommunicationPolicy communicationPolicy = validateAndGetCommunicationPolicy(
+                        requestingEntity, reqPurpose, purpose, requestContext, currentTime);
                 cryptoSpec = communicationPolicy.getSessionCryptoSpec();
                 // generate session keys
                 SessionKeyPurpose sessionKeyPurpose =
@@ -802,6 +810,150 @@ public abstract class EntityConnectionHandler {
         }
 
         return new SessionKeysAndSpec(sessionKeyList, cryptoSpec);
+    }
+
+    /**
+     * Common helper to look up and validate expiration and context of CommunicationPolicy for a session key request.
+     */
+    private CommunicationPolicy validateAndGetCommunicationPolicy(
+            RegisteredEntity requestingEntity, SessionKeyReqPurpose reqPurpose, JSONObject purpose,
+            JSONObject requestContext, long currentTime)
+            throws InvalidSessionKeyTargetException, SQLException {
+        CommunicationPolicy communicationPolicy = server.getCommunicationPolicy(requestingEntity.getGroup(),
+                reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
+        if (communicationPolicy == null) {
+            throw new InvalidSessionKeyTargetException("Unrecognized Purpose: " + purpose);
+        }
+        if (communicationPolicy.getExpiration() < currentTime){
+            getLogger().info("Communication Policy has been expired!");
+            String policyId = String.valueOf(communicationPolicy.getId());
+            server.removeCommunicationPolicies(Collections.singletonList(policyId));
+            getLogger().info("Expired policy has been removed!");
+            throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
+        }
+        if (communicationPolicy.getContext() != null
+                && !ContextVerifier.verifyContext(communicationPolicy.getContext(), requestContext)) {
+            throw new InvalidSessionKeyTargetException(
+                    "Context verification failed for policy: " + purpose);
+        }
+        return communicationPolicy;
+    }
+
+    /**
+     * Common helper to verify requested physical resources against communication policy requirements.
+     */
+    private void verifyPolicyResources(CommunicationPolicy policy, JSONObject requestResources, JSONObject purpose)
+            throws InvalidSessionKeyTargetException {
+        if (policy != null && policy.getContext() != null) {
+            if (!ResourceVerifier.verifyResources(policy.getContext(), requestResources)) {
+                throw new InvalidSessionKeyTargetException(
+                        "Resource verification failed for policy: " + purpose);
+            }
+        }
+    }
+
+    /**
+     * Common helper method for handling session key retrieval by SESSION_KEY_ID or SESSION_KEY_ID_WITH_RESOURCE.
+     */
+    private SessionKeysAndSpec handleSessionKeyIdRequest(
+            RegisteredEntity requestingEntity, SessionKeyReqPurpose reqPurpose)
+            throws IOException, ParseException, SQLException, ClassNotFoundException {
+        Object objTarget = reqPurpose.getTarget();
+        getLogger().debug("objTarget class: {}", objTarget.getClass());
+        long sessionKeyID = -1;
+        if (objTarget.getClass() == Integer.class) {
+            sessionKeyID = (long)(Integer)objTarget;
+        }
+        else if (objTarget.getClass() == Long.class) {
+            sessionKeyID = (Long)objTarget;
+        }
+        else {
+            throw new RuntimeException("Wrong class for session key ID!");
+        }
+        int authID = AuthDB.decodeAuthIDFromSessionKeyID(sessionKeyID);
+        getLogger().info("ID of Auth that generated this key: {}", authID);
+
+        if (authID == server.getAuthID()) {
+            getLogger().info("This session key was generated by me.");
+            SessionKey sessionKey = server.getSessionKeyByID(sessionKeyID);
+
+            if (!CommunicationPolicyChecker.checkSessionKeyCommunicationPolicy(
+                    server, requestingEntity.getGroup(), requestingEntity.getName(), sessionKey)) {
+                throw new RuntimeException("Session key communication policy check failed.");
+            }
+
+            List<SessionKey> sessionKeyList = new LinkedList<>();
+            sessionKeyList.add(sessionKey);
+            SymmetricKeyCryptoSpec cryptoSpec = sessionKey.getCryptoSpec();
+            server.addSessionKeyOwner(sessionKeyID, requestingEntity.getName());
+            return new SessionKeysAndSpec(sessionKeyList, cryptoSpec);
+        }
+        else {
+            getLogger().info("This session key was generated by someone else");
+            AuthSessionKeyReqMessage authSessionKeyReqMessage = new AuthSessionKeyReqMessage(sessionKeyID,
+                    requestingEntity.getName(), requestingEntity.getGroup(), -1);
+            return sendAuthSessionKeyReq(authID, authSessionKeyReqMessage);
+        }
+    }
+
+    /**
+     * Determine structured physical presence challenge JSON for a session key request, given the
+     * resolved set of target entities (a whole group, a single named entity, or none for a solo
+     * action).
+     * @param requestingEntity Entity requesting the session key.
+     * @param requestResources Resources requested by entity (actuators, sensors).
+     * @param targetEntities Resolved target entities: a group's members, a single named entity, or
+     * empty for a solo action with no target entity.
+     * @param communicationPolicy Active communication policy.
+     * @return Formatted Challenge JSON string.
+     * @throws PhysicalVerificationPlanException If a required physical presence check has no feasible
+     * verification mechanism, so the verification plan cannot be constructed.
+     */
+    private String determinePhysicalVerificationChallenge(
+            RegisteredEntity requestingEntity,
+            JSONObject requestResources,
+            List<RegisteredEntity> targetEntities,
+            CommunicationPolicy communicationPolicy) throws PhysicalVerificationPlanException {
+
+        List<PhysicalChallengeTable> physicalChallenges = null;
+        try {
+            physicalChallenges = server.getPhysicalChallenges();
+        } catch (SQLException e) {
+            getLogger().error("Failed to query physical challenges from DB: {}", e.getMessage());
+        }
+
+        JSONObject feasibleSet = FeasibleChallengeMatcher.computeFeasibleChallenges(
+                requestingEntity, requestResources, targetEntities,
+                communicationPolicy,
+                physicalChallenges);
+
+        getLogger().info("[Feasible Challenge Matcher Output] Verification Plan JSON for {}: {}",
+                requestingEntity.getName(), feasibleSet.toJSONString());
+
+        Object verificationPlanObj = feasibleSet.get("verificationPlan");
+        if (verificationPlanObj instanceof JSONObject) {
+            JSONObject verificationPlan = (JSONObject) verificationPlanObj;
+            for (Object checkID : verificationPlan.keySet()) {
+                JSONObject checkObj = (JSONObject) verificationPlan.get(checkID);
+                if (checkObj.get("selectedMethod") == null) {
+                    throw new PhysicalVerificationPlanException(
+                            "No feasible verification mechanism for physical presence check '" + checkID
+                            + "' requested by " + requestingEntity.getName());
+                }
+            }
+        }
+
+        // Independent of the physical presence checks above: if this request targets one or more
+        // entities, a handshake transport must also have been resolved, or there is no way to
+        // actually reach them.
+        Object handshakeTransportObj = feasibleSet.get("handshakeTransport");
+        if (handshakeTransportObj instanceof JSONObject
+                && ((JSONObject) handshakeTransportObj).get("selectedMethod") == null) {
+            throw new PhysicalVerificationPlanException(
+                    "No feasible handshake transport for request by " + requestingEntity.getName());
+        }
+
+        return feasibleSet.toJSONString();
     }
 
     /**

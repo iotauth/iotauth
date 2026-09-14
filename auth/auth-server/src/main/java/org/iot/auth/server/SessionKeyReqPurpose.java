@@ -22,13 +22,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class for describing the purpose of session key requests, solely used by EntityConnectionHandler.
+ * A class for describing the purpose of session key requests, solely used by
+ * EntityConnectionHandler.
+ * 
  * @author Hokeun Kim
  */
 public class SessionKeyReqPurpose {
     public SessionKeyReqPurpose(JSONObject purpose) throws InvalidSessionKeyTargetException {
         // purpose keys
         final String group = "group";
+        final String action = "action";
         final String pubTopic = "pubTopic";
         final String subTopic = "subTopic";
         final String keyId = "keyId";
@@ -36,14 +39,30 @@ public class SessionKeyReqPurpose {
         final String fileSharing = "FileSharing";
         final String delegation = "delegation";
 
-        // TODO: match JSON string (group, pubTopic, subTopic) and CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
+        // TODO: match JSON string (group, pubTopic, subTopic) and
+        // CommunicationPolicyTable.db (Group, PubTopic, SubTopic)
         Object objTarget = null;
         this.targetType = CommunicationTargetType.UNKNOWN;
 
         if (purpose.containsKey(group)) {
             objTarget = purpose.get(group);
             if (objTarget.getClass() == String.class) {
-                this.targetType = CommunicationTargetType.TARGET_GROUP;
+                if (purpose.containsKey("resources")) {
+                    this.targetType = CommunicationTargetType.TARGET_GROUP_WITH_RESOURCE;
+                } else {
+                    this.targetType = CommunicationTargetType.TARGET_GROUP;
+                }
+            }
+        } else if (purpose.containsKey(action)) {
+            objTarget = purpose.get(action);
+            if (objTarget.getClass() == String.class) {
+                this.targetType = CommunicationTargetType.ACTION;
+                // An action may optionally name a specific target entity (e.g., a
+                // particular locker identified by a scanned QR code), unlike
+                // "group", which always refers to a whole group.
+                if (purpose.containsKey("target") && purpose.get("target").getClass() == String.class) {
+                    this.targetEntityName = (String) purpose.get("target");
+                }
             }
         } else if (purpose.containsKey(pubTopic)) {
             objTarget = purpose.get(pubTopic);
@@ -59,7 +78,11 @@ public class SessionKeyReqPurpose {
             objTarget = purpose.get(keyId);
             logger.info("{}", objTarget.getClass());
             if (objTarget.getClass() == Integer.class || objTarget.getClass() == Long.class) {
-                this.targetType = CommunicationTargetType.SESSION_KEY_ID;
+                if (purpose.containsKey("resources")) {
+                    this.targetType = CommunicationTargetType.SESSION_KEY_ID_WITH_RESOURCE;
+                } else {
+                    this.targetType = CommunicationTargetType.SESSION_KEY_ID;
+                }
             }
         } else if (purpose.containsKey(cachedKeys)) {
             objTarget = purpose.get(cachedKeys);
@@ -93,8 +116,18 @@ public class SessionKeyReqPurpose {
         return target;
     }
 
+    /**
+     * Gets the specific target entity name for an ACTION purpose that names one
+     * (e.g., a scanned locker ID), or null if the action has no specific target
+     * (a solo action) or the purpose is not an ACTION.
+     */
+    public String getTargetEntityName() {
+        return targetEntityName;
+    }
+
     private CommunicationTargetType targetType;
     private Object target;
+    private String targetEntityName;
 
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqPurpose.class);
 

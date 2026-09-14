@@ -141,9 +141,15 @@ public class AuthDB {
 
 
     public CommunicationPolicy getCommunicationPolicy(String reqGroup, CommunicationTargetType targetType, String target) {
+        CommunicationTargetType baseTargetType = targetType;
+        if (targetType == CommunicationTargetType.TARGET_GROUP_WITH_RESOURCE) {
+            baseTargetType = CommunicationTargetType.TARGET_GROUP;
+        } else if (targetType == CommunicationTargetType.SESSION_KEY_ID_WITH_RESOURCE) {
+            baseTargetType = CommunicationTargetType.SESSION_KEY_ID;
+        }
         for (CommunicationPolicy communicationPolicy : communicationPolicyList) {
             if (communicationPolicy.getReqGroup().equals(reqGroup) &&
-                    communicationPolicy.getTargetType() == targetType &&
+                    (communicationPolicy.getTargetType() == targetType || communicationPolicy.getTargetType() == baseTargetType) &&
                     communicationPolicy.getTarget().equals(target)) {
                 return communicationPolicy;
             }
@@ -196,6 +202,14 @@ public class AuthDB {
                                                 SessionKeyPurpose sessionKeyPurpose, String[] expectedOwnerGroups)
             throws IOException, SQLException, ClassNotFoundException
     {
+        return generateSessionKeys(authID, owner, numKeys, communicationPolicy,
+                sessionKeyPurpose, expectedOwnerGroups, communicationPolicy.getSessionCryptoSpec());
+    }
+
+    public List<SessionKey> generateSessionKeys(int authID, String owner, int numKeys,
+            CommunicationPolicy communicationPolicy, SessionKeyPurpose sessionKeyPurpose,
+            String[] expectedOwnerGroups, SymmetricKeyCryptoSpec cryptoSpec)
+            throws IOException, SQLException, ClassNotFoundException {
         List<SessionKey> sessionKeyList = new LinkedList<>();
 
         String value = sqLiteConnector.selectMetaDataValue(MetaDataTable.key.SessionKeyCount.name());
@@ -210,7 +224,7 @@ public class AuthDB {
                     owner == null ? null : owner.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM),
                     communicationPolicy.getMaxNumSessionKeyOwners(), sessionKeyPurpose.toString(),
                     new Date().getTime() + communicationPolicy.getAbsValidity(), communicationPolicy.getRelValidity(),
-                    communicationPolicy.getSessionCryptoSpec(),
+                    cryptoSpec,
                     expectedOwnerGroups);
             sessionKeyList.add(sessionKey);
         }
@@ -533,5 +547,9 @@ public class AuthDB {
     public boolean removePrivilege(String privilegeType, String privilegedGroup, String subject, String object)
             throws SQLException, ClassNotFoundException {
         return sqLiteConnector.deletePrivilegeByKey(privilegeType, privilegedGroup, subject, object);
+    }
+
+    public List<org.iot.auth.db.bean.PhysicalChallengeTable> selectAllPhysicalChallenges() throws SQLException {
+        return sqLiteConnector.selectAllPhysicalChallenges();
     }
 }

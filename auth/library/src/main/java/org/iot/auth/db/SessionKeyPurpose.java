@@ -21,7 +21,17 @@ package org.iot.auth.db;
  */
 public class SessionKeyPurpose {
     public SessionKeyPurpose(CommunicationTargetType targetType, String target) {
-        if (targetType == CommunicationTargetType.TARGET_GROUP) {
+        this(targetType, target, null);
+    }
+
+    /**
+     * @param targetEntityName For an ACTION targeting a specific entity named at request time
+     * (e.g., a locker identified by a scanned QR code), the target entity's name; null for a solo
+     * action with no target entity, and ignored for all other target types.
+     */
+    public SessionKeyPurpose(CommunicationTargetType targetType, String target, String targetEntityName) {
+        if (targetType == CommunicationTargetType.TARGET_GROUP ||
+                targetType == CommunicationTargetType.TARGET_GROUP_WITH_RESOURCE) {
             this.targetType = "Group";
         }
         else if (targetType == CommunicationTargetType.PUBLISH_TOPIC ||
@@ -34,14 +44,22 @@ public class SessionKeyPurpose {
         else if (targetType == CommunicationTargetType.DELEGATION) {
             this.targetType = "Delegation";
         }
+        else if (targetType == CommunicationTargetType.ACTION) {
+            this.targetType = "Action";
+        }
         else {
             throw new RuntimeException("Unrecognized communication target type for SessionKeyPurpose");
         }
         this.target = target;
+        this.targetEntityName = (targetType == CommunicationTargetType.ACTION) ? targetEntityName : null;
     }
     public String toString() {
+        if (targetEntityName != null) {
+            return targetType + ":" + target + ":" + targetEntityName;
+        }
         return targetType + ":" + target;
     }
     private String targetType;
     private String target;
+    private String targetEntityName;
 }

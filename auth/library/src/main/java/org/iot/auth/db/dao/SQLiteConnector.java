@@ -252,7 +252,10 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.Active.name() + " BOOLEAN NOT NULL,";
         sql += RegisteredEntityTable.c.BackupToAuthIDs.name() + " TEXT,";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + " INT,";
-        sql += RegisteredEntityTable.c.MigrationToken.name() + " BLOB)";
+        sql += RegisteredEntityTable.c.MigrationToken.name() + " BLOB,";
+        sql += RegisteredEntityTable.c.Resources.name() + " TEXT,";
+        sql += RegisteredEntityTable.c.Host.name() + " TEXT,";
+        sql += RegisteredEntityTable.c.Port.name() + " INT)";
         if (DEBUG) logger.info(sql);
         if (statement.executeUpdate(sql) == 0)
             logger.info("Table {} created", RegisteredEntityTable.T_REGISTERED_ENTITY);
@@ -359,6 +362,18 @@ public class SQLiteConnector {
             logger.info("Table {} already exists", DelegationInfoTable.T_DELEGATION_INFO);
         closeStatement();
 
+        statement = connection.createStatement();
+        sql = "CREATE TABLE IF NOT EXISTS " + PhysicalChallengeTable.T_PHYSICAL_CHALLENGE + "(";
+        sql += PhysicalChallengeTable.c.CheckID.name() + " TEXT PRIMARY KEY,";
+        sql += PhysicalChallengeTable.c.Topology.name() + " TEXT,";
+        sql += PhysicalChallengeTable.c.Methods.name() + " TEXT)";
+        if (DEBUG) logger.info(sql);
+        if (statement.executeUpdate(sql) == 0)
+            logger.info("Table {} created", PhysicalChallengeTable.T_PHYSICAL_CHALLENGE);
+        else
+            logger.info("Table {} already exists", PhysicalChallengeTable.T_PHYSICAL_CHALLENGE);
+        closeStatement();
+
         closeConnection();
     }
 
@@ -374,7 +389,7 @@ public class SQLiteConnector {
      * @see CommunicationPolicyTable
      */
     public boolean insertRecords(CommunicationPolicyTable policy) throws SQLException {
-        String sql = "INSERT INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
+        String sql = "INSERT OR REPLACE INTO " + CommunicationPolicyTable.T_COMMUNICATION_POLICY + "(";
         sql += CommunicationPolicyTable.c.ID.name() + ",";
         sql += CommunicationPolicyTable.c.RequestingGroup.name() + ",";
         sql += CommunicationPolicyTable.c.TargetType.name() + ",";
@@ -448,8 +463,11 @@ public class SQLiteConnector {
         sql += RegisteredEntityTable.c.Active.name() + ",";
         sql += RegisteredEntityTable.c.BackupToAuthIDs.name() + ",";
         sql += RegisteredEntityTable.c.BackupFromAuthID.name() + ",";
-        sql += RegisteredEntityTable.c.MigrationToken.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        sql += RegisteredEntityTable.c.MigrationToken.name() + ",";
+        sql += RegisteredEntityTable.c.Resources.name() + ",";
+        sql += RegisteredEntityTable.c.Host.name() + ",";
+        sql += RegisteredEntityTable.c.Port.name() + ")";
+        sql += " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         regEntity = encryptRecords(regEntity);
         int index = 1;
@@ -487,6 +505,26 @@ public class SQLiteConnector {
         }
         else {
             preparedStatement.setNull(index++, Types.BLOB);
+        }
+
+        // Store physical resources as a JSON string (nullable)
+        String resources = regEntity.getResources();
+        if (resources != null) {
+            preparedStatement.setString(index++, resources);
+        }
+        else {
+            preparedStatement.setNull(index++, Types.VARCHAR);
+        }
+
+        // Store the entity's server address (nullable, only for connectable servers)
+        String host = regEntity.getHost();
+        if (host != null) {
+            preparedStatement.setString(index++, host);
+            preparedStatement.setInt(index++, regEntity.getPort());
+        }
+        else {
+            preparedStatement.setNull(index++, Types.VARCHAR);
+            preparedStatement.setNull(index++, Types.INTEGER);
         }
 
         preparedStatement.toString();
@@ -635,7 +673,7 @@ public class SQLiteConnector {
      */
     public boolean insertRecords(MetaDataTable metaData) throws SQLException {
 
-        String sql = "INSERT INTO " + MetaDataTable.T_META_DATA + "(";
+        String sql = "INSERT OR REPLACE INTO " + MetaDataTable.T_META_DATA + "(";
         sql += MetaDataTable.c.Key.name() + ",";
         sql += MetaDataTable.c.Value.name() + ")";
         sql += " VALUES(?,?)";
@@ -751,6 +789,49 @@ public class SQLiteConnector {
         preparedStatement.close();
         closeConnection();
         return result == 1;
+    }
+
+    /**
+     * Insert records into PhysicalChallengeTable.
+     * @param table the records needed to set physical challenge definition.
+     * @return true if insertion has been successful.
+     * @throws SQLException if database error occurs.
+     */
+    public boolean insertRecords(PhysicalChallengeTable table) throws SQLException {
+        String sql = "INSERT OR REPLACE INTO " + PhysicalChallengeTable.T_PHYSICAL_CHALLENGE + "(";
+        sql += PhysicalChallengeTable.c.CheckID.name() + ",";
+        sql += PhysicalChallengeTable.c.Topology.name() + ",";
+        sql += PhysicalChallengeTable.c.Methods.name() + ")";
+        sql += " VALUES (?,?,?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        int index = 1;
+        preparedStatement.setString(index++, table.getCheckID());
+        preparedStatement.setString(index++, table.getTopology());
+        preparedStatement.setString(index++, table.getMethods());
+        if (DEBUG) logger.info("{}", preparedStatement);
+        int result = preparedStatement.executeUpdate();
+        preparedStatement.close();
+        closeConnection();
+        return result == 1;
+    }
+
+    /**
+     * Select all physical challenge records from physical_challenge table.
+     * @return List of physical challenge records.
+     * @throws SQLException if database error occurs.
+     */
+    public List<PhysicalChallengeTable> selectAllPhysicalChallenges() throws SQLException {
+        List<PhysicalChallengeTable> list = new ArrayList<>();
+        String sql = "SELECT * FROM " + PhysicalChallengeTable.T_PHYSICAL_CHALLENGE;
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        if (DEBUG) logger.info("{}", preparedStatement);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            list.add(PhysicalChallengeTable.createRecord(resultSet));
+        }
+        preparedStatement.close();
+        closeConnection();
+        return list;
     }
 
     /**

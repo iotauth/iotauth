@@ -50,7 +50,7 @@ function getIndividualAuthDBDir(authId) {
 }
 
 process.chdir('auth/');
-execFileSync('mvn', ['-pl', 'example-auth-db-generator', '-am', 'install', '-DskipTests'], {stdio: 'inherit'});
+execFileSync('mvn', ['-pl', 'example-auth-db-generator', '-am', 'package', '-DskipTests'], {stdio: 'inherit'});
 process.chdir('example-auth-db-generator');
 common.safeFileCopy('target/init-example-auth-db-jar-with-dependencies.jar', '../');
 process.chdir('..');
