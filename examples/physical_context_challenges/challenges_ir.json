@@ -13,7 +13,9 @@
           "id": "CAMERA",
           "requirements": {
             "requester": {
-              "sensors": ["CAMERA"]
+              "sensors": [
+                "CAMERA"
+              ]
             }
           },
           "parameters": {
@@ -24,7 +26,9 @@
           "id": "THERMAL_CAMERA",
           "requirements": {
             "requester": {
-              "sensors": ["THERMAL_CAMERA"]
+              "sensors": [
+                "THERMAL_CAMERA"
+              ]
             }
           },
           "parameters": {
@@ -38,41 +42,29 @@
       "topology": "MUTUAL",
       "methods": [
         {
-          "id": "DUMMY",
-          "requirements": {},
-          "parameters": {}
-        },
-        {
           "id": "IR",
           "requirements": {
             "requester": {
-              "sensors": ["IR"],
-              "actuators": ["IR"]
+              "sensors": [
+                "IR"
+              ],
+              "actuators": [
+                "IR"
+              ]
             },
             "target": {
-              "actuators": ["IR"],
-              "sensors": ["IR"]
+              "sensors": [
+                "IR"
+              ],
+              "actuators": [
+                "IR"
+              ]
             }
           },
           "parameters": {
             "rounds": 128,
-            "success_threshold": 0.8,
-            "max_delay_us": 1000
-          }
-        },
-        {
-          "id": "ULTRASOUND",
-          "requirements": {
-            "requester": {
-              "actuators": ["UltraSound"]
-            },
-            "target": {
-              "sensors": ["UltraSound"]
-            }
-          },
-          "parameters": {
-            "rounds": 64,
-            "max_delay_us": 2000
+            "max_delay_us": 1000,
+            "success_threshold": 0.8
           }
         }
       ]
@@ -90,10 +82,14 @@
           "id": "IR",
           "requirements": {
             "requester": {
-              "actuators": ["IR"]
+              "actuators": [
+                "IR"
+              ]
             },
             "target": {
-              "sensors": ["IR"]
+              "sensors": [
+                "IR"
+              ]
             }
           },
           "parameters": {}
@@ -102,10 +98,14 @@
           "id": "ULTRASOUND",
           "requirements": {
             "requester": {
-              "actuators": ["UltraSound"]
+              "actuators": [
+                "UltraSound"
+              ]
             },
             "target": {
-              "sensors": ["UltraSound"]
+              "sensors": [
+                "UltraSound"
+              ]
             }
           },
           "parameters": {}
@@ -120,7 +120,9 @@
           "id": "THERMOMETER",
           "requirements": {
             "requester": {
-              "sensors": ["THERMOMETER"]
+              "sensors": [
+                "THERMOMETER"
+              ]
             }
           },
           "parameters": {
