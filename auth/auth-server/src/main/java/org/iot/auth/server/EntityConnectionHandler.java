@@ -683,7 +683,7 @@ public abstract class EntityConnectionHandler {
                         new SessionKeyPurpose(reqPurpose.getTargetType(), (String)reqPurpose.getTarget());
                 getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
                 sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
-                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose, cryptoSpec);
                 break;
             }
             // Action: physical presence verification for an action the requesting entity performs,
@@ -718,7 +718,7 @@ public abstract class EntityConnectionHandler {
                                 targetEntityName);
                 getLogger().debug("numKeys {}", sessionKeyReq.getNumKeys());
                 sessionKeyList = server.generateSessionKeys(requestingEntity.getName(),
-                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose);
+                        sessionKeyReq.getNumKeys(), communicationPolicy, sessionKeyPurpose, cryptoSpec);
                 break;
             }
             // If a subscribe-topic is specified, derive the keys from DB
@@ -751,15 +751,7 @@ public abstract class EntityConnectionHandler {
                 }
                 sessionKeyList = keysAndSpec.getSessionKeys();
                 cryptoSpec = keysAndSpec.getSpec();
-                if (sessionKeyList != null && !sessionKeyList.isEmpty()) {
-                    SessionKey sessionKey = sessionKeyList.get(0);
-                    String challengeJson = determineSessionKeyIdChallenge(requestingEntity, sessionKey);
-                    if (!challengeJson.isEmpty()) {
-                        cryptoSpec = new SymmetricKeyCryptoSpec(
-                                cryptoSpec.getCipherAlgorithm(), cryptoSpec.getCipherKeySize(),
-                                cryptoSpec.getMacAlgorithm(), challengeJson);
-                    }
-                }
+                // Return the original Auth-selected plan bound to this key.
                 break;
             }
             // If ID of the Auth who caches the keys is specified, talk to that Auth.
@@ -962,98 +954,6 @@ public abstract class EntityConnectionHandler {
         }
 
         return feasibleSet.toJSONString();
-    }
-
-    /**
-     * Determine structured physical presence challenge JSON for session key ID retrieval requests.
-     * @param requestingEntity Entity requesting session key by ID.
-     * @param sessionKey Retrieved session key object from DB.
-     * @return Formatted Challenge JSON string.
-     */
-    @SuppressWarnings("unchecked")
-    private String determineSessionKeyIdChallenge(
-            RegisteredEntity requestingEntity,
-            SessionKey sessionKey) {
-
-        String primaryChannel = "IR";
-        Set<String> candidateChannels = new LinkedHashSet<>();
-
-        // Deduce key creator and match physical resources directionally
-        if (sessionKey != null) {
-            String[] owners = sessionKey.getOwners();
-            if (owners != null && owners.length > 0) {
-                String keyCreatorName = owners[0]; // Original key requester
-                RegisteredEntity keyCreatorEntity = server.getRegisteredEntity(keyCreatorName);
-                if (keyCreatorEntity != null) {
-                    getLogger().info("Deducted that key ID {} was created by {} for requesting entity {}",
-                            sessionKey.getID(), keyCreatorName, requestingEntity.getName());
-
-                    String keyCreatorResourcesJson = keyCreatorEntity.getResources();
-                    String requestingEntityResourcesJson = requestingEntity.getResources();
-                    if (keyCreatorResourcesJson != null && requestingEntityResourcesJson != null) {
-                        try {
-                            JSONObject keyCreatorRes = (JSONObject) new JSONParser().parse(keyCreatorResourcesJson);
-                            JSONObject requestingEntityRes = (JSONObject) new JSONParser().parse(requestingEntityResourcesJson);
-
-                            Set<String> requestingActuators = parseResourceSet(requestingEntityRes, "actuators");
-                            Set<String> creatorSensors = parseResourceSet(keyCreatorRes, "sensors");
-                            requestingActuators.retainAll(creatorSensors);
-                            if (!requestingActuators.isEmpty()) {
-                                candidateChannels.addAll(requestingActuators);
-                            }
-                        } catch (ParseException e) {
-                            getLogger().error("Failed to parse resources for key creator/requester: {}", e.getMessage());
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!candidateChannels.isEmpty()) {
-            primaryChannel = candidateChannels.iterator().next();
-        }
-
-        JSONObject challengeObj = new JSONObject();
-        JSONObject channelParams = new JSONObject();
-        channelParams.put("rounds", 128);
-        channelParams.put("max_delay_us", 1000);
-        challengeObj.put(primaryChannel, channelParams);
-
-        JSONObject cameraParams = new JSONObject();
-        cameraParams.put("max_human", 0);
-        challengeObj.put("camera", cameraParams);
-
-        getLogger().info("Generated SESSION_KEY_ID Challenge JSON for {}: {}",
-                requestingEntity.getName(), challengeObj.toJSONString());
-
-        return challengeObj.toJSONString();
-    }
-
-    /**
-     * Parse a comma-separated resource string from a JSON object into a mutable LinkedHashSet.
-     * Handles both String values ("LiFi,IR,BLE") and JSONArray values (["LiFi","IR","BLE"]). to change...
-     * @param resources JSONObject containing the resource field.
-     * @param key       The key to parse ("sensors" or "actuators").
-     * @return Mutable set of resource names; empty set if key is absent or blank.
-     */
-    private Set<String> parseResourceSet(JSONObject resources, String key) {
-        Set<String> result = new LinkedHashSet<>();
-        if (resources == null || !resources.containsKey(key)) {
-            return result;
-        }
-        Object val = resources.get(key);
-        if (val instanceof JSONArray) {
-            for (Object item : (JSONArray) val) {
-                String s = item.toString().trim();
-                if (!s.isEmpty()) result.add(s);
-            }
-        } else if (val instanceof String) {
-            for (String s : ((String) val).split(",")) {
-                String t = s.trim();
-                if (!t.isEmpty()) result.add(t);
-            }
-        }
-        return result;
     }
 
     /**

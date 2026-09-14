@@ -1,0 +1,944 @@
+%%
+%% This is file `sample-sigconf-authordraft.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% samples.dtx  (with options: `all,proceedings,bibtex,authordraft')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from sample-sigconf-authordraft.tex.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file samples.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+%%
+%%
+%% Commands for TeXCount
+%TC:macro \cite [option:text,text]
+%TC:macro \citep [option:text,text]
+%TC:macro \citet [option:text,text]
+%TC:envir table 0 1
+%TC:envir table* 0 1
+%TC:envir tabular [ignore] word
+%TC:envir displaymath 0 word
+%TC:envir math 0 word
+%TC:envir comment 0 0
+%%
+%% The first command in your LaTeX source must be the \documentclass
+%% command.
+%%
+%% For submission and review of your manuscript please change the
+%% command to \documentclass[manuscript, screen, review]{acmart}.
+%%
+%% When submitting camera ready or to TAPS, please change the command
+%% to \documentclass[sigconf]{acmart} or whichever template is required
+%% for your publication.
+%%
+%%
+\documentclass[sigconf,authordraft]{acmart}
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+%% Rights management information.  This information is sent to you
+%% when you complete the rights form.  These commands have SAMPLE
+%% values in them; it is your responsibility as an author to replace
+%% the commands and values with those provided to you when you
+%% complete the rights form.
+\setcopyright{acmlicensed}
+\copyrightyear{2026}
+\acmYear{2026}
+\acmDOI{XXXXXXX.XXXXXXX}
+%% These commands are for a PROCEEDINGS abstract or paper.
+\acmConference[Conference acronym 'XX]{Make sure to enter the correct
+  conference title from your rights confirmation email}{June 03--05,
+  2026}{Woodstock, NY}
+%%
+%%  Uncomment \acmBooktitle if the title of the proceedings is different
+%%  from ``Proceedings of ...''!
+%%
+%%\acmBooktitle{Woodstock '18: ACM Symposium on Neural Gaze Detection,
+%%  June 03--05, 2018, Woodstock, NY}
+\acmISBN{978-1-4503-XXXX-X/2018/06}
+
+\captionsetup[subfigure]{skip=2pt}
+\setlength{\belowcaptionskip}{-5pt}
+
+%----------------------------------------------------------------
+% For compact bullet lists
+\newenvironment{compactItemize}{\begin{list}{$\bullet$}
+%{\setlength{\topsep}{0.8mm}\setlength{\itemsep}{0.25mm}
+{\setlength{\topsep}{1mm}\setlength{\itemsep}{0.25mm}
+\setlength{\parsep}{0.0mm}
+\setlength{\itemindent}{0mm}\setlength{\partopsep}{0mm}
+\setlength{\labelwidth}{15mm}
+\setlength{\leftmargin}{4mm}}}{\end{list}}
+
+% For compact numbered lists.
+% Space saving List environment for enumerations.
+\newcounter{myctr}
+\newenvironment{compactEnumerate}{\begin{list}{(\arabic{myctr})}
+{\usecounter{myctr}
+%\setlength{\topsep}{1mm}\setlength{\itemsep}{0.5mm}
+\setlength{\topsep}{0.0mm}\setlength{\itemsep}{0mm}
+\setlength{\parsep}{0.0mm}
+\setlength{\itemindent}{0mm}\setlength{\partopsep}{0mm}
+\setlength{\labelwidth}{15mm}
+\setlength{\leftmargin}{4mm}}}{\end{list}}
+%%
+
+%----------------------------------------------------------------
+\newenvironment{compactCheckboxItemize}{\begin{list}{$\openbox$}
+		%{\setlength{\topsep}{0.8mm}\setlength{\itemsep}{0.25mm}
+			{\setlength{\topsep}{1mm}\setlength{\itemsep}{0.25mm}
+				\setlength{\parsep}{0.1mm}
+				\setlength{\itemindent}{0mm}\setlength{\partopsep}{0mm}
+				\setlength{\labelwidth}{15mm}
+				\setlength{\leftmargin}{4mm}}}{\end{list}}
+
+
+\usepackage{tikz}
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;} 
+
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% For managing citations, it is recommended to use bibliography
+%% files in BibTeX format.
+%%
+%% You can then either use BibTeX with the ACM-Reference-Format style,
+%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
+%% support for advanced citation of software artefact from the
+%% biblatex-software package, also separately available on CTAN.
+%%
+%% Look at the sample-*-biblatex.tex files for templates showcasing
+%% the biblatex styles.
+%%
+
+
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+%%\citestyle{acmauthoryear}
+
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{Physical Context Based Access Control for Cyber Physical Systems}
+
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+%% Of note is the shared affiliation of the first two authors, and the
+%% "authornote" and "authornotemark" commands
+%% used to denote shared contribution to the research.
+\author{Dongha Kim}
+\email{dongha@asu.edu}
+\orcid{0000-0001-7660-9646}
+\affiliation{%
+  \institution{Arizona State University}
+  \city{Tempe}
+  \state{Arizona}
+  \country{USA}
+}
+
+\author{Krutyanjay Shinde}
+\email{kshinde6@asu.edu}
+\orcid{0009-0002-0276-2140}
+\affiliation{%
+  \institution{Arizona State University}
+  \city{Tempe}
+  \state{Arizona}
+  \country{USA}
+}
+
+\author{Hokeun Kim}
+\email{hokeun@asu.edu}
+\orcid{0000-0000-0000-0000}
+\affiliation{%
+  \institution{Arizona State University}
+  \city{Tempe}
+  \state{Arizona}
+  \country{USA}
+}
+
+
+%%
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose....
+\renewcommand{\shortauthors}{Trovato et al.}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+
+\end{abstract}
+
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{Do, Not, Use, This, Code, Put, the, Correct, Terms, for,
+  Your, Paper}
+
+
+%%
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle
+
+
+\section{Introduction}
+
+
+%% 첫문장부터 physical context 에 access control가 필요하다.
+%% 아예 첫문장.   
+
+%%두번째문단이 로봇이 쓰는 physical context 
+
+%% 세번째 문단에는 문제제기가 필요함.
+
+%% cheap.
+%%이런  physical context가 있기 때문에 내려준다?
+%% 예를들어, 로봇에 다 slam 해버린다. 할 수 는 있지만. 비효율적이다??
+
+%% robot들 자체가 manufactuor와 소유주도  다를수도 있다? 그래서 untrusted? 비전으로하면 너무 헤비하다. 
+%% 그냥 평범한 actuator들 사용해서 physical context를 증명한다. 해서 access control를 한다.
+
+%%중앙이하면 latency, toctou문제 있다. 그래서 중앙에서 다알려주는게 아니라 challenge만 내려준다. 라고 결론내린다.
+
+%%중앙이 없으면 revocation과 update, mitigation이 안된다.
+% 로봇은 누가 physical 해킹하는데 어떻게 믿냐. 실제 physical attack이 가능하다. 그래서 physical 공격이된다. 이걸로 kubernetes sidecar 방어.
+%% 그냥 할 수도 있음. ㅇㅇ.......
+
+
+%Version 4... 
+Physical actions by autonomous devices increasingly require access control decisions based on the surrounding physical context.
+Robots and embodied agents are becoming more capable of operating alongside humans, handling objects, accessing infrastructure, and interacting with other autonomous devices without continuous human supervision.
+These physical actions can cause real harm to people, objects, and infrastructure when performed under unsafe conditions.
+Thus, before allowing a physical action, the the system must verify that the required physical conditions hold.
+
+A delivery robot accessing a networked storage locker illustrates why physical context matters.
+Suppose the robot is authenticated and has permission to retrieve an item from the locker.
+The locker should nevertheless verify that the robot is physically present before opening, and it may need to ensure that the area around its door is clear.
+Similarly, the robot may need to verify conditions around the locker or the item before retrieving it.
+Each physical action therefore requires verification of the relevant physical conditions at the time of action.
+
+However, using physical context for access control raises three practical challenges. 
+
+% Autonomous and IoT devices are often heterogeneous and resource-constrained, making it impractical to rely on a rich perception stack for every access-control decision. 
+% Instead, the system should verify only the physical conditions required by the policy using available sensors. 
+% Second, physical verification must be timely. 
+% Conditions such as proximity and occupancy can change quickly, so a measurement can become stale before the corresponding action occurs. 
+% Third, physical verification must scale across devices. 
+% Devices may provide different sensing capabilities, and verification mechanisms that share physical channels can interfere when many devices operate concurrently. 
+% Addressing these challenges requires a system that can select, execute, and coordinate lightweight physical verification while keeping its results close to the actions they protect.
+
+
+
+% Centralizing physical verification is particularly problematic because physical observations are local and transient.
+% A device can send a sensor result to a remote authorization service, but doing so does not give the service an independent observation of the physical environment; the service still relies on the measurement made at the device.
+% At the same time, sending the observation away for a decision introduces delay before the corresponding physical action occurs.
+% During this interval, a robot can move or a person can enter an area that was previously observed to be clear.
+% The resulting observation-to-action gap creates a physical time-of-check to time-of-use (TOCTOU) window.
+% For physical-context authorization, communication and decision latency therefore affect not only performance, but also how well a verified condition represents the environment when the action is actually performed.
+
+% We therefore propose an access-control architecture that centrally provisions physical verification but executes it close to the physical action.
+% A trusted authorization service uses system-wide policy, device identities, and sensing capabilities to determine a small set of physical conditions that must be established before an action proceeds.
+% It provisions these conditions as verification requirements to the participating devices rather than collecting their sensor observations and making every physical decision remotely.
+% Devices satisfy the requirements using lightweight local sensing and make the resulting physical-action decisions at the edge, where verification can occur immediately before, or when necessary during, actuation.
+% This design retains centralized policy management, including policy updates and revocation, while avoiding a remote authorization round trip on the physical-action critical path.
+
+% Lightweight physical verification also introduces systems challenges that become important at scale.
+% First, different verification mechanisms have different execution times and therefore different windows over which their results remain useful for actuation.
+% Second, mechanisms such as ultrasonic or infrared verification use physical channels shared by nearby devices, so concurrent verifications can interfere even when their network communication is independent.
+% Third, heterogeneous devices may support different subsets of verification mechanisms, requiring the system to select methods that satisfy a policy using the capabilities available at each endpoint.
+% These challenges make physical-context authorization not only an access-control problem, but also a sensing, scheduling, and coordination problem.
+
+% We design and implement this architecture on top of SST and evaluate it using commodity sensing hardware.
+% Our system uses policy-driven verification requirements to compose lightweight physical checks without requiring each device to maintain a general-purpose perception stack.
+% We characterize the latency and temporal validity of these checks, quantify how authorization delay affects the observation-to-action window, and evaluate contention among concurrent physical verifications as device density increases.
+% We further show how system-wide coordination can schedule shared verification resources while keeping the final physical checks close to actuation.
+% Together, our results explore how inexpensive sensing can provide practical physical context for access control in increasingly autonomous physical systems.
+
+
+% %Version 3... Separate the authorization into two.: interaction & action 
+
+% %% P1: Physical access is increasing and important. Why physical actions need to be authorized.
+% Robots and embodied agents are increasingly operating in the physical world.
+% As these systems become more autonomous, they increasingly perform physical actions without direct human control.
+% %% Not only direct human control, unpredictable (혼자 reasoning하는) 기존과 다른 거를 보여주어야한다. 너무 narrow 해보인다. 단순 human control은.  
+% These actions can have real safety consequences when robots interact with humans, objects, and infrastructure.
+% %% 좀 더 safety 관련된 단어들. critical physical environments. harmful materials. 실제 physical damage를 줄 수 있는. 더 capable한 로봇일수록 데미지를 더 줄 수도 있다.
+% Therefore, systems must decide not only what devices are allowed to access, but also which physical actions they are allowed to perform.
+
+% %% safety 관련이 좀 끊긴다.
+% %% P2: Example of why authorizing physical actions is important and why only authentication doesn't work.
+% %% 첫문장이  following demonstrates ~~~ 그다음 consider.
+% Consider a delivery robot retrieving an item from a networked storage locker.
+% Suppose the robot is authenticated, and authorized to access the locker.
+% This authorization alone does not mean that the locker should immediately open.
+% The robot may need to be physically nearby, the area around the door may need to be clear, or the environment may need to satisfy conditions required by the stored item.
+% The locker may also need to verify if the authenticated robot is the robot in front of me, or if the robot has proper conditions to get the item.
+% % 첫문장이 가장 중요해야한다. 배치를 좀 더 고민.
+% These conditions describe whether a particular physical action is appropriate at the moment it occurs. 
+% Thus, authorizing an interaction does not necessarily authorize the actual physical actions.
+
+% %%첫문장만 읽어도 되게 만들어야한다. 문단별로두괄식으로.근데왜?????\textit{ }  
+
+% %% P3: single interaction authorization -> multiple action authorization.
+% Moreover, an authorized interaction can involve physical actions by multiple participants.
+% For example, an interaction that allows a robot to retrieve an item from a locker may require the locker to open its door and the robot to retrieve the item.
+% Each participant may need to check different physical conditions before performing its own action.
+% The locker may check the robot’s proximity and the area around its door, while the robot may check conditions relevant to retrieving the item.
+% As a result, the participants can reach different decisions within the same interaction: the locker may open while the robot refuses to retrieve the item.
+
+
+% %%Interaction 과 physical. term이 있다.
+% %% P4: Separate interaction authorization from physical-action authorization.
+% This distinction motivates us to separate two levels of authorization.
+% \textit{Interaction authorization} determines whether two devices are allowed to participate in an interaction, such as whether a robot is allowed to retrieve an item from a particular locker.
+% In contrast, \textit{physical-action authorization} determines whether a participant should perform a particular physical action during an authorized interaction.
+% While an interaction may be authorized once, it can require multiple physical-action authorizations, each performed by the participant that controls the corresponding action.
+% Thus, an authorized interaction establishes permission to interact, but does not by itself grant permission to perform every physical action that realizes the interaction.
+
+
+% %%execution physical action 이라는 건 operation이다ㅏ. 두종류다? level이 아니다.
+% %% interaction? 꼭 상대방과? 그럴필요는 없잖아.아니다.
+
+
+
+
+% %% 항상 depends라 하면 좀 그렇다. often 으로 한다. may는 안좋다.
+
+% %% P5: Physical-action authorization depends on runtime physical context. & Existing systems. & Problem statement.
+% Physical-action authorization depends on the physical context in which an action occurs.
+% Existing context-aware access control models, such as attribute-based access control (ABAC)~\cite{hu2013guide}, already provide mechanisms for expressing such context in authorization policies.
+% For example, proximity, temperature, or occupancy can be represented as attributes required by a policy.
+% Therefore, our problem is not how to express physical context as an authorization condition.
+% We ask how to design an access control system that supports both interaction authorization and physical context based physical-action authorizations.
+
+% %% 3.1.3.5
+
+% %% P6: Natural design 
+% A natural approach is to extend the existing authorization architecture to include both interaction authorization and physical action authorization.
+% A policy information point (PIP) collects the physical context, and the policy decision point (PDP) could evaluate it based on the policy.
+% In the robot–locker example, the PDP could first use attributes such as the robot’s identity and role to authorize the interaction.
+% Then, the locker reports the physical context, such as \texttt{doorway\_clear = true}, and the same PDP could decide whether the locker should open.
+% This approach is attractive because the same policy decision point authorizes the interaction and the physical action.
+
+% %% P7: Why natural design does not work.
+% However, the information required for these two decisions has an important difference.
+% Interaction authorization can rely on identity, roles, permissions, and other state maintained by sources trusted by the authorization system.
+% Physical-action authorization depends on conditions such as proximity or doorway occupancy that must be established by observing the physical world.
+% A PDP can receive these observations as authenticated attributes, but authentication does not give the PDP an independent observation of the underlying physical condition.
+% For example, an authenticated report of \texttt{doorway\_clear = true} establishes that the locker \textit{reported} the doorway as clear, not independently that the doorway \textit{was} physically clear.
+% Therefore, the PDP must rely on the physical observation made by the endpoint that will perform the action.
+% Sending that observation to the PDP does not, by itself, provide additional assurance about the physical condition.
+
+% %% P8: ToCToU?
+% Moreover, physical observations can quickly become stale.
+% A robot may move after its proximity is verified, or a person may enter the doorway after it is observed to be clear.
+% Sending an observation to a remote PDP, waiting for a decision, and returning that decision to the endpoint increases the time between observing a physical condition and acting on it.
+% This interval creates a physical form of the time-of-check to time-of-use (TOCTOU) problem: the condition established when authorization is checked may no longer hold when the physical action is performed.
+% For physical action authorization, this delay is not just a performance overhead; it directly increases the window in which the physical state can diverge from the state on which the decision was based.
+%
+% %% P9: Propose.
+% In this paper, we separate interaction authorization from physical action authorization.
+% We retain a trusted authorization service for interaction authorization and system-wide policy, but do not place it on the final physical-action decision path.
+% When an interaction is authorized, the service determines the physical conditions required for each participant’s actions and provisions them as \textit{verification requirements}.
+% Each participant then verifies its requirements using its local sensing capabilities and independently authorizes its own physical actions.
+% The authorization service therefore determines \textit{who may interact} and \textit{what must be verified}, while each endpoint determines \textit{whether those conditions hold now} and whether its own action should proceed...
+
+
+
+
+
+
+% A policy information point (PIP) could collect physical context, and the policy decision point (PDP) could evaluate it based on the policy.
+% For example, the locker could report \texttt{robot\_nearby = true}, and the PDP could decide whether the locker should open.
+
+
+
+
+%Version 2...
+% %% P1: Physical access is increasing and important. Why physical actions need to be authorized.
+% Robots and embodied agents are increasingly operating in the physical world.
+% As these systems become more autonomous, they increasingly perform physical actions without direct human control.
+% These actions can have real safety consequences when robots interact with people, objects and infrastructure.
+% Therefore, before a robot performs a physical action, the system must determine whether that action should be allowed.
+
+
+  
+% %% P2: Example of why authorizing physical actions is important and why only authentication doesn't work.
+% Consider a delivery robot retrieving an item from a networked storage locker.
+% Even if the robot is authenticated, the locker should not just open.
+% The locker should verify that the robot is physically nearby, the area around the locker may need to be clear, or the environment may need to satisfy conditions required by the stored item.
+% Without checking such conditions, a legitimate action can be unsafe.
+% Therefore, physical access control must consider not only who is allowed to act, but also whether the physical context permits the action now.
+
+% %% P3: How existing access control models handle this. They use physical context.
+% Existing access control models already provide a natural way to express such physical context.
+% Attribute-based access control (ABAC)~\cite{hu2013guide} makes authorization decisions based on attributes of subjects, objects, operations, and the environment.
+% Therefore, physical context can be incorporated as attributes, for example, a policy may require that \texttt{robot\_nearby=true} before permitting an action.
+% So there are many conventional systems which have a policy decision point (PDP) which evaluates the policy based on the context received from the policy information point (PIP) and enforces it in the policy enforcement point (PEP).
+
+% However, our case is unusual?
+
+
+
+% Moreover, there are not only conventional systems relying on a centralized policy decision point (PDP), but also there are systems such as OPA sidecar, which place policy enforcement point (PEP) and the PDP together.
+% Thus, neither expressing physical context not performing authorization at the edge is new.
+
+% However, in out robot and locker example, both endpoint serves and the PEP and PIP together, and also the PDP
+
+% In architectures such as XACML~\cite{anderson2003extensible}, a policy information point (PIP) provides attribute values, while a policy decision point (PDP) evaluates them against access control policies.
+% Physical context can fit naturally into this model: sensors can provide attributes such as \texttt{robot\_nearby = true}, and policies can require these attributes before permitting an action.
+
+
+
+%% VERSION 1.....   
+% %% P1: Physical access is increasing and important. Why physical actions need to be authorized.
+% Robots and embodied agents are increasingly operating in the physical world.
+% As these systems become more autonomous, they increasingly perform physical actions without direct human control.
+% These actions can have real safety consequences when robots interact with people, objects and infrastructure.
+% Therefore, before a robot performs a physical action, the system must determine whether that action should be allowed.
+
+% %% P2: Example of why authorizing physical actions is important and why only authentication doesn't work.
+% Consider a delivery robot retrieving an item from a networked storage locker.
+% Even if the robot is authenticated, the locker should not just open.
+% The locker should verify that the robot is physically nearby, the area around the locker may need to be clear, or the environment may need to satisfy conditions required by the stored item.
+% Without checking such conditions, a legitimate action can be unsafe.
+% Therefore, physical access control must consider not only who is allowed to act, but also whether the physical context permits the action now.
+
+% %% P3: How existing access control models handle this. They use physical context.
+% Existing access control models appear to incorporate such context.
+% Attribute based access control (ABAC)~\cite{hu2013guide} makes authorization decisions based on attributes of subjects, objects, operations, and the environment.
+% In architectures such as XACML~\cite{anderson2003extensible}, a policy information point (PIP) provides attribute values, while a policy decision point (PDP) evaluates them against access control policies.
+% Physical context can fit naturally into this model: sensors can provide attributes such as \texttt{robot\_nearby = true}, and policies can require these attributes before permitting an action.
+
+
+% Therefore, physical context could be represented as additional attributes.
+% For instance, a sensor can report \texttt{robot\_nearby = true}, and the PDP could use these values when deciding whether to permit the action.
+% So physical context seem to fit into the existing ABAC model.
+% However, attributes derived from physical context differ from ordinary authorization attributes in two important ways.
+
+% %% However, why this model. .
+
+
+
+\section{Background \& Motivation}
+\noindent
+\textbf{Secure Swarm Toolkit (SST)}
+
+\subsection{Motivating example}
+
+\begin{figure}[t]
+    \centering
+    \fbox{\parbox[c][1.55in][c]{0.94\columnwidth}{
+        \centering
+        \textbf{Motivating example placeholder}\\[0.5em]
+        Delivery robot and networked locker.\\
+        Show proximity verification between the robot and locker,\\
+        doorway-clear verification at the locker, and\\
+        local physical-context verification at the robot.
+    }}
+    \caption{Physical-context access control for a delivery robot and networked locker. Although the robot has permission to retrieve the item, each physical action depends on conditions observed at the time of action.}
+    \label{fig:motivation}
+\end{figure}
+
+\section{Approach}
+\subsection{Overview}
+\label{sec:approach-overview}
+
+\begin{figure}[t]
+    \centering
+    \fbox{\parbox[c][2.0in][c]{0.94\columnwidth}{
+        \centering
+        \textbf{System overview placeholder}\\[0.5em]
+        Auth at the top; Robot and Locker at the bottom.\\[0.3em]
+        (1) Request $\rightarrow$ Auth $\rightarrow$ session key + verification plan\\
+        (2) Robot $\leftrightarrow$ Locker: secure session establishment\\
+        (3) Local/cooperative verification at endpoints\\
+        (4) Freshness check $\rightarrow$ local decision $\rightarrow$ actuation
+    }}
+    \caption{System overview. Auth authorizes the request and provisions a verification plan based on policy and endpoint capabilities. The endpoints then establish a secure session, execute the required physical verification, and locally decide whether to perform their physical actions.}
+    \label{fig:overview}
+\end{figure}
+
+Our approach uses centrally managed access-control policies to provision lightweight physical verification that endpoints execute before physical actions.
+The system consists of a trusted authorization service, \emph{Auth}, and physical endpoints such as robots and lockers.
+Auth maintains access-control policies, registered endpoint resources, and a catalog of available verification mechanisms.
+Endpoints provide sensing and communication capabilities for physical verification and control the actuators protected by the access-control policy.
+
+When an endpoint requests an operation, Auth first performs the conventional authorization checks and identifies the physical conditions required for the corresponding actions.
+These conditions are expressed independently of particular sensing hardware; for example, a policy can require a robot to be within one meter of a locker without specifying how the distance should be measured.
+Auth then considers the resources available at the involved endpoints and selects a feasible verification mechanism for each physical requirement.
+The resulting \emph{verification plan} specifies how the required physical conditions should be verified for each protected action.
+
+Auth provisions the verification plan together with the information needed to establish a secure session between the endpoints.
+The plan can also specify a communication mechanism supported by the participating endpoints, allowing subsequent protocol messages to use an appropriate network or physical channel.
+Once the endpoints establish the session, they execute the provisioned verification mechanisms directly.
+A verification may use a local sensor, such as a thermometer, or require cooperation between endpoints, such as an ultrasonic ranging exchange.
+
+Each endpoint evaluates the physical requirements associated with the actions it controls.
+The endpoint performs an action only when all of its required verifications succeed and satisfy their freshness requirements.
+These final checks are performed locally without returning physical observations to Auth for another authorization decision, keeping verification close to the physical action it protects.
+Auth remains responsible for system-wide policy, verification planning, and, when necessary, coordination of verification mechanisms that share physical resources.
+
+\subsection{Physical Context Requirements}
+\label{sec:requirements}
+%% and 로 표현.
+We represent the physical conditions required by an access-control policy as \emph{physical requirements}.
+A physical requirement is a predicate over the physical world that must hold before a device performs a physical action.
+For a device $d$ and an action $a$, we define the set of physical requirements as
+%
+\begin{equation}
+R(d,a) = \{r_1, r_2, \ldots, r_n\},
+\end{equation}
+%
+where each $r_i$ is a physical predicate that must be satisfied before device $d$ performs action $a$.
+The action is allowed only when all requirements in $R(d,a)$ are satisfied.
+
+For example, consider the requirements for a robot to retrieve an item from a locker.
+The robot may be required to remain within one meter of the locker:
+%
+\begin{equation}
+r_1 = \mathsf{Distance}(\mathit{robot},\mathit{locker}) < 1\,\mathrm{m}.
+\end{equation}
+%
+A temperature-sensitive item may additionally require its temperature to remain between $2^\circ\mathrm{C}$ and $8^\circ\mathrm{C}$:
+%
+\begin{equation}
+r_2 = 2^\circ\mathrm{C} \leq \mathsf{Temperature}(\mathit{item}) \leq 8^\circ\mathrm{C}.
+\end{equation}
+%
+The physical requirements for the retrieval action are therefore
+%
+\begin{equation}
+R(\mathit{robot},\mathsf{RETRIEVE}) = \{r_1,r_2\}.
+\end{equation}
+
+Physical requirements specify \emph{what must hold}, but not \emph{how each requirement is verified}.
+For example, $r_1$ specifies the required distance between the robot and the locker without prescribing ultrasound, infrared, or any particular ranging mechanism.
+This separation keeps access-control policies independent of sensing hardware and allows the same physical requirement to be realized differently across heterogeneous devices.
+Auth maps each $r_i$ to an executable verification plan based on device capabilities and available verification mechanisms, as described in Section~\ref{sec:selection}.
+
+\subsection{Verification Planning}
+\label{sec:selection}
+
+\begin{figure}[t]
+    \centering
+    \fbox{\parbox[c][1.9in][c]{0.94\columnwidth}{
+        \centering
+        \textbf{Verification planning placeholder}\\[0.5em]
+        Physical requirements $R(d,a)$\\
+        $\downarrow$\\
+        Candidate mechanisms $M(r_i)$\\
+        $\downarrow$\\
+        Auth filters by endpoint resources and selects $m_i^*$\\
+        $\downarrow$\\
+        Verification plan $V(d,a)=\{(r_i,m_i^*)\}$
+    }}
+    \caption{Verification planning. Auth maps each policy-defined physical requirement to a feasible verification mechanism using the resources registered by the participating endpoints.}
+    \label{fig:verification-planning}
+\end{figure}
+
+\begin{table}[t]
+    \centering
+    \caption{Example verification planning for a proximity requirement.}
+    \label{tab:verification-example}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Component} & \textbf{Example} \\
+        \midrule
+        Requirement & $\mathsf{Distance}(R,L)<1\,\mathrm{m}$ \\
+        Candidates & Ultrasound, IR, UWB \\
+        Robot resources & Ultrasound, IR \\
+        Locker resources & Ultrasound \\
+        Selected mechanism & Ultrasound \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Auth converts the physical requirements in $R(d,a)$ into an executable \emph{verification plan}.
+For each physical requirement $r_i$, Auth selects a verification mechanism that can verify $r_i$ using the sensing capabilities available on the involved devices.
+This step determines \emph{how} each physical requirement is verified while keeping the requirement itself independent of sensing hardware.
+
+A \emph{verification mechanism} is a concrete sensing procedure for verifying a physical requirement.
+For example, a distance requirement may be verified using ultrasonic, infrared, or UWB ranging, while a temperature requirement may be verified using a temperature sensor.
+Each mechanism specifies the sensing capabilities and participating devices required for its execution.
+Auth maintains these mechanisms in a verification mechanism catalog.
+
+A physical requirement can be supported by multiple verification mechanisms.
+For a physical requirement $r_i$, we denote the set of candidate verification mechanisms as
+%
+\begin{equation}
+M(r_i) = \{m \mid m \text{ can verify } r_i\}.
+\end{equation}
+%
+For example, for the distance requirement $r_1$ defined in Section~\ref{sec:requirements}, the candidate mechanisms may be
+%
+\begin{equation}
+M(r_1) =
+\{
+\mathsf{UltrasonicRanging},
+\mathsf{InfraredRanging},
+\mathsf{UWBRanging}
+\}.
+\end{equation}
+%
+These mechanisms verify the same physical requirement using different sensing capabilities.
+
+Auth selects a mechanism from $M(r_i)$ that can be executed by the devices involved in the verification.
+Mechanisms whose required sensing capabilities are not available on the involved devices are excluded.
+If multiple mechanisms remain, Auth selects the highest-priority feasible mechanism according to the ordering specified in the mechanism catalog.
+We denote the selected mechanism for $r_i$ by
+%
+\begin{equation}
+m_i^* \in M(r_i).
+\end{equation}
+%
+If no mechanism in $M(r_i)$ can be executed, Auth cannot construct a verification plan and the protected action does not proceed.
+
+Given the physical requirements
+%
+\begin{equation}
+R(d,a) = \{r_1,r_2,\ldots,r_n\},
+\end{equation}
+%
+Auth constructs the verification plan
+%
+\begin{equation}
+V(d,a) =
+\{
+(r_1,m_1^*),
+(r_2,m_2^*),
+\ldots,
+(r_n,m_n^*)
+\}.
+\end{equation}
+%
+Thus, $R(d,a)$ specifies \emph{what must hold}, while $V(d,a)$ specifies \emph{how each requirement will be verified}.
+The physical requirements themselves remain unchanged when different verification mechanisms are selected.
+
+For example, if both the robot and locker support ultrasonic ranging, Auth may select $\mathsf{UltrasonicRanging}$ for the distance requirement $r_1$.
+If ultrasonic ranging is unavailable but both devices support another mechanism in $M(r_1)$, Auth can select that mechanism instead.
+A temperature requirement $r_2$ may independently be mapped to a local temperature sensor.
+The resulting verification plan therefore adapts the same physical requirements to the sensing capabilities available in a particular deployment.
+
+\subsection{Physical Verification Execution}
+\label{sec:execution}
+
+\begin{figure}[t]
+    \centering
+    \fbox{\parbox[c][2.1in][c]{0.94\columnwidth}{
+        \centering
+        \textbf{Verification execution placeholder}\\[0.5em]
+        Robot \hspace{4em} Locker\\
+        $\longleftrightarrow$ secure session $\longleftrightarrow$\\[0.3em]
+        Locker-initiated cooperative verification\\
+        $\rightarrow$ measurement $\rightarrow$ local decision\\[0.3em]
+        Robot-initiated/local verification\\
+        $\rightarrow$ local decision
+    }}
+    \caption{Execution of physical verification after session establishment. Each endpoint executes the verification required for the actions it controls and makes its final action decision locally.}
+    \label{fig:verification-execution}
+\end{figure}
+
+Each device executes its verification plan locally before performing the protected physical action.
+Given $V(d,a)$, device $d$ executes the selected mechanism $m_i^*$ for each physical requirement $r_i$ and evaluates whether the requirement is satisfied.
+The device performs action $a$ only when all requirements in $R(d,a)$ are successfully verified.
+Auth is not involved in this final decision.
+
+Verification mechanisms can be either \emph{local} or \emph{cooperative}.
+A local mechanism can be executed entirely by the device making the decision.
+For example, a robot can evaluate a temperature requirement using its local temperature sensor, while a locker can evaluate whether its doorway is clear using a local presence sensor.
+In these cases, device $d$ directly executes $m_i^*$ and evaluates the resulting measurement against $r_i$.
+
+A cooperative mechanism requires participation from one or more other devices.
+For example, verifying
+%
+\begin{equation}
+r_1 = \mathsf{Distance}(\mathit{robot},\mathit{locker}) < 1\,\mathrm{m}
+\end{equation}
+%
+may require the robot and locker to execute an ultrasonic ranging protocol.
+The other device participates in the sensing procedure specified by $m_i^*$, but device $d$ remains responsible for evaluating the requirement protecting its own action.
+Thus, a cooperative verification allows devices to jointly establish physical context without requiring them to share a common action decision.
+
+For each requirement $r_i$, execution of $m_i^*$ produces a verification result
+%
+\begin{equation}
+\mathsf{Verify}(r_i,m_i^*) \in \{\mathsf{PASS},\mathsf{FAIL}\}.
+\end{equation}
+%
+A result of $\mathsf{PASS}$ indicates that the observation obtained through $m_i^*$ satisfies $r_i$, while $\mathsf{FAIL}$ indicates that it does not.
+If a mechanism cannot complete, for example because a required participant does not respond or a sensor measurement cannot be obtained, the requirement is treated as unsatisfied.
+
+Device $d$ authorizes action $a$ only when every physical requirement in $R(d,a)$ passes verification:
+%
+\begin{equation}
+\mathsf{Allow}(d,a)
+\iff
+\bigwedge_{(r_i,m_i^*) \in V(d,a)}
+\left[
+\mathsf{Verify}(r_i,m_i^*) = \mathsf{PASS}
+\right].
+\end{equation}
+%
+%Allow disallow 라고 명확히 표현. 계층을 두자. pass/fail allow/disallow.
+
+Otherwise, the device does not perform the protected action.
+This fail-closed rule ensures that an unavailable or unsuccessful physical verification cannot silently remove a requirement from the policy.
+
+The final action decision is made by the device that controls the corresponding actuator.
+Verification results are therefore not returned to Auth for another authorization decision.
+For example, the locker evaluates the requirements protecting its $\mathsf{OPEN}$ action, while the robot separately evaluates the requirements protecting its $\mathsf{RETRIEVE}$ action.
+The two devices can consequently reach different decisions even when they participate in the same operation.
+This design keeps the physical observation, its evaluation, and the resulting actuation at the endpoint performing the action.
+
+\subsection{Freshness Verification}
+
+\label{sec:freshness}
+% constraint라는 걸 좀 더 강조하는 표현. requirement라는게 더 적절. 
+%freshness? outdated? timeliness requirements.dddd
+
+Physical requirements must specify how fresh their verification results must be when the protected action occurs.
+Physical conditions can change over time, so a successful verification may become stale before actuation.
+For example, a robot may move after its proximity is verified, or a person may enter a doorway after it is observed to be clear.
+We therefore associate each physical requirement $r_i$ with a \emph{freshness bound} $\tau_i$.
+
+Let $t_i^v$ denote the time at which $r_i$ is successfully verified and $t^a$ the time at which the protected action begins.
+The verification of $r_i$ satisfies its freshness requirement only if
+%
+\begin{equation}
+t^a - t_i^v \leq \tau_i.
+\end{equation}
+%
+If the bound is exceeded, the endpoint must verify $r_i$ again before performing the action.
+
+The endpoint checks freshness together with the verification results before actuation.
+Thus, device $d$ allows action $a$ only if every requirement in its verification plan passes and satisfies its freshness bound:
+%
+\begin{equation}
+\mathsf{Allow}(d,a) \iff
+\bigwedge_{(r_i,m_i^*)\in V(d,a)}
+\bigl[\mathsf{Verify}(r_i,m_i^*)=\mathsf{PASS}
+\land t^a-t_i^v\leq\tau_i\bigr].
+\end{equation}
+%
+Keeping this check at the endpoint avoids an additional authorization round trip between physical verification and actuation.
+
+A freshness bound does not guarantee that the physical condition remains unchanged throughout the interval.
+Rather, $\tau_i$ specifies the maximum verification-to-action delay that the policy accepts for requirement $r_i$.
+The appropriate bound depends on the physical condition and the dynamics of the environment.
+
+
+
+
+Formulation
+
+
+
+Design - physical presence verification and authorization protocols given that there is a shared crypto and the entities are already authenticated.
+
+Protocol 1 acoustic - co-presence ...
+
+
+Protocol 2 IR - robots with IR sensors
+
+Protocol 3 LiFi LED \& light receiver
+
+Protocol 4 UWB ...
+
+
+Implementation
+
+- KDC - PKI Kerberos, we use SST.............
+
+How we use SST as KDC and PDP 
+
+
+Evaluation \& experiments
+
+Feasible ...
+
+\section{Implementation}
+
+\subsection{System Integration}
+\label{sec:implementation-overview}
+
+We implement our design by extending SST with physical verification planning and endpoint-side verification.
+We retain SST's existing entity registration, access-control, and session-key establishment mechanisms, and extend them to incorporate the physical requirements associated with an action.
+Our implementation consists of a Java-based Auth service and a C-based endpoint runtime used by physical devices such as robots and lockers.
+
+Auth extends the existing SST authorization path to construct a verification plan when processing a session request.
+In addition to the identity and policy information already maintained by SST, Auth maintains the physical capabilities registered by each entity and a catalog of available verification mechanisms.
+Auth uses this information to select a feasible mechanism for each physical requirement and provisions the resulting verification plan together with the session information.
+
+Endpoints extend the SST C API with a verification runtime that executes the provisioned plan.
+After establishing an authenticated session, the runtime dispatches each physical requirement to its selected verification mechanism, which may use either local sensing or a cooperative protocol with another endpoint.
+The endpoint evaluates the verification results locally and performs the protected action only when its requirements are satisfied.
+Physical observations therefore remain on the endpoint rather than being returned to Auth for a final authorization decision.
+
+We implement physical verification mechanisms behind a common runtime interface, allowing sensing mechanisms to be added independently of the access-control and session-establishment logic.
+This separation also allows communication transports and physical verification mechanisms to evolve independently, even when they use the same underlying hardware.
+Sections~\ref{sec:implementation-runtime}--\ref{sec:implementation-temporal} describe the authorization runtime, physical verification mechanisms, and temporal enforcement in detail.
+
+\subsection{Authorization and Verification Runtime}
+\label{sec:implementation-runtime}
+
+We extend the SST authorization path to translate physical requirements into verification plans and provision them to endpoints.
+When an entity requests a session, Auth first performs the existing SST authorization checks and retrieves the physical requirements associated with the requested action.
+Auth then determines how each requirement can be verified using the physical resources available to the participating entities and the verification mechanisms maintained by Auth.
+
+To support verification planning, we extend SST's entity registration with physical resource information.
+Each entity registers the sensing and communication resources it provides, such as ultrasound, infrared, and temperature sensing, and Auth stores this information as part of the entity's registration record.
+These registered resources allow Auth to determine which verification mechanisms can be executed by a particular set of entities.
+
+For each physical requirement $r_i$, Auth identifies candidate mechanisms from the verification mechanism catalog and filters them according to the resources available to the participating entities.
+Our implementation performs this filtering using \texttt{FeasibleChallengeMatcher}, which combines the physical requirements, registered entity resources, and mechanism definitions to determine feasible verification mechanisms.
+Auth then selects the highest-priority feasible mechanism $m_i^*$ and constructs the verification plan $V(d,a)$ defined in Section~\ref{sec:selection}.
+If no feasible mechanism exists for a required condition, Auth rejects the request rather than removing the requirement.
+
+Auth provisions the selected verification plan together with the SST session information.
+The plan identifies the physical requirements associated with the protected action and the mechanism selected for each requirement.
+For cooperative mechanisms, the plan also identifies the entities participating in the verification and the parameters required to execute the mechanism.
+Both endpoints therefore obtain the information necessary to execute the session-specific verification protocol without requiring Auth to participate in the subsequent physical verification.
+
+We extend the SST C API with a verification runtime that interprets the provisioned plan and dispatches each requirement to its selected mechanism.
+Local mechanisms invoke sensors available at the endpoint, while cooperative mechanisms execute their mechanism-specific protocol with the peer established by the SST session.
+The runtime records the result of each verification and evaluates the requirements associated with the endpoint's physical action.
+Once all required verifications succeed, the endpoint can proceed directly to the protected action without returning the physical observations to Auth for another authorization decision.
+
+The verification runtime separates application logic from mechanism-specific sensing code.
+Applications such as the robot and locker request an action through the runtime rather than parsing verification plans or invoking physical sensors directly.
+Verification mechanisms are registered behind a common interface, allowing new sensing mechanisms to be added without modifying the authorization or application logic.
+
+\subsection{Physical Verification Mechanisms}
+
+\label{sec:implementation-mechanisms}
+
+Ultrasound, IR ... ...
+
+
+\section{Evaluation}
+\section{Security Analysis}
+\section{Related Work}
+\subsection{XACML/OPA}
+\subsection{Kubernetes side car}
+
+\section{Conclusion}
+
+
+
+
+\section{Acoustic Co-Presence for Environmental Containment}
+
+Depending on the specific physical authorization policy, the central Auth node may require interacting entities to prove they are physically contained within the same enclosed environment. 
+To achieve this without relying on strict line-of-sight sensors, we utilize an acoustic \textit{Location-Limited Channel (LLC)}~\cite{balfanz2002talking}. 
+
+As defined by Balfanz et al., an LLC is characterized by physical properties that strictly confine signal propagation to a specific spatial boundary, traditionally ensuring that human operators can precisely control which devices are communicating. 
+We extend this foundational principle to autonomous Cyber-Physical Systems. 
+By substituting active human supervision with the static physical boundaries of an enclosed environment, autonomous entities leverage acoustic attenuation to mathematically prove contextual co-presence without human intervention~\cite{truong2014copresence}. 
+Because high-frequency acoustic waves bounce off solid structures rather than penetrating them, this acoustic channel effectively turns the physical architecture of the room into a secure containment boundary.
+
+\subsection{Acoustic Protocol Architecture}
+To ensure this modality can be executed rapidly by resource-constrained robots without heavy digital signal processing, the protocol avoids transmitting digital data streams over audio. 
+Instead, it employs an analog, tone-based cryptographic challenge.
+
+\subsubsection{Phase 1: Dynamic Signature Provisioning} \hfill \\
+The protocol utilizes the Secure Swarm Toolkit (SST) IoTAuth framework~\cite{kim2023sst, kim2017toolkit} to establish a secure RF connection (e.g., Wi-Fi). Upon successful digital authentication, the central Auth node evaluates the physical policy. 
+If environmental co-presence is mandated, the Auth node provisions the entities with a session key and a shared cryptographic \textit{Acoustic Signature Secret}. Rather than a digital string, this secret is a specific permutation of five distinct audio frequencies.
+
+\subsubsection{Phase 2: Acoustic Exchange and Context Verification} \hfill \\
+Once provisioned, the entities execute the local peer-to-peer verification:
+\begin{compactEnumerate}
+    \item \textbf{Acoustic Broadcast:} The Verifier synthesizes the five specific frequencies dictated by the Acoustic Signature Secret and broadcasts the tones omnidirectionally into the environment.
+    \item \textbf{Acoustic Capture:} The Prover utilizes its local microphone to monitor the ambient environment. Utilizing lightweight Goertzel filters, the Prover actively scans for the precise sequence of five frequencies. 
+    \item \textbf{Contextual RF Response:} Upon successfully detecting the correct analog acoustic signature, the Prover bundles a cryptographic confirmation with its internal physical context telemetry (e.g., operational readiness, battery state). 
+    This payload is encrypted using the session key and transmitted back to the Verifier over the high-speed RF channel.
+\end{compactEnumerate}
+
+Upon decryption, the Verifier confirms that the Prover successfully detected the exact tone sequence. 
+Because these tones could only be captured acoustically within the walls of the enclosed system, the Verifier mathematically proves that the Prover is cryptographically authorized and physically contained within the authorized environment.
+
+\subsection{Acoustic Threat Model and Security Analysis}
+We evaluate the acoustic LLC modality against spatial and containment-based attacks:
+
+\begin{description}
+    \item[Cross-Barrier RF Spoofing (Defeated):] Traditional proximity systems are highly vulnerable to out-of-band relay attacks because radio waves penetrate walls. 
+    By requiring a physical acoustic exchange, an attacker standing outside the physical perimeter cannot intercept or relay the tones, successfully defending the system against cross-barrier RF exploitation.
+    
+    \item[Acoustic Brute Force (Defeated):] An attacker situated within the valid physical radius might attempt to rapidly emit random tone sequences to spoof verification. 
+    However, the protocol partitions the available frequency spectrum into distinct bands, randomly selecting one frequency from each band and randomizing their playback order. 
+    This permutation strategy yields hundreds of millions of unique combinations, rendering brute-force guessing mathematically intractable within the brief acoustic verification window.
+    
+    \item[OS Jitter and Timing Asynchrony (Mitigated):] Because this modality validates spatial \textit{containment} rather than calculating exact distance via Time-of-Flight, it is entirely immune to software-induced timing delays. 
+    If the Prover's operating system halts execution to handle a background task, the acoustic sequence remains safely buffered in the audio hardware until the Goertzel filters are ready to process it.
+    
+    \item[In-Band Acoustic Relay (Out of Scope):] Executing an in-band acoustic relay requires an adversary to physically infiltrate the enclosed system to plant unauthorized hardware (e.g., a microphone bug). 
+    In our threat model, we assume the physical integrity of the enclosed system is maintained by external physical security mechanisms (e.g., locks). Preventing physical intrusion is beyond the scope of this protocol.
+\end{description}
+
+\subsection{Implementation}
+To evaluate the feasibility and low-overhead claims of our acoustic Location-Limited Channel, we developed a fully functional prototype using commodity hardware. 
+Our implementation intentionally avoids specialized industrial equipment to demonstrate that robust physical context verification can be achieved on standard, resource-constrained robotic platforms.
+
+\subsubsection{Hardware Platform} \hfill \\
+The interacting entities were instantiated using standard microcontrollers (Raspberry Pi) running a general-purpose Linux operating system. 
+For the physical acoustic channel, the robots were equipped with basic, Commercial Off-The-Shelf (COTS) speakers and USB microphones. 
+Because our protocol avoids strict Time-of-Flight distance bounding, we did not need to apply real-time kernel patches (e.g., \texttt{PREEMPT\_RT}) to the Linux OS.
+
+\subsubsection{Acoustic Modulation via Goertzel Filters} \hfill \\
+To execute the acoustic broadcast and capture phases rapidly, our prototype utilizes highly optimized Goertzel filters for frequency detection. 
+This approach is computationally lighter than a full Fast Fourier Transform (FFT). 
+While the LLC protocol theoretically supports true ultrasonic frequencies (18\,kHz and above), standard COTS speakers and microphones suffer from severe hardware attenuation at those extremes. 
+To ensure reliable transmission across generic audio hardware, we mapped the 5-tone permutation bands to operate within the high-frequency acoustic 10\,kHz to 13\,kHz range. 
+This adaptation proves that our architecture achieves robust cryptographic tone detection without requiring expensive, dedicated ultrasonic transducers.
+
+\subsubsection{Digital Authentication and RF Payload} \hfill \\
+The out-of-band digital authentication, session key generation, and final contextual payload exchange were implemented using the Secure Swarm Toolkit (SST) IoTAuth framework. 
+Once the Goertzel filters successfully detected the 5-tone sequence, the Raspberry Pi encrypted the verification confirmation via SST and transmitted the final payload over the local Wi-Fi network.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{ref}
+
+\end{document}
+\endinput
+%%
+%% End of file `sample-sigconf-authordraft.tex'.
