@@ -7,7 +7,7 @@
 #   Locker -> pi43@pi43
 #
 # Usage:
-#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound] [--generate]
+#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound] [--generate] [--ir-hk]
 #
 #   --comm_type   Transport for the Robot<->Locker handshake (default: tcp).
 #                 Auth communication is always TCP regardless of this. "ir"
@@ -15,6 +15,8 @@
 #                 access) -- see entity/c/ir_com/run_ir_test.sh for pigpio
 #                 install steps; the build step below detects it the same
 #                 way it detects ALSA for ultrasound.
+#   --ir-hk       Require actual IR HK after any handshake transport. With
+#                 --generate, select the IR-only CO_LOCATION catalog.
 #   --generate    Regenerate the Auth DB on ada6000 (cleanAll.sh + generateAll.sh)
 #                 and redistribute the freshly generated Auth cert + entity
 #                 credentials to Robot/Locker. Skip this on repeat runs where
@@ -35,7 +37,7 @@
 # below) and start_remote_and_verify() retries a few times before giving up.
 # ==============================================================================
 
-set -e
+set -eo pipefail
 
 AUTH_HOST="dongha@ada6000"
 ROBOT_HOST="pi42@pi42"
@@ -47,9 +49,11 @@ TAIL_PID=""
 
 COMM_TYPE="tcp"
 GENERATE=false
+IR_HK=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --comm_type) COMM_TYPE="$2"; shift 2 ;;
+        --ir-hk) IR_HK=true; shift ;;
         --generate) GENERATE=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
@@ -58,16 +62,21 @@ done
 PROJ_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # pigpio (needed for --comm_type ir) requires direct GPIO access, so Robot
-# and Locker must run as root in that case; tcp/ultrasound need no such
-# privilege.
+# and Locker must run as root for either IR handshake or IR HK.
 SUDO_PREFIX=""
 ROBOT_TIMEOUT=90
-if [ "$COMM_TYPE" = "ir" ]; then
+HK_ARGS=""
+CHALLENGE_CATALOG="physical_context_challenges/challenges.json"
+if [ "$IR_HK" = true ]; then
+    HK_ARGS="--require-ir-hk"
+    CHALLENGE_CATALOG="physical_context_challenges/challenges_ir.json"
+fi
+if [ "$COMM_TYPE" = "ir" ] || [ "$IR_HK" = true ]; then
     SUDO_PREFIX="sudo "
     # IR's 50ms-per-bit rate makes even one ~72-100 byte handshake message
     # take on the order of 30s to transmit; three of them (hs1/hs2/hs3) plus
     # retries need much more headroom than ultrasound/tcp do.
-    ROBOT_TIMEOUT=300
+    ROBOT_TIMEOUT=450
 fi
 
 # Runs a command with a hard wall-clock timeout. Portable bash implementation
@@ -139,7 +148,7 @@ start_remote_and_verify() {
 if [ "$GENERATE" = true ]; then
     echo ""
     echo "[1/6] Regenerating Auth DB on $AUTH_HOST..."
-    ssh_to 120 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po policies/physical_presence.json -ch physical_context_challenges/challenges.json -p $PASSWORD -lc"
+    ssh_to 120 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po policies/physical_presence.json -ch $CHALLENGE_CATALOG -p $PASSWORD -lc"
 
     echo ""
     echo "Distributing Auth cert + credentials to Robot and Locker..."
@@ -190,7 +199,7 @@ echo ""
 echo "[5/6] Starting Locker on $LOCKER_HOST (--comm_type $COMM_TYPE)..."
 ssh_to 15 "$LOCKER_HOST" "pkill -f './locker' 2>/dev/null" || true
 start_remote_and_verify "$LOCKER_HOST" \
-    "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ${SUDO_PREFIX}./locker ../locker_pi43.config --comm_type $COMM_TYPE > /tmp/locker_test.log 2>&1 < /dev/null &" \
+    "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ${SUDO_PREFIX}./locker ../locker_pi43.config --comm_type $COMM_TYPE $HK_ARGS > /tmp/locker_test.log 2>&1 < /dev/null &" \
     "./locker" "/tmp/locker_test.log" "Locker" || exit 1
 
 # Stream Locker's log live in this terminal, prefixed so it's distinguishable
@@ -202,7 +211,8 @@ echo ""
 echo "[6/6] Running Robot on $ROBOT_HOST (--comm_type $COMM_TYPE)..."
 # stdbuf forces line-buffered stdout over the ssh pipe (glibc otherwise fully
 # buffers non-tty output, so Robot's log wouldn't show up until it exits).
-ssh_to $((ROBOT_TIMEOUT + 10)) "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL ${SUDO_PREFIX}timeout $ROBOT_TIMEOUT ./robot ../robot_pi42.config --comm_type $COMM_TYPE" 2>&1 | LC_ALL=C sed -u 's/^/[Robot] /' || true
+ROBOT_STATUS=0
+ssh_to $((ROBOT_TIMEOUT + 10)) "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL ${SUDO_PREFIX}timeout $ROBOT_TIMEOUT ./robot ../robot_pi42.config --comm_type $COMM_TYPE $HK_ARGS" 2>&1 | LC_ALL=C sed -u 's/^/[Robot] /' || ROBOT_STATUS=$?
 
 sleep 2
 echo ""
@@ -211,3 +221,5 @@ echo " Locker Log ($LOCKER_HOST):"
 echo "======================================================================"
 ssh_to 15 "$LOCKER_HOST" "cat /tmp/locker_test.log" || true
 echo "======================================================================"
+
+exit "$ROBOT_STATUS"
