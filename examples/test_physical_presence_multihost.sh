@@ -172,8 +172,12 @@ echo "[2/6] Building and starting Auth server on $AUTH_HOST..."
 ssh_to 60 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/auth && mvn -q -DskipTests package"
 ssh_to 15 "$AUTH_HOST" "pkill -f auth-server-jar-with-dependencies 2>/dev/null" || true
 sleep 1
+# stdin must never hit EOF: AuthCommandLine's interactive command loop reads
+# from stdin and shuts the whole Auth server down on EOF (readLine()==null).
+# /dev/zero blocks it in readLine() forever instead (/dev/null used to cause
+# an immediate shutdown-on-start race).
 start_remote_and_verify "$AUTH_HOST" \
-    "cd $REMOTE_REPO/auth/auth-server && setsid nohup java -jar target/auth-server-jar-with-dependencies.jar --properties ../properties/exampleAuth101.properties -s $PASSWORD > /tmp/auth_server_ada6000.log 2>&1 < /dev/null &" \
+    "cd $REMOTE_REPO/auth/auth-server && setsid nohup java -jar target/auth-server-jar-with-dependencies.jar --properties ../properties/exampleAuth101.properties -s $PASSWORD > /tmp/auth_server_ada6000.log 2>&1 < /dev/zero &" \
     "auth-server-jar-with-dependencies" "/tmp/auth_server_ada6000.log" "Auth Server" || exit 1
 
 echo ""
