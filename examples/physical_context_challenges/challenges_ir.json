@@ -63,7 +63,7 @@
           },
           "parameters": {
             "rounds": 128,
-            "max_delay_us": 1000,
+            "max_delay_us": 1300,
             "success_threshold": 0.8
           }
         }
