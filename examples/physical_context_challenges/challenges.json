@@ -46,14 +46,17 @@
           "id": "IR",
           "requirements": {
             "requester": {
+              "sensors": ["IR"],
               "actuators": ["IR"]
             },
             "target": {
+              "actuators": ["IR"],
               "sensors": ["IR"]
             }
           },
           "parameters": {
             "rounds": 128,
+            "success_threshold": 0.8,
             "max_delay_us": 1000
           }
         },

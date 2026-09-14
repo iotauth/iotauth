@@ -58,13 +58,13 @@ public class FeasibleChallengeMatcher {
 
         // Retain only sensors that are both registered in DB and currently active in runtime
         Set<String> effectiveReqSensors = new LinkedHashSet<>(registeredReqSensors);
-        if (!runtimeReqSensors.isEmpty()) {
+        if (requestResources != null && requestResources.containsKey("sensors")) {
             effectiveReqSensors.retainAll(runtimeReqSensors);
         }
 
         // Retain only actuators that are both registered in DB and currently active in runtime
         Set<String> effectiveReqActuators = new LinkedHashSet<>(registeredReqActuators);
-        if (!runtimeReqActuators.isEmpty()) {
+        if (requestResources != null && requestResources.containsKey("actuators")) {
             effectiveReqActuators.retainAll(runtimeReqActuators);
         }
 
@@ -180,6 +180,18 @@ public class FeasibleChallengeMatcher {
                         String methodID = (String) method.get("id");
                         JSONObject reqs = (JSONObject) method.get("requirements");
 
+                        if ("CO_LOCATION".equals(checkID) && "IR".equals(methodID)) {
+                            validateIRParameters((JSONObject) method.get("parameters"));
+                            if (!effectiveReqSensors.contains("IR") || !effectiveReqActuators.contains("IR")
+                                    || targetEntities.isEmpty()) continue;
+                            boolean allDuplex = true;
+                            for (RegisteredEntity target : targetEntities) {
+                                allDuplex &= parseResourcesFromEntity(target, "sensors").contains("IR")
+                                        && parseResourcesFromEntity(target, "actuators").contains("IR");
+                            }
+                            if (!allDuplex) continue;
+                        }
+
                         // Check if requester and target possess all required sensors/actuators for this method
                         if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
                             selectedMethod = new JSONObject();
@@ -209,6 +221,26 @@ public class FeasibleChallengeMatcher {
         }
         checkObj.put("selectedMethod", selectedMethod);
         return checkObj;
+    }
+
+    /** Wire threshold is an integer in millionths; never silently round a policy down. */
+    public static void validateIRParameters(JSONObject parameters) {
+        if (parameters == null) throw new IllegalArgumentException("Missing IR parameters");
+        try {
+            int rounds = new java.math.BigDecimal(parameters.get("rounds").toString()).intValueExact();
+            int delay = new java.math.BigDecimal(parameters.get("max_delay_us").toString()).intValueExact();
+            int threshold = new java.math.BigDecimal(parameters.get("success_threshold").toString())
+                    .movePointRight(6).intValueExact();
+            if ((rounds != 32 && rounds != 64 && rounds != 128)
+                    || delay <= 0 || delay > 1000000 || threshold <= 0 || threshold > 1000000)
+                throw new IllegalArgumentException("Invalid IR rounds, delay, or success threshold");
+            if (!(parameters.get("rounds") instanceof Number)
+                    || !(parameters.get("max_delay_us") instanceof Number)
+                    || !(parameters.get("success_threshold") instanceof Number))
+                throw new IllegalArgumentException("IR parameters must be JSON numbers");
+        } catch (NullPointerException | ArithmeticException e) {
+            throw new IllegalArgumentException("IR needs rounds, max_delay_us and success_threshold (up to 6 decimals)", e);
+        }
     }
 
     /**
