@@ -93,7 +93,7 @@
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
 			},
-			"host": "100.121.192.68",
+			"host": "100.123.107.48",
 			"backupToAuthIds": [],
 			"resources": {
 				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"],
