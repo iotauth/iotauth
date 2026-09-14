@@ -39,6 +39,7 @@ import org.iot.auth.config.constants.C;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.DistributionKey;
 import org.iot.auth.crypto.SessionKey;
+import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.*;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.DelegationInfoTable;
@@ -579,6 +580,12 @@ public class AuthServer {
                                                 SessionKeyPurpose sessionKeyPurpose)
             throws IOException, SQLException, ClassNotFoundException {
         return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy, sessionKeyPurpose, null);
+    }
+
+    public synchronized List<SessionKey> generateSessionKeys(String owner, int numKeys,
+            CommunicationPolicy policy, SessionKeyPurpose purpose, SymmetricKeyCryptoSpec cryptoSpec)
+            throws IOException, SQLException, ClassNotFoundException {
+        return db.generateSessionKeys(authID, owner, numKeys, policy, purpose, null, cryptoSpec);
     }
 
     /**
