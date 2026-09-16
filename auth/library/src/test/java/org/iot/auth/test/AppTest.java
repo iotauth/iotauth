@@ -724,7 +724,6 @@ public class AppTest {
         priv1.setSubjectGroup("net1.highTrustAgent");
         priv1.setObjectGroup("LowTrustAgents");
         priv1.setValidity("1*day");
-        priv1.setInfo("{\"note\":\"test delegation\"}");
         Assert.assertTrue(sqLiteConnector.insertRecords(priv1));
 
         DelegationPrivilegeTable priv2 = new DelegationPrivilegeTable();
@@ -733,7 +732,6 @@ public class AppTest {
         priv2.setSubjectGroup("net1.rcUser");
         priv2.setObjectGroup("Website");
         priv2.setValidity("2*hour");
-        priv2.setInfo("{\"note\":\"read privilege\"}");
         Assert.assertTrue(sqLiteConnector.insertRecords(priv2));
 
         List<DelegationPrivilegeTable> all = sqLiteConnector.selectAllPrivileges();

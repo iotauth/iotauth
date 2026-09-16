@@ -16,15 +16,13 @@ public class DelegationPrivilegeTable {
         PrivilegedGroup,
         SubjectGroup,
         ObjectGroup,
-        Validity,
-        Info
+        Validity
     }
     private String privilegeType;
     private String privilegedGroup;
     private String subjectGroup;
     private String objectGroup;
     private String validity;
-    private JSONObject info;
 
     public String getPrivilegeType() {
         return privilegeType;
@@ -59,17 +57,6 @@ public class DelegationPrivilegeTable {
         this.validity = validity;
     }
 
-    public JSONObject getInfo() {
-        return info;
-    }
-    public void setInfo(String info) {
-        try {
-            this.info = (JSONObject) new JSONParser().parse(info);
-        } catch (ParseException e) {
-            throw new IllegalArgumentException("Invalid JSON in Info column: " + info, e);
-        }
-    }
-
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
@@ -79,7 +66,6 @@ public class DelegationPrivilegeTable {
         object.put(c.SubjectGroup.name(), getSubjectGroup());
         object.put(c.ObjectGroup.name(), getObjectGroup());
         object.put(c.Validity.name(), getValidity());
-        object.put(c.Info.name(), getInfo());
         return object;
     }
     public static DelegationPrivilegeTable createRecord(ResultSet resultSet) throws SQLException, ParseException {
@@ -89,7 +75,6 @@ public class DelegationPrivilegeTable {
         delegationPrivilegeTable.setSubjectGroup(resultSet.getString(c.SubjectGroup.name()));
         delegationPrivilegeTable.setObjectGroup(resultSet.getString(c.ObjectGroup.name()));
         delegationPrivilegeTable.setValidity(resultSet.getString(c.Validity.name()));
-        delegationPrivilegeTable.setInfo(resultSet.getString(c.Info.name()));
         return delegationPrivilegeTable;
 
     }

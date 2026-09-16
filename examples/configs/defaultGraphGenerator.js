@@ -147,17 +147,12 @@ function populatePrivilegeList() {
         var privilege = {
             privilegeType: p[0],
             privilegedGroup: p[1],
-            subject: p[2],
-            object: p[3]
+            subjectGroup: p[2],
+            objectGroup: p[3]
         };
 
         if (p[0] == "DelegationGrant") {
             privilege.validity = "1*day";
-            privilege.info = {
-                cryptoSpec: "AES-128-CBC:SHA256",
-                absValidity: "1*day",
-                relValidity: "1*hour"
-            };
         }
 
         return privilege;

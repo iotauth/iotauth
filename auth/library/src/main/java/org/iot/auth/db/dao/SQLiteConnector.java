@@ -327,7 +327,6 @@ public class SQLiteConnector {
         sql += DelegationPrivilegeTable.c.SubjectGroup.name() + " TEXT NOT NULL,";
         sql += DelegationPrivilegeTable.c.ObjectGroup.name() + " TEXT NOT NULL,";
         sql += DelegationPrivilegeTable.c.Validity.name() + " TEXT,";
-        sql += DelegationPrivilegeTable.c.Info.name() + " TEXT,";
         sql += "PRIMARY KEY (" + DelegationPrivilegeTable.c.PrivilegeType.name() + ",";
         sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
         sql += DelegationPrivilegeTable.c.SubjectGroup.name() + ",";
@@ -697,9 +696,8 @@ public class SQLiteConnector {
         sql += DelegationPrivilegeTable.c.PrivilegedGroup.name() + ",";
         sql += DelegationPrivilegeTable.c.SubjectGroup.name() + ",";
         sql += DelegationPrivilegeTable.c.ObjectGroup.name() + ",";
-        sql += DelegationPrivilegeTable.c.Validity.name() + ",";
-        sql += DelegationPrivilegeTable.c.Info.name() + ")";
-        sql += " VALUES (?,?,?,?,?,?)";
+        sql += DelegationPrivilegeTable.c.Validity.name() + ")";
+        sql += " VALUES (?,?,?,?,?)";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         int index = 1;
         preparedStatement.setString(index++,delegationPrivilegeTable.getPrivilegeType());
@@ -707,11 +705,10 @@ public class SQLiteConnector {
         preparedStatement.setString(index++,delegationPrivilegeTable.getSubjectGroup());
         preparedStatement.setString(index++,delegationPrivilegeTable.getObjectGroup());
         preparedStatement.setString(index++,delegationPrivilegeTable.getValidity());
-        preparedStatement.setString(index++,String.valueOf(delegationPrivilegeTable.getInfo()));
-        logger.info("{} {} {} {} {} {}",
+        logger.info("{} {} {} {} {}",
                 delegationPrivilegeTable.getPrivilegeType(), delegationPrivilegeTable.getPrivilegedGroup(),
                 delegationPrivilegeTable.getSubjectGroup(), delegationPrivilegeTable.getObjectGroup(),
-                delegationPrivilegeTable.getValidity(), delegationPrivilegeTable.getInfo() );
+                delegationPrivilegeTable.getValidity());
         if (DEBUG) logger.info("{}",preparedStatement);
         int result = preparedStatement.executeUpdate();
         preparedStatement.close();

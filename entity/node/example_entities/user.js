@@ -67,6 +67,25 @@ if (process.argv.length > 5) {
     }
 }
 
+function parseTimePeriod(value) {
+    const match = /^([1-9]\d*)\*(sec|min|hour|day|week)$/.exec(value || '');
+    if (!match) throw new Error('Invalid period: ' + value);
+
+    const units = {
+        sec: 1000,
+        min: 60000,
+        hour: 3600000,
+        day: 86400000,
+        week: 604800000
+    };
+
+    const milliseconds = Number(match[1]) * units[match[2]];
+    if (!Number.isSafeInteger(milliseconds)) {
+        throw new Error('Time period exceeds the supported range: ' + value);
+    }
+    return milliseconds;
+}
+
 function commandInterpreter() {
     let chunk;
     const entityInfo = secureCommClient.getEntityInfo();
@@ -149,14 +168,25 @@ function commandInterpreter() {
         }
         else if (command == "delegateAuthority"){
             console.log('delegateAuthority (Perform privilege to grant delegation authority) command');
-            console.log('Enter the delegatee(subjectGroup) delegated(objectGroup) validity');
+            console.log('Enter the delegatee(subjectGroup) delegated(objectGroup) validity absValidity relValidity');
             var spec = message.split(' ');
             var subjectGroup = spec[0];
             var objectGroup = spec[1];
-            var validity = spec[2];
+            var expiration = spec[2];
+            var absValidity = spec[3];
+            var relValidity = spec[4];
 
-            console.log(spec + " / subjectGroup: " + subjectGroup + " / objectGroup: " + objectGroup + " / validity: " + validity);
-            secureCommClient.performPrivilege("DelegationGrant", subjectGroup, objectGroup, validity);
+            console.log(spec + " / subjectGroup: " + subjectGroup + " / objectGroup: " + objectGroup + " / expiration: " + expiration
+                        + " / absValidity: " + absValidity + " / relValidity: " + relValidity);
+            try {
+                parseTimePeriod(expiration);
+                parseTimePeriod(absValidity);
+                parseTimePeriod(relValidity);
+            } catch (error) {
+                console.log(error.message);
+                return;
+            }
+            secureCommClient.performPrivilege("DelegationGrant", subjectGroup, objectGroup, expiration, absValidity, relValidity);
         }
         else if (command == "revoke"){
             console.log('revoke (Perform privilege to revoke delegation authority) command');

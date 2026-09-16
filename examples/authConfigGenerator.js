@@ -153,8 +153,7 @@ function getPrivilegePolicy(entity){
         PrivilegedGroup: entity.privilegedGroup,
         SubjectGroup: entity.subjectGroup,
         ObjectGroup: entity.objectGroup,
-        Validity: entity.validity,
-        Info: entity.info
+        Validity: entity.validity
     }
     return privilegePolicy;
 }

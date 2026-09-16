@@ -30,7 +30,6 @@ public class DelegationPrivilege {
         this.subjectGroup = delegationPrivilegeTable.getSubjectGroup();
         this.objectGroup = delegationPrivilegeTable.getObjectGroup();
         this.validity = delegationPrivilegeTable.getValidity();
-        this.info = delegationPrivilegeTable.getInfo();
     }
 
     public String getPrivilegeType() {
@@ -48,13 +47,10 @@ public class DelegationPrivilege {
     public String getValidity() {
         return validity;
     }
-    public JSONObject getInfo() {
-        return info;
-    }
 
     public String toString() {
         return "PrivilegeType: " + privilegeType + "\tprivilegedGroup: " + privilegedGroup + "\tSubjectGroup: " + subjectGroup +
-                "\tObjectGroup: " + objectGroup + "\tValidity: " + validity + "\tInfo: " + info ;
+                "\tObjectGroup: " + objectGroup + "\tValidity: " + validity ;
     }
 
 
@@ -63,5 +59,4 @@ public class DelegationPrivilege {
     private String subjectGroup;
     private String objectGroup;
     private String validity;
-    private JSONObject info;
 }

@@ -471,19 +471,12 @@ public class AuthCommandLine extends Thread  {
             validity = "1*day";
         }
 
-        logger.info("\nEnter info as JSON [Default: {}]:");
-        String infoStr = br.readLine();
-        if (infoStr.isEmpty()) {
-            infoStr = "{}";
-        }
-
         DelegationPrivilegeTable table = new DelegationPrivilegeTable();
         table.setPrivilegeType(privilegeType);
         table.setprivilegedGroup(privilegedGroup);
         table.setSubjectGroup(subject);
         table.setObjectGroup(object);
         table.setValidity(validity);
-        table.setInfo(infoStr);
         return table;
     }
 

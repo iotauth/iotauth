@@ -330,7 +330,6 @@ public class GenerateExampleAuthDB {
                 delegationPrivilegeTable.setSubjectGroup((String)jsonObject.get(DelegationPrivilegeTable.c.SubjectGroup.name()));
                 delegationPrivilegeTable.setObjectGroup((String)jsonObject.get(DelegationPrivilegeTable.c.ObjectGroup.name()));
                 delegationPrivilegeTable.setValidity((String)jsonObject.get(DelegationPrivilegeTable.c.Validity.name()));
-                delegationPrivilegeTable.setInfo(String.valueOf(jsonObject.get(DelegationPrivilegeTable.c.Info.name())));
                 sqLiteConnector.insertRecords(delegationPrivilegeTable);
             }
         }

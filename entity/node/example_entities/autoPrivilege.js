@@ -20,7 +20,7 @@ function errorHandler(error) {
     console.log("Handler error:", error);
 }
 
-async function runPrivilegeTest(nodeConfig, type, subject, object, validity, timeoutMs = 10000) {
+async function runPrivilegeTest(nodeConfig, type, subject, object, validity, absValidity, relValidity, timeoutMs = 10000) {
     const client = new SecureCommClient(nodeConfig);
     client.initialize();
 
@@ -30,12 +30,13 @@ async function runPrivilegeTest(nodeConfig, type, subject, object, validity, tim
     let lastError = null;
 
     console.log(
-        `Privilege request: ${nodeConfig} | type=${type}, subject=${subject}, object=${object}, validity=${validity}`
+        `Privilege request: ${nodeConfig} | type=${type}, subject=${subject}, object=${object}, 
+        validity=${validity}, absValidity=${absValidity} ,relValidity=${relValidity}`
     );
 
     const startNs = process.hrtime.bigint();
 
-    client.performPrivilege(type, subject, object, validity);
+    client.performPrivilege(type, subject, object, validity, absValidity, relValidity);
 
     const deadline = Date.now() + timeoutMs;
 
@@ -109,6 +110,8 @@ async function main() {
         subject: t.subject,
         object: t.object,
         validity: t.validity || defaultValidity,
+        absValidity: t.absValidity || defaultAbsValidity,
+        relValidity: t.relValidity || defaultRelValidity,
         timeoutMs: t.timeoutMs || defaultTimeoutMs,
     }));
 
@@ -123,6 +126,8 @@ async function main() {
                 test.subject,
                 test.object,
                 test.validity,
+                test.absValidity,
+                test.relValidity,
                 test.timeoutMs
             )
         );
