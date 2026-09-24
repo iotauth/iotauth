@@ -59,7 +59,10 @@ var authList = graph.authList;
 
 for (var i = 0; i < authList.length; i++) {
 	var auth = authList[i];
-	execFileSync('java', ['-jar', 'init-example-auth-db-jar-with-dependencies.jar', '-i', auth.id, '-d', auth.dbProtectionMethod]);
+	execFileSync('java', ['-jar', 'init-example-auth-db-jar-with-dependencies.jar', '-i', auth.id, '-d', auth.dbProtectionMethod],
+		{
+			stdio: 'inherit'
+		});
 }
 fs.rmSync('init-example-auth-db-jar-with-dependencies.jar');
 
