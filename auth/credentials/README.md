@@ -15,6 +15,15 @@
 
 (Separated genrsa and req processes, no more need for password)
 
+### ⚠️ Note on CA certificate extensions
+---
+`-extensions v3_ca` alone doesn't guarantee `[v3_ca]` is defined — it depends on the system's default OpenSSL config, which varies by environment. If missing, `CACert.pem` lacks `BasicConstraints: CA:true`, causing Auth-to-Auth TLS handshakes to fail (Java's PKIX validator rejects non-CA trust anchors).
+
+Fix: added `ca.cnf` defining `[v3_ca]` explicitly, and pass it via `-extfile` so the extension is always applied regardless of environment.
+
+`generateCACredentials.sh` now explicitly passes `-extfile ca.cnf` to avoid this environment dependency:
+`openssl x509 -req -in CAReq.pem -sha256 -extensions v3_ca -extfile ca.cnf -signkey CAKey.pem -out CACert.pem -days 730`
+
 ### To check subjet, issuer, validity period of a certificate
 ---
 openssl x509 -noout -startdate -enddate -subject -issuer -in CACert.pem 
