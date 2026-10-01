@@ -1,0 +1,179 @@
+{
+	"authList": [
+		{
+			"id": 101,
+			"entityHost": "localhost",
+			"authHost": "localhost",
+			"tcpPort": 21900,
+			"udpPort": 21902,
+			"authPort": 21901,
+			"callbackPort": 21903,
+			"dbProtectionMethod": 1,
+			"backupEnabled": false,
+			"contextualCallbackEnabled": true
+		},
+        {
+            "id": 102,
+            "entityHost": "localhost",
+            "authHost": "localhost",
+            "tcpPort": 22900,
+            "udpPort": 22902,
+            "authPort": 22901,
+            "callbackPort": 22903,
+            "dbProtectionMethod": 1,
+            "backupEnabled": false,
+            "contextualCallbackEnabled": true
+        }
+	],
+	"authTrusts": [
+        {
+            "id1": 101,
+            "id2": 102
+        }
+    ],
+	"assignments": {
+		"net1.client": 101,
+		"net1.server": 101,
+		"net2.server": 102,
+		"net1.adminClient": 101,
+		"net1.adminServer": 101
+	},
+	"entityList": [
+		{
+			"group": "Clients",
+			"name": "net1.client",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.Client",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net2.server", "host": "localhost", "port": 22100, "group": "Servers"}
+			],
+			"contextList": []
+		},
+		{
+            "group": "Servers",
+            "name": "net1.server",
+            "port": 21100,
+            "distProtocol": "TCP",
+            "usePermanentDistKey": false,
+            "distKeyValidityPeriod": "1*hour",
+            "maxSessionKeysPerRequest": 1,
+            "netName": "net1",
+            "credentialPrefix": "Net1.Server",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "host": "localhost",
+            "backupToAuthIds": []
+        },
+		{
+			"group": "Servers",
+			"name": "net2.server",
+			"port": 22100,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net2",
+			"credentialPrefix": "Net2.Server",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": []
+		},
+		{
+			"group": "AdminClients",
+			"name": "net1.adminClient",
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 5,
+			"netName": "net1",
+			"credentialPrefix": "Net1.AdminClient",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"backupToAuthIds": [],
+			"targetServerInfoList": [
+				{"name": "net1.adminServer", "host": "localhost", "port": 21200, "group": "AdminServers"}
+			]
+		},
+		{
+			"group": "AdminServers",
+			"name": "net1.adminServer",
+			"port": 21200,
+			"distProtocol": "TCP",
+			"usePermanentDistKey": false,
+			"distKeyValidityPeriod": "1*hour",
+			"maxSessionKeysPerRequest": 1,
+			"netName": "net1",
+			"credentialPrefix": "Net1.AdminServer",
+			"distributionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"sessionCryptoSpec": {
+				"cipher": "AES-128-CBC",
+				"mac": "SHA256"
+			},
+			"host": "localhost",
+			"backupToAuthIds": []
+		}
+	],
+	"filesharingLists": [],
+	"privilegeList": [],
+	"commPolicies": [
+		{
+			"RequestingGroup": "Clients",
+			"TargetType": "Group",
+			"Target": "Servers",
+			"MaxNumSessionKeyOwners": 2,
+			"SessionCryptoSpec": "AES-128-CBC:SHA256",
+			"AbsoluteValidity": "1*day",
+			"RelativeValidity": "2*hour",
+			"Expiration": "Infinity",
+			"IsDelegated": 0,
+			"Context": null
+		},
+		{
+			"RequestingGroup": "AdminClients",
+			"TargetType": "Group",
+			"Target": "AdminServers",
+			"MaxNumSessionKeyOwners": 2,
+			"SessionCryptoSpec": "AES-128-CBC:SHA256",
+			"AbsoluteValidity": "1*day",
+			"RelativeValidity": "2*hour",
+			"Expiration": "Infinity",
+			"IsDelegated": 0,
+			"Context": null
+		}
+	]
+}

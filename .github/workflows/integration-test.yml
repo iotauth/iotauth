@@ -32,6 +32,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          repository: iotauth/iotauth
+          ref: ${{ github.repository == 'iotauth/iotauth' && github.sha || 'main' }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
