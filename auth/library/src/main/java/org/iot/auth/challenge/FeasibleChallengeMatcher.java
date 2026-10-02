@@ -48,6 +48,13 @@ public class FeasibleChallengeMatcher {
 
         JSONObject result = new JSONObject();
         result.put("requester", requestingEntity.getName());
+        // Named by Auth so endpoints can bind physical checks (e.g. the ultrasound
+        // echo's MAC) to both parties without trusting a peer's claim.
+        JSONArray targetNames = new JSONArray();
+        for (RegisteredEntity target : targetEntities) {
+            targetNames.add(target.getName());
+        }
+        result.put("targets", targetNames);
 
         // Step 1: Calculate Requester Effective Capabilities (Registered Capabilities INTERSECT Dynamic Runtime Resources)
         Set<String> registeredReqSensors = parseResourcesFromEntity(requestingEntity, "sensors");
@@ -191,6 +198,18 @@ public class FeasibleChallengeMatcher {
                             }
                             if (!allDuplex) continue;
                         }
+                        // The acoustic keyed echo is pairwise and mutual: exactly one
+                        // target, and each endpoint both plays and records.
+                        if ("CO_LOCATION".equals(checkID) && "ULTRASOUND".equals(methodID)) {
+                            validateUltrasoundEchoParameters((JSONObject) method.get("parameters"));
+                            if (!effectiveReqSensors.contains("UltraSound")
+                                    || !effectiveReqActuators.contains("UltraSound")
+                                    || targetEntities.size() != 1) continue;
+                            RegisteredEntity target = targetEntities.get(0);
+                            if (!parseResourcesFromEntity(target, "sensors").contains("UltraSound")
+                                    || !parseResourcesFromEntity(target, "actuators").contains("UltraSound"))
+                                continue;
+                        }
 
                         // Check if requester and target possess all required sensors/actuators for this method
                         if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
@@ -221,6 +240,30 @@ public class FeasibleChallengeMatcher {
         }
         checkObj.put("selectedMethod", selectedMethod);
         return checkObj;
+    }
+
+    /**
+     * Ultrasound keyed echo settings: max_response_us (longest accepted challenge-to-decode
+     * time, 1..60,000,000 us) and response_timeout_ms (when the verifier stops listening,
+     * 1..60,000 ms, never shorter than the acceptance limit). Both must be JSON integers. The
+     * old ULTRASOUND entry's rounds/max_delay_us are not echo settings and are rejected rather
+     * than reinterpreted. Mirrors ultrasonic_echo_plan_config() on the endpoints.
+     */
+    public static void validateUltrasoundEchoParameters(JSONObject parameters) {
+        if (parameters == null) throw new IllegalArgumentException("Missing ultrasound echo parameters");
+        for (String legacy : new String[]{"rounds", "max_delay_us", "success_threshold"}) {
+            if (parameters.containsKey(legacy))
+                throw new IllegalArgumentException("Ultrasound echo does not take " + legacy);
+        }
+        Object response = parameters.get("max_response_us");
+        Object timeout = parameters.get("response_timeout_ms");
+        if (!(response instanceof Long) || !(timeout instanceof Long))
+            throw new IllegalArgumentException(
+                    "Ultrasound echo needs integer max_response_us and response_timeout_ms");
+        long responseUs = (Long) response, timeoutMs = (Long) timeout;
+        if (responseUs < 1 || responseUs > 60_000_000L || timeoutMs < 1 || timeoutMs > 60_000L
+                || timeoutMs * 1000 < responseUs)
+            throw new IllegalArgumentException("Invalid ultrasound echo max_response_us or response_timeout_ms");
     }
 
     /** Wire threshold is an integer in millionths; never silently round a policy down. */
