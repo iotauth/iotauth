@@ -10,7 +10,7 @@
 # Usage:
 #   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound|bluetooth]
 #                                         [--generate]
-#                                         [--ir-hk | --ultrasound-echo | --ble-rssi]
+#                                         [--ir-hk | --ultrasound-echo | --ble-rssi | --uwb]
 #                                         [--echo-test-delay-ms N]
 #
 #   --comm_type   Transport for the Robot<->Locker handshake (default: tcp).
@@ -34,6 +34,12 @@
 #                 With --generate, select the BLE-only catalog. Succeeds only
 #                 if, in this same run, both Robot and Locker logged their own
 #                 RSSI PASS.
+#   --uwb         Require the mutual UWB ranging check for CO_LOCATION after a
+#                 TCP handshake (--comm_type tcp only), using the DWM3001CDK
+#                 on each Pi (nRF52 USB port J20, CLI firmware). With
+#                 --generate, select the UWB-only catalog. Succeeds only if,
+#                 in this same run, both Robot and Locker logged their own
+#                 ranging PASS.
 #   --echo-test-delay-ms N
 #                 Timing test only: Locker delays its acoustic answer by N ms,
 #                 so Robot's measurement of Locker should fail past the limit.
@@ -77,6 +83,7 @@ IR_HK=false
 ECHO=false
 ECHO_TEST_DELAY_MS=0
 BLE=false
+UWB=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --comm_type) COMM_TYPE="$2"; shift 2 ;;
@@ -84,6 +91,7 @@ while [[ $# -gt 0 ]]; do
         --ultrasound-echo) ECHO=true; shift ;;
         --echo-test-delay-ms) ECHO_TEST_DELAY_MS="$2"; shift 2 ;;
         --ble-rssi) BLE=true; shift ;;
+        --uwb) UWB=true; shift ;;
         --generate) GENERATE=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
@@ -94,6 +102,10 @@ if [ "$ECHO" = true ] && { [ "$IR_HK" = true ] || [ "$COMM_TYPE" != "tcp" ]; }; 
 fi
 if [ "$BLE" = true ] && { [ "$IR_HK" = true ] || [ "$ECHO" = true ] || [ "$COMM_TYPE" != "bluetooth" ]; }; then
     echo "--ble-rssi runs after a Bluetooth handshake only (--comm_type bluetooth), alone."
+    exit 1
+fi
+if [ "$UWB" = true ] && { [ "$IR_HK" = true ] || [ "$ECHO" = true ] || [ "$BLE" = true ] || [ "$COMM_TYPE" != "tcp" ]; }; then
+    echo "--uwb runs after a TCP handshake only, alone."
     exit 1
 fi
 
@@ -146,6 +158,10 @@ if [ "$ECHO" = true ]; then
         LOCKER_EXTRA_ARGS="$LOCKER_EXTRA_ARGS --ultrasound-echo-test-delay-ms $ECHO_TEST_DELAY_MS"
     fi
 fi
+if [ "$UWB" = true ]; then
+    HK_ARGS="--require-uwb"
+    CHALLENGE_CATALOG="physical_context_challenges/challenges_uwb.json"
+fi
 if [ "$BLE" = true ]; then
     HK_ARGS="--require-ble-rssi"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_ble.json"
@@ -179,12 +195,12 @@ scp_between() {
 
 echo "======================================================================"
 echo " Auth: $AUTH_HOST   Robot: $ROBOT_HOST   Locker: $LOCKER_HOST"
-echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  ultrasound_echo=$ECHO  ble_rssi=$BLE"
+echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  ultrasound_echo=$ECHO  ble_rssi=$BLE  uwb=$UWB"
 if [ "$ECHO" = true ]; then
     echo " catalog=$CHALLENGE_CATALOG  echo_test_delay_ms=$ECHO_TEST_DELAY_MS"
     echo " robot mic=$ROBOT_MIC spk=$ROBOT_SPK | locker mic=$LOCKER_MIC spk=$LOCKER_SPK"
 fi
-if [ "$BLE" = true ]; then
+if [ "$BLE" = true ] || [ "$UWB" = true ]; then
     echo " catalog=$CHALLENGE_CATALOG"
 fi
 echo " run_id=$RUN_ID  locker_log=$LOCKER_LOG"
@@ -304,7 +320,7 @@ ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
 ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
 # Record exactly which sources were built (the Pis' entity/c may carry
 # uncommitted, scp-synced files).
-VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_rssi.c bluetooth_com/bt_sst_handshake.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
+VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_rssi.c bluetooth_com/bt_sst_handshake.c uwb_com/uwb_range.c uwb_com/uwb_cli_dev.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
 for host in "$ROBOT_HOST" "$LOCKER_HOST"; do
     echo "--- sources on $host ---"
     ssh_to 15 "$host" "$VERSION_CMD" || true
@@ -388,6 +404,22 @@ if [ "$BLE" = true ]; then
         fi
     done
     if [ "$ROBOT_STATUS" = 0 ] && [ "$BLE_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
+fi
+if [ "$UWB" = true ]; then
+    # Same rule: each endpoint's own ranging must pass.
+    UWB_STATUS=0
+    echo ""
+    echo "UWB ranging results (this run):"
+    for side in Robot Locker; do
+        log="$ROBOT_LOCAL_LOG"; [ "$side" = Locker ] && log="$LOCKER_LOCAL_LOG"
+        grep -hE "UWB RANGE: (samples=|peer_median)" "$log" | sed "s/^/  [$side] /" || true
+        if ! grep -q "UWB RANGE: samples=.*local=PASS" "$log" ||
+           ! grep -q "UWB RANGE: peer_median.*result=PASS" "$log"; then
+            echo "  [$side] did not report its own UWB ranging PASS in this run."
+            UWB_STATUS=1
+        fi
+    done
+    if [ "$ROBOT_STATUS" = 0 ] && [ "$UWB_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
 fi
 rm -f "$ROBOT_LOCAL_LOG" "$LOCKER_LOCAL_LOG"
 

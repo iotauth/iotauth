@@ -94,6 +94,24 @@
             "samples": 20,
             "interval_ms": 100
           }
+        },
+        {
+          "id": "UWB",
+          "requirements": {
+            "requester": {
+              "sensors": ["UWB"],
+              "actuators": ["UWB"]
+            },
+            "target": {
+              "sensors": ["UWB"],
+              "actuators": ["UWB"]
+            }
+          },
+          "parameters": {
+            "max_distance_cm": 150,
+            "samples": 20,
+            "timeout_ms": 10000
+          }
         }
       ]
     },
