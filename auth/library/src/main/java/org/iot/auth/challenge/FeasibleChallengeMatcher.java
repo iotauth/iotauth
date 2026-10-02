@@ -210,6 +210,17 @@ public class FeasibleChallengeMatcher {
                                     || !parseResourcesFromEntity(target, "actuators").contains("UltraSound"))
                                 continue;
                         }
+                        // BLE RSSI is pairwise and mutual too: each endpoint samples the LE link
+                        // that carries the session, so both need a BLE radio.
+                        if ("CO_LOCATION".equals(checkID) && "BLE_RSSI".equals(methodID)) {
+                            validateBleRssiParameters((JSONObject) method.get("parameters"));
+                            if (!effectiveReqSensors.contains("BLE") || !effectiveReqActuators.contains("BLE")
+                                    || targetEntities.size() != 1) continue;
+                            RegisteredEntity target = targetEntities.get(0);
+                            if (!parseResourcesFromEntity(target, "sensors").contains("BLE")
+                                    || !parseResourcesFromEntity(target, "actuators").contains("BLE"))
+                                continue;
+                        }
 
                         // Check if requester and target possess all required sensors/actuators for this method
                         if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
@@ -264,6 +275,23 @@ public class FeasibleChallengeMatcher {
         if (responseUs < 1 || responseUs > 60_000_000L || timeoutMs < 1 || timeoutMs > 60_000L
                 || timeoutMs * 1000 < responseUs)
             throw new IllegalArgumentException("Invalid ultrasound echo max_response_us or response_timeout_ms");
+    }
+
+    /**
+     * BLE RSSI settings: min_rssi_dbm (PASS when an endpoint's median RSSI is at least this,
+     * -127..20 dBm), samples (RSSI reads per endpoint, 1..1000) and interval_ms (between reads,
+     * 0..1000). All must be JSON integers. Mirrors bt_rssi_plan_config() on the endpoints.
+     */
+    public static void validateBleRssiParameters(JSONObject parameters) {
+        if (parameters == null) throw new IllegalArgumentException("Missing BLE RSSI parameters");
+        Object minRssi = parameters.get("min_rssi_dbm");
+        Object samples = parameters.get("samples");
+        Object interval = parameters.get("interval_ms");
+        if (!(minRssi instanceof Long) || !(samples instanceof Long) || !(interval instanceof Long))
+            throw new IllegalArgumentException("BLE RSSI needs integer min_rssi_dbm, samples and interval_ms");
+        long m = (Long) minRssi, n = (Long) samples, i = (Long) interval;
+        if (m < -127 || m > 20 || n < 1 || n > 1000 || i < 0 || i > 1000)
+            throw new IllegalArgumentException("Invalid BLE RSSI min_rssi_dbm, samples or interval_ms");
     }
 
     /** Wire threshold is an integer in millionths; never silently round a policy down. */

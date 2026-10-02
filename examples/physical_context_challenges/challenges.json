@@ -76,6 +76,24 @@
             "max_response_us": 10000000,
             "response_timeout_ms": 10000
           }
+        },
+        {
+          "id": "BLE_RSSI",
+          "requirements": {
+            "requester": {
+              "sensors": ["BLE"],
+              "actuators": ["BLE"]
+            },
+            "target": {
+              "sensors": ["BLE"],
+              "actuators": ["BLE"]
+            }
+          },
+          "parameters": {
+            "min_rssi_dbm": -60,
+            "samples": 20,
+            "interval_ms": 100
+          }
         }
       ]
     },
@@ -108,6 +126,20 @@
             },
             "target": {
               "sensors": ["UltraSound"]
+            }
+          },
+          "parameters": {}
+        },
+        {
+          "id": "BLE",
+          "requirements": {
+            "requester": {
+              "sensors": ["BLE"],
+              "actuators": ["BLE"]
+            },
+            "target": {
+              "sensors": ["BLE"],
+              "actuators": ["BLE"]
             }
           },
           "parameters": {}

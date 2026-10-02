@@ -8,8 +8,9 @@
 #   Locker -> pi43@pi43
 #
 # Usage:
-#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound] [--generate]
-#                                         [--ir-hk | --ultrasound-echo]
+#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound|bluetooth]
+#                                         [--generate]
+#                                         [--ir-hk | --ultrasound-echo | --ble-rssi]
 #                                         [--echo-test-delay-ms N]
 #
 #   --comm_type   Transport for the Robot<->Locker handshake (default: tcp).
@@ -28,6 +29,11 @@
 #                 Audio devices default to the USB mic/speaker card names
 #                 (card numbers differ between the Pis); override with
 #                 ROBOT_MIC/ROBOT_SPK/LOCKER_MIC/LOCKER_SPK env vars.
+#   --ble-rssi    Require the mutual BLE RSSI proximity check for CO_LOCATION
+#                 after a Bluetooth handshake (--comm_type bluetooth only).
+#                 With --generate, select the BLE-only catalog. Succeeds only
+#                 if, in this same run, both Robot and Locker logged their own
+#                 RSSI PASS.
 #   --echo-test-delay-ms N
 #                 Timing test only: Locker delays its acoustic answer by N ms,
 #                 so Robot's measurement of Locker should fail past the limit.
@@ -38,7 +44,7 @@
 #
 # Assumes:
 #   - Passwordless SSH to all three hosts, and passwordless sudo on Robot and
-#     Locker (only needed for --comm_type ir).
+#     Locker (only needed for --comm_type ir or bluetooth).
 #   - ~/project/iotauth checked out on the physical branch on all three hosts,
 #     with matching robot.c/locker.c code already pushed/pulled there. This
 #     script (re)builds robot/locker on pi42/pi43 on every run.
@@ -70,18 +76,24 @@ GENERATE=false
 IR_HK=false
 ECHO=false
 ECHO_TEST_DELAY_MS=0
+BLE=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --comm_type) COMM_TYPE="$2"; shift 2 ;;
         --ir-hk) IR_HK=true; shift ;;
         --ultrasound-echo) ECHO=true; shift ;;
         --echo-test-delay-ms) ECHO_TEST_DELAY_MS="$2"; shift 2 ;;
+        --ble-rssi) BLE=true; shift ;;
         --generate) GENERATE=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 if [ "$ECHO" = true ] && { [ "$IR_HK" = true ] || [ "$COMM_TYPE" != "tcp" ]; }; then
     echo "--ultrasound-echo runs after a TCP handshake only, and not with --ir-hk."
+    exit 1
+fi
+if [ "$BLE" = true ] && { [ "$IR_HK" = true ] || [ "$ECHO" = true ] || [ "$COMM_TYPE" != "bluetooth" ]; }; then
+    echo "--ble-rssi runs after a Bluetooth handshake only (--comm_type bluetooth), alone."
     exit 1
 fi
 
@@ -101,8 +113,9 @@ ROBOT_LOCAL_LOG="$(mktemp -t robot_test.XXXXXX)"
 
 PROJ_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-# pigpio (needed for --comm_type ir) requires direct GPIO access, so Robot
-# and Locker must run as root for either IR handshake or IR HK.
+# pigpio (needed for --comm_type ir) requires direct GPIO access, and
+# Bluetooth advertising/raw HCI commands need CAP_NET_ADMIN, so Robot and
+# Locker run as root for IR or Bluetooth.
 SUDO_PREFIX=""
 ROBOT_TIMEOUT=90
 HK_ARGS=""
@@ -118,6 +131,9 @@ if [ "$COMM_TYPE" = "ir" ] || [ "$IR_HK" = true ]; then
     # retries need much more headroom than ultrasound/tcp do.
     ROBOT_TIMEOUT=450
 fi
+if [ "$COMM_TYPE" = "bluetooth" ]; then
+    SUDO_PREFIX="sudo "
+fi
 ROBOT_EXTRA_ARGS=""
 LOCKER_EXTRA_ARGS=""
 if [ "$ECHO" = true ]; then
@@ -129,6 +145,10 @@ if [ "$ECHO" = true ]; then
     if [ "$ECHO_TEST_DELAY_MS" != 0 ]; then
         LOCKER_EXTRA_ARGS="$LOCKER_EXTRA_ARGS --ultrasound-echo-test-delay-ms $ECHO_TEST_DELAY_MS"
     fi
+fi
+if [ "$BLE" = true ]; then
+    HK_ARGS="--require-ble-rssi"
+    CHALLENGE_CATALOG="physical_context_challenges/challenges_ble.json"
 fi
 
 # Runs a command with a hard wall-clock timeout. Portable bash implementation
@@ -159,10 +179,13 @@ scp_between() {
 
 echo "======================================================================"
 echo " Auth: $AUTH_HOST   Robot: $ROBOT_HOST   Locker: $LOCKER_HOST"
-echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  ultrasound_echo=$ECHO"
+echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  ultrasound_echo=$ECHO  ble_rssi=$BLE"
 if [ "$ECHO" = true ]; then
     echo " catalog=$CHALLENGE_CATALOG  echo_test_delay_ms=$ECHO_TEST_DELAY_MS"
     echo " robot mic=$ROBOT_MIC spk=$ROBOT_SPK | locker mic=$LOCKER_MIC spk=$LOCKER_SPK"
+fi
+if [ "$BLE" = true ]; then
+    echo " catalog=$CHALLENGE_CATALOG"
 fi
 echo " run_id=$RUN_ID  locker_log=$LOCKER_LOG"
 echo "======================================================================"
@@ -267,7 +290,8 @@ scp_between 15 "$PROJ_ROOT/entity/c/examples/physical_presence/locker_pi43.confi
 
 echo ""
 echo "[4/6] Building Robot on $ROBOT_HOST and Locker on $LOCKER_HOST..."
-# libasound2-dev is required to link the ultrasound (ggwave/ALSA) transport;
+# libasound2-dev is required to link the ultrasound (ggwave/ALSA) transport,
+# and libbluetooth-dev the Bluetooth one;
 # apt is a no-op if it's already installed. pigpio (for --comm_type ir) is
 # NOT an apt package and isn't installed here -- see
 # entity/c/ir_com/run_ir_test.sh for its manual install steps; CMake just
@@ -275,16 +299,27 @@ echo "[4/6] Building Robot on $ROBOT_HOST and Locker on $LOCKER_HOST..."
 # wiped instead of reused so a stale CMakeCache.txt never masks
 # find_library() results from a previous run (e.g. before libasound2-dev or
 # pigpio was installed).
-BUILD_CMD="sudo apt-get install -y libasound2-dev && cd $REMOTE_REPO/entity/c/examples/physical_presence && rm -rf build && mkdir build && cd build && cmake .. && make -j"
+BUILD_CMD="sudo apt-get install -y libasound2-dev libbluetooth-dev && cd $REMOTE_REPO/entity/c/examples/physical_presence && rm -rf build && mkdir build && cd build && cmake .. && make -j"
 ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
 ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
 # Record exactly which sources were built (the Pis' entity/c may carry
 # uncommitted, scp-synced files).
-VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
+VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_rssi.c bluetooth_com/bt_sst_handshake.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
 for host in "$ROBOT_HOST" "$LOCKER_HOST"; do
     echo "--- sources on $host ---"
     ssh_to 15 "$host" "$VERSION_CMD" || true
 done
+
+if [ "$COMM_TYPE" = "bluetooth" ]; then
+    # Bluetooth is soft-blocked by default on these Pis. Robot connects to
+    # Locker by its public LE address, read from Locker itself.
+    BT_UP_CMD="for r in /sys/class/rfkill/rfkill*; do if [ \"\$(cat \$r/type)\" = bluetooth ]; then echo 0 | sudo tee \$r/soft > /dev/null; fi; done; bluetoothctl power on > /dev/null"
+    ssh_to 20 "$ROBOT_HOST" "$BT_UP_CMD"
+    ssh_to 20 "$LOCKER_HOST" "$BT_UP_CMD"
+    LOCKER_BT_ADDR=$(ssh_to 15 "$LOCKER_HOST" "hciconfig hci0 | awk '/BD Address/ {print \$3}'")
+    echo "Locker Bluetooth address: $LOCKER_BT_ADDR"
+    ROBOT_EXTRA_ARGS="$ROBOT_EXTRA_ARGS --bt-peer $LOCKER_BT_ADDR"
+fi
 
 echo ""
 echo "[5/6] Starting Locker on $LOCKER_HOST (--comm_type $COMM_TYPE)..."
@@ -337,6 +372,22 @@ if [ "$ECHO" = true ]; then
         fi
     done
     if [ "$ROBOT_STATUS" = 0 ] && [ "$ECHO_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
+fi
+if [ "$BLE" = true ]; then
+    # Same rule as the echo: each endpoint's own RSSI check must pass.
+    BLE_STATUS=0
+    echo ""
+    echo "BLE RSSI results (this run):"
+    for side in Robot Locker; do
+        log="$ROBOT_LOCAL_LOG"; [ "$side" = Locker ] && log="$LOCKER_LOCAL_LOG"
+        grep -hE "BLE RSSI: (samples=|peer_median)" "$log" | sed "s/^/  [$side] /" || true
+        if ! grep -q "BLE RSSI: samples=.*local=PASS" "$log" ||
+           ! grep -q "BLE RSSI: peer_median.*result=PASS" "$log"; then
+            echo "  [$side] did not report its own BLE RSSI PASS in this run."
+            BLE_STATUS=1
+        fi
+    done
+    if [ "$ROBOT_STATUS" = 0 ] && [ "$BLE_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
 fi
 rm -f "$ROBOT_LOCAL_LOG" "$LOCKER_LOCAL_LOG"
 
