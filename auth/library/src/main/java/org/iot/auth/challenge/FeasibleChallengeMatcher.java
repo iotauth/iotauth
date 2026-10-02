@@ -210,6 +210,17 @@ public class FeasibleChallengeMatcher {
                                     || !parseResourcesFromEntity(target, "actuators").contains("UltraSound"))
                                 continue;
                         }
+                        // UWB ranging is pairwise and mutual: each endpoint initiates once
+                        // and responds once, so both need a UWB radio.
+                        if ("CO_LOCATION".equals(checkID) && "UWB".equals(methodID)) {
+                            validateUwbParameters((JSONObject) method.get("parameters"));
+                            if (!effectiveReqSensors.contains("UWB") || !effectiveReqActuators.contains("UWB")
+                                    || targetEntities.size() != 1) continue;
+                            RegisteredEntity target = targetEntities.get(0);
+                            if (!parseResourcesFromEntity(target, "sensors").contains("UWB")
+                                    || !parseResourcesFromEntity(target, "actuators").contains("UWB"))
+                                continue;
+                        }
                         // BLE RSSI is pairwise and mutual too: each endpoint samples the LE link
                         // that carries the session, so both need a BLE radio.
                         if ("CO_LOCATION".equals(checkID) && "BLE_RSSI".equals(methodID)) {
@@ -275,6 +286,24 @@ public class FeasibleChallengeMatcher {
         if (responseUs < 1 || responseUs > 60_000_000L || timeoutMs < 1 || timeoutMs > 60_000L
                 || timeoutMs * 1000 < responseUs)
             throw new IllegalArgumentException("Invalid ultrasound echo max_response_us or response_timeout_ms");
+    }
+
+    /**
+     * UWB ranging settings: max_distance_cm (PASS when an endpoint's median measured distance is at
+     * most this, 1..10000), samples (successful ranges each endpoint needs, 1..100) and timeout_ms
+     * (to collect them, 1..60000). All must be JSON integers. Mirrors uwb_range_plan_config() on
+     * the endpoints.
+     */
+    public static void validateUwbParameters(JSONObject parameters) {
+        if (parameters == null) throw new IllegalArgumentException("Missing UWB parameters");
+        Object distance = parameters.get("max_distance_cm");
+        Object samples = parameters.get("samples");
+        Object timeout = parameters.get("timeout_ms");
+        if (!(distance instanceof Long) || !(samples instanceof Long) || !(timeout instanceof Long))
+            throw new IllegalArgumentException("UWB needs integer max_distance_cm, samples and timeout_ms");
+        long d = (Long) distance, n = (Long) samples, t = (Long) timeout;
+        if (d < 1 || d > 10000 || n < 1 || n > 100 || t < 1 || t > 60000)
+            throw new IllegalArgumentException("Invalid UWB max_distance_cm, samples or timeout_ms");
     }
 
     /**

@@ -40,8 +40,8 @@
 			},
 			"backupToAuthIds": [],
 			"resources": {
-				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"],
-				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB"],
+				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB"]
 			},
 			"targetServerInfoList": [
 				{"name": "net1.locker1", "host": "localhost", "port": 21100, "group": "Lockers"},
@@ -96,8 +96,8 @@
 			"host": "100.123.107.48",
 			"backupToAuthIds": [],
 			"resources": {
-				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"],
-				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER"]
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB"],
+				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB"]
 			}
 		},
 		{
