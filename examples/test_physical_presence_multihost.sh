@@ -2,12 +2,15 @@
 
 # ==============================================================================
 # Multi-host physical presence test:
-#   Auth   -> dongha@ada6000
+#   Auth   -> pi41@pi41 (override with AUTH_HOST=user@host; the entity
+#             configs' auth.ip.address must point at the same machine)
 #   Robot  -> pi42@pi42
 #   Locker -> pi43@pi43
 #
 # Usage:
-#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound] [--generate] [--ir-hk]
+#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound] [--generate]
+#                                         [--ir-hk | --ultrasound-echo]
+#                                         [--echo-test-delay-ms N]
 #
 #   --comm_type   Transport for the Robot<->Locker handshake (default: tcp).
 #                 Auth communication is always TCP regardless of this. "ir"
@@ -17,7 +20,18 @@
 #                 way it detects ALSA for ultrasound.
 #   --ir-hk       Require actual IR HK after any handshake transport. With
 #                 --generate, select the IR-only CO_LOCATION catalog.
-#   --generate    Regenerate the Auth DB on ada6000 (cleanAll.sh + generateAll.sh)
+#   --ultrasound-echo
+#                 Require the mutual acoustic keyed echo for CO_LOCATION after a
+#                 TCP handshake (--comm_type tcp only, for now). With --generate,
+#                 select the ultrasound-only catalog. Succeeds only if, in this
+#                 same run, both Robot and Locker logged their own echo PASS.
+#                 Audio devices default to the USB mic/speaker card names
+#                 (card numbers differ between the Pis); override with
+#                 ROBOT_MIC/ROBOT_SPK/LOCKER_MIC/LOCKER_SPK env vars.
+#   --echo-test-delay-ms N
+#                 Timing test only: Locker delays its acoustic answer by N ms,
+#                 so Robot's measurement of Locker should fail past the limit.
+#   --generate    Regenerate the Auth DB on the Auth host (cleanAll.sh + generateAll.sh)
 #                 and redistribute the freshly generated Auth cert + entity
 #                 credentials to Robot/Locker. Skip this on repeat runs where
 #                 the DB/credentials haven't changed -- it's the slow part.
@@ -28,8 +42,11 @@
 #   - ~/project/iotauth checked out on the physical branch on all three hosts,
 #     with matching robot.c/locker.c code already pushed/pulled there. This
 #     script (re)builds robot/locker on pi42/pi43 on every run.
-#   - Maven installed at /opt/apache-maven-3.9.8/bin on ada6000 (adjust
-#     MVN_PATH below if that changes).
+#   - java, mvn, node/npm and openssl on the Auth host's PATH (set MVN_PATH
+#     if mvn lives elsewhere, e.g. MVN_PATH=/opt/apache-maven-3.9.8/bin).
+#   - The Auth host may be shared: if its Auth ports (21900/21901) are
+#     already taken, this aborts instead of touching that process, and it
+#     only ever stops the Auth server it started itself.
 #
 # SSH sessions to these hosts occasionally hang or drop a backgrounded
 # process when the channel closes, so every remote call here is wrapped with
@@ -39,25 +56,48 @@
 
 set -eo pipefail
 
-AUTH_HOST="dongha@ada6000"
+AUTH_HOST="${AUTH_HOST:-pi41@pi41}"
 ROBOT_HOST="pi42@pi42"
 LOCKER_HOST="pi43@pi43"
 REMOTE_REPO="project/iotauth"
 PASSWORD="testpassword"
-MVN_PATH="/opt/apache-maven-3.9.8/bin"
+MVN_PATH="${MVN_PATH:-}"
+MVN_ENV="${MVN_PATH:+export PATH=\$PATH:$MVN_PATH && }"
 TAIL_PID=""
 
 COMM_TYPE="tcp"
 GENERATE=false
 IR_HK=false
+ECHO=false
+ECHO_TEST_DELAY_MS=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --comm_type) COMM_TYPE="$2"; shift 2 ;;
         --ir-hk) IR_HK=true; shift ;;
+        --ultrasound-echo) ECHO=true; shift ;;
+        --echo-test-delay-ms) ECHO_TEST_DELAY_MS="$2"; shift 2 ;;
         --generate) GENERATE=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
+if [ "$ECHO" = true ] && { [ "$IR_HK" = true ] || [ "$COMM_TYPE" != "tcp" ]; }; then
+    echo "--ultrasound-echo runs after a TCP handshake only, and not with --ir-hk."
+    exit 1
+fi
+
+# Same USB mic/speaker on both Pis, but under different ALSA card numbers,
+# so address the cards by name.
+ROBOT_MIC="${ROBOT_MIC:-plughw:CARD=MICROPHONE,DEV=0}"
+ROBOT_SPK="${ROBOT_SPK:-plughw:CARD=Device,DEV=0}"
+LOCKER_MIC="${LOCKER_MIC:-plughw:CARD=MICROPHONE,DEV=0}"
+LOCKER_SPK="${LOCKER_SPK:-plughw:CARD=Device,DEV=0}"
+# Unique per run, so an earlier run's log (or one left root-owned by a sudo
+# run) can never be mistaken for this run's.
+RUN_ID="$(date +%Y%m%d-%H%M%S)-$$"
+LOCKER_LOG="/tmp/locker_test.$RUN_ID.log"
+AUTH_LOG="/tmp/auth_server.$RUN_ID.log"
+AUTH_PID_FILE="/tmp/auth_server.$RUN_ID.pid"
+ROBOT_LOCAL_LOG="$(mktemp -t robot_test.XXXXXX)"
 
 PROJ_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -77,6 +117,18 @@ if [ "$COMM_TYPE" = "ir" ] || [ "$IR_HK" = true ]; then
     # take on the order of 30s to transmit; three of them (hs1/hs2/hs3) plus
     # retries need much more headroom than ultrasound/tcp do.
     ROBOT_TIMEOUT=450
+fi
+ROBOT_EXTRA_ARGS=""
+LOCKER_EXTRA_ARGS=""
+if [ "$ECHO" = true ]; then
+    HK_ARGS="--require-ultrasound-echo"
+    CHALLENGE_CATALOG="physical_context_challenges/challenges_ultrasound.json"
+    ROBOT_TIMEOUT=120
+    ROBOT_EXTRA_ARGS="--mic $ROBOT_MIC --spk $ROBOT_SPK"
+    LOCKER_EXTRA_ARGS="--mic $LOCKER_MIC --spk $LOCKER_SPK"
+    if [ "$ECHO_TEST_DELAY_MS" != 0 ]; then
+        LOCKER_EXTRA_ARGS="$LOCKER_EXTRA_ARGS --ultrasound-echo-test-delay-ms $ECHO_TEST_DELAY_MS"
+    fi
 fi
 
 # Runs a command with a hard wall-clock timeout. Portable bash implementation
@@ -107,7 +159,12 @@ scp_between() {
 
 echo "======================================================================"
 echo " Auth: $AUTH_HOST   Robot: $ROBOT_HOST   Locker: $LOCKER_HOST"
-echo " comm_type=$COMM_TYPE  generate=$GENERATE"
+echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  ultrasound_echo=$ECHO"
+if [ "$ECHO" = true ]; then
+    echo " catalog=$CHALLENGE_CATALOG  echo_test_delay_ms=$ECHO_TEST_DELAY_MS"
+    echo " robot mic=$ROBOT_MIC spk=$ROBOT_SPK | locker mic=$LOCKER_MIC spk=$LOCKER_SPK"
+fi
+echo " run_id=$RUN_ID  locker_log=$LOCKER_LOG"
 echo "======================================================================"
 
 # Always stop Auth (and Locker, which otherwise waits forever) on exit,
@@ -116,7 +173,8 @@ cleanup() {
     echo ""
     echo "[Clean] Stopping Auth ($AUTH_HOST) and Locker ($LOCKER_HOST)..."
     [ -n "$TAIL_PID" ] && kill "$TAIL_PID" 2>/dev/null || true
-    ssh_to 15 "$AUTH_HOST" "pkill -f auth-server-jar-with-dependencies" 2>/dev/null || true
+    # Only the Auth server this run started (by PID), never anyone else's.
+    ssh_to 15 "$AUTH_HOST" "[ -f $AUTH_PID_FILE ] && kill \$(cat $AUTH_PID_FILE); rm -f $AUTH_PID_FILE" 2>/dev/null || true
     # sudo pkill so this also cleans up a --comm_type ir run (started under
     # sudo for pigpio's direct GPIO access); harmless for tcp/ultrasound runs.
     ssh_to 15 "$LOCKER_HOST" "sudo pkill -f '[.]/locker'" 2>/dev/null || true
@@ -145,10 +203,21 @@ start_remote_and_verify() {
     return 1
 }
 
+# Checked before --generate wipes the DB and before starting Auth: if some
+# Auth already listens there (e.g. another user's), stop rather than kill it
+# or silently test against it (whose DB wouldn't know these credentials).
+AUTH_PORTS_RE=':(21900|21901)( |$)'
+if ssh_to 15 "$AUTH_HOST" "ss -ltn | grep -qE '$AUTH_PORTS_RE'"; then
+    echo "[Error] Auth ports 21900/21901 are already in use on $AUTH_HOST:"
+    ssh_to 15 "$AUTH_HOST" "ss -ltnp 2>/dev/null | grep -E '$AUTH_PORTS_RE'; ps -eo user,pid,lstart,args | grep '[a]uth-server-jar'" || true
+    echo "Leaving it alone. Free the ports or set AUTH_HOST to another machine."
+    exit 1
+fi
+
 if [ "$GENERATE" = true ]; then
     echo ""
     echo "[1/6] Regenerating Auth DB on $AUTH_HOST..."
-    ssh_to 120 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po policies/physical_presence.json -ch $CHALLENGE_CATALOG -p $PASSWORD -lc"
+    ssh_to 600 "$AUTH_HOST" "${MVN_ENV}cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po policies/physical_presence.json -ch $CHALLENGE_CATALOG -p $PASSWORD -lc"
 
     echo ""
     echo "Distributing Auth cert + credentials to Robot and Locker..."
@@ -169,16 +238,27 @@ fi
 
 echo ""
 echo "[2/6] Building and starting Auth server on $AUTH_HOST..."
-ssh_to 60 "$AUTH_HOST" "export PATH=\$PATH:$MVN_PATH && cd $REMOTE_REPO/auth && mvn -q -DskipTests package"
-ssh_to 15 "$AUTH_HOST" "pkill -f auth-server-jar-with-dependencies 2>/dev/null" || true
-sleep 1
+ssh_to 300 "$AUTH_HOST" "${MVN_ENV}cd $REMOTE_REPO/auth && mvn -q -DskipTests package"
 # stdin must never hit EOF: AuthCommandLine's interactive command loop reads
 # from stdin and shuts the whole Auth server down on EOF (readLine()==null).
 # /dev/zero blocks it in readLine() forever instead (/dev/null used to cause
-# an immediate shutdown-on-start race).
-start_remote_and_verify "$AUTH_HOST" \
-    "cd $REMOTE_REPO/auth/auth-server && setsid nohup java -jar target/auth-server-jar-with-dependencies.jar --properties ../properties/exampleAuth101.properties -s $PASSWORD > /tmp/auth_server_ada6000.log 2>&1 < /dev/zero &" \
-    "auth-server-jar-with-dependencies" "/tmp/auth_server_ada6000.log" "Auth Server" || exit 1
+# an immediate shutdown-on-start race). The PID is recorded so cleanup stops
+# exactly this server; "started" means *it* is alive and the port is open,
+# not merely that some auth-server process exists on the host.
+ssh_to 15 "$AUTH_HOST" "cd $REMOTE_REPO/auth/auth-server && setsid nohup sh -c 'echo \$\$ > $AUTH_PID_FILE; exec java -jar target/auth-server-jar-with-dependencies.jar --properties ../properties/exampleAuth101.properties -s $PASSWORD' > $AUTH_LOG 2>&1 < /dev/zero &" || true
+AUTH_UP=false
+for _ in $(seq 1 30); do
+    sleep 2
+    if ssh_to 15 "$AUTH_HOST" "kill -0 \$(cat $AUTH_PID_FILE) 2>/dev/null && ss -ltn | grep -qE ':21900( |$)'"; then
+        AUTH_UP=true
+        break
+    fi
+done
+if [ "$AUTH_UP" != true ]; then
+    echo "[Error] Auth Server did not come up on $AUTH_HOST. Log output:"
+    ssh_to 15 "$AUTH_HOST" "cat $AUTH_LOG" 2>/dev/null || true
+    exit 1
+fi
 
 echo ""
 echo "[3/6] Deploying per-Pi config files..."
@@ -198,17 +278,25 @@ echo "[4/6] Building Robot on $ROBOT_HOST and Locker on $LOCKER_HOST..."
 BUILD_CMD="sudo apt-get install -y libasound2-dev && cd $REMOTE_REPO/entity/c/examples/physical_presence && rm -rf build && mkdir build && cd build && cmake .. && make -j"
 ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
 ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
+# Record exactly which sources were built (the Pis' entity/c may carry
+# uncommitted, scp-synced files).
+VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
+for host in "$ROBOT_HOST" "$LOCKER_HOST"; do
+    echo "--- sources on $host ---"
+    ssh_to 15 "$host" "$VERSION_CMD" || true
+done
 
 echo ""
 echo "[5/6] Starting Locker on $LOCKER_HOST (--comm_type $COMM_TYPE)..."
 ssh_to 15 "$LOCKER_HOST" "pkill -f './locker' 2>/dev/null" || true
+# sudo first: sudo drops stdbuf's LD_PRELOAD, so stdbuf must run under it.
 start_remote_and_verify "$LOCKER_HOST" \
-    "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ${SUDO_PREFIX}./locker ../locker_pi43.config --comm_type $COMM_TYPE $HK_ARGS > /tmp/locker_test.log 2>&1 < /dev/null &" \
-    "./locker" "/tmp/locker_test.log" "Locker" || exit 1
+    "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ${SUDO_PREFIX}stdbuf -oL -eL ./locker ../locker_pi43.config --comm_type $COMM_TYPE $HK_ARGS $LOCKER_EXTRA_ARGS > $LOCKER_LOG 2>&1 < /dev/null &" \
+    "./locker" "$LOCKER_LOG" "Locker" || exit 1
 
 # Stream Locker's log live in this terminal, prefixed so it's distinguishable
 # from Robot's own output below. Killed in cleanup() on exit.
-ssh -o BatchMode=yes -o ConnectTimeout=8 "$LOCKER_HOST" "tail -n +1 -f /tmp/locker_test.log" 2>/dev/null | LC_ALL=C sed -u 's/^/[Locker] /' &
+ssh -o BatchMode=yes -o ConnectTimeout=8 "$LOCKER_HOST" "tail -n +1 -f $LOCKER_LOG" 2>/dev/null | LC_ALL=C sed -u 's/^/[Locker] /' &
 TAIL_PID=$!
 
 echo ""
@@ -216,14 +304,40 @@ echo "[6/6] Running Robot on $ROBOT_HOST (--comm_type $COMM_TYPE)..."
 # stdbuf forces line-buffered stdout over the ssh pipe (glibc otherwise fully
 # buffers non-tty output, so Robot's log wouldn't show up until it exits).
 ROBOT_STATUS=0
-ssh_to $((ROBOT_TIMEOUT + 10)) "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL ${SUDO_PREFIX}timeout $ROBOT_TIMEOUT ./robot ../robot_pi42.config --comm_type $COMM_TYPE $HK_ARGS" 2>&1 | LC_ALL=C sed -u 's/^/[Robot] /' || ROBOT_STATUS=$?
+ssh_to $((ROBOT_TIMEOUT + 10)) "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL ${SUDO_PREFIX}timeout $ROBOT_TIMEOUT ./robot ../robot_pi42.config --comm_type $COMM_TYPE $HK_ARGS $ROBOT_EXTRA_ARGS" 2>&1 | tee "$ROBOT_LOCAL_LOG" | LC_ALL=C sed -u 's/^/[Robot] /' || ROBOT_STATUS=$?
 
-sleep 2
+# Let Locker finish (it exits after its own check and messaging), so its log
+# is complete before it's judged.
+for _ in $(seq 1 30); do
+    ssh_to 10 "$LOCKER_HOST" "pgrep -f '[.]/locker' > /dev/null" || break
+    sleep 1
+done
+LOCKER_LOCAL_LOG="$(mktemp -t locker_test.XXXXXX)"
+ssh_to 15 "$LOCKER_HOST" "cat $LOCKER_LOG" > "$LOCKER_LOCAL_LOG" 2>/dev/null || true
 echo ""
 echo "======================================================================"
-echo " Locker Log ($LOCKER_HOST):"
+echo " Locker Log ($LOCKER_HOST:$LOCKER_LOG):"
 echo "======================================================================"
-ssh_to 15 "$LOCKER_HOST" "cat /tmp/locker_test.log" || true
+cat "$LOCKER_LOCAL_LOG"
 echo "======================================================================"
+
+if [ "$ECHO" = true ]; then
+    # Success means both endpoints measured their peer and passed in this
+    # run -- not just Robot's exit status or a handshake message.
+    ECHO_STATUS=0
+    echo ""
+    echo "Ultrasound echo results (this run):"
+    for side in Robot Locker; do
+        log="$ROBOT_LOCAL_LOG"; [ "$side" = Locker ] && log="$LOCKER_LOCAL_LOG"
+        grep -h "ULTRASOUND ECHO: verified direction=" "$log" | sed "s/^/  [$side] /" || true
+        grep -h "ULTRASOUND ECHO: local=" "$log" | sed "s/^/  [$side] /" || true
+        if ! grep -q "ULTRASOUND ECHO: local=PASS .*result=PASS" "$log"; then
+            echo "  [$side] did not report its own echo PASS in this run."
+            ECHO_STATUS=1
+        fi
+    done
+    if [ "$ROBOT_STATUS" = 0 ] && [ "$ECHO_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
+fi
+rm -f "$ROBOT_LOCAL_LOG" "$LOCKER_LOCAL_LOG"
 
 exit "$ROBOT_STATUS"

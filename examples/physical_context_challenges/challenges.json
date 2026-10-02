@@ -64,15 +64,17 @@
           "id": "ULTRASOUND",
           "requirements": {
             "requester": {
+              "sensors": ["UltraSound"],
               "actuators": ["UltraSound"]
             },
             "target": {
-              "sensors": ["UltraSound"]
+              "sensors": ["UltraSound"],
+              "actuators": ["UltraSound"]
             }
           },
           "parameters": {
-            "rounds": 64,
-            "max_delay_us": 2000
+            "max_response_us": 10000000,
+            "response_timeout_ms": 10000
           }
         }
       ]
