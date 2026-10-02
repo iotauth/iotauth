@@ -462,7 +462,7 @@ public class AppTest {
     @Test
     @Category(org.iot.auth.db.bean.FileSharingTable.class)
     public void testFileSharingTable() throws SQLException, IOException, ClassNotFoundException {
-        final String testDbFileName = testDbPath + "testTrustedAuthInsertionAndSelectAll" + "_auth.db";
+        final String testDbFileName = testDbPath + "testFileSharingTable" + "_auth.db";
         destroyTestAuthDB(testDbFileName);
         createTestAuthDB(testDbFileName);
         SQLiteConnector sqLiteConnector = new SQLiteConnector(testDbFileName, authDBProtectionMethod);

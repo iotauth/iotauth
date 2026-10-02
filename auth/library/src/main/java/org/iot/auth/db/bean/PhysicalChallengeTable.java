@@ -21,50 +21,65 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * A class for meta data table in auth database, storing meta values for database
- * @author Hokeun Kim
+ * Physical Challenge (Physical Presence Check) Table schema definition.
+ * Stores topology and available challenge methods for each physical check.
+ *
+ * @author Dongha Kim
  */
-public class MetaDataTable {
-    public static final String T_META_DATA = "meta_data";
+public class PhysicalChallengeTable {
+    public static final String T_PHYSICAL_CHALLENGE = "physical_challenge";
+
     public enum c {
-        Key,
-        Value
-    }
-    public enum key {
-        SessionKeyCount,
-        EncryptedDatabaseKey,
-        CommPolicyCount,
-        PhysicalChallengeDefinitions
-    }
-    private String key;
-    private String value;
-
-    public String getKey() {
-        return key;
-    }
-    public void setKey(String key) {
-        this.key = key;
+        CheckID,
+        Topology,
+        Methods
     }
 
-    public String getValue() {
-        return value;
+    private String checkID;
+    private String topology;
+    private String methods;
+
+    public String getCheckID() {
+        return checkID;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public PhysicalChallengeTable setCheckID(String checkID) {
+        this.checkID = checkID;
+        return this;
+    }
+
+    public String getTopology() {
+        return topology;
+    }
+
+    public PhysicalChallengeTable setTopology(String topology) {
+        this.topology = topology;
+        return this;
+    }
+
+    public String getMethods() {
+        return methods;
+    }
+
+    public PhysicalChallengeTable setMethods(String methods) {
+        this.methods = methods;
+        return this;
     }
 
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
-        object.put(c.Key.name(), getKey());
-        object.put(c.Value.name(), getValue());
+        object.put(c.CheckID.name(), getCheckID());
+        object.put(c.Topology.name(), getTopology());
+        object.put(c.Methods.name(), getMethods());
         return object;
     }
-    public static MetaDataTable createRecord(ResultSet resultSet) throws SQLException {
-        MetaDataTable metaData = new MetaDataTable();
-        metaData.setKey(resultSet.getString(c.Key.name()));
-        metaData.setValue(resultSet.getString(c.Value.name()));
-        return metaData;
+
+    public static PhysicalChallengeTable createRecord(ResultSet resultSet) throws SQLException {
+        PhysicalChallengeTable table = new PhysicalChallengeTable();
+        table.setCheckID(resultSet.getString(c.CheckID.name()));
+        table.setTopology(resultSet.getString(c.Topology.name()));
+        table.setMethods(resultSet.getString(c.Methods.name()));
+        return table;
     }
 }

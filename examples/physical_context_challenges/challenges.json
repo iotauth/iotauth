@@ -1,0 +1,185 @@
+{
+  "checks": [
+    {
+      "id": "HUMAN_PRESENCE",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "DUMMY",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": ["CAMERA"]
+            }
+          },
+          "parameters": {
+            "max_human": 1
+          }
+        },
+        {
+          "id": "THERMAL_CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": ["THERMAL_CAMERA"]
+            }
+          },
+          "parameters": {
+            "max_human": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "CO_LOCATION",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "DUMMY",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "IR",
+          "requirements": {
+            "requester": {
+              "sensors": ["IR"],
+              "actuators": ["IR"]
+            },
+            "target": {
+              "actuators": ["IR"],
+              "sensors": ["IR"]
+            }
+          },
+          "parameters": {
+            "rounds": 128,
+            "success_threshold": 0.8,
+            "max_delay_us": 1000
+          }
+        },
+        {
+          "id": "ULTRASOUND",
+          "requirements": {
+            "requester": {
+              "sensors": ["UltraSound"],
+              "actuators": ["UltraSound"]
+            },
+            "target": {
+              "sensors": ["UltraSound"],
+              "actuators": ["UltraSound"]
+            }
+          },
+          "parameters": {
+            "max_response_us": 10000000,
+            "response_timeout_ms": 10000
+          }
+        },
+        {
+          "id": "BLE_RSSI",
+          "requirements": {
+            "requester": {
+              "sensors": ["BLE"],
+              "actuators": ["BLE"]
+            },
+            "target": {
+              "sensors": ["BLE"],
+              "actuators": ["BLE"]
+            }
+          },
+          "parameters": {
+            "min_rssi_dbm": -60,
+            "samples": 20,
+            "interval_ms": 100
+          }
+        },
+        {
+          "id": "UWB",
+          "requirements": {
+            "requester": {
+              "sensors": ["UWB"],
+              "actuators": ["UWB"]
+            },
+            "target": {
+              "sensors": ["UWB"],
+              "actuators": ["UWB"]
+            }
+          },
+          "parameters": {
+            "max_distance_cm": 150,
+            "samples": 20,
+            "timeout_ms": 10000
+          }
+        }
+      ]
+    },
+    {
+      "id": "HANDSHAKE_TRANSPORT",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "TCP",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "IR",
+          "requirements": {
+            "requester": {
+              "actuators": ["IR"]
+            },
+            "target": {
+              "sensors": ["IR"]
+            }
+          },
+          "parameters": {}
+        },
+        {
+          "id": "ULTRASOUND",
+          "requirements": {
+            "requester": {
+              "actuators": ["UltraSound"]
+            },
+            "target": {
+              "sensors": ["UltraSound"]
+            }
+          },
+          "parameters": {}
+        },
+        {
+          "id": "BLE",
+          "requirements": {
+            "requester": {
+              "sensors": ["BLE"],
+              "actuators": ["BLE"]
+            },
+            "target": {
+              "sensors": ["BLE"],
+              "actuators": ["BLE"]
+            }
+          },
+          "parameters": {}
+        }
+      ]
+    },
+    {
+      "id": "TEMPERATURE_CHECK",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "THERMOMETER",
+          "requirements": {
+            "requester": {
+              "sensors": ["THERMOMETER"]
+            }
+          },
+          "parameters": {
+            "min_temperature_celsius": 18
+          }
+        }
+      ]
+    }
+  ]
+}
