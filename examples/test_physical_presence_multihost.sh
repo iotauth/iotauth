@@ -10,7 +10,7 @@
 # Usage:
 #   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound|bluetooth]
 #                                         [--generate]
-#                                         [--ir-hk | --ultrasound-echo | --ble-rssi | --uwb]
+#                                         [--ir-hk | --lifi-hk | --ultrasound-echo | --ble-rssi | --uwb]
 #                                         [--echo-test-delay-ms N]
 #
 #   --comm_type   Transport for the Robot<->Locker handshake (default: tcp).
@@ -21,6 +21,11 @@
 #                 way it detects ALSA for ultrasound.
 #   --ir-hk       Require actual IR HK after any handshake transport. With
 #                 --generate, select the IR-only CO_LOCATION catalog.
+#   --lifi-hk     Require actual LiFi HK after any handshake transport. With
+#                 --generate, select the LiFi-only CO_LOCATION catalog. The
+#                 Pis are wired mirror-image: Robot (pi42) TX 23 / RX 22 (the
+#                 defaults), Locker (pi43) TX 22 / RX 23; override with
+#                 ROBOT_LIFI_ARGS / LOCKER_LIFI_ARGS.
 #   --ultrasound-echo
 #                 Require the mutual acoustic keyed echo for CO_LOCATION after a
 #                 TCP handshake (--comm_type tcp only, for now). With --generate,
@@ -80,6 +85,7 @@ TAIL_PID=""
 COMM_TYPE="tcp"
 GENERATE=false
 IR_HK=false
+LIFI_HK=false
 ECHO=false
 ECHO_TEST_DELAY_MS=0
 BLE=false
@@ -88,6 +94,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --comm_type) COMM_TYPE="$2"; shift 2 ;;
         --ir-hk) IR_HK=true; shift ;;
+        --lifi-hk) LIFI_HK=true; shift ;;
         --ultrasound-echo) ECHO=true; shift ;;
         --echo-test-delay-ms) ECHO_TEST_DELAY_MS="$2"; shift 2 ;;
         --ble-rssi) BLE=true; shift ;;
@@ -96,6 +103,14 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
+CHECKS=0
+for check in "$IR_HK" "$LIFI_HK" "$ECHO" "$BLE" "$UWB"; do
+    [ "$check" = true ] && CHECKS=$((CHECKS + 1))
+done
+if [ "$CHECKS" -gt 1 ]; then
+    echo "Choose at most one of --ir-hk, --lifi-hk, --ultrasound-echo, --ble-rssi, --uwb."
+    exit 1
+fi
 if [ "$ECHO" = true ] && { [ "$IR_HK" = true ] || [ "$COMM_TYPE" != "tcp" ]; }; then
     echo "--ultrasound-echo runs after a TCP handshake only, and not with --ir-hk."
     exit 1
@@ -143,11 +158,24 @@ if [ "$COMM_TYPE" = "ir" ] || [ "$IR_HK" = true ]; then
     # retries need much more headroom than ultrasound/tcp do.
     ROBOT_TIMEOUT=450
 fi
+if [ "$LIFI_HK" = true ]; then
+    HK_ARGS="--require-lifi-hk"
+    CHALLENGE_CATALOG="physical_context_challenges/challenges_lifi.json"
+fi
+if [ "$COMM_TYPE" = "lifi" ] || [ "$LIFI_HK" = true ]; then
+    # pigpio, as for IR; the LiFi byte framing is slow too.
+    SUDO_PREFIX="sudo "
+    ROBOT_TIMEOUT=450
+fi
 if [ "$COMM_TYPE" = "bluetooth" ]; then
     SUDO_PREFIX="sudo "
 fi
 ROBOT_EXTRA_ARGS=""
 LOCKER_EXTRA_ARGS=""
+if [ "$COMM_TYPE" = "lifi" ] || [ "$LIFI_HK" = true ]; then
+    ROBOT_EXTRA_ARGS="${ROBOT_LIFI_ARGS:-}"
+    LOCKER_EXTRA_ARGS="${LOCKER_LIFI_ARGS:---lifi-tx-gpio 22 --lifi-rx-gpio 23}"
+fi
 if [ "$ECHO" = true ]; then
     HK_ARGS="--require-ultrasound-echo"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_ultrasound.json"
@@ -195,7 +223,7 @@ scp_between() {
 
 echo "======================================================================"
 echo " Auth: $AUTH_HOST   Robot: $ROBOT_HOST   Locker: $LOCKER_HOST"
-echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  ultrasound_echo=$ECHO  ble_rssi=$BLE  uwb=$UWB"
+echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  lifi_hk=$LIFI_HK  ultrasound_echo=$ECHO  ble_rssi=$BLE  uwb=$UWB"
 if [ "$ECHO" = true ]; then
     echo " catalog=$CHALLENGE_CATALOG  echo_test_delay_ms=$ECHO_TEST_DELAY_MS"
     echo " robot mic=$ROBOT_MIC spk=$ROBOT_SPK | locker mic=$LOCKER_MIC spk=$LOCKER_SPK"
@@ -320,7 +348,7 @@ ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
 ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
 # Record exactly which sources were built (the Pis' entity/c may carry
 # uncommitted, scp-synced files).
-VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_rssi.c bluetooth_com/bt_sst_handshake.c uwb_com/uwb_range.c uwb_com/uwb_cli_dev.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
+VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum physical_com/hk.c physical_com/plan_json.c physical_com/session_ctl.c ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_rssi.c bluetooth_com/bt_sst_handshake.c uwb_com/uwb_range.c uwb_com/uwb_cli_dev.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
 for host in "$ROBOT_HOST" "$LOCKER_HOST"; do
     echo "--- sources on $host ---"
     ssh_to 15 "$host" "$VERSION_CMD" || true
@@ -404,6 +432,22 @@ if [ "$BLE" = true ]; then
         fi
     done
     if [ "$ROBOT_STATUS" = 0 ] && [ "$BLE_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
+fi
+if [ "$IR_HK" = true ] || [ "$LIFI_HK" = true ]; then
+    # Same rule: each endpoint's own HK tally must pass.
+    M=IR; [ "$LIFI_HK" = true ] && M=LIFI
+    HK_STATUS=0
+    echo ""
+    echo "$M HK results (this run):"
+    for side in Robot Locker; do
+        log="$ROBOT_LOCAL_LOG"; [ "$side" = Locker ] && log="$LOCKER_LOCAL_LOG"
+        grep -h "$M HK: successes=" "$log" | sed "s/^/  [$side] /" || true
+        if ! grep -q "$M HK: successes=.*local=PASS result=PASS" "$log"; then
+            echo "  [$side] did not report its own $M HK PASS in this run."
+            HK_STATUS=1
+        fi
+    done
+    if [ "$ROBOT_STATUS" = 0 ] && [ "$HK_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
 fi
 if [ "$UWB" = true ]; then
     # Same rule: each endpoint's own ranging must pass.
