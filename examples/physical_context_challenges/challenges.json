@@ -112,6 +112,24 @@
             "samples": 20,
             "timeout_ms": 10000
           }
+        },
+        {
+          "id": "WIFI_RSSI",
+          "requirements": {
+            "requester": {
+              "sensors": ["WiFi"],
+              "actuators": ["WiFi"]
+            },
+            "target": {
+              "sensors": ["WiFi"],
+              "actuators": ["WiFi"]
+            }
+          },
+          "parameters": {
+            "min_rssi_dbm": -60,
+            "samples": 20,
+            "interval_ms": 100
+          }
         }
       ]
     },

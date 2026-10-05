@@ -8,9 +8,10 @@
 #   Locker -> pi43@pi43
 #
 # Usage:
-#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound|bluetooth]
+#   ./test_physical_presence_multihost.sh [--comm_type tcp|ir|ultrasound|bluetooth|wifi]
 #                                         [--generate]
-#                                         [--ir-hk | --lifi-hk | --ultrasound-echo | --ble-rssi | --uwb]
+#                                         [--ir-hk | --lifi-hk | --ultrasound-echo | --ble-rssi |
+#                                          --wifi-rssi | --uwb]
 #                                         [--echo-test-delay-ms N]
 #
 #   --comm_type   Transport for the Robot<->Locker handshake (default: tcp).
@@ -39,6 +40,13 @@
 #                 With --generate, select the BLE-only catalog. Succeeds only
 #                 if, in this same run, both Robot and Locker logged their own
 #                 RSSI PASS.
+#   --wifi-rssi   Require the mutual Wi-Fi RSSI proximity check for CO_LOCATION
+#                 after a TCP handshake over a direct Wi-Fi link
+#                 (--comm_type wifi only). The link runs on each Pi's USB
+#                 dongle (wlan1): Locker opens the AP, Robot joins it, and
+#                 the link is always taken down afterwards. With --generate,
+#                 select the Wi-Fi-only catalog. Succeeds only if both Robot
+#                 and Locker logged their own RSSI PASS in this same run.
 #   --uwb         Require the mutual UWB ranging check for CO_LOCATION after a
 #                 TCP handshake (--comm_type tcp only), using the DWM3001CDK
 #                 on each Pi (nRF52 USB port J20, CLI firmware). With
@@ -77,6 +85,7 @@ AUTH_HOST="${AUTH_HOST:-pi41@pi41}"
 ROBOT_HOST="pi42@pi42"
 LOCKER_HOST="pi43@pi43"
 REMOTE_REPO="project/iotauth"
+WIFI_LINK="$REMOTE_REPO/entity/c/wifi_com/wifi_link.sh"
 PASSWORD="testpassword"
 MVN_PATH="${MVN_PATH:-}"
 MVN_ENV="${MVN_PATH:+export PATH=\$PATH:$MVN_PATH && }"
@@ -89,6 +98,7 @@ LIFI_HK=false
 ECHO=false
 ECHO_TEST_DELAY_MS=0
 BLE=false
+WIFI=false
 UWB=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -98,17 +108,22 @@ while [[ $# -gt 0 ]]; do
         --ultrasound-echo) ECHO=true; shift ;;
         --echo-test-delay-ms) ECHO_TEST_DELAY_MS="$2"; shift 2 ;;
         --ble-rssi) BLE=true; shift ;;
+        --wifi-rssi) WIFI=true; shift ;;
         --uwb) UWB=true; shift ;;
         --generate) GENERATE=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 CHECKS=0
-for check in "$IR_HK" "$LIFI_HK" "$ECHO" "$BLE" "$UWB"; do
+for check in "$IR_HK" "$LIFI_HK" "$ECHO" "$BLE" "$WIFI" "$UWB"; do
     [ "$check" = true ] && CHECKS=$((CHECKS + 1))
 done
 if [ "$CHECKS" -gt 1 ]; then
-    echo "Choose at most one of --ir-hk, --lifi-hk, --ultrasound-echo, --ble-rssi, --uwb."
+    echo "Choose at most one of --ir-hk, --lifi-hk, --ultrasound-echo, --ble-rssi, --wifi-rssi, --uwb."
+    exit 1
+fi
+if [ "$WIFI" = true ] && [ "$COMM_TYPE" != "wifi" ]; then
+    echo "--wifi-rssi runs after a handshake over the Wi-Fi link only (--comm_type wifi)."
     exit 1
 fi
 if [ "$ECHO" = true ] && { [ "$IR_HK" = true ] || [ "$COMM_TYPE" != "tcp" ]; }; then
@@ -190,6 +205,10 @@ if [ "$UWB" = true ]; then
     HK_ARGS="--require-uwb"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_uwb.json"
 fi
+if [ "$WIFI" = true ]; then
+    HK_ARGS="--require-wifi-rssi"
+    CHALLENGE_CATALOG="physical_context_challenges/challenges_wifi.json"
+fi
 if [ "$BLE" = true ]; then
     HK_ARGS="--require-ble-rssi"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_ble.json"
@@ -223,12 +242,12 @@ scp_between() {
 
 echo "======================================================================"
 echo " Auth: $AUTH_HOST   Robot: $ROBOT_HOST   Locker: $LOCKER_HOST"
-echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  lifi_hk=$LIFI_HK  ultrasound_echo=$ECHO  ble_rssi=$BLE  uwb=$UWB"
+echo " comm_type=$COMM_TYPE  generate=$GENERATE  ir_hk=$IR_HK  lifi_hk=$LIFI_HK  ultrasound_echo=$ECHO  ble_rssi=$BLE  wifi_rssi=$WIFI  uwb=$UWB"
 if [ "$ECHO" = true ]; then
     echo " catalog=$CHALLENGE_CATALOG  echo_test_delay_ms=$ECHO_TEST_DELAY_MS"
     echo " robot mic=$ROBOT_MIC spk=$ROBOT_SPK | locker mic=$LOCKER_MIC spk=$LOCKER_SPK"
 fi
-if [ "$BLE" = true ] || [ "$UWB" = true ]; then
+if [ "$BLE" = true ] || [ "$WIFI" = true ] || [ "$UWB" = true ]; then
     echo " catalog=$CHALLENGE_CATALOG"
 fi
 echo " run_id=$RUN_ID  locker_log=$LOCKER_LOG"
@@ -246,6 +265,11 @@ cleanup() {
     # sudo for pigpio's direct GPIO access); harmless for tcp/ultrasound runs.
     ssh_to 15 "$LOCKER_HOST" "sudo pkill -f '[.]/locker'" 2>/dev/null || true
     ssh_to 15 "$ROBOT_HOST" "sudo pkill -f '[.]/robot'" 2>/dev/null || true
+    if [ "$COMM_TYPE" = "wifi" ]; then
+        echo "[Clean] Taking the Wi-Fi link down on both Pis..."
+        ssh_to 30 "$ROBOT_HOST" "$WIFI_LINK down" 2>/dev/null || true
+        ssh_to 30 "$LOCKER_HOST" "$WIFI_LINK down" 2>/dev/null || true
+    fi
 }
 trap cleanup EXIT
 # Explicit INT/TERM traps (not just EXIT) so this fires even when the shell
@@ -348,7 +372,7 @@ ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
 ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
 # Record exactly which sources were built (the Pis' entity/c may carry
 # uncommitted, scp-synced files).
-VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum physical_com/hk.c physical_com/plan_json.c physical_com/session_ctl.c ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_rssi.c bluetooth_com/bt_sst_handshake.c uwb_com/uwb_range.c uwb_com/uwb_cli_dev.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
+VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum physical_com/hk.c physical_com/plan_json.c physical_com/session_ctl.c physical_com/rssi_check.c wifi_com/wifi_rssi.c ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_rssi.c bluetooth_com/bt_sst_handshake.c uwb_com/uwb_range.c uwb_com/uwb_cli_dev.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
 for host in "$ROBOT_HOST" "$LOCKER_HOST"; do
     echo "--- sources on $host ---"
     ssh_to 15 "$host" "$VERSION_CMD" || true
@@ -363,6 +387,16 @@ if [ "$COMM_TYPE" = "bluetooth" ]; then
     LOCKER_BT_ADDR=$(ssh_to 15 "$LOCKER_HOST" "hciconfig hci0 | awk '/BD Address/ {print \$3}'")
     echo "Locker Bluetooth address: $LOCKER_BT_ADDR"
     ROBOT_EXTRA_ARGS="$ROBOT_EXTRA_ARGS --bt-peer $LOCKER_BT_ADDR"
+fi
+
+if [ "$COMM_TYPE" = "wifi" ]; then
+    # A direct link on each Pi's USB dongle, next to wlan0 (which keeps
+    # carrying SSH): Locker is the AP at 192.168.77.1, Robot joins it.
+    ssh_to 60 "$ROBOT_HOST" "$WIFI_LINK down" > /dev/null 2>&1 || true
+    ssh_to 60 "$LOCKER_HOST" "$WIFI_LINK down" > /dev/null 2>&1 || true
+    ssh_to 60 "$LOCKER_HOST" "$WIFI_LINK ap 15"
+    ssh_to 60 "$ROBOT_HOST" "$WIFI_LINK sta 15"
+    ROBOT_EXTRA_ARGS="$ROBOT_EXTRA_ARGS --wifi-peer 192.168.77.1"
 fi
 
 echo ""
@@ -448,6 +482,22 @@ if [ "$IR_HK" = true ] || [ "$LIFI_HK" = true ]; then
         fi
     done
     if [ "$ROBOT_STATUS" = 0 ] && [ "$HK_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
+fi
+if [ "$WIFI" = true ]; then
+    # Same rule as BLE: each endpoint's own RSSI check must pass.
+    WIFI_STATUS=0
+    echo ""
+    echo "Wi-Fi RSSI results (this run):"
+    for side in Robot Locker; do
+        log="$ROBOT_LOCAL_LOG"; [ "$side" = Locker ] && log="$LOCKER_LOCAL_LOG"
+        grep -hE "WIFI RSSI: (samples=|peer_median)" "$log" | sed "s/^/  [$side] /" || true
+        if ! grep -q "WIFI RSSI: samples=.*local=PASS" "$log" ||
+           ! grep -q "WIFI RSSI: peer_median.*result=PASS" "$log"; then
+            echo "  [$side] did not report its own Wi-Fi RSSI PASS in this run."
+            WIFI_STATUS=1
+        fi
+    done
+    if [ "$ROBOT_STATUS" = 0 ] && [ "$WIFI_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
 fi
 if [ "$UWB" = true ]; then
     # Same rule: each endpoint's own ranging must pass.
