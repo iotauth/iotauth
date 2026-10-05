@@ -221,6 +221,17 @@ public class FeasibleChallengeMatcher {
                                     || !parseResourcesFromEntity(target, "actuators").contains("UWB"))
                                 continue;
                         }
+                        // Wi-Fi RSSI likewise: each endpoint samples the direct Wi-Fi link
+                        // that carries the session, so both need a Wi-Fi radio.
+                        if ("CO_LOCATION".equals(checkID) && "WIFI_RSSI".equals(methodID)) {
+                            validateWifiRssiParameters((JSONObject) method.get("parameters"));
+                            if (!effectiveReqSensors.contains("WiFi") || !effectiveReqActuators.contains("WiFi")
+                                    || targetEntities.size() != 1) continue;
+                            RegisteredEntity target = targetEntities.get(0);
+                            if (!parseResourcesFromEntity(target, "sensors").contains("WiFi")
+                                    || !parseResourcesFromEntity(target, "actuators").contains("WiFi"))
+                                continue;
+                        }
                         // BLE RSSI is pairwise and mutual too: each endpoint samples the LE link
                         // that carries the session, so both need a BLE radio.
                         if ("CO_LOCATION".equals(checkID) && "BLE_RSSI".equals(methodID)) {
@@ -309,18 +320,27 @@ public class FeasibleChallengeMatcher {
     /**
      * BLE RSSI settings: min_rssi_dbm (PASS when an endpoint's median RSSI is at least this,
      * -127..20 dBm), samples (RSSI reads per endpoint, 1..1000) and interval_ms (between reads,
-     * 0..1000). All must be JSON integers. Mirrors bt_rssi_plan_config() on the endpoints.
+     * 0..1000). All must be JSON integers. Mirrors rssi_plan_config() on the endpoints.
      */
     public static void validateBleRssiParameters(JSONObject parameters) {
-        if (parameters == null) throw new IllegalArgumentException("Missing BLE RSSI parameters");
+        validateRssiParameters(parameters, "BLE RSSI");
+    }
+
+    /** Wi-Fi RSSI settings: the same three integers and ranges as BLE RSSI. */
+    public static void validateWifiRssiParameters(JSONObject parameters) {
+        validateRssiParameters(parameters, "Wi-Fi RSSI");
+    }
+
+    private static void validateRssiParameters(JSONObject parameters, String name) {
+        if (parameters == null) throw new IllegalArgumentException("Missing " + name + " parameters");
         Object minRssi = parameters.get("min_rssi_dbm");
         Object samples = parameters.get("samples");
         Object interval = parameters.get("interval_ms");
         if (!(minRssi instanceof Long) || !(samples instanceof Long) || !(interval instanceof Long))
-            throw new IllegalArgumentException("BLE RSSI needs integer min_rssi_dbm, samples and interval_ms");
+            throw new IllegalArgumentException(name + " needs integer min_rssi_dbm, samples and interval_ms");
         long m = (Long) minRssi, n = (Long) samples, i = (Long) interval;
         if (m < -127 || m > 20 || n < 1 || n > 1000 || i < 0 || i > 1000)
-            throw new IllegalArgumentException("Invalid BLE RSSI min_rssi_dbm, samples or interval_ms");
+            throw new IllegalArgumentException("Invalid " + name + " min_rssi_dbm, samples or interval_ms");
     }
 
     /** Wire threshold is an integer in millionths; never silently round a policy down. */
