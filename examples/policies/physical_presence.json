@@ -13,7 +13,11 @@
       "PhysicalPresenceRequirements": [
         "HUMAN_PRESENCE",
         "CO_LOCATION"
-      ]
+      ],
+      "PhysicalPresenceFreshnessMs": {
+        "HUMAN_PRESENCE": 1000,
+        "CO_LOCATION": 15000
+      }
     }
   },
   {
@@ -29,7 +33,10 @@
     "Challenges": {
       "PhysicalPresenceRequirements": [
         "HUMAN_PRESENCE"
-      ]
+      ],
+      "PhysicalPresenceFreshnessMs": {
+        "HUMAN_PRESENCE": 1000
+      }
     }
   }
 ]
