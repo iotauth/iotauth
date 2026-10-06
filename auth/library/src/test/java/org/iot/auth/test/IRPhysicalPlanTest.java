@@ -24,7 +24,8 @@ public class IRPhysicalPlanTest {
     private JSONObject plan(RegisteredEntity requester, JSONObject runtime, List<RegisteredEntity> targets) {
         CommunicationPolicy policy = new CommunicationPolicy(new CommunicationPolicyTable()
                 .setSessionCryptoSpec("AES-128-CBC:SHA256")
-                .setContext("{\"PhysicalPresenceRequirements\":[\"CO_LOCATION\"]}"));
+                .setContext("{\"PhysicalPresenceRequirements\":[\"CO_LOCATION\"],"
+                        + "\"PhysicalPresenceFreshnessMs\":{\"CO_LOCATION\":10000}}"));
         PhysicalChallengeTable ir = new PhysicalChallengeTable().setCheckID("CO_LOCATION").setTopology("MUTUAL")
                 // Empty catalog requirements must not bypass the mutual IR capability checks.
                 .setMethods("[{\"id\":\"IR\",\"requirements\":{},\"parameters\":{\"rounds\":32,\"success_threshold\":0.8,\"max_delay_us\":1000}}]");

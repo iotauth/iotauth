@@ -13,6 +13,7 @@
 #                                         [--ir-hk | --lifi-hk | --ultrasound-echo | --ble-rssi |
 #                                          --wifi-rssi | --uwb]
 #                                         [--echo-test-delay-ms N]
+#                                         [--action-test-delay-ms N]
 #
 #   --comm_type   Transport for the Robot<->Locker handshake (default: tcp).
 #                 Auth communication is always TCP regardless of this. "ir"
@@ -56,6 +57,24 @@
 #   --echo-test-delay-ms N
 #                 Timing test only: Locker delays its acoustic answer by N ms,
 #                 so Robot's measurement of Locker should fail past the limit.
+#   --action-test-delay-ms N
+#                 Freshness experiments only: Robot and Locker each wait N ms
+#                 after their checks, right before their action gate, so the
+#                 evidence ages by N ms. Bounds and checks are unchanged.
+#
+#   Every action ends in the action gate, which starts a simulated action
+#   (logged SIMULATED_ACTION_STARTED; no actuator moves) only while every
+#   check the plan requires has fresh, passing evidence. A run succeeds only
+#   if both Robot (RETRIEVE_ITEM) and Locker (LOCKER_OPEN) passed their gate.
+#   The --ir-hk/--lifi-hk/--ultrasound-echo/--ble-rssi/--wifi-rssi/--uwb runs
+#   generate the Auth DB from policies/physical_presence_colocation.json,
+#   which requires CO_LOCATION only, since HUMAN_PRESENCE has no real sensor
+#   yet (its DUMMY method never passes the gate); other runs use
+#   policies/physical_presence.json. The BLE RSSI check cannot tell how old
+#   the controller's cached RSSI is, so its gate denies
+#   (UNKNOWN_OBSERVATION_TIME) even when the RSSI itself passed; Wi-Fi RSSI
+#   uses only frames counted after its sampling began, so it is gated
+#   normally.
 #   --generate    Regenerate the Auth DB on the Auth host (cleanAll.sh + generateAll.sh)
 #                 and redistribute the freshly generated Auth cert + entity
 #                 credentials to Robot/Locker. Skip this on repeat runs where
@@ -97,6 +116,7 @@ IR_HK=false
 LIFI_HK=false
 ECHO=false
 ECHO_TEST_DELAY_MS=0
+ACTION_TEST_DELAY_MS=0
 BLE=false
 WIFI=false
 UWB=false
@@ -107,6 +127,7 @@ while [[ $# -gt 0 ]]; do
         --lifi-hk) LIFI_HK=true; shift ;;
         --ultrasound-echo) ECHO=true; shift ;;
         --echo-test-delay-ms) ECHO_TEST_DELAY_MS="$2"; shift 2 ;;
+        --action-test-delay-ms) ACTION_TEST_DELAY_MS="$2"; shift 2 ;;
         --ble-rssi) BLE=true; shift ;;
         --wifi-rssi) WIFI=true; shift ;;
         --uwb) UWB=true; shift ;;
@@ -118,6 +139,10 @@ CHECKS=0
 for check in "$IR_HK" "$LIFI_HK" "$ECHO" "$BLE" "$WIFI" "$UWB"; do
     [ "$check" = true ] && CHECKS=$((CHECKS + 1))
 done
+if ! [[ "$ACTION_TEST_DELAY_MS" =~ ^[0-9]{1,7}$ ]]; then
+    echo "--action-test-delay-ms takes a number of milliseconds."
+    exit 1
+fi
 if [ "$CHECKS" -gt 1 ]; then
     echo "Choose at most one of --ir-hk, --lifi-hk, --ultrasound-echo, --ble-rssi, --wifi-rssi, --uwb."
     exit 1
@@ -162,6 +187,10 @@ SUDO_PREFIX=""
 ROBOT_TIMEOUT=90
 HK_ARGS=""
 CHALLENGE_CATALOG="physical_context_challenges/challenges.json"
+POLICY="policies/physical_presence.json"
+if [ "$CHECKS" = 1 ]; then
+    POLICY="policies/physical_presence_colocation.json"
+fi
 if [ "$IR_HK" = true ]; then
     HK_ARGS="--require-ir-hk"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_ir.json"
@@ -213,6 +242,10 @@ if [ "$BLE" = true ]; then
     HK_ARGS="--require-ble-rssi"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_ble.json"
 fi
+if [ "$ACTION_TEST_DELAY_MS" != 0 ]; then
+    ROBOT_EXTRA_ARGS="$ROBOT_EXTRA_ARGS --action-test-delay-ms $ACTION_TEST_DELAY_MS"
+    LOCKER_EXTRA_ARGS="$LOCKER_EXTRA_ARGS --action-test-delay-ms $ACTION_TEST_DELAY_MS"
+fi
 
 # Runs a command with a hard wall-clock timeout. Portable bash implementation
 # since macOS has no `timeout`/`gtimeout` by default. Returns the wrapped
@@ -250,6 +283,7 @@ fi
 if [ "$BLE" = true ] || [ "$WIFI" = true ] || [ "$UWB" = true ]; then
     echo " catalog=$CHALLENGE_CATALOG"
 fi
+echo " policy=$POLICY (used with --generate)  action_test_delay_ms=$ACTION_TEST_DELAY_MS"
 echo " run_id=$RUN_ID  locker_log=$LOCKER_LOG"
 echo "======================================================================"
 
@@ -308,7 +342,7 @@ fi
 if [ "$GENERATE" = true ]; then
     echo ""
     echo "[1/6] Regenerating Auth DB on $AUTH_HOST..."
-    ssh_to 600 "$AUTH_HOST" "${MVN_ENV}cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po policies/physical_presence.json -ch $CHALLENGE_CATALOG -p $PASSWORD -lc"
+    ssh_to 600 "$AUTH_HOST" "${MVN_ENV}cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po $POLICY -ch $CHALLENGE_CATALOG -p $PASSWORD -lc"
 
     echo ""
     echo "Distributing Auth cert + credentials to Robot and Locker..."
@@ -372,7 +406,7 @@ ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
 ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
 # Record exactly which sources were built (the Pis' entity/c may carry
 # uncommitted, scp-synced files).
-VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum physical_com/hk.c physical_com/plan_json.c physical_com/session_ctl.c physical_com/rssi_check.c wifi_com/wifi_rssi.c ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_rssi.c bluetooth_com/bt_sst_handshake.c uwb_com/uwb_range.c uwb_com/uwb_cli_dev.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
+VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum physical_com/freshness.c physical_com/hk.c physical_com/plan_json.c physical_com/session_ctl.c physical_com/rssi_check.c wifi_com/wifi_rssi.c ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_sst_handshake.c uwb_com/uwb_range.c uwb_com/uwb_cli_dev.c examples/physical_presence/hk_check.h | cut -c1-16,65-"
 for host in "$ROBOT_HOST" "$LOCKER_HOST"; do
     echo "--- sources on $host ---"
     ssh_to 15 "$host" "$VERSION_CMD" || true
@@ -515,6 +549,22 @@ if [ "$UWB" = true ]; then
     done
     if [ "$ROBOT_STATUS" = 0 ] && [ "$UWB_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
 fi
+# The action gate is the final word: each side's (simulated) action must
+# have started, after its gate passed, in this run.
+GATE_STATUS=0
+echo ""
+echo "Action gate results (this run):"
+for side in Robot Locker; do
+    log="$ROBOT_LOCAL_LOG"; [ "$side" = Locker ] && log="$LOCKER_LOCAL_LOG"
+    action=RETRIEVE_ITEM; [ "$side" = Locker ] && action=LOCKER_OPEN
+    grep -hE "ACTION_GATE|SIMULATED_ACTION_STARTED" "$log" | sed "s/^/  [$side] /" || true
+    if ! grep -q "SIMULATED_ACTION_STARTED: action=$action " "$log" ||
+       ! grep -q "ACTION_GATE PASS: action=$action " "$log"; then
+        echo "  [$side] $action did not pass its action gate in this run."
+        GATE_STATUS=1
+    fi
+done
+if [ "$ROBOT_STATUS" = 0 ] && [ "$GATE_STATUS" != 0 ]; then ROBOT_STATUS=1; fi
 rm -f "$ROBOT_LOCAL_LOG" "$LOCKER_LOCAL_LOG"
 
 exit "$ROBOT_STATUS"

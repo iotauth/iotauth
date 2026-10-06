@@ -96,28 +96,39 @@ public class FeasibleChallengeMatcher {
         effCapObj.put("target", targetCapObj);
         result.put("effectiveCapabilities", effCapObj);
 
-        // Step 3: Extract Required Physical Presence Checks from Communication Policy Context
+        // Step 3: Extract Required Physical Presence Checks from Communication Policy Context, and
+        // each check's freshness bound. A context that cannot be read is rejected, never treated as
+        // "no physical checks".
         List<String> requiredChecks = new ArrayList<>();
-        if (communicationPolicy != null && communicationPolicy.getContext() != null) {
+        JSONObject policyContext = null;
+        if (communicationPolicy != null && communicationPolicy.getContext() != null
+                && !communicationPolicy.getContext().trim().isEmpty()) {
             try {
-                JSONObject policyContext = (JSONObject) new JSONParser().parse(communicationPolicy.getContext());
-                if (policyContext.containsKey("PhysicalPresenceRequirements")) {
-                    JSONArray reqArray = (JSONArray) policyContext.get("PhysicalPresenceRequirements");
-                    for (Object item : reqArray) {
-                        requiredChecks.add(item.toString());
-                    }
+                policyContext = (JSONObject) new JSONParser().parse(communicationPolicy.getContext());
+            } catch (ParseException | ClassCastException e) {
+                throw new IllegalArgumentException("Malformed policy context: " + e.getMessage());
+            }
+            if (policyContext.containsKey("PhysicalPresenceRequirements")) {
+                Object reqObj = policyContext.get("PhysicalPresenceRequirements");
+                if (!(reqObj instanceof JSONArray))
+                    throw new IllegalArgumentException("PhysicalPresenceRequirements must be an array");
+                for (Object item : (JSONArray) reqObj) {
+                    if (!(item instanceof String) || requiredChecks.contains(item))
+                        throw new IllegalArgumentException("Invalid or duplicate physical presence check: " + item);
+                    requiredChecks.add((String) item);
                 }
-            } catch (ParseException e) {
-                logger.error("Failed to parse policy context: {}", e.getMessage());
             }
         }
         result.put("requiredChecks", new JSONArray() {{ addAll(requiredChecks); }});
 
         // Step 4: For each required physical presence check, select the highest-priority feasible
         // method (m_i*) from the catalog. Priority is given by the method's position in the
-        // catalog's "methods" array (earlier entries are higher priority).
+        // catalog's "methods" array (earlier entries are higher priority). The check also carries
+        // the policy's freshness bound, outside the method's parameters: it belongs to the action's
+        // policy, not to the mechanism.
         JSONObject verificationPlan = new JSONObject();
         for (String checkID : requiredChecks) {
+            long freshnessMs = freshnessBoundMs(policyContext, checkID);
             JSONObject checkObj = computeCheckResult(checkID, challengeDefinitions,
                     effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion,
                     targetEntities);
@@ -125,6 +136,7 @@ public class FeasibleChallengeMatcher {
                 logger.warn("[FeasibleChallengeMatcher] No feasible mechanism found for check {} requested by {}",
                         checkID, requestingEntity.getName());
             }
+            checkObj.put("freshness_ms", freshnessMs);
             verificationPlan.put(checkID, checkObj);
         }
         result.put("verificationPlan", verificationPlan);
@@ -341,6 +353,29 @@ public class FeasibleChallengeMatcher {
         long m = (Long) minRssi, n = (Long) samples, i = (Long) interval;
         if (m < -127 || m > 20 || n < 1 || n > 1000 || i < 0 || i > 1000)
             throw new IllegalArgumentException("Invalid " + name + " min_rssi_dbm, samples or interval_ms");
+    }
+
+    /** Largest freshness bound a policy may set; the endpoints apply the same limit. */
+    public static final long MAX_FRESHNESS_MS = 600_000L;
+
+    /**
+     * The freshness bound (ms) the policy context sets for a required check, from its
+     * PhysicalPresenceFreshnessMs map: the longest time allowed between the physical observation
+     * that satisfied the check and the start of the protected action. Every required check needs
+     * one, as a JSON integer in 1..MAX_FRESHNESS_MS; there is no default and no unlimited bound.
+     */
+    public static long freshnessBoundMs(JSONObject policyContext, String checkID) {
+        Object mapObj = policyContext == null ? null : policyContext.get("PhysicalPresenceFreshnessMs");
+        if (!(mapObj instanceof JSONObject))
+            throw new IllegalArgumentException("Policy requires " + checkID
+                    + " but has no PhysicalPresenceFreshnessMs map");
+        Object bound = ((JSONObject) mapObj).get(checkID);
+        if (!(bound instanceof Long))
+            throw new IllegalArgumentException("Policy has no integer freshness bound for " + checkID);
+        long ms = (Long) bound;
+        if (ms < 1 || ms > MAX_FRESHNESS_MS)
+            throw new IllegalArgumentException("Freshness bound for " + checkID + " out of range: " + ms);
+        return ms;
     }
 
     /** Wire threshold is an integer in millionths; never silently round a policy down. */

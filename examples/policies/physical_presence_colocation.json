@@ -11,11 +11,9 @@
     "IsDelegated": 0,
     "Challenges": {
       "PhysicalPresenceRequirements": [
-        "HUMAN_PRESENCE",
         "CO_LOCATION"
       ],
       "PhysicalPresenceFreshnessMs": {
-        "HUMAN_PRESENCE": 1000,
         "CO_LOCATION": 15000
       }
     }
@@ -29,14 +27,6 @@
     "AbsoluteValidity": "1*day",
     "RelativeValidity": "2*hour",
     "Expiration": "Infinity",
-    "IsDelegated": 0,
-    "Challenges": {
-      "PhysicalPresenceRequirements": [
-        "HUMAN_PRESENCE"
-      ],
-      "PhysicalPresenceFreshnessMs": {
-        "HUMAN_PRESENCE": 1000
-      }
-    }
+    "IsDelegated": 0
   }
 ]

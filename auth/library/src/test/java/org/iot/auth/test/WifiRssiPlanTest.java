@@ -23,7 +23,8 @@ public class WifiRssiPlanTest {
                             String params) {
         CommunicationPolicy policy = new CommunicationPolicy(new CommunicationPolicyTable()
                 .setSessionCryptoSpec("AES-128-CBC:SHA256")
-                .setContext("{\"PhysicalPresenceRequirements\":[\"CO_LOCATION\"]}"));
+                .setContext("{\"PhysicalPresenceRequirements\":[\"CO_LOCATION\"],"
+                        + "\"PhysicalPresenceFreshnessMs\":{\"CO_LOCATION\":10000}}"));
         PhysicalChallengeTable wifi = new PhysicalChallengeTable().setCheckID("CO_LOCATION").setTopology("MUTUAL")
                 // Empty catalog requirements must not bypass the mutual capability checks.
                 .setMethods("[{\"id\":\"WIFI_RSSI\",\"requirements\":{},\"parameters\":" + params + "}]");
