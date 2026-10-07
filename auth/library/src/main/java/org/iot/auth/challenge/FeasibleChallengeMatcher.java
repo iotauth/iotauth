@@ -330,15 +330,28 @@ public class FeasibleChallengeMatcher {
     }
 
     /**
-     * BLE RSSI settings: min_rssi_dbm (PASS when an endpoint's median RSSI is at least this,
-     * -127..20 dBm), samples (RSSI reads per endpoint, 1..1000) and interval_ms (between reads,
-     * 0..1000). All must be JSON integers. Mirrors rssi_plan_config() on the endpoints.
+     * BLE RSSI settings, for RSSI taken from advertising packets that answer a fresh challenge:
+     * min_rssi_dbm (PASS when an endpoint's median RSSI is at least this, -127..20 dBm), samples
+     * (advertising reports per endpoint, 1..100) and timeout_ms (to collect them, 1..60000). All
+     * must be JSON integers. Mirrors ble_adv_rssi_plan_config() on the endpoints.
      */
     public static void validateBleRssiParameters(JSONObject parameters) {
-        validateRssiParameters(parameters, "BLE RSSI");
+        if (parameters == null) throw new IllegalArgumentException("Missing BLE RSSI parameters");
+        Object minRssi = parameters.get("min_rssi_dbm");
+        Object samples = parameters.get("samples");
+        Object timeout = parameters.get("timeout_ms");
+        if (!(minRssi instanceof Long) || !(samples instanceof Long) || !(timeout instanceof Long))
+            throw new IllegalArgumentException("BLE RSSI needs integer min_rssi_dbm, samples and timeout_ms");
+        long m = (Long) minRssi, n = (Long) samples, t = (Long) timeout;
+        if (m < -127 || m > 20 || n < 1 || n > 100 || t < 1 || t > 60000)
+            throw new IllegalArgumentException("Invalid BLE RSSI min_rssi_dbm, samples or timeout_ms");
     }
 
-    /** Wi-Fi RSSI settings: the same three integers and ranges as BLE RSSI. */
+    /**
+     * Wi-Fi RSSI settings: min_rssi_dbm (-127..20 dBm), samples (RSSI reads per endpoint,
+     * 1..1000) and interval_ms (between reads, 0..1000). All must be JSON integers. Mirrors
+     * rssi_plan_config() on the endpoints.
+     */
     public static void validateWifiRssiParameters(JSONObject parameters) {
         validateRssiParameters(parameters, "Wi-Fi RSSI");
     }

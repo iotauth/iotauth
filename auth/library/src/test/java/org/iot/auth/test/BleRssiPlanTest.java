@@ -10,7 +10,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class BleRssiPlanTest {
-    private static final String PARAMS = "{\"min_rssi_dbm\":-60,\"samples\":20,\"interval_ms\":100}";
+    private static final String PARAMS = "{\"min_rssi_dbm\":-60,\"samples\":20,\"timeout_ms\":10000}";
 
     private JSONObject json(String s) throws Exception { return (JSONObject)new JSONParser().parse(s); }
     private RegisteredEntity entity(String name, boolean rx, boolean tx) {
@@ -52,20 +52,22 @@ public class BleRssiPlanTest {
     @Test public void validatesRssiParameters() throws Exception {
         FeasibleChallengeMatcher.validateBleRssiParameters(json(PARAMS));
         FeasibleChallengeMatcher.validateBleRssiParameters(
-                json("{\"min_rssi_dbm\":-127,\"samples\":1,\"interval_ms\":0}"));
+                json("{\"min_rssi_dbm\":-127,\"samples\":1,\"timeout_ms\":1}"));
         FeasibleChallengeMatcher.validateBleRssiParameters(
-                json("{\"min_rssi_dbm\":20,\"samples\":1000,\"interval_ms\":1000}"));
+                json("{\"min_rssi_dbm\":20,\"samples\":100,\"timeout_ms\":60000}"));
         String[] invalid = {
-            "{\"min_rssi_dbm\":-60.5,\"samples\":20,\"interval_ms\":100}",
-            "{\"min_rssi_dbm\":\"-60\",\"samples\":20,\"interval_ms\":100}",
-            "{\"min_rssi_dbm\":-128,\"samples\":20,\"interval_ms\":100}",
-            "{\"min_rssi_dbm\":21,\"samples\":20,\"interval_ms\":100}",
-            "{\"min_rssi_dbm\":-60,\"samples\":0,\"interval_ms\":100}",
-            "{\"min_rssi_dbm\":-60,\"samples\":1001,\"interval_ms\":100}",
-            "{\"min_rssi_dbm\":-60,\"samples\":20,\"interval_ms\":-1}",
-            "{\"min_rssi_dbm\":-60,\"samples\":20,\"interval_ms\":1001}",
-            "{\"samples\":20,\"interval_ms\":100}",
-            "{\"min_rssi_dbm\":-60,\"interval_ms\":100}",
+            // The connection-RSSI settings no longer describe the check.
+            "{\"min_rssi_dbm\":-60,\"samples\":20,\"interval_ms\":100}",
+            "{\"min_rssi_dbm\":-60.5,\"samples\":20,\"timeout_ms\":10000}",
+            "{\"min_rssi_dbm\":\"-60\",\"samples\":20,\"timeout_ms\":10000}",
+            "{\"min_rssi_dbm\":-128,\"samples\":20,\"timeout_ms\":10000}",
+            "{\"min_rssi_dbm\":21,\"samples\":20,\"timeout_ms\":10000}",
+            "{\"min_rssi_dbm\":-60,\"samples\":0,\"timeout_ms\":10000}",
+            "{\"min_rssi_dbm\":-60,\"samples\":101,\"timeout_ms\":10000}",
+            "{\"min_rssi_dbm\":-60,\"samples\":20,\"timeout_ms\":0}",
+            "{\"min_rssi_dbm\":-60,\"samples\":20,\"timeout_ms\":60001}",
+            "{\"samples\":20,\"timeout_ms\":10000}",
+            "{\"min_rssi_dbm\":-60,\"timeout_ms\":10000}",
             "{\"min_rssi_dbm\":-60,\"samples\":20}"};
         for (String s : invalid) {
             try { FeasibleChallengeMatcher.validateBleRssiParameters(json(s)); fail(s); }

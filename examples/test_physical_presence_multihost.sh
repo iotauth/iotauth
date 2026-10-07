@@ -70,11 +70,9 @@
 #   generate the Auth DB from policies/physical_presence_colocation.json,
 #   which requires CO_LOCATION only, since HUMAN_PRESENCE has no real sensor
 #   yet (its DUMMY method never passes the gate); other runs use
-#   policies/physical_presence.json. The BLE RSSI check cannot tell how old
-#   the controller's cached RSSI is, so its gate denies
-#   (UNKNOWN_OBSERVATION_TIME) even when the RSSI itself passed; Wi-Fi RSSI
-#   uses only frames counted after its sampling began, so it is gated
-#   normally.
+#   policies/physical_presence.json. Wi-Fi RSSI uses only frames counted
+#   after its sampling began, and BLE RSSI only advertising packets that
+#   answer a fresh challenge, so both are gated like the other checks.
 #   --generate    Regenerate the Auth DB on the Auth host (cleanAll.sh + generateAll.sh)
 #                 and redistribute the freshly generated Auth cert + entity
 #                 credentials to Robot/Locker. Skip this on repeat runs where
