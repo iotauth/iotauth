@@ -64,7 +64,7 @@
           "parameters": {
             "min_rssi_dbm": -60,
             "samples": 20,
-            "interval_ms": 100
+            "timeout_ms": 10000
           }
         }
       ]
