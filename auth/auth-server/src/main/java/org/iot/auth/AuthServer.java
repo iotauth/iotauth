@@ -39,6 +39,7 @@ import org.iot.auth.config.constants.C;
 import org.iot.auth.crypto.AuthCrypto;
 import org.iot.auth.crypto.DistributionKey;
 import org.iot.auth.crypto.SessionKey;
+import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.db.*;
 import org.iot.auth.db.bean.CommunicationPolicyTable;
 import org.iot.auth.db.bean.DelegationInfoTable;
@@ -581,6 +582,12 @@ public class AuthServer {
         return db.generateSessionKeys(authID, owner, numKeys, communicationPolicy, sessionKeyPurpose, null);
     }
 
+    public synchronized List<SessionKey> generateSessionKeys(String owner, int numKeys,
+            CommunicationPolicy policy, SessionKeyPurpose purpose, SymmetricKeyCryptoSpec cryptoSpec)
+            throws IOException, SQLException, ClassNotFoundException {
+        return db.generateSessionKeys(authID, owner, numKeys, policy, purpose, null, cryptoSpec);
+    }
+
     /**
      * Method for exposing an AuthDB operation, generateSessionKeys, but for delegation.
      * Since it's for delegation, it does not take the requester as an owner.
@@ -664,6 +671,26 @@ public class AuthServer {
      */
     public RegisteredEntity getRegisteredEntity(String entityName) {
         return db.getRegisteredEntity(entityName);
+    }
+
+    /**
+     * Returns all registered entities whose group matches the given group name.
+     * Used for resource-matching in physical presence challenge determination.
+     * @param groupName The group name to filter by (e.g. "Boxes").
+     * @return List of registered entities in that group; empty list if none found.
+     */
+    public List<RegisteredEntity> getRegisteredEntitiesByGroup(String groupName) {
+        List<RegisteredEntity> result = new ArrayList<>();
+        for (RegisteredEntity entity : db.getAllRegisteredEntitiies()) {
+            if (groupName.equals(entity.getGroup())) {
+                result.add(entity);
+            }
+        }
+        return result;
+    }
+
+    public List<org.iot.auth.db.bean.PhysicalChallengeTable> getPhysicalChallenges() throws SQLException {
+        return db.selectAllPhysicalChallenges();
     }
 
     /**

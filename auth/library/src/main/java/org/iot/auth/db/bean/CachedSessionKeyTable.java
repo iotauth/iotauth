@@ -19,6 +19,8 @@ import org.iot.auth.crypto.SessionKey;
 import org.iot.auth.crypto.SymmetricKeyCryptoSpec;
 import org.iot.auth.io.Buffer;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -52,7 +54,7 @@ public class CachedSessionKeyTable {
         cachedSessionKey.setPurpose(sessionKey.getPurpose());
         cachedSessionKey.setAbsValidity(sessionKey.getRawExpirationTime());
         cachedSessionKey.setRelValidity(sessionKey.getRelValidity());
-        cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toSpecString());
+        cachedSessionKey.setSessionCryptoSpec(sessionKey.getCryptoSpec().toJSONObject().toJSONString());
         cachedSessionKey.setKeyVal(sessionKey.getSerializedKeyVal().getRawBytes());
         if (sessionKey.getExpectedOwnerGroups() != null) {
             cachedSessionKey.setExpectedOwnerGroups(String.join(SessionKey.SESSION_KEY_OWNER_NAME_DELIM, sessionKey.getExpectedOwnerGroups()));
@@ -61,7 +63,18 @@ public class CachedSessionKeyTable {
     }
 
     public SessionKey toSessionKey() {
-        SymmetricKeyCryptoSpec cryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(getSessionCryptoSpec());
+        SymmetricKeyCryptoSpec cryptoSpec;
+        String stored = getSessionCryptoSpec();
+        if (stored.trim().startsWith("{")) {
+            try {
+                cryptoSpec = SymmetricKeyCryptoSpec.fromJSONObject((JSONObject) new JSONParser().parse(stored));
+            } catch (ParseException | ClassCastException e) {
+                throw new IllegalArgumentException("Invalid cached session crypto spec", e);
+            }
+        } else {
+            // Compatibility with session keys cached before plans were persisted.
+            cryptoSpec = SymmetricKeyCryptoSpec.fromSpecString(stored);
+        }
         SessionKey sessionKey = new SessionKey(getID(),
                 getOwner() != null ? getOwner().split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM) : new String[0],
                 getMaxNumOwners(), getPurpose(),

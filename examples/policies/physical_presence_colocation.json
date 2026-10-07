@@ -1,0 +1,32 @@
+[
+  {
+    "RequestingGroup": "Robots",
+    "TargetType": "Action",
+    "Target": "RETRIEVE_ITEM",
+    "MaxNumSessionKeyOwners": 2,
+    "SessionCryptoSpec": "AES-128-CBC:SHA256",
+    "AbsoluteValidity": "1*day",
+    "RelativeValidity": "2*hour",
+    "Expiration": "Infinity",
+    "IsDelegated": 0,
+    "Challenges": {
+      "PhysicalPresenceRequirements": [
+        "CO_LOCATION"
+      ],
+      "PhysicalPresenceFreshnessMs": {
+        "CO_LOCATION": 15000
+      }
+    }
+  },
+  {
+    "RequestingGroup": "Robots",
+    "TargetType": "Action",
+    "Target": "GRIP_ITEM",
+    "MaxNumSessionKeyOwners": 2,
+    "SessionCryptoSpec": "AES-128-CBC:SHA256",
+    "AbsoluteValidity": "1*day",
+    "RelativeValidity": "2*hour",
+    "Expiration": "Infinity",
+    "IsDelegated": 0
+  }
+]
