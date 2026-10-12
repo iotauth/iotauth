@@ -32,22 +32,47 @@
         }
     ],
 	"assignments": {
-		"net1.client": 101,
-		"net1.server": 101,
-		"net2.server": 102,
-		"net1.adminClient": 101,
-		"net1.adminServer": 101
+	    "net1.humanUser": 101,
+		"net1.managerAgent": 101,
+		"net1.languageAgent": 101,
+		"net1.analyticsAgent": 101,
+		"net1.robotAgent": 101,
+		"net1.resource": 101,
+		"net1.door": 101
 	},
 	"entityList": [
 		{
-			"group": "Clients",
-			"name": "net1.client",
+            "group": "HumanUsers",
+            "name": "net1.humanUser",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": false,
+            "distKeyValidityPeriod": "1*hour",
+            "maxSessionKeysPerRequest": 5,
+            "netName": "net1",
+            "credentialPrefix": "Net1.HumanUser",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "targetServerInfoList": [
+                {"name": "net1.door", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
+            ],
+            "contextList": []
+        },
+		{
+			"group": "ManagerAgents",
+			"name": "net1.managerAgent",
 			"distProtocol": "TCP",
 			"usePermanentDistKey": false,
 			"distKeyValidityPeriod": "1*hour",
 			"maxSessionKeysPerRequest": 5,
 			"netName": "net1",
-			"credentialPrefix": "Net1.Client",
+			"credentialPrefix": "Net1.ManagerAgents",
 			"distributionCryptoSpec": {
 				"cipher": "AES-128-CBC",
 				"mac": "SHA256"
@@ -58,20 +83,83 @@
 			},
 			"backupToAuthIds": [],
 			"targetServerInfoList": [
-				{"name": "net1.server", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
+				{"name": "net1.door", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
 			],
 			"contextList": []
 		},
 		{
-            "group": "Servers",
-            "name": "net1.server",
+            "group": "LanguageAgents",
+            "name": "net1.languageAgent",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": false,
+            "distKeyValidityPeriod": "1*hour",
+            "maxSessionKeysPerRequest": 5,
+            "netName": "net1",
+            "credentialPrefix": "Net1.LanguageAgents",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "targetServerInfoList": [],
+            "contextList": []
+        },
+		{
+            "group": "AnalyticsAgents",
+            "name": "net1.analyticsAgent",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": false,
+            "distKeyValidityPeriod": "1*hour",
+            "maxSessionKeysPerRequest": 5,
+            "netName": "net1",
+            "credentialPrefix": "Net1.AnalyticsAgent",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "targetServerInfoList": [],
+            "contextList": []
+        },
+		{
+            "group": "RobotAgents",
+            "name": "net1.robotAgent",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": false,
+            "distKeyValidityPeriod": "1*hour",
+            "maxSessionKeysPerRequest": 5,
+            "netName": "net1",
+            "credentialPrefix": "Net1.RobotAgent",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "targetServerInfoList": [],
+            "contextList": []
+        },
+		{
+            "group": "Doors",
+            "name": "net1.door",
             "port": 21100,
             "distProtocol": "TCP",
             "usePermanentDistKey": false,
             "distKeyValidityPeriod": "1*hour",
             "maxSessionKeysPerRequest": 1,
             "netName": "net1",
-            "credentialPrefix": "Net1.Server",
+            "credentialPrefix": "Net1.Door",
             "distributionCryptoSpec": {
                 "cipher": "AES-128-CBC",
                 "mac": "SHA256"
@@ -83,78 +171,64 @@
             "host": "10.218.101.248",
             "backupToAuthIds": []
         },
-		{
-			"group": "Servers",
-			"name": "net2.server",
-			"port": 22100,
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 1,
-			"netName": "net2",
-			"credentialPrefix": "Net2.Server",
-			"distributionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"sessionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"host": "localhost",
-			"backupToAuthIds": []
-		},
-		{
-			"group": "AdminClients",
-			"name": "net1.adminClient",
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 5,
-			"netName": "net1",
-			"credentialPrefix": "Net1.AdminClient",
-			"distributionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"sessionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"backupToAuthIds": [],
-			"targetServerInfoList": [
-				{"name": "net1.adminServer", "host": "localhost", "port": 21200, "group": "AdminServers"}
-			]
-		},
-		{
-			"group": "AdminServers",
-			"name": "net1.adminServer",
-			"port": 21200,
-			"distProtocol": "TCP",
-			"usePermanentDistKey": false,
-			"distKeyValidityPeriod": "1*hour",
-			"maxSessionKeysPerRequest": 1,
-			"netName": "net1",
-			"credentialPrefix": "Net1.AdminServer",
-			"distributionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"sessionCryptoSpec": {
-				"cipher": "AES-128-CBC",
-				"mac": "SHA256"
-			},
-			"host": "localhost",
-			"backupToAuthIds": []
-		}
+        {
+            "group": "Resources",
+            "name": "net1.resource",
+            "port": 21101,
+            "distProtocol": "TCP",
+            "usePermanentDistKey": false,
+            "distKeyValidityPeriod": "1*hour",
+            "maxSessionKeysPerRequest": 1,
+            "netName": "net1",
+            "credentialPrefix": "Net1.Resource",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "host": "10.218.101.248",
+            "backupToAuthIds": []
+        }
 	],
 	"filesharingLists": [],
-	"privilegeList": [],
+	"privilegeList": [
+	    {
+            "privilegeType": "DelegationGrant",
+            "privilegedGroup": "ManagerAgents",
+            "subject": "RobotAgents",
+            "object": "Resources",
+            "validity": "1*day",
+            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+        },
+	    {
+            "privilegeType": "DelegationGrant",
+            "privilegedGroup": "ManagerAgents",
+            "subject": "RobotAgents",
+            "object": "Doors",
+            "validity": "1*day",
+            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+        },
+        {
+            "privilegeType": "DelegationRevoke",
+            "privilegedGroup": "HumanUsers",
+            "subject": "RobotAgents",
+            "object": "Resources"
+        },
+        {
+            "privilegeType": "DelegationRevoke",
+            "privilegedGroup": "HumanUsers",
+            "subject": "RobotAgents",
+            "object": "Doors"
+        }
+	],
 	"commPolicies": [
 		{
-			"RequestingGroup": "Clients",
+			"RequestingGroup": "HumanUsers",
 			"TargetType": "Group",
-			"Target": "Servers",
+			"Target": "Resources",
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
@@ -164,9 +238,33 @@
 			"Context": null
 		},
 		{
-			"RequestingGroup": "AdminClients",
+			"RequestingGroup": "HumanUsers",
 			"TargetType": "Group",
-			"Target": "AdminServers",
+			"Target": "Doors",
+			"MaxNumSessionKeyOwners": 2,
+			"SessionCryptoSpec": "AES-128-CBC:SHA256",
+			"AbsoluteValidity": "1*day",
+			"RelativeValidity": "2*hour",
+			"Expiration": "Infinity",
+			"IsDelegated": 0,
+			"Context": null
+		},
+        {
+			"RequestingGroup": "ManagerAgents",
+			"TargetType": "Group",
+			"Target": "Resources",
+			"MaxNumSessionKeyOwners": 2,
+			"SessionCryptoSpec": "AES-128-CBC:SHA256",
+			"AbsoluteValidity": "1*day",
+			"RelativeValidity": "2*hour",
+			"Expiration": "Infinity",
+			"IsDelegated": 0,
+			"Context": null
+		},
+		{
+			"RequestingGroup": "ManagerAgents",
+			"TargetType": "Group",
+			"Target": "Doors",
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
