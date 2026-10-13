@@ -204,7 +204,7 @@
             "subject": "RobotAgents",
             "object": "Resources",
             "validity": "1*day",
-            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*day"}
         },
 	    {
             "privilegeType": "DelegationGrant",
@@ -212,7 +212,7 @@
             "subject": "RobotAgents",
             "object": "Doors",
             "validity": "1*day",
-            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*day"}
         },
         {
             "privilegeType": "DelegationRevoke",
@@ -235,7 +235,7 @@
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
-			"RelativeValidity": "2*hour",
+			"RelativeValidity": "6*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": null
@@ -247,7 +247,7 @@
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
-			"RelativeValidity": "2*hour",
+			"RelativeValidity": "6*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": null
@@ -259,7 +259,7 @@
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
-			"RelativeValidity": "2*hour",
+			"RelativeValidity": "6*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": null
@@ -271,7 +271,7 @@
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
-			"RelativeValidity": "2*hour",
+			"RelativeValidity": "6*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": null
