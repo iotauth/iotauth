@@ -60,7 +60,7 @@
             },
             "backupToAuthIds": [],
             "targetServerInfoList": [
-                {"name": "net1.resource", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
+                {"name": "net1.resource", "host": "10.218.101.248", "port": 21100, "group": "Resources"}
             ],
             "contextList": []
         },
@@ -83,8 +83,8 @@
 			},
 			"backupToAuthIds": [],
 			"targetServerInfoList": [
-                            {"name": "net1.resource", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
-                        ],
+                {"name": "net1.resource", "host": "10.218.101.248", "port": 21100, "group": "Resources"}
+            ],
 			"contextList": []
 		},
 		{
@@ -148,8 +148,8 @@
             },
             "backupToAuthIds": [],
             "targetServerInfoList": [
-                {"name": "net1.resource", "host": "10.218.101.248", "port": 21101, "group": "Servers"},
-                {"name": "net1.door", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
+                {"name": "net1.resource", "host": "10.218.101.248", "port": 21101, "group": "Resources"},
+                {"name": "net1.door", "host": "10.218.101.248", "port": 21100, "group": "Doors"}
             ],
             "contextList": []
         },
