@@ -24,13 +24,16 @@ import java.util.Map;
 public enum CommunicationTargetType {
     UNKNOWN(0),
     TARGET_GROUP(1),
+    TARGET_GROUP_WITH_RESOURCE(2),
     PUBLISH_TOPIC(20),
     SUBSCRIBE_TOPIC(21),
     SESSION_KEY_ID(30),
+    SESSION_KEY_ID_WITH_RESOURCE(31),
     CACHED_SESSION_KEYS(40),
     FILE_SHARING_TEAM(50),
     ADD_READER(60),
-    DELEGATION(70);
+    DELEGATION(70),
+    ACTION(80);
 
     public int getValue() {
         return value;
@@ -54,13 +57,14 @@ public enum CommunicationTargetType {
                 return ADD_READER;
             case "Delegation":
                 return DELEGATION;
+            case "Action":
+                return ACTION;
             default:
                 return UNKNOWN;
         }
     }
 
-    private static final Map<Integer, CommunicationTargetType> typesByValue =
-            new HashMap<>();
+    private static final Map<Integer, CommunicationTargetType> typesByValue = new HashMap<>();
 
     static {
         for (CommunicationTargetType type : CommunicationTargetType.values()) {

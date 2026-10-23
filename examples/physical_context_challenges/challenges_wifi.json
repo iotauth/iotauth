@@ -1,0 +1,130 @@
+{
+  "checks": [
+    {
+      "id": "HUMAN_PRESENCE",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "DUMMY",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "CAMERA"
+              ]
+            }
+          },
+          "parameters": {
+            "max_human": 1
+          }
+        },
+        {
+          "id": "THERMAL_CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "THERMAL_CAMERA"
+              ]
+            }
+          },
+          "parameters": {
+            "max_human": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "CO_LOCATION",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "WIFI_RSSI",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "WiFi"
+              ],
+              "actuators": [
+                "WiFi"
+              ]
+            },
+            "target": {
+              "sensors": [
+                "WiFi"
+              ],
+              "actuators": [
+                "WiFi"
+              ]
+            }
+          },
+          "parameters": {
+            "min_rssi_dbm": -60,
+            "samples": 20,
+            "interval_ms": 100,
+            "peer_host": "192.168.77.1",
+            "peer_port": "21101"
+          }
+        }
+      ]
+    },
+    {
+      "id": "HANDSHAKE_TRANSPORT",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "WIFI",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "WiFi"
+              ],
+              "actuators": [
+                "WiFi"
+              ]
+            },
+            "target": {
+              "sensors": [
+                "WiFi"
+              ],
+              "actuators": [
+                "WiFi"
+              ]
+            }
+          },
+          "parameters": {
+            "host": "192.168.77.1",
+            "port": "21100"
+          }
+        },
+        {
+          "id": "TCP",
+          "requirements": {},
+          "parameters": {}
+        }
+      ]
+    },
+    {
+      "id": "TEMPERATURE_CHECK",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "THERMOMETER",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "THERMOMETER"
+              ]
+            }
+          },
+          "parameters": {
+            "min_temperature_celsius": 18
+          }
+        }
+      ]
+    }
+  ]
+}

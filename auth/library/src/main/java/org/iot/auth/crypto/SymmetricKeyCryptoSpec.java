@@ -25,15 +25,35 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
 
     private enum key {
         cipher,
-        mac
+        mac,
+        challenge
     }
 
+    /**
+     * Constructor for SymmetricKeyCryptoSpec with cipher algorithm, key size, and MAC algorithm.
+     * @param cipherAlgorithm The name of cipher algorithm.
+     * @param cipherKeySize Cipher key size in bytes.
+     * @param macAlgorithm The name of MAC algorithm.
+     */
     public SymmetricKeyCryptoSpec(String cipherAlgorithm, int cipherKeySize, String macAlgorithm) {
+        this(cipherAlgorithm, cipherKeySize, macAlgorithm, "");
+    }
+
+    /**
+     * Constructor for SymmetricKeyCryptoSpec with challenge specification for physical presence authentication.
+     * @param cipherAlgorithm The name of cipher algorithm.
+     * @param cipherKeySize Cipher key size in bytes.
+     * @param macAlgorithm The name of MAC algorithm.
+     * @param challenge Physical presence challenge rule string or JSON.
+     */
+    public SymmetricKeyCryptoSpec(String cipherAlgorithm, int cipherKeySize, String macAlgorithm, String challenge) {
         this.cipherAlgorithm = cipherAlgorithm;
         this.cipherKeySize = cipherKeySize;
 
         this.macAlgorithm = macAlgorithm;
         this.macKeySize = getMacAlgoKeySize(macAlgorithm);
+        
+        this.challenge = challenge;
     }
 
     /**
@@ -41,19 +61,25 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
      * @param macAlgorithm The name of MAC algorithm
      */
     public SymmetricKeyCryptoSpec(String macAlgorithm) {
-        this("", 0, macAlgorithm);
+        this("", 0, macAlgorithm, "");
     }
 
     public SymmetricKeyCryptoSpec makeMacOnly() {
         return new SymmetricKeyCryptoSpec(macAlgorithm);
     }
 
+    /**
+     * Deserializes SymmetricKeyCryptoSpec from a JSONObject including cipher, mac, and challenge fields.
+     * @param jsonObject JSONObject containing crypto spec fields.
+     * @return Deserialized SymmetricKeyCryptoSpec instance.
+     */
     public static SymmetricKeyCryptoSpec fromJSONObject(JSONObject jsonObject) {
         CryptoAlgoKeySize cipherAlgoKeySize = fromJSCryptoAlgo((String)jsonObject.get(key.cipher.toString()));
         CryptoAlgoKeySize hashAlgoKeySize = fromJSCryptoAlgo((String)jsonObject.get(key.mac.toString()));
+        String challenge = jsonObject.containsKey(key.challenge.toString()) ? (String)jsonObject.get(key.challenge.toString()) : "";
 
         return new SymmetricKeyCryptoSpec(cipherAlgoKeySize.getCryptoAlgo(), cipherAlgoKeySize.getKeySize(),
-                hashAlgoKeySize.getCryptoAlgo());
+                hashAlgoKeySize.getCryptoAlgo(), challenge);
     }
 
     public static SymmetricKeyCryptoSpec fromSpecString(String cryptoSpecString) {
@@ -81,12 +107,33 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     public int getMacKeySize() {
         return macKeySize;
     }
+    /**
+     * Gets the physical presence challenge string.
+     * @return Challenge string or JSON.
+     */
+    public String getChallenge() {
+        return challenge;
+    }
+    /**
+     * Sets the physical presence challenge string.
+     * @param challenge Challenge string or JSON.
+     */
+    public void setChallenge(String challenge) {
+        this.challenge = challenge;
+    }
 
+    /**
+     * Serializes SymmetricKeyCryptoSpec into a JSONObject including challenge if present.
+     * @return Serialized JSONObject.
+     */
     @SuppressWarnings("unchecked")
     public JSONObject toJSONObject() {
         JSONObject object = new JSONObject();
         object.put(key.cipher, toJavaScriptSpecString(cipherAlgorithm, cipherKeySize));
         object.put(key.mac, toJavaScriptSpecString(macAlgorithm, -1));
+        if (challenge != null && !challenge.isEmpty()) {
+            object.put(key.challenge, challenge);
+        }
         return object;
     }
 
@@ -98,6 +145,7 @@ public class SymmetricKeyCryptoSpec extends CryptoSpec {
     private int cipherKeySize;
     private String macAlgorithm;
     private int macKeySize;
+    private String challenge;
 
     private static String toJavaScriptSpecString(String cryptoAlgo, int keySize) {
         if (cryptoAlgo.equals("")) {

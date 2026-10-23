@@ -1,0 +1,103 @@
+{
+  "checks": [
+    {
+      "id": "HUMAN_PRESENCE",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "DUMMY",
+          "requirements": {},
+          "parameters": {}
+        },
+        {
+          "id": "CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "CAMERA"
+              ]
+            }
+          },
+          "parameters": {
+            "max_human": 1
+          }
+        },
+        {
+          "id": "THERMAL_CAMERA",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "THERMAL_CAMERA"
+              ]
+            }
+          },
+          "parameters": {
+            "max_human": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "CO_LOCATION",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "UWB",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "UWB"
+              ],
+              "actuators": [
+                "UWB"
+              ]
+            },
+            "target": {
+              "sensors": [
+                "UWB"
+              ],
+              "actuators": [
+                "UWB"
+              ]
+            }
+          },
+          "parameters": {
+            "max_distance_cm": 150,
+            "samples": 20,
+            "timeout_ms": 10000
+          }
+        }
+      ]
+    },
+    {
+      "id": "HANDSHAKE_TRANSPORT",
+      "topology": "MUTUAL",
+      "methods": [
+        {
+          "id": "TCP",
+          "requirements": {},
+          "parameters": {}
+        }
+      ]
+    },
+    {
+      "id": "TEMPERATURE_CHECK",
+      "topology": "LOCAL",
+      "methods": [
+        {
+          "id": "THERMOMETER",
+          "requirements": {
+            "requester": {
+              "sensors": [
+                "THERMOMETER"
+              ]
+            }
+          },
+          "parameters": {
+            "min_temperature_celsius": 18
+          }
+        }
+      ]
+    }
+  ]
+}
