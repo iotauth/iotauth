@@ -928,7 +928,8 @@ public abstract class EntityConnectionHandler {
                 physicalChallenges);
 
         getLogger().info("[Feasible Challenge Matcher Output] Verification Plan JSON for {}: {}",
-                requestingEntity.getName(), feasibleSet.toJSONString());
+                requestingEntity.getName(),
+                FeasibleChallengeMatcher.redactSecrets(feasibleSet.toJSONString()));
 
         Object verificationPlanObj = feasibleSet.get("verificationPlan");
         if (verificationPlanObj instanceof JSONObject) {

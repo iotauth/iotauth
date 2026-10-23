@@ -152,10 +152,9 @@ if [ "$CHECKS" -gt 1 ]; then
     echo "Choose at most one of --ir-hk, --lifi-hk, --ultrasound-echo, --ble-rssi, --wifi-rssi, --uwb."
     exit 1
 fi
-if [ "$WIFI" = true ] && [ "$COMM_TYPE" != "wifi" ]; then
-    echo "--wifi-rssi runs after a handshake over the Wi-Fi link only (--comm_type wifi)."
-    exit 1
-fi
+# --wifi-rssi runs its proximity check on a dedicated measurement Wi-Fi link
+# that is independent of the handshake transport, so it is allowed with any
+# --comm_type (e.g. a TCP handshake plus a separate Wi-Fi proximity link).
 if [ "$ECHO" = true ] && { [ "$IR_HK" = true ] || [ "$COMM_TYPE" != "tcp" ]; }; then
     echo "--ultrasound-echo runs after a TCP handshake only, and not with --ir-hk."
     exit 1
@@ -225,6 +224,11 @@ fi
 if [ "$BLE" = true ]; then
     SUDO_PREFIX="sudo "
 fi
+# Wi-Fi RSSI endpoints bring up the measurement dongle link themselves
+# (wifi_link.sh needs root), so they run under sudo whatever the handshake.
+if [ "$WIFI" = true ]; then
+    SUDO_PREFIX="sudo "
+fi
 ROBOT_EXTRA_ARGS=""
 LOCKER_EXTRA_ARGS=""
 if [ "$COMM_TYPE" = "lifi" ] || [ "$LIFI_HK" = true ]; then
@@ -246,7 +250,10 @@ if [ "$UWB" = true ]; then
     CHALLENGE_CATALOG="physical_context_challenges/challenges_uwb.json"
 fi
 if [ "$WIFI" = true ]; then
-    HK_ARGS="--require-wifi-rssi"
+    # The endpoints bring up the measurement Wi-Fi link themselves (path is
+    # relative to the build dir they run from) and run the proximity check on a
+    # dedicated socket on it, independent of --comm_type.
+    HK_ARGS="--require-wifi-rssi --wifi-link-script ../../../wifi_com/wifi_link.sh"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_wifi.json"
     # Relay experiment: optional authenticated Wi-Fi response-time check,
     # passed to both endpoints (e.g. "--wifi-timing-mode measure").
@@ -320,7 +327,7 @@ cleanup() {
     # sudo for pigpio's direct GPIO access); harmless for tcp/ultrasound runs.
     ssh_to 15 "$LOCKER_HOST" "sudo pkill -f '[.]/locker'" 2>/dev/null || true
     ssh_to 15 "$ROBOT_HOST" "sudo pkill -f '[.]/robot'" 2>/dev/null || true
-    if [ "$COMM_TYPE" = "wifi" ]; then
+    if [ "$COMM_TYPE" = "wifi" ] || [ "$WIFI" = true ]; then
         echo "[Clean] Taking the Wi-Fi link down on both Pis..."
         ssh_to 30 "$ROBOT_HOST" "$WIFI_LINK down" 2>/dev/null || true
         ssh_to 30 "$LOCKER_HOST" "$WIFI_LINK down" 2>/dev/null || true
@@ -447,11 +454,22 @@ fi
 if [ "$COMM_TYPE" = "wifi" ]; then
     # A direct link on each Pi's USB dongle, next to wlan0 (which keeps
     # carrying SSH): Locker is the AP at 192.168.77.1, Robot joins it.
-    ssh_to 60 "$ROBOT_HOST" "$WIFI_LINK down" > /dev/null 2>&1 || true
-    ssh_to 60 "$LOCKER_HOST" "$WIFI_LINK down" > /dev/null 2>&1 || true
-    ssh_to 60 "$LOCKER_HOST" "$WIFI_LINK ap 15"
-    ssh_to 60 "$ROBOT_HOST" "$WIFI_LINK sta 15"
     ROBOT_EXTRA_ARGS="$ROBOT_EXTRA_ARGS --wifi-peer 192.168.77.1"
+    if [ "$WIFI" != true ]; then
+        # No proximity check: the endpoints won't bring the link up on their
+        # own, but the Wi-Fi handshake needs it, so the script does. wifi_link.sh
+        # has no built-in credentials, so the script stages a bootstrap
+        # credentials file for this handshake-only link (the Auth-provisioned
+        # credentials are only for the proximity measurement link).
+        BOOT_CREDS="/tmp/wifi_boot_creds.$RUN_ID"
+        WRITE_BOOT_CREDS="umask 077; printf 'SSID=%s\nPASSPHRASE=%s\n' iotauth-boot iotauth-boot-pass > $BOOT_CREDS"
+        ssh_to 15 "$ROBOT_HOST" "$WRITE_BOOT_CREDS"
+        ssh_to 15 "$LOCKER_HOST" "$WRITE_BOOT_CREDS"
+        ssh_to 60 "$ROBOT_HOST" "$WIFI_LINK down" > /dev/null 2>&1 || true
+        ssh_to 60 "$LOCKER_HOST" "$WIFI_LINK down" > /dev/null 2>&1 || true
+        ssh_to 60 "$LOCKER_HOST" "WIFI_CREDS_FILE=$BOOT_CREDS $WIFI_LINK ap 15"
+        ssh_to 60 "$ROBOT_HOST" "WIFI_CREDS_FILE=$BOOT_CREDS $WIFI_LINK sta 15"
+    fi
 fi
 
 echo ""

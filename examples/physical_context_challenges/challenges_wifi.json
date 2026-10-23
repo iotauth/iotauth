@@ -64,7 +64,9 @@
           "parameters": {
             "min_rssi_dbm": -60,
             "samples": 20,
-            "interval_ms": 100
+            "interval_ms": 100,
+            "peer_host": "192.168.77.1",
+            "peer_port": "21101"
           }
         }
       ]

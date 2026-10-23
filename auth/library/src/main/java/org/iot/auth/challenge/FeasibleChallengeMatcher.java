@@ -10,6 +10,7 @@ import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.SecureRandom;
 import java.util.*;
 
 /**
@@ -159,7 +160,7 @@ public class FeasibleChallengeMatcher {
         }
 
         logger.info("[FeasibleChallengeMatcher] Computed Verification Plan for {}: {}",
-                requestingEntity.getName(), result.toJSONString());
+                requestingEntity.getName(), redactSecrets(result.toJSONString()));
 
         return result;
     }
@@ -260,8 +261,13 @@ public class FeasibleChallengeMatcher {
                         if (isMethodFeasible(reqs, effectiveReqSensors, effectiveReqActuators, targetSensorsUnion, targetActuatorsUnion)) {
                             selectedMethod = new JSONObject();
                             selectedMethod.put("method", methodID);
-                            JSONObject parameters = method.containsKey("parameters")
-                                    ? (JSONObject) method.get("parameters") : new JSONObject();
+                            // Copy the catalog parameters so per-request/per-execution injection
+                            // (e.g. the fresh Wi-Fi credentials below) never mutates the shared
+                            // catalog object.
+                            JSONObject parameters = new JSONObject();
+                            if (method.containsKey("parameters")) {
+                                parameters.putAll((JSONObject) method.get("parameters"));
+                            }
                             // For a TCP transport, the target's address isn't a static catalog
                             // parameter; look it up from the target entity Auth resolved for this
                             // request (e.g., the specific locker named at request time).
@@ -273,6 +279,16 @@ public class FeasibleChallengeMatcher {
                                         break;
                                     }
                                 }
+                            }
+                            // Wi-Fi proximity runs on a dedicated measurement link, separate from
+                            // the handshake transport. Auth provisions a fresh SSID/password per
+                            // authorized execution here; this runs once when the requester's
+                            // session key is created and is cached with the key, so the target's
+                            // later lookup returns the same values. The password is kept out of
+                            // logs (see EntityConnectionHandler's redaction).
+                            if ("WIFI_RSSI".equals(methodID)) {
+                                parameters.put("ssid", generateWifiSsid());
+                                parameters.put("password", generateWifiPassword());
                             }
                             selectedMethod.put("parameters", parameters);
                             break;
@@ -354,6 +370,41 @@ public class FeasibleChallengeMatcher {
      */
     public static void validateWifiRssiParameters(JSONObject parameters) {
         validateRssiParameters(parameters, "Wi-Fi RSSI");
+    }
+
+    // Fresh per-execution credentials for the Wi-Fi measurement link. Generated
+    // once when the requester's session key is created (cached with the key), so
+    // the requester and the target read identical values.
+    private static final SecureRandom WIFI_RANDOM = new SecureRandom();
+    private static final char[] WIFI_SSID_ALPHABET =
+            "abcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
+    // WPA2 passphrases are 8..63 printable ASCII; an unambiguous mixed-case set.
+    private static final char[] WIFI_PW_ALPHABET =
+            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789".toCharArray();
+
+    /** A fresh SSID (e.g. "iotauth-ab12cd34") for one authorized execution. */
+    private static String generateWifiSsid() {
+        StringBuilder sb = new StringBuilder("iotauth-");
+        for (int i = 0; i < 8; i++) {
+            sb.append(WIFI_SSID_ALPHABET[WIFI_RANDOM.nextInt(WIFI_SSID_ALPHABET.length)]);
+        }
+        return sb.toString();
+    }
+
+    /** A fresh 24-character WPA2 passphrase for one authorized execution. */
+    private static String generateWifiPassword() {
+        StringBuilder sb = new StringBuilder(24);
+        for (int i = 0; i < 24; i++) {
+            sb.append(WIFI_PW_ALPHABET[WIFI_RANDOM.nextInt(WIFI_PW_ALPHABET.length)]);
+        }
+        return sb.toString();
+    }
+
+    /** Replaces any "password" string value with "***" so the Wi-Fi measurement
+     *  passphrase never reaches a log, even when the whole plan is logged. */
+    public static String redactSecrets(String planJson) {
+        if (planJson == null) return null;
+        return planJson.replaceAll("(\"password\"\\s*:\\s*\")[^\"]*\"", "$1***\"");
     }
 
     private static void validateRssiParameters(JSONObject parameters, String name) {
