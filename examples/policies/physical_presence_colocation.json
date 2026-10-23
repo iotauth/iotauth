@@ -14,7 +14,7 @@
         "CO_LOCATION"
       ],
       "PhysicalPresenceFreshnessMs": {
-        "CO_LOCATION": 15000
+        "CO_LOCATION": 30000
       }
     }
   },

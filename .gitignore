@@ -22,3 +22,9 @@ dist/
 venv/
 env/
 entity/python/.venv/
+
+# Temp
+artifacts/*
+*.log
+*.pdf
+

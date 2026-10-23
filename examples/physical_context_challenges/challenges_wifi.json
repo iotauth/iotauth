@@ -74,11 +74,6 @@
       "topology": "MUTUAL",
       "methods": [
         {
-          "id": "TCP",
-          "requirements": {},
-          "parameters": {}
-        },
-        {
           "id": "WIFI",
           "requirements": {
             "requester": {
@@ -98,6 +93,14 @@
               ]
             }
           },
+          "parameters": {
+            "host": "192.168.77.1",
+            "port": "21100"
+          }
+        },
+        {
+          "id": "TCP",
+          "requirements": {},
           "parameters": {}
         }
       ]
