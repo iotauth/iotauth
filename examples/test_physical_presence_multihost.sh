@@ -24,9 +24,8 @@
 #   --ir-hk       Require actual IR HK after any handshake transport. With
 #                 --generate, select the IR-only CO_LOCATION catalog.
 #   --lifi-hk     Require actual LiFi HK after any handshake transport. With
-#                 --generate, select the LiFi-only CO_LOCATION catalog. The
-#                 Pis are wired mirror-image: Robot (pi42) TX 23 / RX 22 (the
-#                 defaults), Locker (pi43) TX 22 / RX 23; override with
+#                 --generate, select the LiFi-only CO_LOCATION catalog. Both
+#                 Pis are wired TX 23 / RX 22 (the defaults); override with
 #                 ROBOT_LIFI_ARGS / LOCKER_LIFI_ARGS.
 #   --ultrasound-echo
 #                 Require the mutual acoustic keyed echo for CO_LOCATION after a
@@ -99,8 +98,16 @@
 set -eo pipefail
 
 AUTH_HOST="${AUTH_HOST:-pi41@pi41}"
-ROBOT_HOST="pi42@pi42"
-LOCKER_HOST="pi43@pi43"
+# Another Pi pair: ROBOT_HOST/LOCKER_HOST plus their ROBOT_CONFIG/
+# LOCKER_CONFIG (in entity/c/examples/physical_presence) and a GRAPH naming
+# the locker's address, e.g. for the Pi 5 pair:
+#   ROBOT_HOST=pi52@pi52 LOCKER_HOST=pi53@pi53 ROBOT_CONFIG=robot_pi52.config \
+#   LOCKER_CONFIG=locker_pi53.config GRAPH=configs/physical_presence_remote_pi5.graph
+ROBOT_HOST="${ROBOT_HOST:-pi42@pi42}"
+LOCKER_HOST="${LOCKER_HOST:-pi43@pi43}"
+ROBOT_CONFIG="${ROBOT_CONFIG:-robot_pi42.config}"
+LOCKER_CONFIG="${LOCKER_CONFIG:-locker_pi43.config}"
+GRAPH="${GRAPH:-configs/physical_presence_remote.graph}"
 REMOTE_REPO="project/iotauth"
 WIFI_LINK="$REMOTE_REPO/entity/c/wifi_com/wifi_link.sh"
 PASSWORD="testpassword"
@@ -153,7 +160,9 @@ if [ "$ECHO" = true ] && { [ "$IR_HK" = true ] || [ "$COMM_TYPE" != "tcp" ]; }; 
     echo "--ultrasound-echo runs after a TCP handshake only, and not with --ir-hk."
     exit 1
 fi
-if [ "$BLE" = true ] && { [ "$IR_HK" = true ] || [ "$ECHO" = true ] || [ "$COMM_TYPE" != "bluetooth" ]; }; then
+if [ "$BLE" = true ] && [ "${RELAY_BLE_TCP:-0}" = 1 ] && [ "$COMM_TYPE" = tcp ]; then
+    : # relay mode: BLE RSSI over a TCP session, advertisements bridged by an external relay
+elif [ "$BLE" = true ] && { [ "$IR_HK" = true ] || [ "$ECHO" = true ] || [ "$COMM_TYPE" != "bluetooth" ]; }; then
     echo "--ble-rssi runs after a Bluetooth handshake only (--comm_type bluetooth), alone."
     exit 1
 fi
@@ -212,11 +221,15 @@ fi
 if [ "$COMM_TYPE" = "bluetooth" ]; then
     SUDO_PREFIX="sudo "
 fi
+# BLE RSSI uses raw HCI (CAP_NET_ADMIN) regardless of the session transport.
+if [ "$BLE" = true ]; then
+    SUDO_PREFIX="sudo "
+fi
 ROBOT_EXTRA_ARGS=""
 LOCKER_EXTRA_ARGS=""
 if [ "$COMM_TYPE" = "lifi" ] || [ "$LIFI_HK" = true ]; then
     ROBOT_EXTRA_ARGS="${ROBOT_LIFI_ARGS:-}"
-    LOCKER_EXTRA_ARGS="${LOCKER_LIFI_ARGS:---lifi-tx-gpio 22 --lifi-rx-gpio 23}"
+    LOCKER_EXTRA_ARGS="${LOCKER_LIFI_ARGS:-}"
 fi
 if [ "$ECHO" = true ]; then
     HK_ARGS="--require-ultrasound-echo"
@@ -235,10 +248,20 @@ fi
 if [ "$WIFI" = true ]; then
     HK_ARGS="--require-wifi-rssi"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_wifi.json"
+    # Relay experiment: optional authenticated Wi-Fi response-time check,
+    # passed to both endpoints (e.g. "--wifi-timing-mode measure").
+    if [ -n "${WIFI_TIMING_ARGS:-}" ]; then
+        HK_ARGS="$HK_ARGS $WIFI_TIMING_ARGS"
+    fi
 fi
 if [ "$BLE" = true ]; then
     HK_ARGS="--require-ble-rssi"
     CHALLENGE_CATALOG="physical_context_challenges/challenges_ble.json"
+fi
+# Relay experiment: route IR/LiFi HK preparation (INIT/READY) over the TCP
+# session, keeping only the timed rounds optical.
+if [ "${HK_CONTROL_TCP:-0}" = 1 ] && { [ "$IR_HK" = true ] || [ "$LIFI_HK" = true ]; }; then
+    HK_ARGS="$HK_ARGS --hk-control-tcp"
 fi
 if [ "$ACTION_TEST_DELAY_MS" != 0 ]; then
     ROBOT_EXTRA_ARGS="$ROBOT_EXTRA_ARGS --action-test-delay-ms $ACTION_TEST_DELAY_MS"
@@ -340,7 +363,7 @@ fi
 if [ "$GENERATE" = true ]; then
     echo ""
     echo "[1/6] Regenerating Auth DB on $AUTH_HOST..."
-    ssh_to 600 "$AUTH_HOST" "${MVN_ENV}cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g configs/physical_presence_remote.graph -po $POLICY -ch $CHALLENGE_CATALOG -p $PASSWORD -lc"
+    ssh_to 600 "$AUTH_HOST" "${MVN_ENV}cd $REMOTE_REPO/examples && ./cleanAll.sh && ./generateAll.sh -g $GRAPH -po $POLICY -ch $CHALLENGE_CATALOG -p $PASSWORD -lc"
 
     echo ""
     echo "Distributing Auth cert + credentials to Robot and Locker..."
@@ -385,8 +408,8 @@ fi
 
 echo ""
 echo "[3/6] Deploying per-Pi config files..."
-scp_between 15 "$PROJ_ROOT/entity/c/examples/physical_presence/robot_pi42.config" "$ROBOT_HOST:$REMOTE_REPO/entity/c/examples/physical_presence/robot_pi42.config"
-scp_between 15 "$PROJ_ROOT/entity/c/examples/physical_presence/locker_pi43.config" "$LOCKER_HOST:$REMOTE_REPO/entity/c/examples/physical_presence/locker_pi43.config"
+scp_between 15 "$PROJ_ROOT/entity/c/examples/physical_presence/$ROBOT_CONFIG" "$ROBOT_HOST:$REMOTE_REPO/entity/c/examples/physical_presence/$ROBOT_CONFIG"
+scp_between 15 "$PROJ_ROOT/entity/c/examples/physical_presence/$LOCKER_CONFIG" "$LOCKER_HOST:$REMOTE_REPO/entity/c/examples/physical_presence/$LOCKER_CONFIG"
 
 echo ""
 echo "[4/6] Building Robot on $ROBOT_HOST and Locker on $LOCKER_HOST..."
@@ -413,7 +436,7 @@ done
 if [ "$COMM_TYPE" = "bluetooth" ]; then
     # Bluetooth is soft-blocked by default on these Pis. Robot connects to
     # Locker by its public LE address, read from Locker itself.
-    BT_UP_CMD="for r in /sys/class/rfkill/rfkill*; do if [ \"\$(cat \$r/type)\" = bluetooth ]; then echo 0 | sudo tee \$r/soft > /dev/null; fi; done; bluetoothctl power on > /dev/null"
+    BT_UP_CMD="for r in /sys/class/rfkill/rfkill*; do if [ \"\$(cat \$r/type)\" = bluetooth ]; then echo 0 | sudo tee \$r/soft > /dev/null; fi; done; for i in 1 2 3 4 5; do bluetoothctl power on > /dev/null && break; sleep 1; done"
     ssh_to 20 "$ROBOT_HOST" "$BT_UP_CMD"
     ssh_to 20 "$LOCKER_HOST" "$BT_UP_CMD"
     LOCKER_BT_ADDR=$(ssh_to 15 "$LOCKER_HOST" "hciconfig hci0 | awk '/BD Address/ {print \$3}'")
@@ -436,8 +459,19 @@ echo "[5/6] Starting Locker on $LOCKER_HOST (--comm_type $COMM_TYPE)..."
 ssh_to 15 "$LOCKER_HOST" "pkill -f './locker' 2>/dev/null" || true
 # sudo first: sudo drops stdbuf's LD_PRELOAD, so stdbuf must run under it.
 start_remote_and_verify "$LOCKER_HOST" \
-    "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ${SUDO_PREFIX}stdbuf -oL -eL ./locker ../locker_pi43.config --comm_type $COMM_TYPE $HK_ARGS $LOCKER_EXTRA_ARGS > $LOCKER_LOG 2>&1 < /dev/null &" \
+    "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && setsid nohup ${SUDO_PREFIX}stdbuf -oL -eL ./locker ../$LOCKER_CONFIG --comm_type $COMM_TYPE $HK_ARGS $LOCKER_EXTRA_ARGS > $LOCKER_LOG 2>&1 < /dev/null &" \
     "./locker" "$LOCKER_LOG" "Locker" || exit 1
+
+# For a TCP-backed session (tcp/wifi; also BLE-over-TCP in the relay
+# experiment), the Locker process being alive is not enough -- it must be
+# listening before the Robot's bounded connect retries start, or they race
+# and fail with "connection refused". Wait for the port to open.
+if [ "$COMM_TYPE" = "tcp" ] || [ "$COMM_TYPE" = "wifi" ]; then
+    for _ in $(seq 1 30); do
+        ssh_to 10 "$LOCKER_HOST" "ss -ltn | grep -qE ':21100( |$)'" && break
+        sleep 1
+    done
+fi
 
 # Stream Locker's log live in this terminal, prefixed so it's distinguishable
 # from Robot's own output below. Killed in cleanup() on exit.
@@ -449,7 +483,7 @@ echo "[6/6] Running Robot on $ROBOT_HOST (--comm_type $COMM_TYPE)..."
 # stdbuf forces line-buffered stdout over the ssh pipe (glibc otherwise fully
 # buffers non-tty output, so Robot's log wouldn't show up until it exits).
 ROBOT_STATUS=0
-ssh_to $((ROBOT_TIMEOUT + 10)) "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL ${SUDO_PREFIX}timeout $ROBOT_TIMEOUT ./robot ../robot_pi42.config --comm_type $COMM_TYPE $HK_ARGS $ROBOT_EXTRA_ARGS" 2>&1 | tee "$ROBOT_LOCAL_LOG" | LC_ALL=C sed -u 's/^/[Robot] /' || ROBOT_STATUS=$?
+ssh_to $((ROBOT_TIMEOUT + 10)) "$ROBOT_HOST" "cd $REMOTE_REPO/entity/c/examples/physical_presence/build && stdbuf -oL -eL ${SUDO_PREFIX}timeout $ROBOT_TIMEOUT ./robot ../$ROBOT_CONFIG --comm_type $COMM_TYPE $HK_ARGS $ROBOT_EXTRA_ARGS" 2>&1 | tee "$ROBOT_LOCAL_LOG" | LC_ALL=C sed -u 's/^/[Robot] /' || ROBOT_STATUS=$?
 
 # Let Locker finish (it exits after its own check and messaging), so its log
 # is complete before it's judged.
