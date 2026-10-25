@@ -281,11 +281,14 @@ setup_multi_auth_logs() {
 	else
 		mkdir -p "$LOG_DIR"
 	fi
+	LOG_DIR="$(cd "$LOG_DIR" && pwd)"
 	AUTH101_LOG="$LOG_DIR/auth101.log"
 	AUTH102_LOG="$LOG_DIR/auth102.log"
 	SERVER_LOG="$LOG_DIR/server.log"
 	CLIENT_LOG="$LOG_DIR/client.log"
-	trap cleanup EXIT INT TERM
+	trap cleanup EXIT
+	trap 'exit 130' INT
+	trap 'exit 143' TERM
 	echo "[test] Logs: $LOG_DIR"
 }
 
@@ -426,6 +429,7 @@ start_auths() {
 	wait_for_port "$AUTH101_ENTITY_PORT" "Auth101 entity service"
 	wait_for_port "$AUTH101_TRUSTED_PORT" "Auth101 trusted-Auth service"
 	wait_for_port "$AUTH102_ENTITY_PORT" "Auth102 entity service"
+	wait_for_port "$AUTH102_TRUSTED_PORT" "Auth102 trusted-Auth service"
 }
 
 # --- Node scenario: client.js (net1.client) and server.js (net2.server) ---
