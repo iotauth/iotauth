@@ -11,26 +11,9 @@
 			"dbProtectionMethod": 1,
 			"backupEnabled": false,
 			"contextualCallbackEnabled": true
-		},
-        {
-            "id": 102,
-            "entityHost": "localhost",
-            "authHost": "localhost",
-            "tcpPort": 22900,
-            "udpPort": 22902,
-            "authPort": 22901,
-            "callbackPort": 22903,
-            "dbProtectionMethod": 1,
-            "backupEnabled": false,
-            "contextualCallbackEnabled": true
-        }
+		}
 	],
-	"authTrusts": [
-        {
-            "id1": 101,
-            "id2": 102
-        }
-    ],
+	"authTrusts": [],
 	"assignments": {
 	    "net1.humanUser": 101,
 		"net1.managerAgent": 101,
@@ -60,7 +43,7 @@
             },
             "backupToAuthIds": [],
             "targetServerInfoList": [
-                {"name": "net1.door", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
+                {"name": "net1.resource", "host": "10.218.101.248", "port": 21100, "group": "Resources"}
             ],
             "contextList": []
         },
@@ -83,8 +66,8 @@
 			},
 			"backupToAuthIds": [],
 			"targetServerInfoList": [
-				{"name": "net1.door", "host": "10.218.101.248", "port": 21100, "group": "Servers"}
-			],
+                {"name": "net1.resource", "host": "10.218.101.248", "port": 21100, "group": "Resources"}
+            ],
 			"contextList": []
 		},
 		{
@@ -147,7 +130,10 @@
                 "mac": "SHA256"
             },
             "backupToAuthIds": [],
-            "targetServerInfoList": [],
+            "targetServerInfoList": [
+                {"name": "net1.resource", "host": "10.218.101.248", "port": 21101, "group": "Resources"},
+                {"name": "net1.door", "host": "10.218.101.248", "port": 21100, "group": "Doors"}
+            ],
             "contextList": []
         },
 		{
@@ -201,7 +187,7 @@
             "subject": "RobotAgents",
             "object": "Resources",
             "validity": "1*day",
-            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*day"}
         },
 	    {
             "privilegeType": "DelegationGrant",
@@ -209,7 +195,7 @@
             "subject": "RobotAgents",
             "object": "Doors",
             "validity": "1*day",
-            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+            "info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*day"}
         },
         {
             "privilegeType": "DelegationRevoke",
@@ -232,7 +218,7 @@
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
-			"RelativeValidity": "2*hour",
+			"RelativeValidity": "6*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": null
@@ -244,7 +230,7 @@
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
-			"RelativeValidity": "2*hour",
+			"RelativeValidity": "6*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": null
@@ -256,7 +242,7 @@
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
-			"RelativeValidity": "2*hour",
+			"RelativeValidity": "6*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": null
@@ -268,7 +254,7 @@
 			"MaxNumSessionKeyOwners": 2,
 			"SessionCryptoSpec": "AES-128-CBC:SHA256",
 			"AbsoluteValidity": "1*day",
-			"RelativeValidity": "2*hour",
+			"RelativeValidity": "6*hour",
 			"Expiration": "Infinity",
 			"IsDelegated": 0,
 			"Context": null
