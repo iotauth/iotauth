@@ -11,26 +11,9 @@
 			"dbProtectionMethod": 1,
 			"backupEnabled": false,
 			"contextualCallbackEnabled": true
-		},
-        {
-            "id": 102,
-            "entityHost": "localhost",
-            "authHost": "localhost",
-            "tcpPort": 22900,
-            "udpPort": 22902,
-            "authPort": 22901,
-            "callbackPort": 22903,
-            "dbProtectionMethod": 1,
-            "backupEnabled": false,
-            "contextualCallbackEnabled": true
-        }
+		}
 	],
-	"authTrusts": [
-        {
-            "id1": 101,
-            "id2": 102
-        }
-    ],
+	"authTrusts": [],
 	"assignments": {
 	    "net1.humanUser": 101,
 		"net1.managerAgent": 101,
