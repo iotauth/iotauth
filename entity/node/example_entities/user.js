@@ -129,6 +129,7 @@ function commandInterpreter() {
                 }
                 if (commServerInfo == null) {
                     console.log('cannot find communication server named ' + serverName);
+                    errorHandler('Unknown communication server: ' + serverName);
                     return;
                 }
 
