@@ -647,7 +647,10 @@ verify_python_output() {
 	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server"
 	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server - second message"
 	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server - third message"
-	assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client"
+	if ! grep -Fxq "LOG: Received: Hello client" "$CLIENT_LOG"; then
+		echo "[test] Failure: Missing first Python reply in $CLIENT_LOG" >&2
+		return 1
+	fi
 	assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client 2"
 	assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client 3"
 }
