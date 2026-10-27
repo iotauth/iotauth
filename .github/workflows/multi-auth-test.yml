@@ -2,13 +2,13 @@
 # examples/scripts/run_multi_auth_test.sh. Each test starts Auth101 and Auth102
 # and connects a client registered with Auth101 (net1.client) to a server
 # registered with Auth102 (net2.server), so Auth102 has to fetch the session
-# key from Auth101 over the trusted-Auth channel. The Node, C, and C++
+# key from Auth101 over the trusted-Auth channel. The Node, C, C++, and Python
 # client-server pairs are tested in turn.
 #
 # The first test does the full Auth build and credential setup. If it
 # succeeds, the later tests reuse those artifacts (--no-build --no-setup);
 # otherwise each later test runs its own build and setup so it is independent.
-# All three tests always run; the job fails if any of them fails.
+# All four tests always run; the job fails if any of them fails.
 
 name: Multi-Auth Integration Tests
 
@@ -41,6 +41,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Install C and C++ build tools
         run: |
@@ -80,6 +85,18 @@ jobs:
             ./run_multi_auth_test.sh --entity cpp --stop-existing
           fi
 
+      - name: Run Python client to Python server through two Auths
+        id: python
+        if: always()
+        continue-on-error: true
+        working-directory: ./examples/scripts
+        run: |
+          if [ "${{ steps.node.outcome }}" = "success" ]; then
+            ./run_multi_auth_test.sh --entity python --no-build --no-setup --stop-existing
+          else
+            ./run_multi_auth_test.sh --entity python --stop-existing
+          fi
+
       - name: Fail if any test failed
         if: always()
         run: |
@@ -87,7 +104,8 @@ jobs:
           for outcome in \
             "node: ${{ steps.node.outcome }}" \
             "c: ${{ steps.c.outcome }}" \
-            "cpp: ${{ steps.cpp.outcome }}"; do
+            "cpp: ${{ steps.cpp.outcome }}" \
+            "python: ${{ steps.python.outcome }}"; do
             case "$outcome" in
               *": success") ;;
               *)

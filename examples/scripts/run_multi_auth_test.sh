@@ -19,8 +19,10 @@
 #         entity/c/examples/server_client_example.
 #   cpp   entity_client and entity_server in
 #         entity/c/cpp/examples/server_client_example.
-# For c and cpp, net1.client and net2.server configs are written to the log
-# directory, derived from the C example configs (c_client.config and
+#   python
+#         py_client.py and py_server.py in entity/python/examples.
+# For c, cpp, and python, net1.client and net2.server configs are written to
+# the log directory, derived from the C example configs (c_client.config and
 # c_server.config) with Auth102 and net2.server credentials for the server.
 
 set -euo pipefail
@@ -36,7 +38,7 @@ AUTH101_ENTITY_PORT=21900
 AUTH101_TRUSTED_PORT=21901
 AUTH102_ENTITY_PORT=22900
 AUTH102_TRUSTED_PORT=22901
-# Port of net2.server in the example graph; used by the Node and C++ servers.
+# Port of net2.server in the example graph; used by the Node, C++, and Python servers.
 NET2_SERVER_PORT=22100
 # The C example server (entity_server.c) always listens on this port.
 C_SERVER_PORT=21100
@@ -49,6 +51,7 @@ MULTI_AUTH_PORTS=(
 NODE_EXAMPLES_DIR="$SST_ROOT/entity/node/example_entities"
 C_EXAMPLE_DIR="$SST_ROOT/entity/c/examples/server_client_example"
 CPP_EXAMPLE_DIR="$SST_ROOT/entity/c/cpp/examples/server_client_example"
+PYTHON_EXAMPLES_DIR="$SST_ROOT/entity/python/examples"
 
 NODE_CLIENT_MESSAGE_1="Hello net2.server from net1.client"
 NODE_CLIENT_MESSAGE_2="Second message from net1.client"
@@ -60,13 +63,14 @@ LAUNCHED_PID=""
 declare -a TAIL_PIDS=()
 
 usage() {
-	echo "Usage: $0 --entity <node|c|cpp> [options]"
+	echo "Usage: $0 --entity <node|c|cpp|python> [options]"
 	echo
 	echo "Runs Auth101 and Auth102 and verifies that net1.client (registered with"
 	echo "Auth101) can communicate securely with net2.server (registered with Auth102)."
 	echo
 	echo "Required:"
-	echo "  --entity <implementation>   Client and server implementation: node, c, or cpp."
+	echo "  --entity <implementation>   Client and server implementation: node, c, cpp,"
+	echo "                              or python."
 	echo
 	echo "Options:"
 	echo "  --password <password>       Auth password used for generation and the Auths."
@@ -85,6 +89,7 @@ usage() {
 	echo "  $0 --entity node"
 	echo "  $0 --entity c --no-build --no-setup"
 	echo "  $0 --entity cpp --no-build --no-setup --stop-existing"
+	echo "  $0 --entity python --no-build --no-setup"
 }
 
 require_option_value() {
@@ -159,7 +164,7 @@ parse_multi_auth_args() {
 
 validate_entity_implementation() {
 	case "$ENTITY_IMPLEMENTATION" in
-		node|c|cpp)
+		node|c|cpp|python)
 			;;
 		"")
 			echo "Missing required option: --entity" >&2
@@ -168,7 +173,7 @@ validate_entity_implementation() {
 			;;
 		*)
 			echo "Unsupported entity implementation: $ENTITY_IMPLEMENTATION" >&2
-			echo "Expected one of: node, c, cpp" >&2
+			echo "Expected one of: node, c, cpp, python" >&2
 			exit 1
 			;;
 	esac
@@ -179,6 +184,7 @@ implementation_label() {
 		node) echo "Node" ;;
 		c) echo "C" ;;
 		cpp) echo "C++" ;;
+		python) echo "Python" ;;
 	esac
 }
 
@@ -266,10 +272,19 @@ prepare_test() {
 			require_command make
 			build_cpp_entities
 			;;
+		python)
+			require_command python3
+			;;
 	esac
 
 	if [[ "$RUN_SETUP" == true ]]; then
 		run_setup
+	fi
+
+	# The Python virtual environment is prepared on every run, as in
+	# run_integration_test.sh; it is quick once it exists.
+	if [[ "$ENTITY_IMPLEMENTATION" == python ]]; then
+		build_python_entities
 	fi
 }
 
@@ -286,6 +301,9 @@ setup_multi_auth_logs() {
 	AUTH102_LOG="$LOG_DIR/auth102.log"
 	SERVER_LOG="$LOG_DIR/server.log"
 	CLIENT_LOG="$LOG_DIR/client.log"
+	# Configs generated for the C, C++, and Python entities.
+	CLIENT_CONFIG="$LOG_DIR/net1_client.config"
+	SERVER_CONFIG="$LOG_DIR/net2_server.config"
 	trap cleanup EXIT
 	trap 'exit 130' INT
 	trap 'exit 143' TERM
@@ -497,11 +515,12 @@ verify_node_output() {
 	assert_log_contains "$SERVER_LOG" "data: $NODE_CLIENT_MESSAGE_2"
 }
 
-# --- C and C++ scenarios: entity_client (net1.client), entity_server (net2.server) ---
+# --- C, C++, and Python scenarios: net1.client connects to net2.server twice ---
 
-# Both the C and the C++ example binaries read the C config format. The key
-# paths are absolute because the examples resolve relative paths against the
-# working directory.
+# The C, C++, and Python examples all read the C config format. The key paths
+# are absolute because the C and C++ examples resolve relative paths against
+# the working directory (the Python examples resolve them against the config
+# directory).
 write_net1_client_c_config() {
 	local path="$1"
 	local server_port="$2"
@@ -540,35 +559,44 @@ network.protocol=TCP
 EOF
 }
 
-# run_entity_server_client_scenario <label> <build_dir> <server_port>
-# Runs entity_server (net2.server) and then entity_client (net1.client) from
-# the build directory. The client connects twice and both programs exit on
-# their own once the exchange is complete.
-run_entity_server_client_scenario() {
+# run_server_client_scenario <label> <server_port> <server_command> <client_command>
+# Writes the net1.client and net2.server configs (CLIENT_CONFIG and
+# SERVER_CONFIG), starts the server command line, waits for it to listen on
+# the port, runs the client command line, and waits for both to exit
+# successfully. The example clients and servers exit on their own once their
+# message exchange is complete.
+run_server_client_scenario() {
 	local label="$1"
-	local build_dir="$2"
-	local server_port="$3"
-	local client_config="$LOG_DIR/net1_client.config"
-	local server_config="$LOG_DIR/net2_server.config"
+	local server_port="$2"
+	local server_command="$3"
+	local client_command="$4"
 
-	write_net1_client_c_config "$client_config" "$server_port"
-	write_net2_server_c_config "$server_config" "$server_port"
+	write_net1_client_c_config "$CLIENT_CONFIG" "$server_port"
+	write_net2_server_c_config "$SERVER_CONFIG" "$server_port"
 
 	echo "[test] Starting $label server net2.server (Auth102) on port $server_port."
-	launch server "$SERVER_LOG" /dev/null bash -c \
-		"cd $(quote_for_shell "$build_dir") && exec ./entity_server $(quote_for_shell "$server_config")"
+	launch server "$SERVER_LOG" /dev/null bash -c "$server_command"
 	SERVER_PID="$LAUNCHED_PID"
 	wait_for_port "$server_port" "$label server net2.server"
 
 	echo "[test] Running $label client net1.client (Auth101)."
-	launch client "$CLIENT_LOG" /dev/null bash -c \
-		"cd $(quote_for_shell "$build_dir") && exec ./entity_client $(quote_for_shell "$client_config")"
+	launch client "$CLIENT_LOG" /dev/null bash -c "$client_command"
 	CLIENT_PID="$LAUNCHED_PID"
 
 	wait_for_clean_exit "$CLIENT_PID" "$label client"
 	CLIENT_PID=""
 	wait_for_clean_exit "$SERVER_PID" "$label server"
 	SERVER_PID=""
+}
+
+# Runs entity_server and entity_client from the C or C++ example build directory.
+run_entity_server_client_scenario() {
+	local label="$1"
+	local build_dir="$2"
+	local server_port="$3"
+	run_server_client_scenario "$label" "$server_port" \
+		"cd $(quote_for_shell "$build_dir") && exec ./entity_server $(quote_for_shell "$SERVER_CONFIG")" \
+		"cd $(quote_for_shell "$build_dir") && exec ./entity_client $(quote_for_shell "$CLIENT_CONFIG")"
 }
 
 run_c_scenario() {
@@ -605,6 +633,25 @@ verify_cpp_output() {
 	assert_log_contains "$CLIENT_LOG" "Received: Hello client 2 - second message"
 }
 
+# py_server.py serves one client and exits when it disconnects; py_client.py
+# sends three messages and prints the replies.
+run_python_scenario() {
+	run_server_client_scenario "Python" "$NET2_SERVER_PORT" \
+		"cd $(quote_for_shell "$PYTHON_EXAMPLES_DIR") && source ../.venv/bin/activate && exec python3 -u py_server.py $(quote_for_shell "$SERVER_CONFIG")" \
+		"cd $(quote_for_shell "$PYTHON_EXAMPLES_DIR") && source ../.venv/bin/activate && exec python3 -u py_client.py $(quote_for_shell "$CLIENT_CONFIG")"
+}
+
+verify_python_output() {
+	assert_log_contains "$SERVER_LOG" "Listening securely on 127.0.0.1:$NET2_SERVER_PORT"
+	assert_log_contains "$SERVER_LOG" "Secure connection established!"
+	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server"
+	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server - second message"
+	assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server - third message"
+	assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client"
+	assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client 2"
+	assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client 3"
+}
+
 # --- Cross-Auth verification ---
 
 # net2.server presents a session key ID issued by Auth101, so Auth102 must
@@ -636,6 +683,9 @@ main() {
 		cpp)
 			run_cpp_scenario
 			;;
+		python)
+			run_python_scenario
+			;;
 	esac
 
 	echo "[test] Verifying $(implementation_label "$ENTITY_IMPLEMENTATION") client and server output."
@@ -643,6 +693,7 @@ main() {
 		node) verify_node_output ;;
 		c) verify_c_output ;;
 		cpp) verify_cpp_output ;;
+		python) verify_python_output ;;
 	esac
 	verify_cross_auth_exchange
 

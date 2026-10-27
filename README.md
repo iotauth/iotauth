@@ -32,7 +32,7 @@ Please visit the [SST website](https://iotauth.github.io/) for more information.
 - **android**: Directory for SST's Auth and entities for the Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
 - **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/main/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
-- **examples**: Directory for scripts and descriptions to run example Auths and entities. The [`examples/scripts/`](examples/scripts/) subdirectory contains automated end-to-end integration test scripts covering all combinations of C and Node.js clients and servers — see [`examples/scripts/README.md`](examples/scripts/README.md).
+- **examples**: Directory for scripts and descriptions to run example Auths and entities. The [`examples/scripts/`](examples/scripts/) subdirectory contains automated end-to-end integration test scripts for C, C++, Node.js, and Python clients and servers, with a single Auth or with two Auths; see [`examples/scripts/README.md`](examples/scripts/README.md).
 
 # Quick start for SST
 ---
@@ -41,6 +41,10 @@ Please check [QUICKSTART.md](https://github.com/iotauth/iotauth/blob/main/QUICKS
 # Detailed examples with Auths and entities
 ---
 See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/main/examples/README.md) for a fully working example.
+
+# Continuous integration (CI) tests
+---
+The GitHub Actions workflows of this repository, including the entity integration tests with a single Auth and the multi-Auth tests, are described in [`.github/workflows/README.md`](.github/workflows/README.md).
 
 # Contributors
 ---
