@@ -62,9 +62,9 @@ cd examples/scripts
 ```
 
 Both runners build Auth and generate the example credentials by default; pass `--no-build --no-setup` to reuse existing artifacts.
-The setup regenerates the example credentials with the runner's password (`1234` unless `--password` is given).
 
-**Warning:** Without `--no-setup`, the runners delete any example credentials and configs you generated before, so back them up first.
+**Warning:** Unless `--no-setup` is given, each run first executes `examples/cleanAll.sh`, which deletes the previously generated example credentials, entity configs, Auth properties files, and Auth databases, and then regenerates them from `examples/configs/default.graph` with the runner's password (`1234` unless `--password` is given).
+Back up those files first if you still need them, for example when they were generated from another graph file or with a different password.
 
 ## Cross-repository testing with sst-c-api
 
