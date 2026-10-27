@@ -64,6 +64,8 @@ cd examples/scripts
 Both runners build Auth and generate the example credentials by default; pass `--no-build --no-setup` to reuse existing artifacts.
 The setup regenerates the example credentials with the runner's password (`1234` unless `--password` is given).
 
+**Warning:** Without `--no-setup`, the runners delete any example credentials and configs you generated before, so back them up first.
+
 ## Cross-repository testing with sst-c-api
 
 The C and C++ entity APIs live in the [iotauth/sst-c-api](https://github.com/iotauth/sst-c-api) repository, which is checked out here as the `entity/c` submodule.
