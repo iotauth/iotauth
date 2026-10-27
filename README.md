@@ -9,8 +9,10 @@ Our ACM journal article [[ACM TIOT '20](https://dl.acm.org/doi/abs/10.1145/33758
 In 2023, we released the C API for SST, which was introduced in an open-source software journal [[SoftwareX '23](https://www.sciencedirect.com/science/article/pii/S2352711023000869)].
 We also applied SST for securing large-scale key-value storage [[SIGMOD '25](https://dl.acm.org/doi/10.1145/3725354)] and for access control of decentralized and distributed file systems [[Mid4CC '23](https://dl.acm.org/doi/10.1145/3631309.3632832)].
 Furthermore, we built SST Testbed [[ICIT '26](https://ieeexplore.ieee.org/document/11490150)], a testbed for experimenting with attacks and defenses for distributed embedded systems and IoT using SST, which also won the **[1st place](https://2025.esweek.org/awards-2025/) in the Embedded System Software Competition (ESSC) at ESWEEK '25** ([[YouTube Video of SST Testbed](https://www.youtube.com/watch?v=DU9cHmDfRYI)]).
+More recently, we have been applying SST to access control for agentic AI, including AI agents with delegated critical tasks [[WWW '26](https://dl.acm.org/doi/10.1145/3774904.3792864)], [[CARS '25](https://ieeexplore.ieee.org/document/11337816)] and embodied agents based on vision-language-action models [LAMPS '26 (to appear)].
 
-More publications on SST or using SST include [[SmartSP '24](https://arxiv.org/abs/2411.13441)], [[FDL '23](https://ieeexplore.ieee.org/document/10272133)], and [[SenSys '23 - Poster Abstract]](https://dl.acm.org/doi/10.1145/3625687.3628408).
+More publications on SST or using SST include [[SmartSP '24](https://arxiv.org/abs/2411.13441)], [[FDL '23](https://ieeexplore.ieee.org/document/10272133)], [[SenSys '23 - Poster Abstract]](https://dl.acm.org/doi/10.1145/3625687.3628408), and [[IEEE Computer '19](https://ieeexplore.ieee.org/abstract/document/8780405)].
+See the [Publications](https://iotauth.github.io/publications) page of the SST website for the full list with BibTeX entries.
 
 For the most in-depth technical document of SST, please refer to this Ph.D. dissertation [[UC Berkeley '17](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-139.html)].
 
@@ -79,4 +81,4 @@ This project is currently intended for academic and research purposes, although 
 This work was supported in part by the TerraSwarm Research Center, one of six centers supported by the STARnet phase of the Focus Center Research Program (FCRP), a Semiconductor Research Corporation program sponsored by MARCO and DARPA.
 This work was supported in part by the National Research Foundation of Korea (NRF) grants funded by the Korea government (MSIT).
 
-*Last updated on June 12, 2026*
+*Last updated on October 26, 2026*
