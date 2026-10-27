@@ -9,8 +9,8 @@ Unless noted otherwise, each workflow runs on every push to `main` and on every 
 | Example Tests | [`example.yml`](example.yml) | Runs `examples/generateAll.sh` to generate the credentials, configuration files, and databases of the example Auths and entities. |
 | Entity Integration Tests | [`integration-test.yml`](integration-test.yml) | Python unit tests, then end-to-end tests of every C, Node.js, and Python client-server combination against Auth101, plus the Python permanent distribution key scenario. See [Entity integration tests](#entity-integration-tests). |
 | Multi-Auth Integration Tests | [`multi-auth-test.yml`](multi-auth-test.yml) | End-to-end tests with two Auths: a Node.js, C, C++, or Python client registered with Auth101 talks to a server of the same implementation registered with Auth102. Can also be started manually (`workflow_dispatch`). See [Multi-Auth integration tests](#multi-auth-integration-tests). |
-| sst-c-api Tests | [`sst-c-api-tests.yml`](sst-c-api-tests.yml) | Calls the reusable `ci.yml` workflow of [iotauth/sst-c-api](https://github.com/iotauth/sst-c-api): C API unit tests, and the C examples (server/client, file block encryption, IPFS file sharing) against Auth. |
-| sst-c-api C++ Tests | [`sst-c-api-cpp-tests.yml`](sst-c-api-cpp-tests.yml) | Calls the reusable `ci-cpp.yml` workflow of sst-c-api: C++ API unit tests, and the C++ examples (server/client, file block encryption, IPFS file sharing) against Auth. |
+| sst-c-api Tests | [`sst-c-api-tests.yml`](sst-c-api-tests.yml) | Calls the reusable `ci.yml` workflow of [iotauth/sst-c-api](https://github.com/iotauth/sst-c-api): C API unit tests (on sst-c-api `main`), and the C examples (server/client, file block encryption, IPFS file sharing) at the sst-c-api commit pinned by the `entity/c` submodule, against Auth. See [Cross-repository testing with sst-c-api](#cross-repository-testing-with-sst-c-api). |
+| sst-c-api C++ Tests | [`sst-c-api-cpp-tests.yml`](sst-c-api-cpp-tests.yml) | Calls the reusable `ci-cpp.yml` workflow of sst-c-api: C++ API unit tests (on sst-c-api `main`), and the C++ examples (server/client, file block encryption, IPFS file sharing) at the sst-c-api commit pinned by the `entity/c` submodule, against Auth. See [Cross-repository testing with sst-c-api](#cross-repository-testing-with-sst-c-api). |
 | Python Formatting | [`python-formatting.yml`](python-formatting.yml) | Ruff lint and format checks for `entity/python`. Runs on pull requests that change files under `entity/python/`. |
 | CodeQL | [`codeql-analysis.yml`](codeql-analysis.yml) | CodeQL static analysis for Java, JavaScript, and Python. Also runs weekly on a schedule. |
 
@@ -69,10 +69,12 @@ The setup regenerates the example credentials with the runner's password (`1234`
 The C and C++ entity APIs live in the [iotauth/sst-c-api](https://github.com/iotauth/sst-c-api) repository, which is checked out here as the `entity/c` submodule.
 The two repositories test each other:
 
-- `sst-c-api-tests.yml` and `sst-c-api-cpp-tests.yml` in this repository call the reusable `ci.yml` and `ci-cpp.yml` workflows of sst-c-api with `iotauth-ref` set to the commit under test, so the sst-c-api examples run against this version of Auth and of the example configuration.
+- `sst-c-api-tests.yml` and `sst-c-api-cpp-tests.yml` in this repository call the reusable `ci.yml` and `ci-cpp.yml` workflows of sst-c-api with `iotauth-ref` set to the iotauth commit under test. The two jobs of each reusable workflow then use different sst-c-api versions:
+  - The unit test job checks out sst-c-api `main`, so the C and C++ unit tests do not depend on the iotauth commit at all.
+  - The integration test job checks out this repository at `iotauth-ref` with its submodules, so the sst-c-api examples run with the sst-c-api commit pinned by the `entity/c` submodule, against this version of Auth and of the example configuration. To test a newer sst-c-api commit here, update the submodule pin.
 - The `ci.yml` workflow of sst-c-api calls `integration-test.yml` of this repository with `sst-c-api-ref` set to the sst-c-api commit under test, so the entity integration tests run with that C API instead of the submodule pin. When called this way, `integration-test.yml` checks out the `main` branch of this repository and the given sst-c-api ref into `entity/c`.
 
-The multi-Auth tests always use the sst-c-api commit pinned by the submodule.
+When `integration-test.yml` runs on a push or pull request in this repository, and in the multi-Auth tests always, the C and C++ entities come from the sst-c-api commit pinned by the submodule.
 
 ## Adding a CI test
 
