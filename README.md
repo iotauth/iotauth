@@ -1,3 +1,13 @@
+[![Auth Server Build](https://github.com/iotauth/iotauth/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/iotauth/iotauth/actions/workflows/maven.yml)
+[![Example Tests](https://github.com/iotauth/iotauth/actions/workflows/example.yml/badge.svg?branch=main)](https://github.com/iotauth/iotauth/actions/workflows/example.yml)
+[![Entity Integration Tests](https://github.com/iotauth/iotauth/actions/workflows/integration-test.yml/badge.svg?branch=main)](https://github.com/iotauth/iotauth/actions/workflows/integration-test.yml)
+[![Multi-Auth Integration Tests](https://github.com/iotauth/iotauth/actions/workflows/multi-auth-test.yml/badge.svg?branch=main)](https://github.com/iotauth/iotauth/actions/workflows/multi-auth-test.yml)
+[![sst-c-api Tests](https://github.com/iotauth/iotauth/actions/workflows/sst-c-api-tests.yml/badge.svg?branch=main)](https://github.com/iotauth/iotauth/actions/workflows/sst-c-api-tests.yml)
+[![sst-c-api C++ Tests](https://github.com/iotauth/iotauth/actions/workflows/sst-c-api-cpp-tests.yml/badge.svg?branch=main)](https://github.com/iotauth/iotauth/actions/workflows/sst-c-api-cpp-tests.yml)
+
+The badges show the status of the continuous integration (CI) workflows on `main`.
+See [**CI workflows**](.github/workflows/README.md) for what each workflow tests and how to run the tests locally.
+
 # Overview
 ---
 This is a repository for the open-source project **SST (Secure Swarm Toolkit)** and its local authentication and authorization entity, **Auth**, for the security of distributed systems and the Internet of Things (IoT). Auth is a local point of authorization, and Auth's main roles are 1) providing authentication/authorization for its locally registered entities or devices and 2) working as a bridge of authorization between its local entities and the Internet. 
@@ -35,6 +45,7 @@ Please visit the [SST website](https://iotauth.github.io/) for more information.
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
 - **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/main/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
 - **examples**: Directory for scripts and descriptions to run example Auths and entities. The [`examples/scripts/`](examples/scripts/) subdirectory contains automated end-to-end integration test scripts for C, C++, Node.js, and Python clients and servers, with a single Auth or with two Auths; see [`examples/scripts/README.md`](examples/scripts/README.md).
+- **.github/workflows**: GitHub Actions workflows for continuous integration (CI): the Auth build, example generation, entity integration tests with one Auth and with two Auths, sst-c-api tests, Python formatting, and CodeQL; see [`.github/workflows/README.md`](.github/workflows/README.md).
 
 # Quick start for SST
 ---
@@ -46,7 +57,18 @@ See "How to run examples" in [README.md under *examples/*](https://github.com/io
 
 # Continuous integration (CI) tests
 ---
-The GitHub Actions workflows of this repository, including the entity integration tests with a single Auth and the multi-Auth tests, are described in [`.github/workflows/README.md`](.github/workflows/README.md).
+Every push and pull request to `main` runs the GitHub Actions workflows below.
+[`.github/workflows/README.md`](.github/workflows/README.md) describes each workflow in detail, including how the tests are structured and how to run them locally.
+
+| Workflow | What it checks |
+| --- | --- |
+| [Auth Server Build](.github/workflows/maven.yml) | Auth builds with Maven. |
+| [Example Tests](.github/workflows/example.yml) | `examples/generateAll.sh` generates the credentials, configurations, and Auth databases of the example Auths and entities. |
+| [Entity Integration Tests](.github/workflows/integration-test.yml) | Python unit tests, and every C, Node.js, and Python client-server combination against a single Auth ([details](.github/workflows/README.md#entity-integration-tests)). |
+| [Multi-Auth Integration Tests](.github/workflows/multi-auth-test.yml) | Node.js, C, C++, and Python client-server pairs across two Auths, where the server's Auth fetches the session key from the client's Auth ([details](.github/workflows/README.md#multi-auth-integration-tests)). |
+| [sst-c-api Tests](.github/workflows/sst-c-api-tests.yml), [sst-c-api C++ Tests](.github/workflows/sst-c-api-cpp-tests.yml) | The C and C++ API unit tests and examples of [sst-c-api](https://github.com/iotauth/sst-c-api) against this version of Auth. |
+| [Python Formatting](.github/workflows/python-formatting.yml) | Ruff lint and format checks for `entity/python` on pull requests. |
+| [CodeQL](.github/workflows/codeql-analysis.yml) | Static analysis for Java, JavaScript, and Python. |
 
 # Contributors
 ---
