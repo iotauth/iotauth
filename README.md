@@ -55,15 +55,16 @@ The GitHub Actions workflows of this repository, including the entity integratio
 - [Carlos Beltran Quinonez](https://github.com/CarlosBeltranQ) (M.S. Student at Arizona State University)
 - [Sunyoung Kim](https://github.com/sunnykim638) (Ph.D. Student at Arizona State University)
 - [Jose Felix](https://github.com/JFelix000) (M.S. Student at Arizona State University)
-- [Kushal Paliwal](https://github.com/kushalpaliwal01) (M.S. Graduate, Volunteer Researcher at Arizona State University)
-- [Krutyanjay Shinde](https://github.com/kjshinde) (M.S. Graduate, Volunteer Researcher at Arizona State University)
 - [Deeparghya Dutta Barua](https://deeparghya.com/) (Ph.D. Student at Arizona State University)
+- [Divyansh Tare](https://github.com/dtare05) (Undergraduate Student at Arizona State University)
 
 ## Former Contributors
 - [Eunsuk Kang](https://eskang.github.io/) (Associate Professor at Carnegie Mellon University)
 - [Marten Lohstroh](https://people.eecs.berkeley.edu/~marten/) (CEO at Xronos Inc.)
 - [Taekyung Kim](https://github.com/LukeKimm) (Commissioned Officer in the Republic of Korea Army)
 - [Yeongbin Jo](https://github.com/yeongbin7) (Embedded Software Engineer at Hyundai Rotem)
+- [Kushal Paliwal](https://github.com/kushalpaliwal01) (Software Engineer at Globus Medical)
+- [Krutyanjay Shinde](https://kjshinde.github.io/) (Hardware Validation Engineer at WattEV, Inc)
 
 # External libraries
 ---
