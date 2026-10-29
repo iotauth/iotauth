@@ -223,6 +223,17 @@ public class FeasibleChallengeMatcher {
                                     || !parseResourcesFromEntity(target, "actuators").contains("UltraSound"))
                                 continue;
                         }
+                        // Ambient-audio co-location is pairwise and mutual: exactly one
+                        // target, and each endpoint records passively with its microphone
+                        // (no emitter), so only a microphone sensor is required.
+                        if ("CO_LOCATION".equals(checkID) && "AMBIENT_AUDIO".equals(methodID)) {
+                            validateAmbientAudioParameters((JSONObject) method.get("parameters"));
+                            if (!effectiveReqSensors.contains("Microphone")
+                                    || targetEntities.size() != 1) continue;
+                            RegisteredEntity target = targetEntities.get(0);
+                            if (!parseResourcesFromEntity(target, "sensors").contains("Microphone"))
+                                continue;
+                        }
                         // UWB ranging is pairwise and mutual: each endpoint initiates once
                         // and responds once, so both need a UWB radio.
                         if ("CO_LOCATION".equals(checkID) && "UWB".equals(methodID)) {
@@ -325,6 +336,30 @@ public class FeasibleChallengeMatcher {
         if (responseUs < 1 || responseUs > 60_000_000L || timeoutMs < 1 || timeoutMs > 60_000L
                 || timeoutMs * 1000 < responseUs)
             throw new IllegalArgumentException("Invalid ultrasound echo max_response_us or response_timeout_ms");
+    }
+
+    /**
+     * Ambient-audio (Sound-Proof-inspired) settings: recording_ms (capture length per
+     * endpoint, 1000..10000), similarity_threshold_milli (accept when the score*1000
+     * exceeds this, 0..1000), max_lag_ms (alignment tolerance, 0..1000) and min_power_dbfs
+     * (reject recordings quieter than this, -120..0). All must be JSON integers. Mirrors
+     * ambient_audio_plan_config() on the endpoints.
+     */
+    public static void validateAmbientAudioParameters(JSONObject parameters) {
+        if (parameters == null) throw new IllegalArgumentException("Missing ambient audio parameters");
+        Object rec = parameters.get("recording_ms");
+        Object thr = parameters.get("similarity_threshold_milli");
+        Object lag = parameters.get("max_lag_ms");
+        Object pwr = parameters.get("min_power_dbfs");
+        if (!(rec instanceof Long) || !(thr instanceof Long) || !(lag instanceof Long)
+                || !(pwr instanceof Long))
+            throw new IllegalArgumentException("Ambient audio needs integer recording_ms, "
+                    + "similarity_threshold_milli, max_lag_ms and min_power_dbfs");
+        long recMs = (Long) rec, thrMilli = (Long) thr, lagMs = (Long) lag, pwrDbfs = (Long) pwr;
+        if (recMs < 1000 || recMs > 10000 || thrMilli < 0 || thrMilli > 1000
+                || lagMs < 0 || lagMs > 1000 || pwrDbfs < -120 || pwrDbfs > 0)
+            throw new IllegalArgumentException("Invalid ambient audio recording_ms, "
+                    + "similarity_threshold_milli, max_lag_ms or min_power_dbfs");
     }
 
     /**
