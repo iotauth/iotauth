@@ -75,7 +75,8 @@ public class ContextVerifier {
             String conditionName = (String) keyObj;
             if (!"Resources".equals(conditionName) && !"PhysicalPresenceRequirements".equals(conditionName)
                     && !"PhysicalPresenceFreshnessMs".equals(conditionName)
-                    && !"TargetLocalChecks".equals(conditionName)) {
+                    && !"TargetLocalChecks".equals(conditionName)
+                    && !"RequesterLocalChecks".equals(conditionName)) {
                 hasContextConditions = true;
                 break;
             }
@@ -94,7 +95,8 @@ public class ContextVerifier {
             String conditionName = (String) keyObj;
             if ("Resources".equals(conditionName) || "PhysicalPresenceRequirements".equals(conditionName)
                     || "PhysicalPresenceFreshnessMs".equals(conditionName)
-                    || "TargetLocalChecks".equals(conditionName)) {
+                    || "TargetLocalChecks".equals(conditionName)
+                    || "RequesterLocalChecks".equals(conditionName)) {
                 continue;
             }
             JSONObject requirement = (JSONObject) policyContext.get(conditionName);

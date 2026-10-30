@@ -169,6 +169,34 @@ public class FeasibleChallengeMatcher {
                 verificationPlan.put(checkID, checkObj);
             }
         }
+        // Step 4c: Requester-local checks (mirror of 4b on the requester side).
+        // Provisioned to the plan but NOT added to requiredChecks: the requester
+        // enforces them against its own sensor (e.g. its camera for
+        // HUMAN_PRESENCE) before the action, so the target -- which lacks that
+        // sensor -- is not burdened through the shared action gate.
+        if (policyContext != null && policyContext.containsKey("RequesterLocalChecks")) {
+            Object rlcObj = policyContext.get("RequesterLocalChecks");
+            if (!(rlcObj instanceof JSONArray))
+                throw new IllegalArgumentException("RequesterLocalChecks must be an array");
+            for (Object item : (JSONArray) rlcObj) {
+                if (!(item instanceof String))
+                    throw new IllegalArgumentException("Invalid RequesterLocalChecks entry: " + item);
+                String checkID = (String) item;
+                if (requiredChecks.contains(checkID))
+                    throw new IllegalArgumentException(
+                            "Check " + checkID + " cannot be both required and requester-local");
+                long freshnessMs = freshnessBoundMs(policyContext, checkID);
+                JSONObject checkObj = computeCheckResult(checkID, challengeDefinitions,
+                        effectiveReqSensors, effectiveReqActuators, targetSensorsUnion,
+                        targetActuatorsUnion, targetEntities);
+                if (checkObj.get("selectedMethod") == null) {
+                    logger.warn("[FeasibleChallengeMatcher] No feasible method for requester-local check {} requested by {}",
+                            checkID, requestingEntity.getName());
+                }
+                checkObj.put("freshness_ms", freshnessMs);
+                verificationPlan.put(checkID, checkObj);
+            }
+        }
 
         result.put("verificationPlan", verificationPlan);
 
@@ -308,6 +336,14 @@ public class FeasibleChallengeMatcher {
                             if (!parseResourcesFromEntity(target, "sensors").contains("BLE")
                                     || !parseResourcesFromEntity(target, "actuators").contains("BLE"))
                                 continue;
+                        }
+
+                        // Camera person presence is requester-local: the requester checks
+                        // its own camera, so only it needs a CAMERA sensor; the target is
+                        // not involved.
+                        if ("HUMAN_PRESENCE".equals(checkID) && "CAMERA_PERSON".equals(methodID)) {
+                            validateCameraPersonParameters((JSONObject) method.get("parameters"));
+                            if (!effectiveReqSensors.contains("CAMERA")) continue;
                         }
 
                         // Check if requester and target possess all required sensors/actuators for this method
@@ -453,6 +489,26 @@ public class FeasibleChallengeMatcher {
         long c = (Long) tol, n = (Long) samples, t = (Long) timeout;
         if (c < 1 || c > 100000 || n < 1 || n > 100 || t < 1 || t > 60000)
             throw new IllegalArgumentException("Invalid UWB_POSITION tolerance_cm, samples or timeout_ms");
+    }
+
+    /**
+     * Camera person-presence settings: min_confidence, a decimal confidence in (0, 1] stored as a
+     * string so the endpoint can pass it straight to the detector. Mirrors detect.py's
+     * --min-confidence.
+     */
+    public static void validateCameraPersonParameters(JSONObject parameters) {
+        if (parameters == null) throw new IllegalArgumentException("Missing CAMERA_PERSON parameters");
+        Object conf = parameters.get("min_confidence");
+        if (!(conf instanceof String))
+            throw new IllegalArgumentException("CAMERA_PERSON needs string min_confidence");
+        double c;
+        try {
+            c = Double.parseDouble((String) conf);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("CAMERA_PERSON min_confidence is not a number");
+        }
+        if (!(c > 0.0 && c <= 1.0))
+            throw new IllegalArgumentException("CAMERA_PERSON min_confidence must be in (0, 1]");
     }
 
     /** A coordinate object with integer x_cm and y_cm within +-100000. */

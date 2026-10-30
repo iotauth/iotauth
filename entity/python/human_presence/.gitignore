@@ -1,0 +1,4 @@
+# The MobileNet-SSD weights are ~23 MB; fetch them with the commands in README,
+# don't commit them.
+models/*.caffemodel
+models/*.prototxt
