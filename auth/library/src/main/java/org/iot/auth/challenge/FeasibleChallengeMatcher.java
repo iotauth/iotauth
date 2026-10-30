@@ -140,6 +140,36 @@ public class FeasibleChallengeMatcher {
             checkObj.put("freshness_ms", freshnessMs);
             verificationPlan.put(checkID, checkObj);
         }
+        // Step 4b: Target-local checks. These are provisioned to the plan (so the
+        // target endpoint can read the selected method and its parameters) but are
+        // deliberately NOT added to requiredChecks: they are enforced locally by the
+        // target that owns the sensor (e.g. a thermometer on the locker), so the
+        // requester -- which may not have that sensor -- is not required to satisfy
+        // them through the shared action gate.
+        if (policyContext != null && policyContext.containsKey("TargetLocalChecks")) {
+            Object tlcObj = policyContext.get("TargetLocalChecks");
+            if (!(tlcObj instanceof JSONArray))
+                throw new IllegalArgumentException("TargetLocalChecks must be an array");
+            for (Object item : (JSONArray) tlcObj) {
+                if (!(item instanceof String))
+                    throw new IllegalArgumentException("Invalid TargetLocalChecks entry: " + item);
+                String checkID = (String) item;
+                if (requiredChecks.contains(checkID))
+                    throw new IllegalArgumentException(
+                            "Check " + checkID + " cannot be both required and target-local");
+                long freshnessMs = freshnessBoundMs(policyContext, checkID);
+                JSONObject checkObj = computeCheckResult(checkID, challengeDefinitions,
+                        effectiveReqSensors, effectiveReqActuators, targetSensorsUnion,
+                        targetActuatorsUnion, targetEntities);
+                if (checkObj.get("selectedMethod") == null) {
+                    logger.warn("[FeasibleChallengeMatcher] No feasible method for target-local check {} requested by {}",
+                            checkID, requestingEntity.getName());
+                }
+                checkObj.put("freshness_ms", freshnessMs);
+                verificationPlan.put(checkID, checkObj);
+            }
+        }
+
         result.put("verificationPlan", verificationPlan);
 
         // Step 5: Independently of the physical presence checks above, if this request targets one
