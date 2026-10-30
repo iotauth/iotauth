@@ -38,7 +38,7 @@
       ]
     },
     {
-      "id": "CO_LOCATION",
+      "id": "PROXIMITY",
       "topology": "MUTUAL",
       "methods": [
         {

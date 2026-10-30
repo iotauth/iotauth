@@ -12,11 +12,11 @@
     "Challenges": {
       "PhysicalPresenceRequirements": [
         "HUMAN_PRESENCE",
-        "CO_LOCATION"
+        "PROXIMITY"
       ],
       "PhysicalPresenceFreshnessMs": {
         "HUMAN_PRESENCE": 1000,
-        "CO_LOCATION": 30000
+        "PROXIMITY": 30000
       }
     }
   },

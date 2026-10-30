@@ -258,7 +258,7 @@ public class FeasibleChallengeMatcher {
                         String methodID = (String) method.get("id");
                         JSONObject reqs = (JSONObject) method.get("requirements");
 
-                        if ("CO_LOCATION".equals(checkID) && "IR".equals(methodID)) {
+                        if ("PROXIMITY".equals(checkID) && "IR".equals(methodID)) {
                             validateIRParameters((JSONObject) method.get("parameters"));
                             if (!effectiveReqSensors.contains("IR") || !effectiveReqActuators.contains("IR")
                                     || targetEntities.isEmpty()) continue;
@@ -271,7 +271,7 @@ public class FeasibleChallengeMatcher {
                         }
                         // The acoustic keyed echo is pairwise and mutual: exactly one
                         // target, and each endpoint both plays and records.
-                        if ("CO_LOCATION".equals(checkID) && "ULTRASOUND".equals(methodID)) {
+                        if ("PROXIMITY".equals(checkID) && "ULTRASOUND".equals(methodID)) {
                             validateUltrasoundEchoParameters((JSONObject) method.get("parameters"));
                             if (!effectiveReqSensors.contains("UltraSound")
                                     || !effectiveReqActuators.contains("UltraSound")
@@ -284,7 +284,7 @@ public class FeasibleChallengeMatcher {
                         // Ambient-audio co-location is pairwise and mutual: exactly one
                         // target, and each endpoint records passively with its microphone
                         // (no emitter), so only a microphone sensor is required.
-                        if ("CO_LOCATION".equals(checkID) && "AMBIENT_AUDIO".equals(methodID)) {
+                        if ("SHARED_ACOUSTIC_ENVIRONMENT".equals(checkID) && "AMBIENT_AUDIO".equals(methodID)) {
                             validateAmbientAudioParameters((JSONObject) method.get("parameters"));
                             if (!effectiveReqSensors.contains("Microphone")
                                     || targetEntities.size() != 1) continue;
@@ -294,7 +294,7 @@ public class FeasibleChallengeMatcher {
                         }
                         // UWB ranging is pairwise and mutual: each endpoint initiates once
                         // and responds once, so both need a UWB radio.
-                        if ("CO_LOCATION".equals(checkID) && "UWB".equals(methodID)) {
+                        if ("PROXIMITY".equals(checkID) && "UWB".equals(methodID)) {
                             validateUwbParameters((JSONObject) method.get("parameters"));
                             if (!effectiveReqSensors.contains("UWB") || !effectiveReqActuators.contains("UWB")
                                     || targetEntities.size() != 1) continue;
@@ -306,7 +306,7 @@ public class FeasibleChallengeMatcher {
                         // UWB position is anchored, not mutual: the target carries fixed
                         // anchors and the requester carries one tag, ranging to each anchor
                         // to trilaterate its own position. Both still need a UWB radio.
-                        if ("CO_LOCATION".equals(checkID) && "UWB_POSITION".equals(methodID)) {
+                        if ("POSITION_IN_REGION".equals(checkID) && "UWB_POSITION".equals(methodID)) {
                             validateUwbPositionParameters((JSONObject) method.get("parameters"));
                             if (!effectiveReqSensors.contains("UWB") || !effectiveReqActuators.contains("UWB")
                                     || targetEntities.size() != 1) continue;
@@ -317,7 +317,7 @@ public class FeasibleChallengeMatcher {
                         }
                         // Wi-Fi RSSI likewise: each endpoint samples the direct Wi-Fi link
                         // that carries the session, so both need a Wi-Fi radio.
-                        if ("CO_LOCATION".equals(checkID) && "WIFI_RSSI".equals(methodID)) {
+                        if ("PROXIMITY".equals(checkID) && "WIFI_RSSI".equals(methodID)) {
                             validateWifiRssiParameters((JSONObject) method.get("parameters"));
                             if (!effectiveReqSensors.contains("WiFi") || !effectiveReqActuators.contains("WiFi")
                                     || targetEntities.size() != 1) continue;
@@ -328,7 +328,7 @@ public class FeasibleChallengeMatcher {
                         }
                         // BLE RSSI is pairwise and mutual too: each endpoint samples the LE link
                         // that carries the session, so both need a BLE radio.
-                        if ("CO_LOCATION".equals(checkID) && "BLE_RSSI".equals(methodID)) {
+                        if ("PROXIMITY".equals(checkID) && "BLE_RSSI".equals(methodID)) {
                             validateBleRssiParameters((JSONObject) method.get("parameters"));
                             if (!effectiveReqSensors.contains("BLE") || !effectiveReqActuators.contains("BLE")
                                     || targetEntities.size() != 1) continue;
@@ -378,11 +378,6 @@ public class FeasibleChallengeMatcher {
                             if ("WIFI_RSSI".equals(methodID)) {
                                 parameters.put("ssid", generateWifiSsid());
                                 parameters.put("password", generateWifiPassword());
-                            }
-                            // UWB position localizes the requester one-way, so override the
-                            // mutual CO_LOCATION topology with ANCHORED for this method.
-                            if ("UWB_POSITION".equals(methodID)) {
-                                checkObj.put("topology", "ANCHORED");
                             }
                             selectedMethod.put("parameters", parameters);
                             break;

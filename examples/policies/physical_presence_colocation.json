@@ -11,10 +11,10 @@
     "IsDelegated": 0,
     "Challenges": {
       "PhysicalPresenceRequirements": [
-        "CO_LOCATION"
+        "PROXIMITY"
       ],
       "PhysicalPresenceFreshnessMs": {
-        "CO_LOCATION": 30000
+        "PROXIMITY": 30000
       }
     }
   },
