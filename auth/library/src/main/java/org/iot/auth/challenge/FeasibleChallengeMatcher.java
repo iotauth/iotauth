@@ -275,6 +275,18 @@ public class FeasibleChallengeMatcher {
                                     || !parseResourcesFromEntity(target, "actuators").contains("UWB"))
                                 continue;
                         }
+                        // UWB position is anchored, not mutual: the target carries fixed
+                        // anchors and the requester carries one tag, ranging to each anchor
+                        // to trilaterate its own position. Both still need a UWB radio.
+                        if ("CO_LOCATION".equals(checkID) && "UWB_POSITION".equals(methodID)) {
+                            validateUwbPositionParameters((JSONObject) method.get("parameters"));
+                            if (!effectiveReqSensors.contains("UWB") || !effectiveReqActuators.contains("UWB")
+                                    || targetEntities.size() != 1) continue;
+                            RegisteredEntity target = targetEntities.get(0);
+                            if (!parseResourcesFromEntity(target, "sensors").contains("UWB")
+                                    || !parseResourcesFromEntity(target, "actuators").contains("UWB"))
+                                continue;
+                        }
                         // Wi-Fi RSSI likewise: each endpoint samples the direct Wi-Fi link
                         // that carries the session, so both need a Wi-Fi radio.
                         if ("CO_LOCATION".equals(checkID) && "WIFI_RSSI".equals(methodID)) {
@@ -330,6 +342,11 @@ public class FeasibleChallengeMatcher {
                             if ("WIFI_RSSI".equals(methodID)) {
                                 parameters.put("ssid", generateWifiSsid());
                                 parameters.put("password", generateWifiPassword());
+                            }
+                            // UWB position localizes the requester one-way, so override the
+                            // mutual CO_LOCATION topology with ANCHORED for this method.
+                            if ("UWB_POSITION".equals(methodID)) {
+                                checkObj.put("topology", "ANCHORED");
                             }
                             selectedMethod.put("parameters", parameters);
                             break;
@@ -408,6 +425,46 @@ public class FeasibleChallengeMatcher {
         long d = (Long) distance, n = (Long) samples, t = (Long) timeout;
         if (d < 1 || d > 10000 || n < 1 || n > 100 || t < 1 || t > 60000)
             throw new IllegalArgumentException("Invalid UWB max_distance_cm, samples or timeout_ms");
+    }
+
+    /**
+     * UWB position (anchored localization) settings: anchors (3..4 fixed anchor coordinates, each an
+     * object with integer x_cm and y_cm), expected (the point the requester should be at, integer
+     * x_cm/y_cm), tolerance_cm (largest accepted distance from expected, 1..100000), samples
+     * (successful ranges to each anchor, 1..100) and timeout_ms (to collect them per anchor,
+     * 1..60000). Mirrors uwb_locate_plan_config() on the endpoints.
+     */
+    @SuppressWarnings("unchecked")
+    public static void validateUwbPositionParameters(JSONObject parameters) {
+        if (parameters == null) throw new IllegalArgumentException("Missing UWB_POSITION parameters");
+        Object anchorsObj = parameters.get("anchors");
+        if (!(anchorsObj instanceof JSONArray))
+            throw new IllegalArgumentException("UWB_POSITION needs an anchors array");
+        JSONArray anchors = (JSONArray) anchorsObj;
+        if (anchors.size() < 3 || anchors.size() > 4)
+            throw new IllegalArgumentException("UWB_POSITION needs 3 or 4 anchors");
+        for (Object a : anchors) validateCoordinate(a, "anchor");
+        validateCoordinate(parameters.get("expected"), "expected");
+        Object tol = parameters.get("tolerance_cm");
+        Object samples = parameters.get("samples");
+        Object timeout = parameters.get("timeout_ms");
+        if (!(tol instanceof Long) || !(samples instanceof Long) || !(timeout instanceof Long))
+            throw new IllegalArgumentException("UWB_POSITION needs integer tolerance_cm, samples and timeout_ms");
+        long c = (Long) tol, n = (Long) samples, t = (Long) timeout;
+        if (c < 1 || c > 100000 || n < 1 || n > 100 || t < 1 || t > 60000)
+            throw new IllegalArgumentException("Invalid UWB_POSITION tolerance_cm, samples or timeout_ms");
+    }
+
+    /** A coordinate object with integer x_cm and y_cm within +-100000. */
+    private static void validateCoordinate(Object coordObj, String what) {
+        if (!(coordObj instanceof JSONObject))
+            throw new IllegalArgumentException("UWB_POSITION " + what + " must be an {x_cm, y_cm} object");
+        JSONObject coord = (JSONObject) coordObj;
+        Object x = coord.get("x_cm"), y = coord.get("y_cm");
+        if (!(x instanceof Long) || !(y instanceof Long))
+            throw new IllegalArgumentException("UWB_POSITION " + what + " needs integer x_cm and y_cm");
+        if (Math.abs((Long) x) > 100000 || Math.abs((Long) y) > 100000)
+            throw new IllegalArgumentException("UWB_POSITION " + what + " coordinates out of range");
     }
 
     /**
