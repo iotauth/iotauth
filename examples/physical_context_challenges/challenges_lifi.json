@@ -126,7 +126,8 @@
             }
           },
           "parameters": {
-            "min_temperature_celsius": 18
+            "min_temperature_celsius": 18,
+            "max_temperature_celsius": 30
           }
         }
       ]
