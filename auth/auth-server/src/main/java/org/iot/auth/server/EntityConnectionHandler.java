@@ -518,6 +518,35 @@ public abstract class EntityConnectionHandler {
                 sessionKeyResp = new SessionKeyRespMessage(entityNonce, sessionCryptoSpec, sessionKeyList);
             }
         }
+        /*
+         * Prototype location-verification policy.
+         * Auth attaches this policy to the session-key response.
+         */
+        String verificationPolicy =
+            "{"
+            + "\"verification\":{"
+            + "\"type\":\"location\","
+            + "\"method\":\"uwb\","
+            + "\"ranging_method\":\"ds_twr\","
+            + "\"anchors\":["
+            + "{\"id\":1,\"x\":0.0,\"y\":0.0},"
+            + "{\"id\":2,\"x\":1.0668,\"y\":0.0},"
+            + "{\"id\":3,\"x\":0.0,\"y\":0.5842},"
+            + "{\"id\":4,\"x\":1.0668,\"y\":0.5842}"
+            + "],"
+            + "\"required_zone\":{"
+            + "\"name\":\"ZONE_A\","
+            + "\"x_min\":0.25,"
+            + "\"x_max\":0.82,"
+            + "\"y_min\":0.15,"
+            + "\"y_max\":0.43"
+            + "},"
+            + "\"max_error_m\":0.10"
+            + "}"
+            + "}";
+
+        sessionKeyResp.setVerificationPolicy(verificationPolicy);
+
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
     }
     /**

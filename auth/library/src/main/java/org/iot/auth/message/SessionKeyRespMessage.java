@@ -24,6 +24,7 @@ import org.iot.auth.io.Buffer;
 import org.iot.auth.io.BufferedString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.json.simple.JSONObject;
 
 import java.util.List;
 
@@ -91,6 +92,10 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
         this.otherSessionKeyOwnerGroup = otherSessionKeyOwnerGroup;
     }
 
+    public void setVerificationPolicy(String verificationPolicy) {
+    this.verificationPolicy = verificationPolicy;
+    }   
+    
     /**
      * Serialize the session key response message and encrypt with the specified distribution key.
      * @param distKey A distribution key for encrypting the session key request message.
@@ -111,6 +116,18 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
 
         for (SessionKey sessionKey: sessionKeyList) {
             payload.concat(sessionKey.serialize());
+        }
+        /*
+        * Optional authorization verification policy.
+        *
+        * Serialized as a BufferedString so the C API can recover
+        * both the length and JSON payload.
+        */
+        if (verificationPolicy != null) {
+            payload.concat(new BufferedString(verificationPolicy).serialize());
+        }
+        else {
+            payload.concat(new BufferedString("").serialize());
         }
 
         if (otherSessionKeyOwnerGroup != null) {
@@ -133,5 +150,6 @@ public class SessionKeyRespMessage extends IoTSPMessage  {
     private final SymmetricKeyCryptoSpec cryptoSpec;
     private final List<SessionKey> sessionKeyList;
     private String otherSessionKeyOwnerGroup = null;
+    private String verificationPolicy = null;
     private static final Logger logger = LoggerFactory.getLogger(SessionKeyReqMessage.class);
 }
