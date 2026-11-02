@@ -33,7 +33,7 @@ Please visit the [SST website](https://iotauth.github.io/) for more information.
 # Prerequisites
 ---
 
-1. OpenSSL command-line tools for creating certificates and keystores of Auths and example entities
+1. OpenSSL command-line tools for creating certificates and keystores for Auth and example entities
 2. Java 11 or above
 3. [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing Java project of Auth
 4. [Maven CLI (command line interface)](http://maven.apache.org/ref/3.1.0/maven-embedder/cli.html) for building Auth from the command line
@@ -43,7 +43,7 @@ Please visit the [SST website](https://iotauth.github.io/) for more information.
 ---
 - **android**: Directory for SST's Auth and entities for the Android platform (*currently under development*)
 - **auth**: Directory for the Java implementation of Auth (local authentication/authorization entity), IntelliJ IDEA project
-- **entity**: Directory for SST's APIs in C, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/main/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
+- **entity**: Directory for SST's APIs in C, C++, Python, and JavaScript and example IoT entities using SST to be authenticated/authorized by Auth. This directory also includes [a sub-directory](https://github.com/iotauth/iotauth/tree/main/entity/node/accessors) for *Secure Communication Accessors* as software building blocks for writing IoT applications.
 - **examples**: Directory for scripts and descriptions to run example Auths and entities. The [`examples/scripts/`](examples/scripts/) subdirectory contains automated end-to-end integration test scripts for C, C++, Node.js, and Python clients and servers, with a single Auth or with two Auths; see [`examples/scripts/README.md`](examples/scripts/README.md).
 - **.github/workflows**: GitHub Actions workflows for continuous integration (CI): the Auth build, example generation, entity integration tests with one Auth and with two Auths, sst-c-api tests, Python formatting, and CodeQL; see [`.github/workflows/README.md`](.github/workflows/README.md).
 
@@ -64,7 +64,7 @@ Every push and pull request to `main` runs the GitHub Actions workflows below.
 | --- | --- |
 | [Auth Server Build](.github/workflows/maven.yml) | Auth builds with Maven. |
 | [Example Tests](.github/workflows/example.yml) | `examples/generateAll.sh` generates the credentials, configurations, and Auth databases of the example Auths and entities. |
-| [Entity Integration Tests](.github/workflows/integration-test.yml) | Python unit tests, and every C, Node.js, and Python client-server combination against a single Auth ([details](.github/workflows/README.md#entity-integration-tests)). |
+| [Entity Integration Tests](.github/workflows/integration-test.yml) | C, C++, Python unit tests, and every C, C++, Node.js, and Python client-server combination against a single Auth ([details](.github/workflows/README.md#entity-integration-tests)). |
 | [Multi-Auth Integration Tests](.github/workflows/multi-auth-test.yml) | Node.js, C, C++, and Python client-server pairs across two Auths, where the server's Auth fetches the session key from the client's Auth ([details](.github/workflows/README.md#multi-auth-integration-tests)). |
 | [sst-c-api Tests](.github/workflows/sst-c-api-tests.yml), [sst-c-api C++ Tests](.github/workflows/sst-c-api-cpp-tests.yml) | The C and C++ API unit tests and examples of [sst-c-api](https://github.com/iotauth/sst-c-api) against this version of Auth. |
 | [Python Formatting](.github/workflows/python-formatting.yml) | Ruff lint and format checks for `entity/python` on pull requests. |
@@ -96,7 +96,7 @@ Every push and pull request to `main` runs the GitHub Actions workflows below.
 
 # Disclaimer
 ---
-This project is currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source codes with caution at their own risk when the tools provided in this project are used for commercial or safety-critical purposes.
+This project is currently intended for academic and research purposes, although the ultimate goal of this project is to build a secure and robust network architecture for the Internet of Things. Therefore, users must use the provided source code with caution at their own risk when the tools provided in this project are used for commercial or safety-critical purposes.
 
 # Acknowledgement
 ---
