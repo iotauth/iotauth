@@ -2,8 +2,8 @@
     "authList": [
         {
             "id": 101,
-            "entityHost": "localhost",
-            "authHost": "localhost",
+            "entityHost": "10.218.101.248",
+            "authHost": "10.218.101.248",
             "tcpPort": 21900,
             "udpPort": 21902,
             "authPort": 21901,
@@ -45,13 +45,13 @@
                 {
                     "name": "net1.gate",
                     "group": "Gate",
-                    "host": "localhost",
+                    "host": "10.235.121.176",
                     "port": 21100
                 },
                 {
                     "name": "net1.targetItem",
                     "group": "TargetItem",
-                    "host": "localhost",
+                    "host": "10.235.121.176",
                     "port": 21101
                 }
             ],
@@ -79,13 +79,13 @@
                 {
                     "name": "net1.gate",
                     "group": "Gate",
-                    "host": "localhost",
+                    "host": "10.235.121.176",
                     "port": 21100
                 },
                 {
                     "name": "net1.targetItem",
                     "group": "TargetItem",
-                    "host": "localhost",
+                    "host": "10.235.121.176",
                     "port": 21101
                 }
             ],
@@ -113,13 +113,13 @@
                 {
                     "name": "net1.gate",
                     "group": "Gate",
-                    "host": "localhost",
+                    "host": "10.235.121.176",
                     "port": 21100
                 },
                 {
                     "name": "net1.targetItem",
                     "group": "TargetItem",
-                    "host": "localhost",
+                    "host": "10.235.121.176",
                     "port": 21101
                 }
             ],
@@ -147,13 +147,13 @@
                 {
                     "name": "net1.gate",
                     "group": "Gate",
-                    "host": "localhost",
+                    "host": "10.235.121.176",
                     "port": 21100
                 },
                 {
                     "name": "net1.targetItem",
                     "group": "TargetItem",
-                    "host": "localhost",
+                    "host": "10.235.121.176",
                     "port": 21101
                 }
             ],
@@ -177,7 +177,7 @@
                 "mac": "SHA256"
             },
             "backupToAuthIds": [],
-            "host": "localhost",
+            "host": "10.235.121.176",
             "port": 21100
         },
         {
@@ -198,7 +198,7 @@
                 "mac": "SHA256"
             },
             "backupToAuthIds": [],
-            "host": "localhost",
+            "host": "10.235.121.176",
             "port": 21101
         }
     ],
