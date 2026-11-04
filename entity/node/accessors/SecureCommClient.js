@@ -252,27 +252,10 @@ function handleSessionKeyIdResp(sessionKeyID, receivedDistKey, callbackParameter
 
 function sendSessionKeyRequest(purpose, numKeys, sessionKeyRespCallback, callbackParameters) {
     var options = iotAuth.getSessionKeyReqOptions(entityConfig, currentDistributionKey, purpose, numKeys);
-    // Optional metadata-only timing hook. Never expose session key material.
-    const started = process.hrtime.bigint();
-    let reported = false;
-    function report(status) {
-        if (reported) return;
-        reported = true;
-        if (outputHandlers.latency) {
-            outputHandlers.latency({name: 'sst_session_key', status: status,
-                duration_ms: Number(process.hrtime.bigint() - started) / 1e6});
-        }
-    }
     var eventHandlers = {
-        onError: function(message) {
-            report('error');
-            onError(message);
-        }
+        onError: onError
     };
-    iotAuth.sendSessionKeyReq(options, function(...args) {
-        report('ok');
-        return sessionKeyRespCallback.apply(this, args);
-    }, eventHandlers, callbackParameters);
+    iotAuth.sendSessionKeyReq(options, sessionKeyRespCallback, eventHandlers, callbackParameters);
 }
 
 function handleMigrationResp(newAuthId, newCredential) {
