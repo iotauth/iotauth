@@ -40,7 +40,7 @@
 			},
 			"backupToAuthIds": [],
 			"resources": {
-				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB", "WiFi"],
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB", "WiFi", "Microphone", "Humidity"],
 				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB", "WiFi"]
 			},
 			"targetServerInfoList": [
@@ -96,7 +96,7 @@
 			"host": "100.123.107.48",
 			"backupToAuthIds": [],
 			"resources": {
-				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB", "WiFi"],
+				"sensors": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB", "WiFi", "Microphone", "Humidity"],
 				"actuators": ["LiFi", "IR", "UltraSound", "BLE", "CAMERA", "THERMOMETER", "UWB", "WiFi"]
 			}
 		},

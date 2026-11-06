@@ -391,7 +391,9 @@ fi
 
 echo ""
 echo "[2/6] Building and starting Auth server on $AUTH_HOST..."
+if [ -z "$SKIP_BUILD" ]; then
 ssh_to 300 "$AUTH_HOST" "${MVN_ENV}cd $REMOTE_REPO/auth && mvn -q -DskipTests package"
+else echo "  SKIP_BUILD set: reusing existing Auth jar"; fi
 # stdin must never hit EOF: AuthCommandLine's interactive command loop reads
 # from stdin and shuts the whole Auth server down on EOF (readLine()==null).
 # /dev/zero blocks it in readLine() forever instead (/dev/null used to cause
@@ -430,8 +432,10 @@ echo "[4/6] Building Robot on $ROBOT_HOST and Locker on $LOCKER_HOST..."
 # find_library() results from a previous run (e.g. before libasound2-dev or
 # pigpio was installed).
 BUILD_CMD="sudo apt-get install -y libasound2-dev libbluetooth-dev && cd $REMOTE_REPO/entity/c/examples/physical_presence && rm -rf build && mkdir build && cd build && cmake .. && make -j"
+if [ -z "$SKIP_BUILD" ]; then
 ssh_to 120 "$ROBOT_HOST" "$BUILD_CMD"
 ssh_to 120 "$LOCKER_HOST" "$BUILD_CMD"
+else echo "  SKIP_BUILD set: reusing existing robot/locker binaries"; fi
 # Record exactly which sources were built (the Pis' entity/c may carry
 # uncommitted, scp-synced files).
 VERSION_CMD="cd $REMOTE_REPO/entity/c && echo \"entity/c HEAD \$(git rev-parse --short HEAD) \$(git status --short | wc -l) changed\" && sha256sum physical_com/freshness.c physical_com/hk.c physical_com/plan_json.c physical_com/session_ctl.c physical_com/rssi_check.c wifi_com/wifi_rssi.c ultrasonic_com/ultrasonic_echo.c ultrasonic_com/ultrasonic_echo_plan.c ultrasonic_com/ultrasonic_audio.c bluetooth_com/bt_link.c bluetooth_com/bt_sst_handshake.c uwb_com/uwb_range.c uwb_com/uwb_cli_dev.c examples/physical_presence/hk_check.h | cut -c1-16,65-"

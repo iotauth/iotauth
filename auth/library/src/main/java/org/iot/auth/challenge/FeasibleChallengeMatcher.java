@@ -555,8 +555,12 @@ public class FeasibleChallengeMatcher {
     private static final char[] WIFI_PW_ALPHABET =
             "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789".toCharArray();
 
-    /** A fresh SSID (e.g. "iotauth-ab12cd34") for one authorized execution. */
+    /** A fresh SSID (e.g. "iotauth-ab12cd34") for one authorized execution.
+     *  Relay-experiment only: WIFI_FIXED_SSID pins a fixed SSID so pre-standing
+     *  relay nodes can match the measurement link. Unset in normal operation. */
     private static String generateWifiSsid() {
+        String fixed = System.getenv("WIFI_FIXED_SSID");
+        if (fixed != null && !fixed.isEmpty()) return fixed;
         StringBuilder sb = new StringBuilder("iotauth-");
         for (int i = 0; i < 8; i++) {
             sb.append(WIFI_SSID_ALPHABET[WIFI_RANDOM.nextInt(WIFI_SSID_ALPHABET.length)]);
@@ -564,8 +568,12 @@ public class FeasibleChallengeMatcher {
         return sb.toString();
     }
 
-    /** A fresh 24-character WPA2 passphrase for one authorized execution. */
+    /** A fresh 24-character WPA2 passphrase for one authorized execution.
+     *  Relay-experiment only: WIFI_FIXED_PASS pins a fixed passphrase to match a
+     *  pre-standing relay measurement link. Unset in normal operation. */
     private static String generateWifiPassword() {
+        String fixed = System.getenv("WIFI_FIXED_PASS");
+        if (fixed != null && !fixed.isEmpty()) return fixed;
         StringBuilder sb = new StringBuilder(24);
         for (int i = 0; i < 24; i++) {
             sb.append(WIFI_PW_ALPHABET[WIFI_RANDOM.nextInt(WIFI_PW_ALPHABET.length)]);

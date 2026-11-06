@@ -1,0 +1,20 @@
+{
+  "_comment": "Copy to your own file, fill in what was actually set up, and pass it to `bench.py init --placement`. Leave a field as null when it was not measured; do not guess.",
+  "placement": {
+    "summary": "Both endpoints on a desk, closer than 0.5 m; the distance and arrangement differ per mechanism and were not measured.",
+    "per_mechanism": {
+      "IR": {"distance_m": null, "height_m": null, "orientation": null, "alignment": null, "photo": null},
+      "LiFi": {"distance_m": null, "height_m": null, "orientation": null, "alignment": null, "photo": null},
+      "Acoustic": {"distance_m": null, "height_m": null, "orientation": "speaker/microphone facing: ?", "photo": null},
+      "Bluetooth": {"distance_m": null, "height_m": null, "photo": null},
+      "Wi-Fi": {"distance_m": null, "height_m": null, "photo": null},
+      "UWB": {"distance_m": null, "height_m": null, "orientation": null, "photo": null}
+    }
+  },
+  "environment": {
+    "optical_illumination": null,
+    "audio_background": null,
+    "rf_environment": null,
+    "notes": null
+  }
+}
