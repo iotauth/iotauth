@@ -67,6 +67,8 @@ if (process.argv.length > 5) {
     }
 }
 
+const clientCommands = require('./clientCommands');
+
 function parseTimePeriod(value) {
     const match = /^([1-9]\d*)\*(sec|min|hour|day|week)$/.exec(value || '');
     if (!match) throw new Error('Invalid period: ' + value);
@@ -92,17 +94,8 @@ function commandInterpreter() {
     console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
     // Use a loop to make sure we read all available data.
     while ((chunk = process.stdin.read()) !== null) {
-        var input = chunk.toString().trim();
-        var idx = input.indexOf(' ');
-        var command;
-        var message = undefined;
-        if (idx < 0) {
-            command = input;
-        }
-        else {
-            command = input.slice(0, idx);
-            message = input.slice(idx + 1);
-        }
+        const {command, message} = clientCommands.parseCommand(chunk);
+
         if (command == 'delegateAccess') {
             console.log('delegateAccess (Session key request for cached keys that will be used to delegate access) command');
             console.log('Enter the agent\'s trust level');
@@ -123,40 +116,14 @@ function commandInterpreter() {
              
         }
         else if (command == 'initComm') {
-            var targetServerInfoList = secureCommClient.getTargetServerInfoList();
-            var commServerInfo = null;
-            if (message != undefined) {
-                var tokens = message.split(' ');
-                var serverName = tokens[0];
-                for (var i = 0; i < targetServerInfoList.length; i++) {
-                    if (targetServerInfoList[i].name == serverName) {
-                        commServerInfo = targetServerInfoList[i];
-                    }
-                }
-                if (commServerInfo == null) {
-                    console.log('cannot find communication server named ' + serverName);
-                    return;
-                }
+            const commServerInfo = clientCommands.selectServer(secureCommClient, message);
+            if (commServerInfo === null) return;
 
-                if (tokens.length > 1) {
-                    var serverPort = parseInt(tokens[1]);
-                    console.log('serverPort is explicitly specified: ' + serverPort);
-                    commServerInfo.port = serverPort;
-                }
-            }
-            else {
-                commServerInfo = targetServerInfoList[0];
-            }
-
-            const resourceName = commServerInfo.group ||
-                commServerInfo.name.split('.')[1].replace(/^./, c => c.toUpperCase());
-            console.log('initComm command targeted to ' + commServerInfo.name + ' (group: ' + resourceName + ')');
-            secureCommClient.provideInput('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, resourceName);
+            clientCommands.initComm(secureCommClient, commServerInfo);
 
         }
         else if (command == 'finComm' || command == 'f') {
-            console.log('finComm command');
-            secureCommClient.provideInput('serverHostPort', null);
+            clientCommands.finComm(secureCommClient);
         }
         else if (command == 'send') {
             console.log('send command');
