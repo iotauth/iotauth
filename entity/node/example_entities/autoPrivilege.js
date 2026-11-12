@@ -110,8 +110,8 @@ async function main() {
         subject: t.subject,
         object: t.object,
         validity: t.validity || defaultValidity,
-        absValidity: t.absValidity || defaultAbsValidity,
-        relValidity: t.relValidity || defaultRelValidity,
+        absValidity: t.absValidity || config.defaultAbsValidity || "1*day",
+        relValidity: t.relValidity || config.defaultRelValidity || "1*hour",
         timeoutMs: t.timeoutMs || defaultTimeoutMs,
     }));
 

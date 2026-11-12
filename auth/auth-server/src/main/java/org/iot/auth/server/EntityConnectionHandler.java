@@ -918,6 +918,16 @@ public abstract class EntityConnectionHandler {
                 String expiration = (String) payload.get("expiration");
                 String absValidity = (String) payload.get("absValidity");
                 String relValidity = (String) payload.get("relValidity");
+                try {
+                    if (DateHelper.parseTimePeriod(absValidity) <= 0
+                            || DateHelper.parseTimePeriod(relValidity) <= 0) {
+                        getLogger().info("Session key validity periods must be positive!");
+                        return null;
+                    }
+                } catch (NumberFormatException | NullPointerException e) {
+                    getLogger().info("Invalid session key validity periods!");
+                    return null;
+                }
 
                 for (DelegationPrivilege p : privileges){
                     if (!p.getPrivilegeType().equals(privilegeType))

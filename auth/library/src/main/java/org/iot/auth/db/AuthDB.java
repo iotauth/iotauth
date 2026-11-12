@@ -448,19 +448,12 @@ public class AuthDB {
             }
             String[] ownerNames = ownersValue.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM);
 
-            if (ownerNames.length < 2) {
-                continue;
-            }
-
             RegisteredEntity requestingOwner = getRegisteredEntity(ownerNames[0].trim());
-            RegisteredEntity targetOwner = getRegisteredEntity(ownerNames[1].trim());
-
-            if (requestingOwner == null || targetOwner == null) {
+            if (requestingOwner == null) {
                 continue;
             }
 
             String requestingOwnerGroup = requestingOwner.getGroup();
-            String targetOwnerGroup = targetOwner.getGroup();
 
             for (CommunicationPolicy policy : policies) {
                 if (policy.getTargetType() != CommunicationTargetType.TARGET_GROUP) {
@@ -468,7 +461,8 @@ public class AuthDB {
                 }
 
                 boolean matchesPolicy = policy.getReqGroup().equals(requestingOwnerGroup)
-                                    && policy.getTarget().equals(targetOwnerGroup);
+                                    && new SessionKeyPurpose(policy.getTargetType(), policy.getTarget())
+                                            .toString().equals(sessionKey.getPurpose());
 
                 if (matchesPolicy) {
                     keyIDsToRemove.add(sessionKey.getID());
