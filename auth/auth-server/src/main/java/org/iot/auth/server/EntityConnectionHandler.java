@@ -967,7 +967,8 @@ public abstract class EntityConnectionHandler {
                                 .setTargetType(CommunicationTargetType.fromStringValue("Group"))
                                 .setTarget(objectGroup)
                                 .setMaxNumSessionKeyOwners(2)
-                                .setSessionCryptoSpec("AES-128-CBC:SHA256")
+                                .setSessionCryptoSpec(parentPolicy.getSessionCryptoSpec().toSpecString()
+                                )
                                 .setAbsValidityStr(absValidity)
                                 .setRelValidityStr(relValidity)
                                 // Ensure expiration does not exceed parent policy expiration
