@@ -20,7 +20,6 @@
 
 "use strict";
 
-var fs = require('fs');
 var SecureCommServer = require('../accessors/SecureCommServer');
 
 function connectionHandler(info) {
@@ -41,7 +40,7 @@ function receivedHandler(received) {
     }
     if (received.data.length > 65535) {
         console.log('Handler: ' + 'socketID: ' + received.id);
-        console.log('data is too large to display, to store in file use saveData command');
+        console.log('data is too large to display');
     }
     else {
         console.log('Handler: ' + 'socketID: ' + received.id + ' data: ' + received.data.toString());
@@ -89,12 +88,7 @@ function commandInterpreter() {
             console.log('  help                        Show this help message');
             console.log('  send <message>              Send message to all connected clients');
             console.log('  sendTo <socketID> <msg>     Send message to a specific client by socket ID');
-            console.log('  sendFile [filepath]         Send a binary file to all connected clients');
-            console.log('                              (default: ../data_examples/data.bin)');
-            console.log('  sendFileTo <id> [filepath]  Send a binary file to a specific client');
             console.log('  skReq [numKeys]             Request session keys for future clients (default: 3)');
-            console.log('  skReqPub [numKeys]          Request session keys for publish topic (default: 1)');
-            console.log('  saveData [filepath]         Save last received data to a file');
             console.log('  showKeys                    Show current distribution key and session keys');
             console.log('  showSocket                  Show current secure server socket info');
             console.log('  mig                         Migrate to a trusted Auth');
@@ -115,14 +109,6 @@ function commandInterpreter() {
                 numKeys = parseInt(message);
             }
             secureCommServer.getSessionKeysForFutureClients(numKeys);
-        }
-        else if (command == 'skReqPub') {
-            console.log('skReqSub (Session key request for target publish topic) command');
-            var numKeys = 1;
-            if (message != undefined) {
-                numKeys = parseInt(message);
-            }
-            secureCommServer.getSessionKeysForPublish(numKeys);
         }
         else if (command == 'send') {
             console.log('send command (sending to all connected clients)');
@@ -148,48 +134,6 @@ function commandInterpreter() {
             var socketID = parseInt(message.slice(0, idx));
             message = message.slice(idx + 1);
             secureCommServer.provideInput('toSend', {data: Buffer.from(message), id: socketID});
-        }
-        else if (command == 'sendFile') {
-            console.log('sendFile command');
-            var fileName = '../data_examples/data.bin';
-            if (message != undefined) {
-                fileName = message;
-            }
-            console.error('======== log for experiments: publishing message =========');
-            var fileData = fs.readFileSync(fileName);
-            console.log('file data length: ' + fileData.length);
-            secureCommServer.provideInput('toSend', {data: fileData, id: null});
-        }
-        else if (command == 'sendFileTo') {
-            console.log('sendFileTo command');
-            if (message == undefined) {
-                console.log('socketID must be specified!');
-                return;
-            }
-            var args = message.split(' ');
-            var socketID = parseInt(args[0]);
-            var fileName = '../data_examples/data.bin';
-            if (args.length > 1) {
-                fileName = args[1];
-            }
-            console.error('======== log for experiments: publishing message =========');
-            var fileData = fs.readFileSync(fileName);
-            console.log('file data length: ' + fileData.length);
-            secureCommServer.provideInput('toSend', {data: fileData, id: socketID});
-        }
-        else if (command == 'saveData') {
-            console.log('saveData command');
-            var received = secureCommServer.latestOutput('received');
-            if (received == undefined) {
-                console.log('No data to be saved!');
-                return;
-            }
-            var fileName = '../data_examples/receivedData.bin';
-            if (message != undefined) {
-                fileName = message;
-            }
-            fs.writeFileSync(fileName, received);
-            console.log('file data saved to ' + fileName);
         }
         else if (command == 'mig') {
             console.log('migration request command!');
