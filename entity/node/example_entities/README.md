@@ -16,6 +16,8 @@ It prints received data to stdout and can be selected with `--server node` in th
 ```
 node server.js configs/net1/server.config
 ```
+Type `help` at the server prompt to list its commands.
+The prompt, the standard output handlers, and the server creation are implemented in `serverCommands.js`, which is shared by `server.js`, `echoServer.js`, `gate.js`, and `targetItem.js`.
 
 ### 2. client.js
 A general-purpose interactive secure client.

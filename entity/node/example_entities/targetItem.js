@@ -14,142 +14,24 @@
  */
 
 /**
- * Example targetItem resource server.
+ * Example targetItem resource server. When an authorized client sends
+ * RETRIEVE_ITEM, it replies 'retrieved'.
  * @author Sunyoung Kim
  */
 
 "use strict";
 
-var SecureCommServer = require('../accessors/SecureCommServer');
+const serverCommands = require('./serverCommands');
 
-function connectionHandler(info) {
-    console.log('Handler: ' + info);
-}
-
-function errorHandler(info) {
-    console.error('Handler: ' + info);
-}
-
-function listeningHandler(port) {
-    console.log('Handler: listening on port ' + port);
-}
+// Standard commands offered at the prompt; the target item does not send files.
+const TARGET_ITEM_COMMANDS = ['send', 'sendTo', 'skReq', 'showKeys', 'showSocket', 'mig', 'finComm'];
 
 function receivedHandler(received) {
     if (received.data.equals(Buffer.from('RETRIEVE_ITEM'))) {
         secureCommServer.provideInput('toSend', {data: Buffer.from('retrieved'), id: received.id});
     }
-    if (received.data.length > 65535) {
-        console.log('Handler: ' + 'socketID: ' + received.id);
-        console.log('data is too large to display');
-    }
-    else {
-        console.log('Handler: ' + 'socketID: ' + received.id + ' data: ' + received.data.toString());
-    }
+    serverCommands.logReceived(received);
 }
 
-// to be loaded from config file
-var entityInfo;
-var authInfo;
-var listeningServerInfo;
-var cryptoInfo;
-
-var configFilePath = 'configs/net1/targetItem.config';
-if (process.argv.length > 2) {
-    configFilePath = process.argv[2];
-}
-
-var secureCommServer = new SecureCommServer(configFilePath);
-secureCommServer.initialize();
-secureCommServer.setOutputHandler('connection', connectionHandler);
-secureCommServer.setOutputHandler('error', errorHandler);
-secureCommServer.setOutputHandler('listening', listeningHandler);
-secureCommServer.setOutputHandler('received', receivedHandler);
-
-function commandInterpreter() {
-    let chunk;
-    const entityInfo = secureCommServer.getEntityInfo();
-    console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
-    // Use a loop to make sure we read all available data.
-    while ((chunk = process.stdin.read()) !== null) {
-        var input = chunk.toString().trim();
-        var idx = input.indexOf(' ');
-        var command;
-        var message;
-        if (idx < 0) {
-            command = input;
-        }
-        else {
-            command = input.slice(0, idx);
-            message = input.slice(idx + 1);
-        }
-
-        if (command == 'help') {
-            console.log('Available commands:');
-            console.log('  help                        Show this help message');
-            console.log('  send <message>              Send message to all connected clients');
-            console.log('  sendTo <socketID> <msg>     Send message to a specific client by socket ID');
-            console.log('  skReq [numKeys]             Request session keys for future clients (default: 3)');
-            console.log('  showKeys                    Show current distribution key and session keys');
-            console.log('  showSocket                  Show current secure server socket info');
-            console.log('  mig                         Migrate to a trusted Auth');
-            console.log('  finComm  (or f)             End all active secure communications');
-        }
-        else if (command == 'showKeys') {
-            console.log('showKeys command. distribution key and session keys: ');
-            console.log(secureCommServer.showKeys());
-        }
-        else if (command == 'showSocket') {
-            console.log('showSocket command. current secure client socket: ');
-            console.log(secureCommServer.showSocket());
-        }
-        else if (command == 'skReq') {
-            console.log('skReq (Session key request for cached keys that will be used by clients) command');
-            var numKeys = 3;
-            if (message != undefined) {
-                numKeys = parseInt(message);
-            }
-            secureCommServer.getSessionKeysForFutureClients(numKeys);
-        }
-        else if (command == 'send') {
-            console.log('send command (sending to all connected clients)');
-            if (message == undefined) {
-                console.log('no message!');
-                return;
-            }
-            // id is set to null to indicate sending to all connected clients.
-            secureCommServer.provideInput('toSend', {data: Buffer.from(message), id: null});
-        }
-        else if (command == 'sendTo') {
-            console.log('sendTo command (sending to a specific client- usage: sendTo [socketID] [message]');
-            if (message == undefined) {
-                console.log('no specify both socket ID and message!');
-                return;
-            }
-            message = message.trim();
-            idx = message.indexOf(' ');
-            if (idx < 0) {
-                console.log('Please specify both socket ID and message!');
-                return;
-            }
-            var socketID = parseInt(message.slice(0, idx));
-            message = message.slice(idx + 1);
-            secureCommServer.provideInput('toSend', {data: Buffer.from(message), id: socketID});
-        }
-        else if (command == 'mig') {
-            console.log('migration request command!');
-            secureCommServer.migrateToTrustedAuth();
-
-        }
-        else if (command == 'finComm' || command == 'f') {
-            console.log('finComm command');
-            secureCommServer.provideInput('toSend', null);
-        }
-        else {
-            console.log('unrecognized command: ' + command);
-        }
-        console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
-    }
-};
-
-process.stdin.on('readable', commandInterpreter);
-
+const secureCommServer = serverCommands.createServer('configs/net1/targetItem.config', receivedHandler);
+serverCommands.startCommandInterpreter(secureCommServer, {commands: TARGET_ITEM_COMMANDS});
