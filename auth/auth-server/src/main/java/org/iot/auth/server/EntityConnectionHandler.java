@@ -1038,7 +1038,7 @@ public abstract class EntityConnectionHandler {
                                 policiesToRemove.add(policy);
                             }
                         }
-                        boolean removedKeys = server.removeSessionKeysFromPolicies(policiesToRemove);
+                        boolean removedKeys = server.removeSessionKeysFromRevokedPolicies(policiesToRemove);
                         if (!removedKeys) {
                             getLogger().info("Failed to remove session keys for revoked policies!");
                             return null;

@@ -437,7 +437,7 @@ public class AuthDB {
         loadCommPolicyDB();
     }
 
-    public boolean removeSessionKeysForPolicies(List<CommunicationPolicy> policies) throws SQLException {
+    public boolean removeSessionKeysForRevokedPolicies(List<CommunicationPolicy> policies) throws SQLException {
         List<CachedSessionKeyTable> sessionKeys = sqLiteConnector.selectAllCachedSessionKeys();
         List<Long> keyIDsToRemove = new ArrayList<>();
 
@@ -457,6 +457,9 @@ public class AuthDB {
 
             for (CommunicationPolicy policy : policies) {
                 if (policy.getTargetType() != CommunicationTargetType.TARGET_GROUP) {
+                    continue;
+                }
+                if (policy.getIsDelegated() != 1){
                     continue;
                 }
 

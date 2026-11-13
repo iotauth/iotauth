@@ -530,9 +530,9 @@ public class AuthServer {
         return true;
     }
 
-    public boolean removeSessionKeysFromPolicies(List<CommunicationPolicy> policies) {
+    public boolean removeSessionKeysFromRevokedPolicies(List<CommunicationPolicy> policies) {
         try {
-            return db.removeSessionKeysForPolicies(policies);
+            return db.removeSessionKeysForRevokedPolicies(policies);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -723,7 +723,7 @@ public class AuthServer {
             }
         }
 
-        if (!db.removeSessionKeysForPolicies(policiesToRemove)) {
+        if (!db.removeSessionKeysForRevokedPolicies(policiesToRemove)) {
             logger.error("Failed to remove session keys for expired policies {}", allPolicyIDsToRemove);
             return;
         }
