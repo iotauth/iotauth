@@ -56,6 +56,19 @@ secureCommClient.setOutputHandler('connected', connectedHandler);
 secureCommClient.setOutputHandler('error', errorHandler);
 secureCommClient.setOutputHandler('received', receivedHandler);
 
+// Opt-in machine-readable events for the manager; preserve interactive output.
+if (process.argv.includes('--privilege-json')) {
+    secureCommClient.setOutputHandler('privilege', function(result) {
+        console.log('IOTAUTH_PRIVILEGE ' + JSON.stringify(result));
+    });
+    secureCommClient.setOutputHandler('error', function(message) {
+        console.log('IOTAUTH_ERROR ' + JSON.stringify(String(message)));
+        errorHandler(message);
+    });
+    // initialize() has returned after printing the loaded config and parameters.
+    console.log('IOTAUTH_READY');
+}
+
 // For publish-subscribe experiments based individual secure connection using proposed approach
 if (process.argv.length > 5) {
     var commandArg = process.argv[3];
@@ -113,11 +126,15 @@ function commandInterpreter() {
             }
 
             secureCommClient.getSessionKeyIdForGrantAccess(1, trustLevel);
-             
+
         }
         else if (command == 'initComm') {
             const commServerInfo = clientCommands.selectServer(secureCommClient, message);
-            if (commServerInfo === null) return;
+            if (commServerInfo === null) {
+                // selectServer returns null only for an unknown server name in message.
+                errorHandler('Unknown communication server: ' + message.split(' ')[0]);
+                return;
+            }
 
             clientCommands.initComm(secureCommClient, commServerInfo);
 

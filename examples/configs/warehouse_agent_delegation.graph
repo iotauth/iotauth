@@ -1,0 +1,342 @@
+{
+    "authList": [
+        {
+            "id": 101,
+            "entityHost": "10.218.101.248",
+            "authHost": "10.218.101.248",
+            "tcpPort": 21900,
+            "udpPort": 21902,
+            "authPort": 21901,
+            "callbackPort": 21903,
+            "dbProtectionMethod": 1,
+            "backupEnabled": false,
+            "contextualCallbackEnabled": true
+        }
+    ],
+    "authTrusts": [],
+    "assignments": {
+        "net1.managerAgent": 101,
+        "net1.roverAgent": 101,
+        "net1.droneAgent": 101,
+        "net1.forkliftAgent": 101,
+        "net1.gate": 101,
+        "net1.targetItem": 101
+    },
+    "entityList": [
+        {
+            "group": "ManagerAgent",
+            "name": "net1.managerAgent",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": true,
+            "distKeyValidityPeriod": "6*hour",
+            "maxSessionKeysPerRequest": 5,
+            "netName": "net1",
+            "credentialPrefix": "Net1.managerAgent",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "targetServerInfoList": [
+                {
+                    "name": "net1.gate",
+                    "group": "Gate",
+                    "host": "127.0.0.1",
+                    "port": 21100
+                },
+                {
+                    "name": "net1.targetItem",
+                    "group": "TargetItem",
+                    "host": "127.0.0.1",
+                    "port": 21101
+                }
+            ],
+            "contextList": []
+        },
+        {
+            "group": "RoverAgent",
+            "name": "net1.roverAgent",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": true,
+            "distKeyValidityPeriod": "6*hour",
+            "maxSessionKeysPerRequest": 5,
+            "netName": "net1",
+            "credentialPrefix": "Net1.roverAgent",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "targetServerInfoList": [
+                {
+                    "name": "net1.gate",
+                    "group": "Gate",
+                    "host": "127.0.0.1",
+                    "port": 21100
+                },
+                {
+                    "name": "net1.targetItem",
+                    "group": "TargetItem",
+                    "host": "127.0.0.1",
+                    "port": 21101
+                }
+            ],
+            "contextList": []
+        },
+        {
+            "group": "DroneAgent",
+            "name": "net1.droneAgent",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": true,
+            "distKeyValidityPeriod": "6*hour",
+            "maxSessionKeysPerRequest": 5,
+            "netName": "net1",
+            "credentialPrefix": "Net1.droneAgent",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "targetServerInfoList": [
+                {
+                    "name": "net1.gate",
+                    "group": "Gate",
+                    "host": "127.0.0.1",
+                    "port": 21100
+                },
+                {
+                    "name": "net1.targetItem",
+                    "group": "TargetItem",
+                    "host": "127.0.0.1",
+                    "port": 21101
+                }
+            ],
+            "contextList": []
+        },
+        {
+            "group": "ForkliftAgent",
+            "name": "net1.forkliftAgent",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": true,
+            "distKeyValidityPeriod": "6*hour",
+            "maxSessionKeysPerRequest": 5,
+            "netName": "net1",
+            "credentialPrefix": "Net1.forkliftAgent",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "targetServerInfoList": [
+                {
+                    "name": "net1.gate",
+                    "group": "Gate",
+                    "host": "127.0.0.1",
+                    "port": 21100
+                },
+                {
+                    "name": "net1.targetItem",
+                    "group": "TargetItem",
+                    "host": "127.0.0.1",
+                    "port": 21101
+                }
+            ],
+            "contextList": []
+        },
+        {
+            "group": "Gate",
+            "name": "net1.gate",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": true,
+            "distKeyValidityPeriod": "6*hour",
+            "maxSessionKeysPerRequest": 1,
+            "netName": "net1",
+            "credentialPrefix": "Net1.gate",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "host": "127.0.0.1",
+            "port": 21100
+        },
+        {
+            "group": "TargetItem",
+            "name": "net1.targetItem",
+            "distProtocol": "TCP",
+            "usePermanentDistKey": true,
+            "distKeyValidityPeriod": "6*hour",
+            "maxSessionKeysPerRequest": 1,
+            "netName": "net1",
+            "credentialPrefix": "Net1.targetItem",
+            "distributionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "sessionCryptoSpec": {
+                "cipher": "AES-128-CBC",
+                "mac": "SHA256"
+            },
+            "backupToAuthIds": [],
+            "host": "127.0.0.1",
+            "port": 21101
+        }
+    ],
+    "filesharingLists": [],
+    "privilegeList": [
+        {
+            "privilegeType": "DelegationGrant",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "DroneAgent",
+            "object": "Gate",
+            "validity": "1*day",
+            "info": {
+                "cryptoSpec": "AES-128-CBC:SHA256",
+                "absValidity": "1*day",
+                "relValidity": "1*day"
+            }
+        },
+        {
+            "privilegeType": "DelegationRevoke",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "DroneAgent",
+            "object": "Gate"
+        },
+        {
+            "privilegeType": "DelegationGrant",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "ForkliftAgent",
+            "object": "Gate",
+            "validity": "1*day",
+            "info": {
+                "cryptoSpec": "AES-128-CBC:SHA256",
+                "absValidity": "1*day",
+                "relValidity": "1*day"
+            }
+        },
+        {
+            "privilegeType": "DelegationRevoke",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "ForkliftAgent",
+            "object": "Gate"
+        },
+        {
+            "privilegeType": "DelegationGrant",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "RoverAgent",
+            "object": "Gate",
+            "validity": "1*day",
+            "info": {
+                "cryptoSpec": "AES-128-CBC:SHA256",
+                "absValidity": "1*day",
+                "relValidity": "1*day"
+            }
+        },
+        {
+            "privilegeType": "DelegationRevoke",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "RoverAgent",
+            "object": "Gate"
+        },
+        {
+            "privilegeType": "DelegationGrant",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "RoverAgent",
+            "object": "TargetItem",
+            "validity": "1*day",
+            "info": {
+                "cryptoSpec": "AES-128-CBC:SHA256",
+                "absValidity": "1*day",
+                "relValidity": "1*day"
+            }
+        },
+        {
+            "privilegeType": "DelegationRevoke",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "RoverAgent",
+            "object": "TargetItem"
+        },
+        {
+            "privilegeType": "DelegationGrant",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "ForkliftAgent",
+            "object": "TargetItem",
+            "validity": "1*day",
+            "info": {
+                "cryptoSpec": "AES-128-CBC:SHA256",
+                "absValidity": "1*day",
+                "relValidity": "1*day"
+            }
+        },
+        {
+            "privilegeType": "DelegationRevoke",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "ForkliftAgent",
+            "object": "TargetItem"
+        },
+        {
+            "privilegeType": "DelegationGrant",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "DroneAgent",
+            "object": "TargetItem",
+            "validity": "1*day",
+            "info": {
+                "cryptoSpec": "AES-128-CBC:SHA256",
+                "absValidity": "1*day",
+                "relValidity": "1*day"
+            }
+        },
+        {
+            "privilegeType": "DelegationRevoke",
+            "privilegedGroup": "ManagerAgent",
+            "subject": "DroneAgent",
+            "object": "TargetItem"
+        }
+    ],
+    "commPolicies": [
+        {
+            "RequestingGroup": "ManagerAgent",
+            "TargetType": "Group",
+            "Target": "Gate",
+            "MaxNumSessionKeyOwners": 2,
+            "SessionCryptoSpec": "AES-128-CBC:SHA256",
+            "AbsoluteValidity": "1*day",
+            "RelativeValidity": "6*hour",
+            "Expiration": "Infinity",
+            "IsDelegated": 0,
+            "Context": null
+        },
+        {
+            "RequestingGroup": "ManagerAgent",
+            "TargetType": "Group",
+            "Target": "TargetItem",
+            "MaxNumSessionKeyOwners": 2,
+            "SessionCryptoSpec": "AES-128-CBC:SHA256",
+            "AbsoluteValidity": "1*day",
+            "RelativeValidity": "6*hour",
+            "Expiration": "Infinity",
+            "IsDelegated": 0,
+            "Context": null
+        }
+    ]
+}

@@ -86,3 +86,16 @@
     cd $ROOT/examples
     ./generateAll.sh -g configs/context_based.graph
     ```
+
+* `warehouse_agent_delegation.graph`
+
+  Warehouse example topology for foundation-model based multi-agent access delegation in [Multi-Agentic Auth](https://github.com/asu-kim/multi-agentic-auth).
+  * Uses a single Auth (`Auth101`) with Manager, Drone, Rover, and Forklift agents, plus the protected Gate and TargetItem resources in `net1`.
+  * Defines direct communication policies for the Manager and privileges to grant and revoke each worker group's access to Gate and TargetItem. Workers obtain resource access through runtime delegation.
+  * Used with `gate.js` and `targetItem.js` under [`entity/node/example_entities`](../../entity/node/example_entities) for secure gate-opening and item-retrieval requests in the warehouse demonstration.
+  * For the experimental setup used in the paper, see the [Robot deployment guide](https://github.com/asu-kim/multi-agentic-auth/blob/main/a2a-multi-agent/simulation/ROBOT_DEPLOYMENT.md).
+  * Adjust the Auth and resource addresses for your deployment, then generate credentials and the Auth database from the repository root:
+    ```sh
+    cd examples
+    ./generateAll.sh -g configs/warehouse_agent_delegation.graph
+    ```
