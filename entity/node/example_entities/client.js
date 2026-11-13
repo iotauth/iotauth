@@ -70,23 +70,15 @@ if (process.argv.length > 5) {
     }
 }
 
+const clientCommands = require('./clientCommands');
+
 function commandInterpreter() {
     let chunk;
     const entityInfo = secureCommClient.getEntityInfo();
     console.log(entityInfo.name + ':' + entityInfo.group + ' prompt>');
     // Use a loop to make sure we read all available data.
     while ((chunk = process.stdin.read()) !== null) {
-        var input = chunk.toString().trim();
-        var idx = input.indexOf(' ');
-        var command;
-        var message = undefined;
-        if (idx < 0) {
-            command = input;
-        }
-        else {
-            command = input.slice(0, idx);
-            message = input.slice(idx + 1);
-        }
+        const {command, message} = clientCommands.parseCommand(chunk);
 
         if (command == 'help') {
             console.log('Available commands:');
@@ -112,30 +104,9 @@ function commandInterpreter() {
             console.log('  mig                         Migrate to a trusted Auth');
         }
         else if (command == 'initComm') {
-            var targetServerInfoList = secureCommClient.getTargetServerInfoList();
-            var commServerInfo = null;
-            if (message != undefined) {
-                var tokens = message.split(' ');
-                var serverName = tokens[0];
-                for (var i = 0; i < targetServerInfoList.length; i++) {
-                    if (targetServerInfoList[i].name == serverName) {
-                        commServerInfo = targetServerInfoList[i];
-                    }
-                }
-                if (commServerInfo == null) {
-                    console.log('cannot find communication server named ' + serverName);
-                    return;
-                }
+            const commServerInfo = clientCommands.selectServer(secureCommClient, message);
+            if (commServerInfo === null) return;
 
-                if (tokens.length > 1) {
-                    var serverPort = parseInt(tokens[1]);
-                    console.log('serverPort is explicitly specified: ' + serverPort);
-                    commServerInfo.port = serverPort;
-                }
-            }
-            else {
-                commServerInfo = targetServerInfoList[0];
-            }
             if (contextList !== null) {
                 if (contextIdx >= contextList.length) {
                     console.log('Context list exhausted: all ' + contextList.length + ' contexts have been used.' +
@@ -147,15 +118,11 @@ function commandInterpreter() {
                 console.log('[Context ' + contextIdx + '/' + contextList.length + '] Sending: ' + JSON.stringify(nextContext));
                 secureCommClient.setParameter('context', nextContext);
             }
-            const resourceName = commServerInfo.group ||
-                commServerInfo.name.split('.')[1].replace(/^./, c => c.toUpperCase());
-            console.log('initComm command targeted to ' + commServerInfo.name + ' (group: ' + resourceName + ')');
-            secureCommClient.provideInput('serverHostPort', {host: commServerInfo.host, port: commServerInfo.port}, resourceName);
+            clientCommands.initComm(secureCommClient, commServerInfo);
 
         }
         else if (command == 'finComm' || command == 'f') {
-            console.log('finComm command');
-            secureCommClient.provideInput('serverHostPort', null);
+            clientCommands.finComm(secureCommClient);
         }
         else if (command == 'setContext'){
             if (contextList !== null){
