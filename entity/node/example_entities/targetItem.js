@@ -53,7 +53,7 @@ var authInfo;
 var listeningServerInfo;
 var cryptoInfo;
 
-var configFilePath = 'configs/net1/resource.config';
+var configFilePath = 'configs/net1/targetItem.config';
 if (process.argv.length > 2) {
     configFilePath = process.argv[2];
 }
