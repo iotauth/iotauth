@@ -456,9 +456,6 @@ public class AuthDB {
             String requestingOwnerGroup = requestingOwner.getGroup();
 
             for (CommunicationPolicy policy : policies) {
-                if (policy.getTargetType() != CommunicationTargetType.TARGET_GROUP) {
-                    continue;
-                }
                 if (policy.getIsDelegated() != 1){
                     continue;
                 }
