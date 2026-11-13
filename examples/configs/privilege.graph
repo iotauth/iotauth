@@ -273,78 +273,70 @@
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Node0",
-			"subject": "Node1",
-			"object": "ResourceA",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"subjectGroup": "Node1",
+			"objectGroup": "ResourceA",
+			"validity": "1*day"
 		},
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Node0",
-			"subject": "Node1",
-			"object": "ResourceB",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"subjectGroup": "Node1",
+			"objectGroup": "ResourceB",
+			"validity": "1*day"
 		},
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Node0",
-			"subject": "Node2",
-			"object": "ResourceC",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"subjectGroup": "Node2",
+			"objectGroup": "ResourceC",
+			"validity": "1*day"
 		},
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Node0",
-			"subject": "Node2",
-			"object": "ResourceD",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"subjectGroup": "Node2",
+			"objectGroup": "ResourceD",
+			"validity": "1*day"
 		},
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Node1",
-			"subject": "Node3",
-			"object": "ResourceA",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"subjectGroup": "Node3",
+			"objectGroup": "ResourceA",
+			"validity": "1*day"
 		},
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Node1",
-			"subject": "Node4",
-			"object": "ResourceB",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"subjectGroup": "Node4",
+			"objectGroup": "ResourceB",
+			"validity": "1*day"
 		},
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Node2",
-			"subject": "Node5",
-			"object": "ResourceC",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"subjectGroup": "Node5",
+			"objectGroup": "ResourceC",
+			"validity": "1*day"
 		},
 		{
 			"privilegeType": "DelegationGrant",
 			"privilegedGroup": "Node2",
-			"subject": "Node6",
-			"object": "ResourceD",
-			"validity": "1*day",
-			"info": {"cryptoSpec":"AES-128-CBC:SHA256","absValidity": "1*day","relValidity": "1*hour"}
+			"subjectGroup": "Node6",
+			"objectGroup": "ResourceD",
+			"validity": "1*day"
 		},
 		{
 			"privilegeType": "DelegationRevoke",
 			"privilegedGroup": "Node0",
-			"subject": "Node1",
-			"object": "ResourceA"
+			"subjectGroup": "Node1",
+			"objectGroup": "ResourceA"
 		},
 		{
 			"privilegeType": "DelegationRevoke",
 			"privilegedGroup": "Node0",
-			"subject": "Node1",
-			"object": "ResourceB"
+			"subjectGroup": "Node1",
+			"objectGroup": "ResourceB"
 		}
 	]
 }

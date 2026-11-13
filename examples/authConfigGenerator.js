@@ -151,10 +151,9 @@ function getPrivilegePolicy(entity){
     var privilegePolicy = {
         PrivilegeType: entity.privilegeType,
         PrivilegedGroup: entity.privilegedGroup,
-        Subject: entity.subject,
-        Object: entity.object,
-        Validity: entity.validity,
-        Info: entity.info
+        SubjectGroup: entity.subjectGroup,
+        ObjectGroup: entity.objectGroup,
+        Validity: entity.validity
     }
     return privilegePolicy;
 }

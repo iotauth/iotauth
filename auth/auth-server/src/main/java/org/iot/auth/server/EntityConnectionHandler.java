@@ -643,7 +643,7 @@ public abstract class EntityConnectionHandler {
                 if (communicationPolicy.getExpiration() < currentTime){
                     getLogger().info("Communication Policy has been expired!");
                     String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    server.cleanExpiredCommunicationPolicies();
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
@@ -671,7 +671,7 @@ public abstract class EntityConnectionHandler {
                 if (communicationPolicy.getExpiration() < currentTime){
                     getLogger().info("Communication Policy has been expired!");
                     String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    server.cleanExpiredCommunicationPolicies();
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
@@ -776,7 +776,7 @@ public abstract class EntityConnectionHandler {
                 if (communicationPolicy.getExpiration() < currentTime){
                     getLogger().info("Communication Policy has been expired!");
                     String policyId = String.valueOf(communicationPolicy.getId());
-                    server.removeCommunicationPolicies(Collections.singletonList(policyId));
+                    server.cleanExpiredCommunicationPolicies();
                     getLogger().info("Expired policy has been removed!");
                     throw new InvalidSessionKeyTargetException("Expired policy: " + policyId);
                 }
@@ -912,19 +912,31 @@ public abstract class EntityConnectionHandler {
         switch (privilegeType) {
             case ("DelegationGrant"): {
                 // Get privilege information from privilegeReqMessage
-                // E.g., {"privilegeType":"DelegationGrant","subject":"a","object": "b","validity":"1*day","info":"AES-128-CBC:SHA256,1*day,1*hour"}
-                String subject = (String) payload.get("subject");
-                String object = (String) payload.get("object");
-                String validity = (String) payload.get("validity");
+                // E.g., {"privilegeType":"DelegationGrant","subject":"a","object": "b","expiration":"1*day","absValidity":1*day", "relValidity": "1*hour"}
+                String subjectGroup = (String) payload.get("subject");
+                String objectGroup = (String) payload.get("object");
+                String expiration = (String) payload.get("expiration");
+                String absValidity = (String) payload.get("absValidity");
+                String relValidity = (String) payload.get("relValidity");
+                try {
+                    if (DateHelper.parseTimePeriod(absValidity) <= 0
+                            || DateHelper.parseTimePeriod(relValidity) <= 0) {
+                        getLogger().info("Session key validity periods must be positive!");
+                        return null;
+                    }
+                } catch (NumberFormatException | NullPointerException e) {
+                    getLogger().info("Invalid session key validity periods!");
+                    return null;
+                }
 
                 for (DelegationPrivilege p : privileges){
                     if (!p.getPrivilegeType().equals(privilegeType))
                         continue;
-                    if (p.getSubject().equals(subject)
-                            && p.getObject().equals(object)
+                    if (p.getSubjectGroup().equals(subjectGroup)
+                            && p.getObjectGroup().equals(objectGroup)
                             && p.getPrivilegedGroup().equals(requestingGroup)){
                         CommunicationPolicy parentPolicy = server.getCommunicationPolicy(
-                                requestingGroup, CommunicationTargetType.fromStringValue("Group"), object);
+                                requestingGroup, CommunicationTargetType.fromStringValue("Group"), objectGroup);
 
                         if (parentPolicy == null){
                             getLogger().info("There's no parent policy!");
@@ -937,31 +949,30 @@ public abstract class EntityConnectionHandler {
                             getLogger().info("Expired policy with Id {} has been removed!", policyId);
                             return null;
                         }
-                        long reqValidity = DateHelper.parseTimePeriod(validity);
+                        long reqValidity = DateHelper.parseTimePeriod(expiration);
                         long privilegeValidity = DateHelper.parseTimePeriod(p.getValidity());
-                        String expiration = "";
-                        if (reqValidity >= privilegeValidity){
-                            expiration = p.getValidity();
-                        } else {
-                            expiration = validity;
-                        }
 
-                        JSONObject info = p.getInfo();
+                        long expirationTimestamp = Math.min(
+                                currentTime + Math.min(reqValidity, privilegeValidity),
+                                parentPolicy.getExpiration()
+                        );
+
                         String commPolicyCountValue = server.getCommPolicyCountValue();
                         long nextCommPolicyID = Long.parseLong(commPolicyCountValue);
 
                         CommunicationPolicyTable newCommunicationPolicyTable = new CommunicationPolicyTable()
                                 .setID(nextCommPolicyID)
-                                .setReqGroup(subject)
+                                .setReqGroup(subjectGroup)
                                 .setTargetTypeVal("Group")
                                 .setTargetType(CommunicationTargetType.fromStringValue("Group"))
-                                .setTarget(object)
+                                .setTarget(objectGroup)
                                 .setMaxNumSessionKeyOwners(2)
-                                .setSessionCryptoSpec((String) info.get("cryptoSpec"))
-                                .setAbsValidityStr((String) info.get("absValidity"))
-                                .setRelValidityStr((String) info.get("relValidity"))
+                                .setSessionCryptoSpec(parentPolicy.getSessionCryptoSpec().toSpecString()
+                                )
+                                .setAbsValidityStr(absValidity)
+                                .setRelValidityStr(relValidity)
                                 // Ensure expiration does not exceed parent policy expiration
-                                .setExpiration(Math.min(new Date().getTime() + DateHelper.parseTimePeriod(expiration), parentPolicy.getExpiration()))
+                                .setExpiration(expirationTimestamp)
                                 .setIsDelegated(1);
 
                         DelegationInfoTable newDelegationInfoTable = new DelegationInfoTable()
@@ -994,15 +1005,15 @@ public abstract class EntityConnectionHandler {
                 return null;
             }
             case ("DelegationRevoke"): {
-                String subject = (String) payload.get("subject");
-                String object = (String) payload.get("object");
+                String subjectGroup = (String) payload.get("subject");
+                String objectGroup = (String) payload.get("object");
                 for (DelegationPrivilege p : privileges) {
                     if (!p.getPrivilegeType().equals(privilegeType))
                         continue;
-                    if (p.getSubject().equals(subject) && p.getObject().equals(object)
+                    if (p.getSubjectGroup().equals(subjectGroup) && p.getObjectGroup().equals(objectGroup)
                             && p.getPrivilegedGroup().equals(requestingGroup)) {
                         CommunicationPolicy revokeTargetPolicy = server.getCommunicationPolicy(
-                                subject, CommunicationTargetType.fromStringValue("Group"), object);
+                                subjectGroup, CommunicationTargetType.fromStringValue("Group"), objectGroup);
                         if (revokeTargetPolicy == null){
                             getLogger().info("There's no corresponding policy to revoke!");
                             return null;
@@ -1019,6 +1030,19 @@ public abstract class EntityConnectionHandler {
                         List<String> allCPTIDsToBeRemoved = new ArrayList<>();
                         allCPTIDsToBeRemoved.add(revokeTargetPolicyId);
                         allCPTIDsToBeRemoved.addAll(targetPolicies);
+
+                        List<CommunicationPolicy> policiesToRemove = new ArrayList<>();
+                        for (String policyId : allCPTIDsToBeRemoved) {
+                            CommunicationPolicy policy = server.getCommunicationPolicyByID(Long.parseLong(policyId));
+                            if (policy != null) {
+                                policiesToRemove.add(policy);
+                            }
+                        }
+                        boolean removedKeys = server.removeSessionKeysFromRevokedPolicies(policiesToRemove);
+                        if (!removedKeys) {
+                            getLogger().info("Failed to remove session keys for revoked policies!");
+                            return null;
+                        }
 
                         boolean removeCommunicationPolicies = server.removeCommunicationPolicies(allCPTIDsToBeRemoved);
                         if (!removeCommunicationPolicies){

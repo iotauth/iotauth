@@ -288,6 +288,18 @@ public class AuthDB {
         return sqLiteConnector.deleteExpiredCommunicationPolicies();
     }
 
+    public List<String> getExpiredCommunicationPolicyIDs() {
+        long currentTime = System.currentTimeMillis();
+        List<String> expiredIDs = new ArrayList<>();
+
+        for (CommunicationPolicy policy : communicationPolicyList) {
+            if (policy.getExpiration() < currentTime) {
+                expiredIDs.add(String.valueOf(policy.getId()));
+            }
+        }
+        return expiredIDs;
+    }
+
     public void deleteAllSessionKeys() throws SQLException, ClassNotFoundException {
         sqLiteConnector.deleteAllCachedSessionKeys();
     }
@@ -425,6 +437,43 @@ public class AuthDB {
         loadCommPolicyDB();
     }
 
+    public boolean removeSessionKeysForRevokedPolicies(List<CommunicationPolicy> policies) throws SQLException {
+        List<CachedSessionKeyTable> sessionKeys = sqLiteConnector.selectAllCachedSessionKeys();
+        List<Long> keyIDsToRemove = new ArrayList<>();
+
+        for (CachedSessionKeyTable sessionKey : sessionKeys) {
+            String ownersValue = sessionKey.getOwner();
+            if (ownersValue == null || ownersValue.trim().isEmpty()) {
+                continue;
+            }
+            String[] ownerNames = ownersValue.split(SessionKey.SESSION_KEY_OWNER_NAME_DELIM);
+
+            RegisteredEntity requestingOwner = getRegisteredEntity(ownerNames[0].trim());
+            if (requestingOwner == null) {
+                continue;
+            }
+
+            String requestingOwnerGroup = requestingOwner.getGroup();
+
+            for (CommunicationPolicy policy : policies) {
+                if (policy.getIsDelegated() != 1){
+                    continue;
+                }
+
+                boolean matchesPolicy = policy.getReqGroup().equals(requestingOwnerGroup)
+                                    && new SessionKeyPurpose(policy.getTargetType(), policy.getTarget())
+                                            .toString().equals(sessionKey.getPurpose());
+
+                if (matchesPolicy) {
+                    keyIDsToRemove.add(sessionKey.getID());
+                    break;
+                }
+            }
+        }
+
+        return sqLiteConnector.deleteCachedSessionKeysByIDs(keyIDsToRemove);
+    }
+
     private void loadCommPolicyDB() throws SQLException, ClassNotFoundException {
         sqLiteConnector.selectAllPolicies().forEach(communicationPolicyTable -> {
             CommunicationPolicy communicationPolicy = new CommunicationPolicy(communicationPolicyTable);
@@ -530,8 +579,8 @@ public class AuthDB {
         return sqLiteConnector.insertRecords(privilegeTable);
     }
 
-    public boolean removePrivilege(String privilegeType, String privilegedGroup, String subject, String object)
+    public boolean removePrivilege(String privilegeType, String privilegedGroup, String subjectGroup, String objectGroup)
             throws SQLException, ClassNotFoundException {
-        return sqLiteConnector.deletePrivilegeByKey(privilegeType, privilegedGroup, subject, object);
+        return sqLiteConnector.deletePrivilegeByKey(privilegeType, privilegedGroup, subjectGroup, objectGroup);
     }
 }
