@@ -1,54 +1,77 @@
 package org.iot.auth;
 
-import org.json.simple.JSONObject;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.FileAppender;
+import org.json.simple.JSONValue;
+
+import java.io.Closeable;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.time.Instant;
 import java.util.Map;
 
-/** Per-Auth JSON Lines history. Never truncates or rotates existing records. */
-public final class AuthEventLog {
-    private final Path path;
+/** Per-Auth, timestamp-first event history, written through a Logback logger. */
+public final class AuthEventLog implements Closeable {
     private final int authID;
+    private final LoggerContext context;
+    private final Logger logger;
 
     public AuthEventLog(String databaseDir, int authID) throws IOException {
         this.authID = authID;
-        path = Paths.get(databaseDir).resolve("events.jsonl");
-        Files.createDirectories(path.getParent());
-        try (FileChannel channel = open()) {
-            // Create an empty log on startup without truncating an existing log.
-        }
-    }
+        Path path = Paths.get(databaseDir).resolve("authlog.txt");
+        // An isolated context avoids routing audit events through console/rolling appenders
+        // or depending on which SLF4J provider the server's assembled JAR selects.
+        context = new LoggerContext();
+        context.setName("auth-events-" + authID);
+        context.start();
 
-    private FileChannel open() throws IOException {
-        return FileChannel.open(path, StandardOpenOption.CREATE,
-                StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+        PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+        encoder.setContext(context);
+        encoder.setCharset(StandardCharsets.UTF_8);
+        encoder.setPattern("[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX,UTC}] %msg%n");
+        encoder.start();
+
+        FileAppender<ILoggingEvent> appender = new FileAppender<>();
+        appender.setContext(context);
+        appender.setName("AUTH_EVENTS");
+        appender.setFile(path.toString());
+        appender.setAppend(true);
+        appender.setPrudent(true); // Lock writes if cooperating Auth processes share the file.
+        appender.setImmediateFlush(true);
+        appender.setEncoder(encoder);
+        appender.start();
+        if (!appender.isStarted()) {
+            encoder.stop();
+            context.stop();
+            throw new IOException("Cannot open Auth event log: " + path);
+        }
+
+        logger = context.getLogger("auth.events");
+        logger.setAdditive(false);
+        logger.setLevel(Level.INFO);
+        logger.addAppender(appender);
     }
 
     public void append(String event, String outcome, String actor, Map details) throws IOException {
-        JSONObject record = new JSONObject();
-        record.put("timestamp", Instant.now().toString());
-        record.put("authId", authID);
-        record.put("event", event);
-        record.put("outcome", outcome);
-        record.put("actor", actor);
-        record.put("details", details);
-        ByteBuffer bytes = ByteBuffer.wrap((record.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-        // JVM lock also covers multiple logger instances; file lock covers cooperating processes.
+        // JSON escaping keeps untrusted actor/details text within a single log line.
         synchronized (AuthEventLog.class) {
-            try (FileChannel channel = open(); FileLock lock = channel.lock()) {
-                while (bytes.hasRemaining()) {
-                    channel.write(bytes);
-                }
-                channel.force(true);
-            }
+            logger.info("Auth{} {} {} actor={} details={}", authID,
+                    singleLine(event), singleLine(outcome), JSONValue.toJSONString(actor),
+                    JSONValue.toJSONString(details));
         }
+    }
+
+    private static String singleLine(String value) {
+        return value == null ? "null" : value.replace("\r", "\\r").replace("\n", "\\n");
+    }
+
+    @Override
+    public void close() {
+        context.stop();
     }
 }
