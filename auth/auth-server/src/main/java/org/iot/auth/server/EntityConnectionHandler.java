@@ -607,21 +607,6 @@ public abstract class EntityConnectionHandler {
      */
     private SessionKeysAndSpec processSessionKeyReq(
             RegisteredEntity requestingEntity, SessionKeyReqInternal sessionKeyReq, Buffer authNonce)
-            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException, TooManySessionKeysRequestedException, InvalidNonceException {
-        JSONObject details = auditFields(sessionKeyReq.getPurpose());
-        details.put("numKeys", sessionKeyReq.getNumKeys());
-        String outcome = "FAILED";
-        try {
-            SessionKeysAndSpec result = processSessionKeyReqInternal(requestingEntity, sessionKeyReq, authNonce);
-            outcome = "SUCCESS";
-            return result;
-        } finally {
-            server.recordEvent("ACCESS", outcome, requestingEntity.getName(), details);
-        }
-    }
-
-    private SessionKeysAndSpec processSessionKeyReqInternal(
-            RegisteredEntity requestingEntity, SessionKeyReqInternal sessionKeyReq, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
             TooManySessionKeysRequestedException, InvalidNonceException {
         getLogger().debug("Sender entity: {}", sessionKeyReq.getEntityName());
@@ -901,43 +886,7 @@ public abstract class EntityConnectionHandler {
      * @throws ClassNotFoundException When class is not found.
      * @throws InvalidNonceException If nonce does not match.
      */
-    private JSONObject auditFields(JSONObject source) {
-        JSONObject details = new JSONObject();
-        // Do not persist arbitrary context, cryptographic material, or complete wire payloads.
-        for (String field : new String[]{"privilegeType", "subject", "object", "expiration",
-                "absValidity", "relValidity", "group", "pubTopic", "subTopic", "keyId",
-                "cachedKeys", "delegation", "FileSharing"}) {
-            if (source.containsKey(field)) {
-                details.put(field, source.get(field));
-            }
-        }
-        return details;
-    }
-
     private JSONObject processPrivilegeReq(
-            RegisteredEntity requestingEntity, PrivilegeReqMessage privilegeReqMessage, Buffer authNonce)
-            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidNonceException {
-        JSONObject payload = privilegeReqMessage.getPayload();
-        String type = String.valueOf(payload.get("privilegeType"));
-        String event = "DelegationGrant".equals(type) ? "DELEGATION" :
-                "DelegationRevoke".equals(type) ? "REVOCATION" : null;
-        JSONObject details = auditFields(payload);
-        String outcome = "FAILED";
-        try {
-            JSONObject result = processPrivilegeReqInternal(requestingEntity, privilegeReqMessage, authNonce);
-            outcome = result == null ? "REJECTED" : "SUCCESS";
-            if (result != null) {
-                details.put("result", result);
-            }
-            return result;
-        } finally {
-            if (event != null) {
-                server.recordEvent(event, outcome, requestingEntity.getName(), details);
-            }
-        }
-    }
-
-    private JSONObject processPrivilegeReqInternal(
             RegisteredEntity requestingEntity, PrivilegeReqMessage privilegeReqMessage, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException,
             InvalidNonceException {
