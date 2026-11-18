@@ -24,6 +24,7 @@ import org.iot.auth.exception.*;
 import org.iot.auth.util.DateHelper;
 import org.json.simple.JSONArray;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iot.auth.AuthServer;
 import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
@@ -50,6 +51,8 @@ import java.util.concurrent.TimeoutException;
  * @author Hokeun Kim
  */
 public abstract class EntityConnectionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(EntityConnectionHandler.class);
+
     private final int RSA_KEY_SIZE = 256; // 2048 bits
 
     private class SessionKeysAndSpec {
@@ -519,6 +522,7 @@ public abstract class EntityConnectionHandler {
             }
         }
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
+        logger.info("Access granted: session key response sent, keyCount={}", sessionKeyList.size());
     }
     /**
      * Send an add reader response to the requesting entity
@@ -588,6 +592,7 @@ public abstract class EntityConnectionHandler {
                             new DelegatedAccessRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
         }
         writeToSocket(delegatedAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
+        logger.info("Delegated access granted: response sent, keyCount={}", sessionKeyList.size());
     } 
 
     /**
@@ -995,6 +1000,8 @@ public abstract class EntityConnectionHandler {
                             getLogger().info("Failed to add new Delegation Info!");
                             return null;
                         }
+                        logger.info("Delegation granted: entity={}, subject={}, object={}, policyId={}",
+                                requestingEntity.getName(), subjectGroup, objectGroup, commPolicyCountValue);
                         result.put("action", "DelegationGrant");
                         result.put("newCommunicationPolicy", newCommunicationPolicyTable.toJSONObject());
                         result.put("curCommPolicyCount", server.getCommPolicyCountValue());
@@ -1056,6 +1063,8 @@ public abstract class EntityConnectionHandler {
                             return null;
                         }
 
+                        logger.info("Delegation revoked: entity={}, policyIds={}",
+                                requestingEntity.getName(), allCPTIDsToBeRemoved);
                         String revokedPolicy = revokeTargetPolicy.toString();
                         result.put("action", "DelegationRevoke");
                         result.put("revokedTarget", revokedPolicy);
