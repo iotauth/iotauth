@@ -87,18 +87,7 @@ public class TrustedAuthConnectionHandler extends AbstractHandler {
         if (authReqType.equals(TrustedAuthReqMessasge.type.AUTH_SESSION_KEY_REQ.name())) {
             logger.info("Received " + authReqType + " from Auth"
                             + requestingAuthInfo.getID() + " at " + baseRequest.getRemoteHost() + ":" + baseRequest.getRemotePort());
-            org.json.simple.JSONObject details = new org.json.simple.JSONObject();
-            details.put("requestingAuthId", requestingAuthID);
-            AuthSessionKeyReqMessage keyRequest = AuthSessionKeyReqMessage.fromHttpRequest(baseRequest);
-            details.put("sessionKeyId", keyRequest.getSessionKeyID());
-            details.put("cachedKeyAuthId", keyRequest.getCachedKeyAuthID());
-            String outcome = "FAILED";
-            try {
-                handleAuthSessionKeyReq(baseRequest, response);
-                outcome = "SUCCESS";
-            } finally {
-                server.recordEvent("ACCESS", outcome, keyRequest.getRequestingEntityName(), details);
-            }
+            handleAuthSessionKeyReq(baseRequest, response);
             logger.info("The request {} was successfully handled!", authReqType);
         }
         else if(authReqType.equals(TrustedAuthReqMessasge.type.BACKUP_REQ.name())) {

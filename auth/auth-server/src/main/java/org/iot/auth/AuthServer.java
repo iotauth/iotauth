@@ -117,7 +117,6 @@ public class AuthServer {
                 properties.getDatabaseEncryptionKeyPath(),
                 AuthDBProtectionMethod.fromValue(properties.getAuthDBProtectionMethod()));
         logger.info("Finished initializing Auth DB.");
-        eventLog = new AuthEventLog(properties.getAuthDatabaseDir(), authID);
 
         entityTcpPortTimeout = properties.getEntityTcpPortTimeout();
         entityUdpPortTimeout = properties.getEntityUdpPortTimeout();
@@ -686,15 +685,6 @@ public class AuthServer {
         return db.getTrustedAuthInfo(authID);
     }
 
-    /** Record an event without changing the outcome of an already processed request. */
-    public void recordEvent(String event, String outcome, String actor, Map details) {
-        try {
-            eventLog.append(event, outcome, actor, details);
-        } catch (IOException e) {
-            logger.error("Failed to append Auth event history", e);
-        }
-    }
-
     /**
      * Method for exposing an AuthDB operation, cleanExpiredSessionKeys
      * @throws SQLException If an error occurs in SQL processing.
@@ -743,12 +733,7 @@ public class AuthServer {
         }
         if (!removeCommunicationPolicies(allPolicyIDsToRemove)) {
             logger.error("Failed to remove expired communication policies {}", allPolicyIDsToRemove);
-            return;
         }
-        Map<String, Object> details = new LinkedHashMap<>();
-        details.put("reason", "expiration");
-        details.put("policyIds", allPolicyIDsToRemove);
-        recordEvent("REVOCATION", "SUCCESS", "system", details);
     }
 
     /**
@@ -1293,7 +1278,6 @@ public class AuthServer {
 
     private boolean isRunning;
     private AuthDB db;
-    private final AuthEventLog eventLog;
     private AuthCrypto crypto;
 
     private Server serverForTrustedAuths;

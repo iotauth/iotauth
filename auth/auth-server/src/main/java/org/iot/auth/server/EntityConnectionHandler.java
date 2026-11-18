@@ -24,6 +24,7 @@ import org.iot.auth.exception.*;
 import org.iot.auth.util.DateHelper;
 import org.json.simple.JSONArray;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.iot.auth.AuthServer;
 import org.iot.auth.db.*;
 import org.iot.auth.io.Buffer;
@@ -50,6 +51,8 @@ import java.util.concurrent.TimeoutException;
  * @author Hokeun Kim
  */
 public abstract class EntityConnectionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(EntityConnectionHandler.class);
+
     private final int RSA_KEY_SIZE = 256; // 2048 bits
 
     private class SessionKeysAndSpec {
@@ -519,6 +522,7 @@ public abstract class EntityConnectionHandler {
             }
         }
         writeToSocket(sessionKeyResp.serializeAndEncrypt(distributionKey).getRawBytes());
+        logger.info("Access granted: session key response sent, keyCount={}", sessionKeyList.size());
     }
     /**
      * Send an add reader response to the requesting entity
@@ -588,6 +592,7 @@ public abstract class EntityConnectionHandler {
                             new DelegatedAccessRespMessage(encryptedDistKey, entityNonce, sessionCryptoSpec, sessionKeyList);
         }
         writeToSocket(delegatedAccessRespMessage.serializeAndEncrypt(distributionKey).getRawBytes());
+        logger.info("Delegated access granted: response sent, keyCount={}", sessionKeyList.size());
     } 
 
     /**
@@ -606,21 +611,6 @@ public abstract class EntityConnectionHandler {
      * @throws TooManySessionKeysRequestedException If more keys requested than allowed for the entity.
      */
     private SessionKeysAndSpec processSessionKeyReq(
-            RegisteredEntity requestingEntity, SessionKeyReqInternal sessionKeyReq, Buffer authNonce)
-            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException, TooManySessionKeysRequestedException, InvalidNonceException {
-        JSONObject details = auditFields(sessionKeyReq.getPurpose());
-        details.put("numKeys", sessionKeyReq.getNumKeys());
-        String outcome = "FAILED";
-        try {
-            SessionKeysAndSpec result = processSessionKeyReqInternal(requestingEntity, sessionKeyReq, authNonce);
-            outcome = "SUCCESS";
-            return result;
-        } finally {
-            server.recordEvent("ACCESS", outcome, requestingEntity.getName(), details);
-        }
-    }
-
-    private SessionKeysAndSpec processSessionKeyReqInternal(
             RegisteredEntity requestingEntity, SessionKeyReqInternal sessionKeyReq, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidSessionKeyTargetException,
             TooManySessionKeysRequestedException, InvalidNonceException {
@@ -901,43 +891,7 @@ public abstract class EntityConnectionHandler {
      * @throws ClassNotFoundException When class is not found.
      * @throws InvalidNonceException If nonce does not match.
      */
-    private JSONObject auditFields(JSONObject source) {
-        JSONObject details = new JSONObject();
-        // Do not persist arbitrary context, cryptographic material, or complete wire payloads.
-        for (String field : new String[]{"privilegeType", "subject", "object", "expiration",
-                "absValidity", "relValidity", "group", "pubTopic", "subTopic", "keyId",
-                "cachedKeys", "delegation", "FileSharing"}) {
-            if (source.containsKey(field)) {
-                details.put(field, source.get(field));
-            }
-        }
-        return details;
-    }
-
     private JSONObject processPrivilegeReq(
-            RegisteredEntity requestingEntity, PrivilegeReqMessage privilegeReqMessage, Buffer authNonce)
-            throws IOException, ParseException, SQLException, ClassNotFoundException, InvalidNonceException {
-        JSONObject payload = privilegeReqMessage.getPayload();
-        String type = String.valueOf(payload.get("privilegeType"));
-        String event = "DelegationGrant".equals(type) ? "DELEGATION" :
-                "DelegationRevoke".equals(type) ? "REVOCATION" : null;
-        JSONObject details = auditFields(payload);
-        String outcome = "FAILED";
-        try {
-            JSONObject result = processPrivilegeReqInternal(requestingEntity, privilegeReqMessage, authNonce);
-            outcome = result == null ? "REJECTED" : "SUCCESS";
-            if (result != null) {
-                details.put("result", result);
-            }
-            return result;
-        } finally {
-            if (event != null) {
-                server.recordEvent(event, outcome, requestingEntity.getName(), details);
-            }
-        }
-    }
-
-    private JSONObject processPrivilegeReqInternal(
             RegisteredEntity requestingEntity, PrivilegeReqMessage privilegeReqMessage, Buffer authNonce)
             throws IOException, ParseException, SQLException, ClassNotFoundException,
             InvalidNonceException {
@@ -1046,6 +1000,8 @@ public abstract class EntityConnectionHandler {
                             getLogger().info("Failed to add new Delegation Info!");
                             return null;
                         }
+                        logger.info("Delegation granted: entity={}, subject={}, object={}, policyId={}",
+                                requestingEntity.getName(), subjectGroup, objectGroup, commPolicyCountValue);
                         result.put("action", "DelegationGrant");
                         result.put("newCommunicationPolicy", newCommunicationPolicyTable.toJSONObject());
                         result.put("curCommPolicyCount", server.getCommPolicyCountValue());
@@ -1107,6 +1063,8 @@ public abstract class EntityConnectionHandler {
                             return null;
                         }
 
+                        logger.info("Delegation revoked: entity={}, policyIds={}",
+                                requestingEntity.getName(), allCPTIDsToBeRemoved);
                         String revokedPolicy = revokeTargetPolicy.toString();
                         result.put("action", "DelegationRevoke");
                         result.put("revokedTarget", revokedPolicy);

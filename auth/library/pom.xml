@@ -53,6 +53,10 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+<<<<<<< HEAD
+=======
+            <version>1.7.36</version>
+>>>>>>> 3948bf68cb78c4042d5e3a24ceb60dca40cbc1fb
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

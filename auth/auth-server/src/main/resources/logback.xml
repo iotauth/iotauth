@@ -23,6 +23,18 @@
         </triggeringPolicy>
     </appender>
 
+    <!-- Paths are relative to auth/auth-server, the standard launch directory.
+         Override AUTH_DATABASE_DIR and AUTH_ID with JVM -D options when needed. -->
+    <appender name="AUTH_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${AUTH_DATABASE_DIR:-../databases/auth101}/auth${AUTH_ID:-101}log.txt</file>
+        <append>true</append>
+        <immediateFlush>true</immediateFlush>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!--
     // For debug output
     <root level="DEBUG">
@@ -32,5 +44,6 @@
     <root level="INFO">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
+        <appender-ref ref="AUTH_FILE" />
     </root>
 </configuration>
