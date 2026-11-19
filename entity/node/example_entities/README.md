@@ -42,6 +42,14 @@ node user.js configs/net1/user.config
 delegateAccess high
 ```
 
+With the `privilege.graph` fixture, the same program manages group access at Auth.
+Start `node user.js configs/net1/node0.config --privilege-json` and enter
+`delegateAuthority Node1 ResourceA 1*hour 10*min 1*min`. The three durations
+set the grant lifetime, absolute key validity, and relative key validity.
+After the grant acknowledgment, `revoke Node1 ResourceA` withdraws the grant
+and its descendants. The [dynamic access control guide](https://iotauth.github.io/docs/dynamic-access-control/)
+walks through both levels of the example and explains the response fields.
+
 ### 5. agent.js
 Represents an agent entity that acts on behalf of a user using delegated access.
 #### Features

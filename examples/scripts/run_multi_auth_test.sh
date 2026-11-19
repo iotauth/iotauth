@@ -246,11 +246,6 @@ check_and_prepare_multi_auth_ports() {
 
 # --- Build and setup ---
 
-build_cpp_entities() {
-	run_step cmake -S "$CPP_EXAMPLE_DIR" -B "$CPP_EXAMPLE_DIR/build"
-	run_step cmake --build "$CPP_EXAMPLE_DIR/build"
-}
-
 prepare_test() {
 	if [[ "$RUN_BUILD" == true ]]; then
 		require_command mvn

@@ -55,6 +55,8 @@ Please check [QUICKSTART.md](https://github.com/iotauth/iotauth/blob/main/QUICKS
 ---
 See "How to run examples" in [README.md under *examples/*](https://github.com/iotauth/iotauth/blob/main/examples/README.md) for a fully working example.
 
+For runtime changes to access, the [delegation, revocation, and context guide](https://iotauth.github.io/docs/dynamic-access-control/) shows the Node.js privilege calls, Python key requests, and example graph configurations.
+
 # Continuous integration (CI) tests
 ---
 Every push and pull request to `main` runs the GitHub Actions workflows below.
@@ -64,7 +66,7 @@ Every push and pull request to `main` runs the GitHub Actions workflows below.
 | --- | --- |
 | [Auth Server Build](.github/workflows/maven.yml) | Auth builds with Maven. |
 | [Example Tests](.github/workflows/example.yml) | `examples/generateAll.sh` generates the credentials, configurations, and Auth databases of the example Auths and entities. |
-| [Entity Integration Tests](.github/workflows/integration-test.yml) | C, C++, Python unit tests, and every C, C++, Node.js, and Python client-server combination against a single Auth ([details](.github/workflows/README.md#entity-integration-tests)). |
+| [Entity Integration Tests](.github/workflows/integration-test.yml) | Python unit tests, the C/Node.js/Python client-server matrix, six mixed C++ pairings against one Auth, and a Python credential-mode check ([details](.github/workflows/README.md#entity-integration-tests)). |
 | [Multi-Auth Integration Tests](.github/workflows/multi-auth-test.yml) | Node.js, C, C++, and Python client-server pairs across two Auths, where the server's Auth fetches the session key from the client's Auth ([details](.github/workflows/README.md#multi-auth-integration-tests)). |
 | [sst-c-api Tests](.github/workflows/sst-c-api-tests.yml), [sst-c-api C++ Tests](.github/workflows/sst-c-api-cpp-tests.yml) | The C and C++ API unit tests and examples of [sst-c-api](https://github.com/iotauth/sst-c-api) against this version of Auth. |
 | [Python Formatting](.github/workflows/python-formatting.yml) | Ruff lint and format checks for `entity/python` on pull requests. |
