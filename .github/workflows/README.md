@@ -7,7 +7,7 @@ Unless noted otherwise, each workflow runs on every push to `main` and on every 
 | --- | --- | --- |
 | Auth Server Build | [`maven.yml`](maven.yml) | Builds Auth with Maven on JDK 17 (`mvn -B package --file auth/pom.xml`). |
 | Example Tests | [`example.yml`](example.yml) | Runs `examples/generateAll.sh` to generate the credentials, configuration files, and databases of the example Auths and entities. |
-| Entity Integration Tests | [`integration-test.yml`](integration-test.yml) | Python unit tests, then end-to-end tests of every C, Node.js, and Python client-server combination against Auth101, plus the Python permanent distribution key scenario. See [Entity integration tests](#entity-integration-tests). |
+| Entity Integration Tests | [`integration-test.yml`](integration-test.yml) | Python unit tests, the C/Node.js/Python matrix, six mixed C++ pairings against Auth101, and a Python permanent distribution-key case. See [Entity integration tests](#entity-integration-tests). |
 | Multi-Auth Integration Tests | [`multi-auth-test.yml`](multi-auth-test.yml) | End-to-end tests with two Auths: a Node.js, C, C++, or Python client registered with Auth101 talks to a server of the same implementation registered with Auth102. Can also be started manually (`workflow_dispatch`). See [Multi-Auth integration tests](#multi-auth-integration-tests). |
 | sst-c-api Tests | [`sst-c-api-tests.yml`](sst-c-api-tests.yml) | Calls the reusable `ci.yml` workflow of [iotauth/sst-c-api](https://github.com/iotauth/sst-c-api): C API unit tests (on sst-c-api `main`), and the C examples (server/client, file block encryption, IPFS file sharing) at the sst-c-api commit pinned by the `entity/c` submodule, against Auth. See [Cross-repository testing with sst-c-api](#cross-repository-testing-with-sst-c-api). |
 | sst-c-api C++ Tests | [`sst-c-api-cpp-tests.yml`](sst-c-api-cpp-tests.yml) | Calls the reusable `ci-cpp.yml` workflow of sst-c-api: C++ API unit tests (on sst-c-api `main`), and the C++ examples (server/client, file block encryption, IPFS file sharing) at the sst-c-api commit pinned by the `entity/c` submodule, against Auth. See [Cross-repository testing with sst-c-api](#cross-repository-testing-with-sst-c-api). |
@@ -16,13 +16,14 @@ Unless noted otherwise, each workflow runs on every push to `main` and on every 
 
 ## Entity integration tests
 
-`integration-test.yml` has two jobs.
+`integration-test.yml` defines three jobs.
 
 - `python-unit-tests` installs the Python package in `entity/python` and runs its unit tests with Python 3.12.
 - `integration-test` runs the unified runner [`examples/scripts/run_integration_test.sh`](../../examples/scripts/run_integration_test.sh) ten times: the nine combinations of `--client` and `--server` among `c`, `node`, and `python`, and the Python client with `--permanent-distribution-key`.
   Each run builds (or reuses) Auth and the entities, generates (or reuses) the example credentials, starts Auth101, starts the server, runs the client, and checks the logs for the expected messages.
+- `cpp-interop` runs the six ordered pairs between C++ and the other three implementations. Each pair gets a fresh runner and its own Auth101. One failed pair leaves the others running. The C++-client/C++-server case runs in the separate C++ workflow. Together the workflows exercise all 16 ordered language pairs with one Auth.
 
-The first run (C client, C server) does the full build and credential setup.
+In the `integration-test` job, the first run (C client, C server) does the full build and credential setup.
 If it succeeds, the later runs reuse those artifacts with `--no-build --no-setup`; if it fails, each later run does its own build and setup so the runs stay independent.
 Every run has `continue-on-error`, so all ten always execute, and a final step fails the job if any run did not succeed.
 
@@ -57,7 +58,8 @@ For example:
 
 ```bash
 cd examples/scripts
-./run_integration_test.sh --client python --server node
+./run_integration_test.sh --client cpp --server python
+./run_integration_test.sh --client python --server cpp
 ./run_multi_auth_test.sh --entity cpp
 ```
 
