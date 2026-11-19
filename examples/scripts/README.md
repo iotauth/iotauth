@@ -2,7 +2,7 @@
 
 This directory contains the shared helpers (`common.sh`) and two unified runners for IoTAuth client-server integration tests:
 
-- `run_integration_test.sh` tests a client and a server that are both registered with Auth101, for the C, Node, and Python implementations.
+- `run_integration_test.sh` tests a client and a server that are both registered with Auth101, using C, C++, Node.js, or Python at either endpoint.
 - `run_multi_auth_test.sh` tests a client registered with Auth101 and a server registered with Auth102, for the Node, C, C++, and Python implementations.
 
 Each test starts the Auth or Auths, runs the selected client and server, verifies the expected message exchange, and cleans up its processes.
@@ -18,13 +18,19 @@ Both runners are used by the GitHub Actions workflows described in [`.github/wor
 ./run_integration_test.sh --client python --server node
 ```
 
-Both `--client` and `--server` accept `c`, `node`, or `python`.
+Both `--client` and `--server` accept `c`, `cpp`, `node`, or `python`.
+
+For example, run a Python client against the C++ server with
+`./run_integration_test.sh --client python --server cpp`. Reverse the options
+to exercise the C++ client and Python server. The C++ examples use the shared
+C configuration files. The runner builds the chosen implementations and starts
+each binary in the directory its credentials require.
 
 The runner accepts the following options:
 
 ```text
---client <language>             Client implementation: c, node, or python
---server <language>             Server implementation: c, node, or python
+--client <language>             Client implementation: c, cpp, node, or python
+--server <language>             Server implementation: c, cpp, node, or python
 --permanent-distribution-key    Use permanent distribution-key mode
 --password <password>           Auth password used for setup and Auth101
 --client-timeout <seconds>      Maximum time allowed for the client scenario

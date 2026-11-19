@@ -28,7 +28,7 @@
 
 * `privilege.graph`
 
-	Multi-level delegated-access example topology used for automated privilege grand and revoke workflows.
+	Multi-level delegated-access example topology used for runtime grants and cascading revocations. A worked example grants `Node1` access to `ResourceA`, grants onward to `Node3`, and revokes both by withdrawing the first grant. The [dynamic access control guide](https://iotauth.github.io/docs/dynamic-access-control/) gives the commands, API arguments, and expected key decisions.
   * Example entities include:
     * `Node0` ~ `Node6`
     * `ResourceA`, `ResourceB`, `ResourceC`, `ResourceD`

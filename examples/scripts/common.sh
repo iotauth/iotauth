@@ -92,6 +92,12 @@ build_c_entities() {
 	run_step cmake --build "$SST_ROOT/entity/c/examples/server_client_example/build"
 }
 
+build_cpp_entities() {
+	local example_dir="$SST_ROOT/entity/c/cpp/examples/server_client_example"
+	run_step cmake -S "$example_dir" -B "$example_dir/build"
+	run_step cmake --build "$example_dir/build"
+}
+
 build_python_entities() {
 	run_step bash -c "cd $(quote_for_shell "$SST_ROOT/entity/python") && ./initPythonEntities.sh"
 }
@@ -200,30 +206,6 @@ start_auth() {
 	# "Enter command" can appear before the entity TCP port (21900) is bound;
 	# wait for the port explicitly so entities don't race during handshake.
 	wait_for_port 21900 "Auth101 entity service"
-}
-
-# --- Client runner (C entity_client) ---
-
-run_client_with_timeout() {
-	(
-		cd "$SST_ROOT/entity/c/examples/server_client_example/build"
-		exec ./entity_client ../c_client.config
-	) >"$CLIENT_LOG" 2>&1 &
-	local client_pid=$!
-	local elapsed=0
-
-	while kill -0 "$client_pid" 2>/dev/null; do
-		if [[ "$elapsed" -ge "$CLIENT_TIMEOUT" ]]; then
-			echo "[test] C client timed out after ${CLIENT_TIMEOUT}s." >&2
-			kill "$client_pid" 2>/dev/null || true
-			wait "$client_pid" 2>/dev/null || true
-			return 1
-		fi
-		sleep 1
-		elapsed=$((elapsed + 1))
-	done
-
-	wait "$client_pid"
 }
 
 # --- Assertions ---

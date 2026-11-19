@@ -14,13 +14,13 @@ PYTHON_CLIENT_CONFIG=""
 PYTHON_SERVER_CONFIG="$SST_ROOT/entity/node/example_entities/configs/net1/server.config"
 
 usage() {
-	echo "Usage: $0 --client <c|node|python> --server <c|node|python> [options]"
+	echo "Usage: $0 --client <c|cpp|node|python> --server <c|cpp|node|python> [options]"
 	echo
 	echo "Builds, prepares, runs, and verifies one IoTAuth client-server integration test."
 	echo
 	echo "Required:"
-	echo "  --client <language>         Client implementation: c, node, or python."
-	echo "  --server <language>         Server implementation: c, node, or python."
+	echo "  --client <language>         Client implementation: c, cpp, node, or python."
+	echo "  --server <language>         Server implementation: c, cpp, node, or python."
 	echo
 	echo "Options:"
 	echo "  --permanent-distribution-key"
@@ -38,7 +38,7 @@ usage() {
 	echo
 	echo "Examples:"
 	echo "  $0 --client python --server node"
-	echo "  $0 --client c --server python --no-build --no-setup"
+	echo "  $0 --client cpp --server python --no-build --no-setup"
 	echo "  $0 --client python --server python --permanent-distribution-key"
 }
 
@@ -134,7 +134,7 @@ validate_implementation() {
 	local role="$1"
 	local implementation="$2"
 	case "$implementation" in
-		c|node|python)
+		c|cpp|node|python)
 			;;
 		"")
 			echo "Missing required option: --$role" >&2
@@ -143,7 +143,7 @@ validate_implementation() {
 			;;
 		*)
 			echo "Unsupported $role implementation: $implementation" >&2
-			echo "Expected one of: c, node, python" >&2
+			echo "Expected one of: c, cpp, node, python" >&2
 			exit 1
 			;;
 	esac
@@ -166,6 +166,7 @@ uses_implementation() {
 implementation_label() {
 	case "$1" in
 		c) echo "C" ;;
+		cpp) echo "C++" ;;
 		node) echo "Node" ;;
 		python) echo "Python" ;;
 	esac
@@ -176,9 +177,14 @@ prepare_test() {
 		require_command mvn
 		build_auth
 
-		if uses_implementation c; then
+		if uses_implementation c || uses_implementation cpp; then
 			require_command cmake
 			require_command make
+		fi
+		if uses_implementation cpp; then
+			build_cpp_entities
+		fi
+		if uses_implementation c; then
 			build_c_entities
 		fi
 		if uses_implementation node; then
@@ -227,13 +233,26 @@ validate_python_configs() {
 	fi
 }
 
+# The native examples share C configs whose credential paths are relative to
+# the working directory. The C++ executable sits one level below its workdir.
+native_entity_command() {
+	local language="$1" role="$2"
+	local example_dir="$SST_ROOT/entity/c/examples/server_client_example"
+	local binary="./entity_$role" config="../c_$role.config" workdir="$example_dir/build"
+	if [[ "$language" == cpp ]]; then
+		workdir="$SST_ROOT/entity/c/cpp/examples/server_client_example"
+		binary="./build/entity_$role"
+		config="$example_dir/c_$role.config"
+	fi
+	echo "cd $(quote_for_shell "$workdir") && exec $binary $(quote_for_shell "$config")"
+}
+
 start_selected_server() {
 	case "$SERVER_IMPLEMENTATION" in
-		c)
-			echo "[test] Starting C server."
-			start_service server bash -c \
-				"cd $(quote_for_shell "$SST_ROOT/entity/c/examples/server_client_example/build") && exec ./entity_server ../c_server.config"
-			wait_for_port 21100 "C server"
+		c|cpp)
+			echo "[test] Starting $(implementation_label "$SERVER_IMPLEMENTATION") server."
+			start_service server bash -c "$(native_entity_command "$SERVER_IMPLEMENTATION" server)"
+			wait_for_port 21100 "$SERVER_IMPLEMENTATION server"
 			;;
 		node)
 			echo "[test] Starting Node server."
@@ -244,7 +263,7 @@ start_selected_server() {
 		python)
 			echo "[test] Starting Python server."
 			case "$CLIENT_IMPLEMENTATION" in
-				c)
+				c|cpp)
 					start_service server bash -c \
 						"cd $(quote_for_shell "$SST_ROOT/entity/python/examples") && source ../.venv/bin/activate && while true; do python3 -u py_server.py -n 2 $(quote_for_shell "$PYTHON_SERVER_CONFIG"); sleep 0.5; done"
 					;;
@@ -295,11 +314,11 @@ reap_successful_process() {
 	fi
 }
 
-wait_for_c_server_completion() {
+wait_for_native_server_completion() {
 	local pid="$SERVER_PID"
-	echo "[test] Waiting for C server to complete both connections."
-	wait_for_process_exit "$pid" "C server"
-	reap_successful_process "$pid" "C server"
+	echo "[test] Waiting for $SERVER_IMPLEMENTATION server to complete both connections."
+	wait_for_process_exit "$pid" "$SERVER_IMPLEMENTATION server"
+	reap_successful_process "$pid" "$SERVER_IMPLEMENTATION server"
 	SERVER_PID=""
 }
 
@@ -311,11 +330,15 @@ stop_background_client() {
 	fi
 }
 
-run_c_client() {
-	echo "[test] Running C client."
-	run_client_with_timeout
-	if [[ "$SERVER_IMPLEMENTATION" == "c" ]]; then
-		wait_for_log "$SERVER_LOG" "LOG: Received: Hello server 2 - second message" "C server" 15
+run_native_client() {
+	echo "[test] Running $(implementation_label "$CLIENT_IMPLEMENTATION") client."
+	bash -c "$(native_entity_command "$CLIENT_IMPLEMENTATION" client)" >"$CLIENT_LOG" 2>&1 &
+	CLIENT_PID=$!
+	wait_for_process_exit "$CLIENT_PID" "$CLIENT_IMPLEMENTATION client"
+	reap_successful_process "$CLIENT_PID" "$CLIENT_IMPLEMENTATION client"
+	CLIENT_PID=""
+	if [[ "$SERVER_IMPLEMENTATION" == c || "$SERVER_IMPLEMENTATION" == cpp ]]; then
+		wait_for_log "$SERVER_LOG" "Received: Hello server 2 - second message" "$SERVER_IMPLEMENTATION server" 15
 	fi
 }
 
@@ -329,8 +352,8 @@ run_node_client() {
 	start_client_log_tail
 
 	case "$SERVER_IMPLEMENTATION" in
-		c)
-			wait_for_c_server_completion
+		c|cpp)
+			wait_for_native_server_completion
 			;;
 		node)
 			echo "[test] Waiting for Node server to receive both messages."
@@ -346,18 +369,18 @@ run_node_client() {
 }
 
 run_python_client() {
-	if [[ "$SERVER_IMPLEMENTATION" == "c" ]]; then
-		echo "[test] Starting Python client twice to satisfy the C server."
+	if [[ "$SERVER_IMPLEMENTATION" == c || "$SERVER_IMPLEMENTATION" == cpp ]]; then
+		echo "[test] Starting Python client twice for the two $SERVER_IMPLEMENTATION server connections."
 		(
 			cd "$SST_ROOT/entity/python/examples"
 			source ../.venv/bin/activate
-			python3 py_client.py "$PYTHON_CLIENT_CONFIG"
+			python3 -u py_client.py "$PYTHON_CLIENT_CONFIG"
 			sleep 2
-			exec python3 py_client.py "$PYTHON_CLIENT_CONFIG"
+			exec python3 -u py_client.py "$PYTHON_CLIENT_CONFIG"
 		) >"$CLIENT_LOG" 2>&1 &
 		CLIENT_PID=$!
 		start_client_log_tail
-		wait_for_c_server_completion
+		wait_for_native_server_completion
 		stop_background_client
 		return
 	fi
@@ -366,7 +389,7 @@ run_python_client() {
 	(
 		cd "$SST_ROOT/entity/python/examples"
 		source ../.venv/bin/activate
-		exec python3 py_client.py "$PYTHON_CLIENT_CONFIG"
+		exec python3 -u py_client.py "$PYTHON_CLIENT_CONFIG"
 	) >"$CLIENT_LOG" 2>&1 &
 	CLIENT_PID=$!
 	start_client_log_tail
@@ -379,26 +402,26 @@ run_python_client() {
 
 run_selected_client() {
 	case "$CLIENT_IMPLEMENTATION" in
-		c) run_c_client ;;
+		c|cpp) run_native_client ;;
 		node) run_node_client ;;
 		python) run_python_client ;;
 	esac
 }
 
-verify_c_client() {
+verify_native_client() {
 	case "$SERVER_IMPLEMENTATION" in
-		c)
-			assert_log_no_errors "$SERVER_LOG" "C server"
-			assert_log_no_errors "$CLIENT_LOG" "C client"
-			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server"
-			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server - second message"
-			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server 2"
-			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server 2 - second message"
-			assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client"
-			assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client 2"
+		c|cpp)
+			assert_log_no_errors "$SERVER_LOG" "$SERVER_IMPLEMENTATION server"
+			assert_log_no_errors "$CLIENT_LOG" "$CLIENT_IMPLEMENTATION client"
+			assert_log_contains "$SERVER_LOG" "Received: Hello server"
+			assert_log_contains "$SERVER_LOG" "Received: Hello server - second message"
+			assert_log_contains "$SERVER_LOG" "Received: Hello server 2"
+			assert_log_contains "$SERVER_LOG" "Received: Hello server 2 - second message"
+			assert_log_contains "$CLIENT_LOG" "Received: Hello client"
+			assert_log_contains "$CLIENT_LOG" "Received: Hello client 2"
 			;;
 		node)
-			assert_log_no_errors "$CLIENT_LOG" "C client"
+			assert_log_no_errors "$CLIENT_LOG" "$CLIENT_IMPLEMENTATION client"
 			assert_log_contains "$SERVER_LOG" "Handler: socketID:"
 			assert_log_contains "$SERVER_LOG" "data: Hello server"
 			assert_log_contains "$SERVER_LOG" "data: Hello server - second message"
@@ -406,22 +429,27 @@ verify_c_client() {
 			assert_log_contains "$SERVER_LOG" "data: Hello server 2 - second message"
 			;;
 		python)
-			assert_log_no_errors "$CLIENT_LOG" "C client"
+			assert_log_no_errors "$CLIENT_LOG" "$CLIENT_IMPLEMENTATION client"
 			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server"
 			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server - second message"
 			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server 2"
 			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server 2 - second message"
+			assert_log_contains "$CLIENT_LOG" "Received: Hello client 2"
 			;;
 	esac
 }
 
 verify_node_client() {
 	case "$SERVER_IMPLEMENTATION" in
-		c)
-			assert_log_no_errors "$SERVER_LOG" "C server"
-			assert_log_contains "$SERVER_LOG" "LOG: Received: data2"
+		c|cpp)
+			assert_log_no_errors "$SERVER_LOG" "$SERVER_IMPLEMENTATION server"
+			assert_log_contains "$SERVER_LOG" "Received: data2"
 			assert_log_contains "$SERVER_LOG" "Finished first communication"
 			assert_log_contains "$CLIENT_LOG" "Hello client"
+			if [[ "$SERVER_IMPLEMENTATION" == cpp ]]; then
+				assert_log_contains "$SERVER_LOG" "Finished second communication"
+				assert_log_contains "$CLIENT_LOG" "Hello client 2"
+			fi
 			;;
 		node)
 			assert_log_contains "$SERVER_LOG" "Handler: socketID:"
@@ -437,11 +465,15 @@ verify_node_client() {
 
 verify_python_client() {
 	case "$SERVER_IMPLEMENTATION" in
-		c)
-			assert_log_no_errors "$SERVER_LOG" "C server"
-			assert_log_contains "$SERVER_LOG" "LOG: Received: Hello server"
+		c|cpp)
+			assert_log_no_errors "$SERVER_LOG" "$SERVER_IMPLEMENTATION server"
+			assert_log_contains "$SERVER_LOG" "Received: Hello server"
 			assert_log_contains "$SERVER_LOG" "Finished first communication"
-			assert_log_contains "$CLIENT_LOG" "LOG: Received: Hello client"
+			assert_log_contains "$CLIENT_LOG" "Received: Hello client"
+			if [[ "$SERVER_IMPLEMENTATION" == cpp ]]; then
+				assert_log_contains "$SERVER_LOG" "Finished second communication"
+				assert_log_contains "$CLIENT_LOG" "Hello client 2"
+			fi
 			;;
 		node)
 			assert_log_contains "$SERVER_LOG" "data: Hello server"
@@ -467,7 +499,7 @@ verify_output() {
 
 	echo "[test] Verifying $CLIENT_IMPLEMENTATION-client to $SERVER_IMPLEMENTATION-server output."
 	case "$CLIENT_IMPLEMENTATION" in
-		c) verify_c_client ;;
+		c|cpp) verify_native_client ;;
 		node) verify_node_client ;;
 		python) verify_python_client ;;
 	esac
@@ -480,15 +512,15 @@ verify_output() {
 
 tmux_server_command() {
 	case "$SERVER_IMPLEMENTATION" in
-		c)
-			echo "sleep 3 && cd $(quote_for_shell "$SST_ROOT/entity/c/examples/server_client_example/build") && ./entity_server ../c_server.config"
+		c|cpp)
+			echo "sleep 3 && $(native_entity_command "$SERVER_IMPLEMENTATION" server)"
 			;;
 		node)
 			echo "sleep 3 && cd $(quote_for_shell "$SST_ROOT/entity/node/example_entities") && node server.js configs/net1/server.config"
 			;;
 		python)
 			case "$CLIENT_IMPLEMENTATION" in
-				c)
+				c|cpp)
 					echo "sleep 3 && cd $(quote_for_shell "$SST_ROOT/entity/python/examples") && source ../.venv/bin/activate && while true; do python3 -u py_server.py -n 2 $(quote_for_shell "$PYTHON_SERVER_CONFIG"); sleep 0.5; done"
 					;;
 				node)
@@ -508,9 +540,8 @@ write_tmux_client_script() {
 		echo "set +e"
 		echo "sleep 6"
 		case "$CLIENT_IMPLEMENTATION" in
-			c)
-				echo "cd $(quote_for_shell "$SST_ROOT/entity/c/examples/server_client_example/build") || exit 1"
-				echo "./entity_client ../c_client.config"
+			c|cpp)
+				echo "($(native_entity_command "$CLIENT_IMPLEMENTATION" client))"
 				echo "status=\$?"
 				;;
 			node)
@@ -529,16 +560,16 @@ write_tmux_client_script() {
 			python)
 				echo "cd $(quote_for_shell "$SST_ROOT/entity/python/examples") || exit 1"
 				echo "source ../.venv/bin/activate"
-				if [[ "$SERVER_IMPLEMENTATION" == "c" ]]; then
-					echo "python3 py_client.py $(quote_for_shell "$PYTHON_CLIENT_CONFIG")"
+				if [[ "$SERVER_IMPLEMENTATION" == c || "$SERVER_IMPLEMENTATION" == cpp ]]; then
+					echo "python3 -u py_client.py $(quote_for_shell "$PYTHON_CLIENT_CONFIG")"
 					echo "status=\$?"
 					echo "if [[ \"\$status\" -eq 0 ]]; then"
 					echo "  sleep 2"
-					echo "  python3 py_client.py $(quote_for_shell "$PYTHON_CLIENT_CONFIG")"
+					echo "  python3 -u py_client.py $(quote_for_shell "$PYTHON_CLIENT_CONFIG")"
 					echo "  status=\$?"
 					echo "fi"
 				else
-					echo "python3 py_client.py $(quote_for_shell "$PYTHON_CLIENT_CONFIG")"
+					echo "python3 -u py_client.py $(quote_for_shell "$PYTHON_CLIENT_CONFIG")"
 					echo "status=\$?"
 				fi
 				;;
