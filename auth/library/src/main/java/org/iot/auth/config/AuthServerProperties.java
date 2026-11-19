@@ -56,6 +56,7 @@ public class AuthServerProperties {
         trusted_ca_cert_paths,
 
         auth_database_dir,
+        log_enabled,
         auth_db_protection_method,
         backup_enabled,
         bluetooth_enabled,
@@ -93,6 +94,7 @@ public class AuthServerProperties {
     private String[] trustedCACertPaths;
 
     private String authDatabaseDir;
+    private boolean logEnabled;
     private int authDBProtectionMethod;
     private boolean backupEnabled;
     private boolean bluetoothEnabled;
@@ -177,6 +179,9 @@ public class AuthServerProperties {
             authDatabaseDir = basePath + prop.getProperty(key.auth_database_dir.toString());
             logger.info("key:value = {}:{}", key.auth_database_dir.toString(), authDatabaseDir);
 
+            // Keep logging enabled for older properties files that omit this option.
+            logEnabled = Boolean.parseBoolean(prop.getProperty(key.log_enabled.toString(), "true"));
+
             authDBProtectionMethod = Integer.parseInt(prop.getProperty(key.auth_db_protection_method.toString()));
             logger.info("key:value = {}:{}", key.auth_db_protection_method.toString(), authDBProtectionMethod);
 
@@ -255,6 +260,10 @@ public class AuthServerProperties {
         return databaseEncryptionKeyPath;
     }
     public String[] getTrustedCACertPaths() { return trustedCACertPaths; }
+
+    public boolean isLogEnabled() {
+        return logEnabled;
+    }
 
     public String getAuthDatabaseDir() {
         return authDatabaseDir;

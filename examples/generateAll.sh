@@ -10,6 +10,8 @@ echo "*SCRIPT- generateAll.sh: For generating example Auths and entities"
 GRAPH_FILE="configs/default.graph"
 # Whether to show help
 SHOW_HELP=false
+# Auth file logging is enabled unless --no-log is supplied.
+LOG_ENABLED=true
 # Generate credentials and configs
 GEN_CRED_CONFIG=true
 # Generate Auth databases
@@ -41,6 +43,9 @@ do
 			PASSWORD_FOR_CRED_GENERATION="$2"
 			shift # past argument
 		;;
+		--no-log)
+			LOG_ENABLED=false
+		;;
 		-h|--help)
 			SHOW_HELP=true
 		;;
@@ -70,12 +75,20 @@ if [ "$SHOW_HELP" = true ] ; then
 	echo "  -po,--policy <file>                 Path to communication policy JSON file."
 	echo "                                  If provided, only the policies defined in the file"
 	echo "                                  will be generated instead of the default policies."
+	echo "  --no-log                        Disable Auth file logging in generated properties."
+	echo "                                  Not valid with --gen-db-only (properties are not generated)."
 	echo "  -h,--help                       Show this help."
+	exit 1
+fi
+
+if [ "$GEN_CRED_CONFIG" = false ] && [ "$LOG_ENABLED" = false ]; then
+	echo "[Error] --no-log cannot be used with --gen-db-only; regenerate configuration files instead." >&2
 	exit 1
 fi
 
 echo "Example generation options:"
 echo GRAPH_FILE  = $GRAPH_FILE
+echo LOG_ENABLED = $LOG_ENABLED
 
 # if required npm modules do not exist
 if [ ! -d "node_modules/readline-sync" ] ||  [ ! -d "node_modules/JSON2" ]; then
@@ -103,11 +116,14 @@ if [ "$GEN_CRED_CONFIG" = true ] ; then
 		echo "[Error] Script finished with problems! entityConfigGenerator.js failed. exiting..." ; exit 1
 	fi
 	echo "Generating Auth configuration files..."
+	AUTH_CONFIG_ARGS=("$GRAPH_FILE")
 	if [ -n "$POLICY_FILE" ]; then
-		node authConfigGenerator.js "$GRAPH_FILE" --policy "$POLICY_FILE"
-	else
-		node authConfigGenerator.js "$GRAPH_FILE"
+		AUTH_CONFIG_ARGS+=(--policy "$POLICY_FILE")
 	fi
+	if [ "$LOG_ENABLED" = false ]; then
+		AUTH_CONFIG_ARGS+=(--no-log)
+	fi
+	node authConfigGenerator.js "${AUTH_CONFIG_ARGS[@]}"
 	if [ $? -ne 0  ] ; then
 		echo "[Error] Script finished with problems! authConfigGenerator.js failed. exiting..." ; exit 1
 	fi

@@ -170,3 +170,17 @@ See https://github.com/iotauth/sst-c-api/tree/main/examples/ for more examples.
 4. Make sure Auth101 is running.
 
 5. Run `SecureCommServer.xml` first then also run `SecureCommClient.xml`.
+
+## Auth file logging
+
+`./generateAll.sh` writes `log_enabled=true` into each generated Auth properties
+file (for example, `auth/properties/exampleAuth101.properties`). Use
+`./generateAll.sh --no-log` to generate `log_enabled=false` instead. This can be
+combined with `--policy` or `--gen-cred-config-only`, but not `--gen-db-only`,
+which does not generate properties.
+
+At server startup, `log_enabled=false` disables both the Auth event file and the
+rolling server log; console output remains enabled. Existing log files are
+preserved. When enabled, the event log appends to
+`<auth_database_dir>/auth<auth_id>log.txt`. Older properties files without
+`log_enabled` default to enabled. Restart Auth after changing this setting.

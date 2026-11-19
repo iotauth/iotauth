@@ -18,7 +18,7 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>logback.xml</include>
+                    <include>logback*.xml</include>
                 </includes>
                 <targetPath>${project.build.outputDirectory}</targetPath>
             </resource>

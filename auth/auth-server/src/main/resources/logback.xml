@@ -1,49 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Bootstrap logging stays on the console until Auth properties are loaded. -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>log/iot-auth-server.log</file>
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
-        </encoder>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <FileNamePattern>log/iot-auth-server.%i.log.zip</FileNamePattern>
-            <MinIndex>1</MinIndex>
-            <MaxIndex>10</MaxIndex>
-        </rollingPolicy>
-
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>20MB</MaxFileSize>
-        </triggeringPolicy>
-    </appender>
-
-    <!-- Paths are relative to auth/auth-server, the standard launch directory.
-         Override AUTH_DATABASE_DIR and AUTH_ID with JVM -D options when needed. -->
-    <appender name="AUTH_FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${AUTH_DATABASE_DIR:-../databases/auth101}/auth${AUTH_ID:-101}log.txt</file>
-        <append>true</append>
-        <immediateFlush>true</immediateFlush>
-        <encoder>
-            <charset>UTF-8</charset>
-            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <!--
-    // For debug output
-    <root level="DEBUG">
-    // Without debug output
-    <root level="INFO">
-    -->
     <root level="INFO">
         <appender-ref ref="STDOUT" />
-        <appender-ref ref="FILE" />
-        <appender-ref ref="AUTH_FILE" />
     </root>
 </configuration>

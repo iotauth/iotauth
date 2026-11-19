@@ -98,7 +98,33 @@ public class AuthServer {
         this.isRunning = running;
     }
 
+    /** Enable file appenders only after reading the Auth's logging preference. */
+    static synchronized void configureLogging(AuthServerProperties properties)
+            throws ch.qos.logback.core.joran.spi.JoranException {
+        ch.qos.logback.classic.LoggerContext context =
+                (ch.qos.logback.classic.LoggerContext) LoggerFactory.getILoggerFactory();
+        ch.qos.logback.classic.Logger root = context.getLogger(Logger.ROOT_LOGGER_NAME);
+        for (String name : new String[] {"FILE", "AUTH_FILE"}) {
+            ch.qos.logback.core.Appender<ch.qos.logback.classic.spi.ILoggingEvent> appender =
+                    root.getAppender(name);
+            if (appender != null) {
+                root.detachAppender(appender);
+                appender.stop();
+            }
+        }
+        if (!properties.isLogEnabled()) {
+            return;
+        }
+        context.putProperty("AUTH_DATABASE_DIR", properties.getAuthDatabaseDir());
+        context.putProperty("AUTH_ID", String.valueOf(properties.getAuthID()));
+        ch.qos.logback.classic.joran.JoranConfigurator configurator =
+                new ch.qos.logback.classic.joran.JoranConfigurator();
+        configurator.setContext(context);
+        configurator.doConfigure(AuthServer.class.getResource("/logback-files.xml"));
+    }
+
     public AuthServer(AuthServerProperties properties, String givenAuthPassword) throws Exception {
+        configureLogging(properties);
         String authKeyStorePassword;
         if (givenAuthPassword == null) {
             authKeyStorePassword = readPassword();

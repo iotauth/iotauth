@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Loaded by AuthServer only when log_enabled=true. Paths and ID come
+         from the selected Auth properties, including the base_path prefix. -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>log/iot-auth-server.log</file>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <FileNamePattern>log/iot-auth-server.%i.log.zip</FileNamePattern>
+            <MinIndex>1</MinIndex>
+            <MaxIndex>10</MaxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>20MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <appender name="AUTH_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${AUTH_DATABASE_DIR:-../databases/auth101}/auth${AUTH_ID:-101}log.txt</file>
+        <append>true</append>
+        <immediateFlush>true</immediateFlush>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root>
+        <appender-ref ref="FILE" />
+        <appender-ref ref="AUTH_FILE" />
+    </root>
+</configuration>

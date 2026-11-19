@@ -34,6 +34,7 @@ var graphFile = process.argv[2];
 var graph = JSON.parse(fs.readFileSync(graphFile));
 console.log(graph);
 // Optionally read policy file
+const logEnabled = !process.argv.includes("--no-log");
 let policiesOverride = null;
 const policyIdx = process.argv.indexOf("--policy");
 
@@ -419,6 +420,7 @@ function generatePropertiesFiles() {
             'database_encryption_key_path': authKeystorePrefix + 'Database.bin',
             'trusted_ca_cert_paths': '../credentials/ca/CACert.pem',
             'auth_database_dir': authDBDir,
+            'log_enabled': logEnabled,
             'auth_db_protection_method': auth.dbProtectionMethod,
             // currently default is true, set false only when this is given by the graph file
             'backup_enabled': (auth.backupEnabled != null && !auth.backupEnabled) ? false : true,
